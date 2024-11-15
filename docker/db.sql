@@ -22,6 +22,13 @@ tournament.';
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Functions
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+
 -- function calculate_points()
 CREATE OR REPLACE FUNCTION calculate_points(
     shot_x FLOAT,
@@ -95,19 +102,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Tables
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
 -- Tournaments table
 CREATE TABLE IF NOT EXISTS tournaments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
     number_of_lanes INT NOT NULL,
-    UNIQUE (start_time)
+    is_opened BOOLEAN DEFAULT FALSE,
+    CONSTRAINT open_tournament_no_end_time CHECK (
+        (is_opened = TRUE AND end_time IS NULL) OR (is_opened = FALSE)
+    ),
+    CONSTRAINT closed_tournament_with_end_time CHECK (
+        (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
+    )
 );
 
 -- Archers table
 CREATE TABLE IF NOT EXISTS archers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -129,9 +147,11 @@ CREATE TABLE IF NOT EXISTS arrows (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     weight FLOAT DEFAULT 0.0,
     diameter FLOAT DEFAULT 0.0,
+    spine FLOAT DEFAULT 0.0,
     length FLOAT NOT NULL,
     human_readable_name VARCHAR(255) NOT NULL,
     archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
+    label_position FLOAT NOT NULL,
     UNIQUE (archer_id, human_readable_name)
 );
 
@@ -149,6 +169,7 @@ CREATE TABLE IF NOT EXISTS targets (
     CHECK (array_length(radius, 1) = array_length(points, 1)),
     UNIQUE (lane_id, human_readable_name)
 );
+
 
 -- Tournament registration table
 CREATE TABLE IF NOT EXISTS registration (
@@ -169,10 +190,16 @@ CREATE TABLE IF NOT EXISTS shots (
     y_coordinate FLOAT,
     pull_length FLOAT,
     distance FLOAT,
-    archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
     arrow_id UUID REFERENCES arrows (id) ON DELETE CASCADE,
-    target_id UUID REFERENCES targets (id) ON DELETE CASCADE
+    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
+    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE
 );
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Triggers
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 
 
 -- Create a trigger that calls the trigger function before inserting or updating rows in the lanes
@@ -189,6 +216,12 @@ BEFORE INSERT OR UPDATE ON shots
 FOR EACH ROW
 EXECUTE FUNCTION check_shot_coordinates();
 
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Views
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 
 -- View for shots with calculated points
 CREATE OR REPLACE VIEW shots_view AS
@@ -226,6 +259,13 @@ SELECT
     t.human_readable_name AS target_name
 FROM shots AS s
 INNER JOIN targets AS t ON s.target_id = t.id;
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Comments
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
 
 COMMENT ON TABLE tournaments IS 'Each tournament must have a start time, an end time, and a number
 of lanes.
