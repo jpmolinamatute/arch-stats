@@ -1,1 +1,11 @@
-/target/
+**/target/
+**/node_modules/
+**/.venv/
+npm-debug.log
+yarn-error.log
+**/__pycache__/
+**/.env
+# System files
+.DS_Store
+Thumbs.db
+**/.vscode/

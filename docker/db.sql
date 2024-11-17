@@ -102,6 +102,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE TYPE archer_type AS ENUM ('compound', 'traditional', 'barebow', 'olympic');
+CREATE TYPE archer_genre AS ENUM ('male', 'female', 'no-answered');
+
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
 --                                   Tables
@@ -126,20 +129,14 @@ CREATE TABLE IF NOT EXISTS tournaments (
 -- Archers table
 CREATE TABLE IF NOT EXISTS archers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    genre ARCHER_GENRE NOT NULL,
+    type_of_archer ARCHER_TYPE NOT NULL,
+    bow_poundage FLOAT NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
-);
-
--- Lanes table
-CREATE TABLE IF NOT EXISTS lanes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
-    lane_number INT NOT NULL,
-    number_of_archers INT NOT NULL,
-    max_x_coordinate FLOAT,
-    max_y_coordinate FLOAT
 );
 
 -- Arrows table
@@ -155,6 +152,14 @@ CREATE TABLE IF NOT EXISTS arrows (
     UNIQUE (archer_id, human_readable_name)
 );
 
+-- Lanes table
+CREATE TABLE IF NOT EXISTS lanes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
+    lane_number INT NOT NULL,
+    number_of_archers INT NOT NULL
+);
+
 -- Targets table
 CREATE TABLE IF NOT EXISTS targets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -163,6 +168,9 @@ CREATE TABLE IF NOT EXISTS targets (
     radius FLOAT [],
     points INT [],
     height FLOAT,
+    lane_sensor_id UUID NOT NULL,
+    max_x_coordinate FLOAT,
+    max_y_coordinate FLOAT,
     human_readable_name VARCHAR(255),
     lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
     archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
@@ -177,12 +185,15 @@ CREATE TABLE IF NOT EXISTS registration (
     archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
     lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
     tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
+    UNIQUE (archer_id, tournament_id),
     UNIQUE (archer_id, lane_id, tournament_id)
 );
 
 -- Shots table
 CREATE TABLE IF NOT EXISTS shots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    lane_sensor_id UUID NOT NULL,
+    bow_sensor_id UUID NOT NULL,
     arrow_engage_time INT,
     arrow_disengage_time INT,
     arrow_landing_time INT,
@@ -191,8 +202,6 @@ CREATE TABLE IF NOT EXISTS shots (
     pull_length FLOAT,
     distance FLOAT,
     arrow_id UUID REFERENCES arrows (id) ON DELETE CASCADE,
-    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
-    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE
 );
 
 ---------------------------------------------------------------------------------------------------
@@ -284,10 +293,6 @@ COMMENT ON TABLE lanes IS 'Each lane can be used by only one archer at a time.
 Each lane will have a limit of number of archers.
 Each lane will be available only for one tournament at a time.';
 COMMENT ON TABLE targets IS 'Each target will be set to a specific lane.';
-COMMENT ON COLUMN lanes.max_x_coordinate IS 'This represent the maximum x coordinate that the
-sensor will read. Coordinates are in centimeters.';
-COMMENT ON COLUMN lanes.max_y_coordinate IS 'This represent the maximum y coordinate that the
-sensor will read. Coordinates are in centimeters.';
 COMMENT ON COLUMN lanes.lane_number IS 'This will be a number from 1 to the number of lanes set in
 the tournament.';
 COMMENT ON COLUMN arrows.id IS 'this will be extracted from a NFC tag.';
@@ -298,13 +303,21 @@ because not everyone will have a caliper.';
 COMMENT ON COLUMN arrows.length IS 'The length of the arrow in millimeters and it is required
 because it will be used to do other calculations.';
 COMMENT ON COLUMN arrows.human_readable_name IS 'This is a label to identify the arrow easily.';
-COMMENT ON COLUMN targets.id IS 'human readable name to generate the uuid.';
+COMMENT ON COLUMN targets.id IS 'human readable name is used to generate the uuid.';
 COMMENT ON COLUMN targets.human_readable_name IS 'This is a label to identify the target easily.';
 COMMENT ON COLUMN targets.height IS 'This is the height from the ground to the center of the
 target. Height is in centimeters.';
 COMMENT ON COLUMN targets.radius IS 'This is an array of x axis values that represent the radius 
 of the different rings in the target. Coordinates are in centimeters.';
 COMMENT ON COLUMN targets.points IS 'This is an array of points each ring in the target.';
+COMMENT ON COLUMN targets.max_x_coordinate IS 'the maximum x coordinate that the
+sensor will read. Coordinates are in centimeters.';
+COMMENT ON COLUMN targets.max_y_coordinate IS 'the maximum y coordinate that the
+sensor will read. Coordinates are in centimeters.';
+COMMENT ON COLUMN targets.x_coordinate IS 'x coordinate of the center of the target. Coordinates
+are in centimeters.';
+COMMENT ON COLUMN targets.y_coordinate IS 'y coordinate of the center of the target. Coordinates
+are in centimeters.';
 COMMENT ON COLUMN shots.arrow_engage_time IS 'Time in seconds when the arrow is engaged in the bow.
 ';
 COMMENT ON COLUMN shots.arrow_disengage_time IS 'Time in seconds when the arrow leave the bow.';
