@@ -121,60 +121,63 @@ The system's PostgreSQL database includes the following tables:
 
 The project's file organization is outlined below. This structure is a work in progress and will evolve during development:
 
+```sh
+tree  --gitignore -FalL3 -I .git
+```
+
 ```plain
 
 arch_stats
-├── arrow_reader
+./
+├── arrow_reader/
+│   ├── Cargo.lock
 │   ├── Cargo.toml
-│   └── src
+│   └── src/
 │       └── main.rs
-├── docker
+├── docker/
 │   ├── db.sql
 │   ├── docker-compose.yaml
 │   └── setup.cfg
+├── .gitignore
 ├── LICENSE
 ├── README.md
-├── server
-│   ├── app
-│   │   ├── src
-│   │   │   ├── __init__.py
-│   │   │   └── main.py
-│   │   └── tests
-│   │       └── __init__.py
+├── server/
+│   ├── app/
+│   │   ├── src/
+│   │   └── tests/
 │   ├── poetry.lock
-│   ├── poetry.toml
 │   ├── pyproject.toml
+│   ├── .python-version
 │   ├── README.md
 │   └── tasks.py
-├── shot_reader
+├── shot_reader/
+│   ├── Cargo.lock
 │   ├── Cargo.toml
-│   └── src
+│   └── src/
 │       └── main.rs
-├── target_reader
+├── target_reader/
+│   ├── Cargo.lock
 │   ├── Cargo.toml
-│   └── src
+│   └── src/
 │       └── main.rs
 ├── thoughts.md
-└── webui
+└── webui/
     ├── angular.json
+    ├── .editorconfig
     ├── package.json
-    ├── public
+    ├── package-lock.json
+    ├── public/
     │   └── favicon.ico
     ├── README.md
-    ├── src
-    │   ├── app
-    │   │   ├── app.component.css
-    │   │   ├── app.component.html
-    │   │   ├── app.component.spec.ts
-    │   │   ├── app.component.ts
-    │   │   ├── app.config.ts
-    │   │   └── app.routes.ts
+    ├── src/
+    │   ├── app/
     │   ├── index.html
     │   ├── main.ts
     │   └── styles.css
     ├── tsconfig.app.json
     ├── tsconfig.json
     └── tsconfig.spec.json
+
 
 ```
 

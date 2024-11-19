@@ -15,10 +15,10 @@ start.
 8. The tournament ends when all archers have finished shooting.
 */
 
-CREATE DATABASE archery;
-COMMENT ON DATABASE archery IS 'the database will track shots by one or more archers within a
-tournament.';
-\c archery;
+-- CREATE DATABASE archery;
+-- COMMENT ON DATABASE archery IS 'the database will track shots by one or more archers within a
+-- tournament.';
+-- \c archery;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -31,15 +31,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- function calculate_points()
 CREATE OR REPLACE FUNCTION calculate_points(
-    shot_x FLOAT,
-    shot_y FLOAT,
-    target_x FLOAT,
-    target_y FLOAT,
-    radius FLOAT [],
+    shot_x REAL,
+    shot_y REAL,
+    target_x REAL,
+    target_y REAL,
+    radius REAL [],
     points INT []
 ) RETURNS INT AS $$
 DECLARE
-    distance FLOAT;
+    distance REAL;
     ring_index INT;
     shot_points INT;
 BEGIN
@@ -81,14 +81,13 @@ $$ LANGUAGE plpgsql;
 -- function check_shot_coordinates()
 CREATE OR REPLACE FUNCTION check_shot_coordinates() RETURNS TRIGGER AS $$
 DECLARE
-    max_x FLOAT;
-    max_y FLOAT;
+    max_x REAL;
+    max_y REAL;
 BEGIN
-    SELECT l.max_x_coordinate, l.max_y_coordinate
+    SELECT max_x_coordinate, max_y_coordinate
     INTO max_x, max_y
-    FROM lanes AS l
-    INNER JOIN targets AS t ON l.id = t.lane_id
-    WHERE t.id = NEW.target_id;
+    FROM lanes
+    WHERE id = NEW.lane_id;
 
     IF NEW.x_coordinate < 0.0 OR NEW.x_coordinate > max_x THEN
         RAISE EXCEPTION 'x_coordinate out of range';
@@ -101,7 +100,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 CREATE TYPE archer_type AS ENUM ('compound', 'traditional', 'barebow', 'olympic');
 CREATE TYPE archer_genre AS ENUM ('male', 'female', 'no-answered');
 
@@ -135,20 +133,20 @@ CREATE TABLE IF NOT EXISTS archers (
     email VARCHAR(255) UNIQUE NOT NULL,
     genre ARCHER_GENRE NOT NULL,
     type_of_archer ARCHER_TYPE NOT NULL,
-    bow_poundage FLOAT NOT NULL,
+    bow_poundage REAL NOT NULL,
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 
 -- Arrows table
 CREATE TABLE IF NOT EXISTS arrows (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    weight FLOAT DEFAULT 0.0,
-    diameter FLOAT DEFAULT 0.0,
-    spine FLOAT DEFAULT 0.0,
-    length FLOAT NOT NULL,
+    weight REAL DEFAULT 0.0,
+    diameter REAL DEFAULT 0.0,
+    spine REAL DEFAULT 0.0,
+    length REAL NOT NULL,
     human_readable_name VARCHAR(255) NOT NULL,
     archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
-    label_position FLOAT NOT NULL,
+    label_position REAL NOT NULL,
     UNIQUE (archer_id, human_readable_name)
 );
 
@@ -157,20 +155,19 @@ CREATE TABLE IF NOT EXISTS lanes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
     lane_number INT NOT NULL,
+    max_x_coordinate REAL,
+    max_y_coordinate REAL,
     number_of_archers INT NOT NULL
 );
 
 -- Targets table
 CREATE TABLE IF NOT EXISTS targets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    x_coordinate FLOAT,
-    y_coordinate FLOAT,
-    radius FLOAT [],
+    x_coordinate REAL,
+    y_coordinate REAL,
+    radius REAL [],
     points INT [],
-    height FLOAT,
-    lane_sensor_id UUID NOT NULL,
-    max_x_coordinate FLOAT,
-    max_y_coordinate FLOAT,
+    height REAL,
     human_readable_name VARCHAR(255),
     lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
     archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
@@ -192,16 +189,15 @@ CREATE TABLE IF NOT EXISTS registration (
 -- Shots table
 CREATE TABLE IF NOT EXISTS shots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    lane_sensor_id UUID NOT NULL,
-    bow_sensor_id UUID NOT NULL,
-    arrow_engage_time INT,
-    arrow_disengage_time INT,
-    arrow_landing_time INT,
-    x_coordinate FLOAT,
-    y_coordinate FLOAT,
-    pull_length FLOAT,
-    distance FLOAT,
-    arrow_id UUID REFERENCES arrows (id) ON DELETE CASCADE,
+    arrow_engage_time BIGINT,
+    arrow_disengage_time BIGINT,
+    arrow_landing_time BIGINT,
+    x_coordinate REAL,
+    y_coordinate REAL,
+    pull_length REAL,
+    distance REAL,
+    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
+    arrow_id UUID REFERENCES arrows (id) ON DELETE CASCADE
 );
 
 ---------------------------------------------------------------------------------------------------
@@ -233,41 +229,41 @@ EXECUTE FUNCTION check_shot_coordinates();
 ---------------------------------------------------------------------------------------------------
 
 -- View for shots with calculated points
-CREATE OR REPLACE VIEW shots_view AS
-SELECT
-    s.distance,
-    (s.arrow_landing_time - s.arrow_disengage_time) AS flight_time,
-    s.distance / (s.arrow_landing_time - s.arrow_disengage_time) AS speed,
-    calculate_points(
-        s.x_coordinate,
-        s.y_coordinate,
-        t.x_coordinate,
-        t.y_coordinate,
-        t.radius,
-        t.points
-    ) AS shot_points
-FROM shots AS s
-INNER JOIN
-    targets AS t ON s.target_id = t.id;
+-- CREATE OR REPLACE VIEW shots_view AS
+-- SELECT
+--     s.distance,
+--     (s.arrow_landing_time - s.arrow_disengage_time) AS flight_time,
+--     s.distance / (s.arrow_landing_time - s.arrow_disengage_time) AS speed,
+--     calculate_points(
+--         s.x_coordinate,
+--         s.y_coordinate,
+--         t.x_coordinate,
+--         t.y_coordinate,
+--         t.radius,
+--         t.points
+--     ) AS shot_points
+-- FROM shots AS s
+-- INNER JOIN
+--     targets AS t ON s.target_id = t.id;
 
-CREATE OR REPLACE VIEW raw_data AS
-SELECT
-    s.arrow_engage_time,
-    s.arrow_disengage_time,
-    s.arrow_landing_time,
-    s.x_coordinate AS shot_x_coordinate,
-    s.y_coordinate AS shot_y_coordinate,
-    s.pull_length,
-    s.distance,
-    s.target_id,
-    t.x_coordinate AS target_x_coordinate,
-    t.y_coordinate AS target_y_coordinate,
-    t.radius,
-    t.points,
-    t.height AS target_height,
-    t.human_readable_name AS target_name
-FROM shots AS s
-INNER JOIN targets AS t ON s.target_id = t.id;
+-- CREATE OR REPLACE VIEW raw_data AS
+-- SELECT
+--     s.arrow_engage_time,
+--     s.arrow_disengage_time,
+--     s.arrow_landing_time,
+--     s.x_coordinate AS shot_x_coordinate,
+--     s.y_coordinate AS shot_y_coordinate,
+--     s.pull_length,
+--     s.distance,
+--     s.target_id,
+--     t.x_coordinate AS target_x_coordinate,
+--     t.y_coordinate AS target_y_coordinate,
+--     t.radius,
+--     t.points,
+--     t.height AS target_height,
+--     t.human_readable_name AS target_name
+-- FROM shots AS s
+-- INNER JOIN targets AS t ON s.target_id = t.id;
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -295,6 +291,10 @@ Each lane will be available only for one tournament at a time.';
 COMMENT ON TABLE targets IS 'Each target will be set to a specific lane.';
 COMMENT ON COLUMN lanes.lane_number IS 'This will be a number from 1 to the number of lanes set in
 the tournament.';
+COMMENT ON COLUMN lanes.max_x_coordinate IS 'the maximum x coordinate that the
+sensor will read. Coordinates are in centimeters.';
+COMMENT ON COLUMN lanes.max_y_coordinate IS 'the maximum y coordinate that the
+sensor will read. Coordinates are in centimeters.';
 COMMENT ON COLUMN arrows.id IS 'this will be extracted from a NFC tag.';
 COMMENT ON COLUMN arrows.weight IS 'The weight of the arrow in grains and it is optional because
 not everyone will have a scale.';
@@ -310,10 +310,6 @@ target. Height is in centimeters.';
 COMMENT ON COLUMN targets.radius IS 'This is an array of x axis values that represent the radius 
 of the different rings in the target. Coordinates are in centimeters.';
 COMMENT ON COLUMN targets.points IS 'This is an array of points each ring in the target.';
-COMMENT ON COLUMN targets.max_x_coordinate IS 'the maximum x coordinate that the
-sensor will read. Coordinates are in centimeters.';
-COMMENT ON COLUMN targets.max_y_coordinate IS 'the maximum y coordinate that the
-sensor will read. Coordinates are in centimeters.';
 COMMENT ON COLUMN targets.x_coordinate IS 'x coordinate of the center of the target. Coordinates
 are in centimeters.';
 COMMENT ON COLUMN targets.y_coordinate IS 'y coordinate of the center of the target. Coordinates
@@ -326,3 +322,207 @@ COMMENT ON COLUMN shots.pull_length IS 'Distance from the knocking point to the 
 at full draw. The measurement is in centimeters.';
 COMMENT ON COLUMN shots.distance IS 'The distance represented in meters from the archer to the
 target.';
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+--                                   Dummy Data
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+
+-- Insert into tournaments table
+INSERT INTO tournaments (
+    id, start_time, end_time, number_of_lanes, is_opened
+) VALUES (
+    '550e8400-e29b-41d4-a716-446655440000', '2023-01-01 09:00:00', NULL, 10, TRUE
+);
+
+-- Insert into archers table
+INSERT INTO archers (
+    id, first_name, last_name, password, email, genre, type_of_archer, bow_poundage, created_at
+) VALUES (
+    '550e8400-e29b-41d4-a716-446655440001',
+    'John',
+    'Doe',
+    'password123',
+    'john.doe@example.com',
+    'male',
+    'olympic',
+    40.5,
+    current_timestamp
+);
+
+-- Insert into lanes table
+INSERT INTO lanes (
+    id, tournament_id, lane_number, number_of_archers,max_x_coordinate, max_y_coordinate
+) VALUES (
+    '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 1, 4, 100.0, 200.0
+);
+
+-- Insert into targets table
+INSERT INTO targets (
+    id,
+    x_coordinate,
+    y_coordinate,
+    radius,
+    points,
+    height,
+    human_readable_name,
+    lane_id,
+    archer_id
+) VALUES (
+    '550e8400-e29b-41d4-a716-446655440003',
+    1.23,
+    4.56,
+    ARRAY[10.0, 20.0, 30.0],
+    ARRAY[10, 9, 8],
+    1.5,
+    'Target 1',
+    '550e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440001'
+), (
+    '550e8400-e29b-41d4-a716-446655440005',
+    2.34,
+    5.67,
+    ARRAY[15.0, 25.0, 35.0],
+    ARRAY[10, 9, 8],
+    1.6,
+    'Target 2',
+    '550e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440001'
+), (
+    '550e8400-e29b-41d4-a716-446655440007',
+    3.45,
+    6.78,
+    ARRAY[20.0, 30.0, 40.0],
+    ARRAY[10, 9, 8],
+    1.7,
+    'Target 3',
+    '550e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440001'
+);
+
+
+
+-- Insert into arrows table
+INSERT INTO arrows (
+    id, weight, diameter, spine, length, human_readable_name, archer_id, label_position
+) VALUES (
+    '4c19ead8-9b49-4876-978c-f22b5ec5edbf',
+    30.0,
+    5.0,
+    400.0,
+    28.0,
+    'Arrow 1',
+    '550e8400-e29b-41d4-a716-446655440001',
+    10.0
+), (
+    '854eef0f-badb-414d-a580-2b4aa5df79eb',
+    32.0,
+    5.2,
+    420.0,
+    28.5,
+    'Arrow 2',
+    '550e8400-e29b-41d4-a716-446655440001',
+    10.5
+), (
+    '7122a4ad-eece-46eb-9424-f680b7b12d4e',
+    34.0,
+    5.4,
+    440.0,
+    29.0,
+    'Arrow 3',
+    '550e8400-e29b-41d4-a716-446655440001',
+    11.0
+), (
+    '1cd1d238-cf78-40ed-a32b-5f8208473183',
+    36.0,
+    5.6,
+    460.0,
+    29.5,
+    'Arrow 4',
+    '550e8400-e29b-41d4-a716-446655440001',
+    11.5
+), (
+    '55af4551-bc88-4602-8a43-4837c16cdb81',
+    38.0,
+    5.8,
+    480.0,
+    30.0,
+    'Arrow 5',
+    '550e8400-e29b-41d4-a716-446655440001',
+    12.0
+), (
+    'e1388bf0-df48-4a2a-867e-e882348c6c3d',
+    40.0,
+    6.0,
+    500.0,
+    30.5,
+    'Arrow 6',
+    '550e8400-e29b-41d4-a716-446655440001',
+    12.5
+), (
+    'ed8f8586-1137-4192-bcc7-c0607d7c2df4',
+    42.0,
+    6.2,
+    520.0,
+    31.0,
+    'Arrow 7',
+    '550e8400-e29b-41d4-a716-446655440001',
+    13.0
+), (
+    '1f91e8e0-77dc-4621-8108-f000b0e690a5',
+    44.0,
+    6.4,
+    540.0,
+    31.5,
+    'Arrow 8',
+    '550e8400-e29b-41d4-a716-446655440001',
+    13.5
+), (
+    'edd2e424-9d62-4457-ad75-08b3de4f4b72',
+    46.0,
+    6.6,
+    560.0,
+    32.0,
+    'Arrow 9',
+    '550e8400-e29b-41d4-a716-446655440001',
+    14.0
+), (
+    'd5e554dc-face-47b3-adca-d6354fbe6b1e',
+    48.0,
+    6.8,
+    580.0,
+    32.5,
+    'Arrow 10',
+    '550e8400-e29b-41d4-a716-446655440001',
+    14.5
+), (
+    '6c34d6b9-c778-4e78-9ad8-9ade92890659',
+    50.0,
+    7.0,
+    600.0,
+    33.0,
+    'Arrow 11',
+    '550e8400-e29b-41d4-a716-446655440001',
+    15.0
+), (
+    '6a1a0923-1bc2-40e0-87cb-5d342ea83643',
+    52.0,
+    7.2,
+    620.0,
+    33.5,
+    'Arrow 12',
+    '550e8400-e29b-41d4-a716-446655440001',
+    15.5
+);
+
+-- Insert into registration table
+INSERT INTO registration (
+    id, archer_id, lane_id, tournament_id
+) VALUES (
+    uuid_generate_v4(),
+    '550e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440000'
+);
