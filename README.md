@@ -103,20 +103,6 @@ The following table illustrates the data sources at each step of the workflow:
 | Target Setup            | Archer and Sensors | Archers provide names; sensors supply x/y coordinates, radius, and height. |
 | Shooting                | Sensors            | Metrics collected in real-time via shot_reader and stored in the database. |
 
-## Database Tables
-
-The system's PostgreSQL database includes the following tables:
-
-| Table        | Description                            |
-| ------------ | -------------------------------------- |
-| tournaments  | Stores tournament-related data.        |
-| archers      | Contains archer registration details.  |
-| lanes        | Tracks lane assignments and data.      |
-| arrows       | Holds arrow-specific details.          |
-| targets      | Stores target specifications and data. |
-| registration | Tracks archer participation in events. |
-| shots        | Records shot-related metrics.          |
-
 ## File structure
 
 The project's file organization is outlined below. This structure is a work in progress and will evolve during development:
@@ -130,50 +116,62 @@ tree  --gitignore -FalL3 -I .git
 arch_stats
 ./
 ├── arrow_reader/
-│   ├── Cargo.lock
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   └── src/
+│       └── main.rs
+├── bow_reader/
+│   ├── Cargo.toml
+│   └── src/
+│       └── main.rs
 ├── docker/
-│   ├── db.sql
-│   ├── docker-compose.yaml
-│   └── setup.cfg
+│   ├── db.sql
+│   ├── docker-compose.yaml
+│   ├── README.md
+│   └── setup.cfg
 ├── .gitignore
 ├── LICENSE
+├── .mypy_cache/
+├── os/
+│   └── postgresql.conf
 ├── README.md
+├── scripts/
+│   └── .gitkeep
 ├── server/
-│   ├── app/
-│   │   ├── src/
-│   │   └── tests/
-│   ├── poetry.lock
-│   ├── pyproject.toml
-│   ├── .python-version
-│   ├── README.md
-│   └── tasks.py
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py*
+│   │   ├── stats/
+│   │   └── tests/
+│   ├── docs/
+│   │   ├── apps_communication.py
+│   │   ├── data_flow.py
+│   │   ├── img/
+│   │   └── __init__.py
+│   ├── .mypy_cache/
+│   ├── poetry.lock
+│   ├── pyproject.toml
+│   ├── .python-version
+│   ├── README.md
+│   └── tasks.py
 ├── shot_reader/
-│   ├── Cargo.lock
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-├── bow_reader/
-│   ├── Cargo.lock
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-├── thoughts.md
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   └── src/
+│       └── main.rs
 └── webui/
     ├── angular.json
     ├── .editorconfig
     ├── package.json
     ├── package-lock.json
     ├── public/
-    │   └── favicon.ico
+    │   └── favicon.ico
     ├── README.md
     ├── src/
-    │   ├── app/
-    │   ├── index.html
-    │   ├── main.ts
-    │   └── styles.css
+    │   ├── app/
+    │   ├── index.html
+    │   ├── main.ts
+    │   └── styles.css
     ├── tsconfig.app.json
     ├── tsconfig.json
     └── tsconfig.spec.json
@@ -186,41 +184,14 @@ the configuration of The Raspberry Pi will include PostgreSQL, systemd files, SS
 
 ## Work Effort
 
-### The server
-
-We will be using FastAPI, SQLAlchemy, Pydantic, and Uvicorn, all compiled using Cython. First, we need to create SQLAlchemy schemas in Python (.pyx files) for registration, tournament, lane, archer, target, arrow, and shots. Next, we will create an endpoint to serve the WebUI. For each of the entities (registration, tournament, lane, archer, target, and arrow), we will implement GET, POST, PATCH, and DELETE endpoints. The shots will be created by the shot_reader service. Finally, we need to determine if we should create DELETE and PATCH endpoints for the shots.
-
-### The WebUI
-
-We are going to use Angular to build the WebUI. In the Raspberry Pi we are compile it into a dist folder and then server it using the server. The Webui will have the following pages:
-
-* Home
-* Login/Registration
-* Tournament Registration
-* Target Setup
-* Tournament
-* Analysis
-* Profile
-
-### The Shot Reader
-<!-- This is half way done. We need the part that is going to communicate with the sensors
-Add a task update the socket to be a producer
-
-Rust Applications:
-    Completing shot_reader, which will:
-        Read bow and target sensor data.
-        Validate and store data in the database.
-    Data to be recorded includes:
-        UUID, arrow engage/disengage times, landing time, x/y coordinates, pull length, and distance.
--->
-
-### The Bow Reader
-<!-- basically we need to copy code from the shot reader -->
-
-### The Arrow Reader
-<!-- basically we need to copy code from the shot reader -->
-
-### The Deployment
+* [The Server](./server/README.md)
+* [The WebUI](./webui/README.md)
+* [The Shot Reader](./shot_reader/README.md)
+* [The Bow Reader](./bow_reader/README.md)
+* [The Arrow Reader](./arrow_reader/README.md)
+* [The Database](./docker/README.md)
+* [The Raspberry Pi Setup](./os/README.md)
+* [Tools](./scripts/README.md)
 
 <!--
 we need to create a script that will:

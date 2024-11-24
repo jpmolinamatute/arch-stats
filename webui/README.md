@@ -1,4 +1,18 @@
-# Webui
+# The WebUI
+
+## Overview
+
+We are going to use Angular to build the WebUI. In the Raspberry Pi we are compile it into a dist folder and then server it using the server. The Webui will have the following pages:
+
+* Home
+* Login/Registration
+* Tournament Registration
+* Target Setup
+* Tournament
+* Analysis
+* Profile
+
+## About Angular
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.12.
 
