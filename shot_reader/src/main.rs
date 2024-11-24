@@ -24,7 +24,7 @@ struct Shot {
     arrow_id: Uuid,
 }
 
-fn write_to_socket(socket: &UnixDatagram, socket_path: &PathBuf, shot: &Shot) {
+fn write_to_socket(socket: &UnixDatagram, shot: &Shot, socket_path: &PathBuf) {
     if fs::metadata(socket_path).is_ok() {
         let message = serde_json::to_string(&shot).expect("Failed to serialize shot");
         match socket.send_to(message.as_bytes(), socket_path) {
@@ -78,31 +78,39 @@ fn connect_to_postgres() -> Result<Client, Error> {
     Ok(client)
 }
 
+fn read_sensors() -> Option<Shot> {
+    let shot = Shot {
+        id: None,
+        arrow_engage_time: 123,
+        arrow_disengage_time: 456,
+        arrow_landing_time: 789,
+        x_coordinate: 1.23,
+        y_coordinate: 4.56,
+        pull_length: 7.89,
+        distance: 10.11,
+        arrow_id: Uuid::parse_str("4c19ead8-9b49-4876-978c-f22b5ec5edbf")
+            .expect("Failed to parse UUID"),
+    };
+
+    if false {
+        Some(shot)
+    } else {
+        None
+    }
+}
+
 fn listen(
     terminate: Arc<AtomicBool>,
     mut client: Client,
     socket: UnixDatagram,
     socket_path: PathBuf,
 ) {
+    println!("Listening!");
     while !terminate.load(Ordering::Relaxed) {
-        println!("Listening!");
-
-        let shot = Shot {
-            id: None,
-            arrow_engage_time: 123,
-            arrow_disengage_time: 456,
-            arrow_landing_time: 789,
-            x_coordinate: 1.23,
-            y_coordinate: 4.56,
-            pull_length: 7.89,
-            distance: 10.11,
-            arrow_id: Uuid::parse_str("4c19ead8-9b49-4876-978c-f22b5ec5edbf")
-                .expect("Failed to parse UUID"),
-        };
-
-        // Call the write_shot function
-        if let Some(inserted_shot) = write_shot(&mut client, shot) {
-            write_to_socket(&socket, &socket_path, &inserted_shot);
+        if let Some(shot) = read_sensors() {
+            if let Some(inserted_shot) = write_shot(&mut client, shot) {
+                write_to_socket(&socket, &inserted_shot, &socket_path);
+            }
         }
     }
     // Attempt to close the connection gracefully
