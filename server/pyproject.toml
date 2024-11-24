@@ -10,6 +10,9 @@ package-mode = false
 python = "3.12.0"
 fastapi = "^0.115.5"
 fastapi-sqlalchemy = "^0.2.1"
+pydantic-settings = "^2.6.1"
+cython = "^3.0.11"
+setuptools = "^75.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.1"
@@ -24,6 +27,7 @@ bpython = "^0.24"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3
@@ -85,12 +89,12 @@ ignore-patterns = ["^\\.#"]
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook = 'import sys; sys.path.append("app/src")'
+init-hook = 'import sys; sys.path.append("/home/juanpa/Projects/arch-stats/server")'
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use, and will cap the count on Windows to
 # avoid hangs.
-jobs = 1
+jobs = 0
 
 # Control the amount of potential inferred values when inferring a single object.
 # This can help the performance when dealing with large functions or complex,
@@ -645,13 +649,18 @@ line-length = 100
 target-version = ["py312"]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 python_version = "3.12"
 sqlite_cache = true
 follow_imports = "silent"
 ignore_missing_imports = true
 show_column_numbers = true
-no_pretty = true
 show_error_codes = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
