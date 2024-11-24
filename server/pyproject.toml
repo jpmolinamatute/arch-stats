@@ -5,12 +5,11 @@ description = ""
 authors = ["Juan Pablo Molina Matute <jpmolinamatute@gmail.com>"]
 readme = "README.md"
 package-mode = false
-in-project = true
-create = true
-
 
 [tool.poetry.dependencies]
 python = "3.12.0"
+fastapi = "^0.115.5"
+fastapi-sqlalchemy = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.1"

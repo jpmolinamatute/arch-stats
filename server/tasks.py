@@ -3,11 +3,11 @@ import shutil
 
 from invoke import task, Context, Collection
 
-from server.app.main import main
+from app.main import main
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-PYPROJECT = PROJECT_ROOT.joinpath("/pyproject.toml")
-APP_ROOT = PROJECT_ROOT.joinpath("/src/app")
+PROJECT_ROOT = Path(__file__).parent
+PYPROJECT = PROJECT_ROOT.joinpath("pyproject.toml")
+APP_ROOT = PROJECT_ROOT.joinpath("app")
 PTY = True
 ECHO = True
 

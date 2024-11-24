@@ -6,17 +6,17 @@ Flow of data:
 1. N/A
 2. A tournament will be created if none exists.
 3. Each archer will register in the database if they are not already registered.
-   When registering the archer will register all their arrows.
+   When registering the archer will register all their arrow.
 4. Each archer will select a tournament and a lane.
 5. After all the archer participating in the tournament have selected a lane, the tournament will
 start.
-6. The archers will shoot at the targets.
-7. The shots will be recorded in the database.
+6. The archers will shoot at the target.
+7. The shot will be recorded in the database.
 8. The tournament ends when all archers have finished shooting.
 */
 
 -- CREATE DATABASE archery;
--- COMMENT ON DATABASE archery IS 'the database will track shots by one or more archers within a
+-- COMMENT ON DATABASE archery IS 'the database will track shot by one or more archers within a
 -- tournament.';
 -- \c archery;
 
@@ -66,7 +66,7 @@ DECLARE
 BEGIN
     SELECT number_of_lanes
     INTO max_lanes
-    FROM tournaments
+    FROM tournament
     WHERE id = NEW.tournament_id;
 
     IF NEW.lane_number < 1 OR NEW.lane_number > max_lanes THEN
@@ -86,7 +86,7 @@ DECLARE
 BEGIN
     SELECT max_x_coordinate, max_y_coordinate
     INTO max_x, max_y
-    FROM lanes
+    FROM lane
     WHERE id = NEW.lane_id;
 
     IF NEW.x_coordinate < 0.0 OR NEW.x_coordinate > max_x THEN
@@ -110,7 +110,7 @@ CREATE TYPE archer_genre AS ENUM ('male', 'female', 'no-answered');
 ---------------------------------------------------------------------------------------------------
 
 -- Tournaments table
-CREATE TABLE IF NOT EXISTS tournaments (
+CREATE TABLE IF NOT EXISTS tournament (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
 );
 
 -- Archers table
-CREATE TABLE IF NOT EXISTS archers (
+CREATE TABLE IF NOT EXISTS archer (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
@@ -138,22 +138,22 @@ CREATE TABLE IF NOT EXISTS archers (
 );
 
 -- Arrows table
-CREATE TABLE IF NOT EXISTS arrows (
+CREATE TABLE IF NOT EXISTS arrow (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     weight REAL DEFAULT 0.0,
     diameter REAL DEFAULT 0.0,
     spine REAL DEFAULT 0.0,
     length REAL NOT NULL,
     human_readable_name VARCHAR(255) NOT NULL,
-    archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
+    archer_id UUID REFERENCES archer (id) ON DELETE CASCADE,
     label_position REAL NOT NULL,
     UNIQUE (archer_id, human_readable_name)
 );
 
 -- Lanes table
-CREATE TABLE IF NOT EXISTS lanes (
+CREATE TABLE IF NOT EXISTS lane (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
+    tournament_id UUID REFERENCES tournament (id) ON DELETE CASCADE,
     lane_number INT NOT NULL,
     max_x_coordinate REAL,
     max_y_coordinate REAL,
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS lanes (
 );
 
 -- Targets table
-CREATE TABLE IF NOT EXISTS targets (
+CREATE TABLE IF NOT EXISTS target (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     x_coordinate REAL,
     y_coordinate REAL,
@@ -169,8 +169,8 @@ CREATE TABLE IF NOT EXISTS targets (
     points INT [],
     height REAL,
     human_readable_name VARCHAR(255),
-    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
-    archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
+    lane_id UUID REFERENCES lane (id) ON DELETE CASCADE,
+    archer_id UUID REFERENCES archer (id) ON DELETE CASCADE,
     CHECK (array_length(radius, 1) = array_length(points, 1)),
     UNIQUE (lane_id, human_readable_name)
 );
@@ -179,15 +179,15 @@ CREATE TABLE IF NOT EXISTS targets (
 -- Tournament registration table
 CREATE TABLE IF NOT EXISTS registration (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    archer_id UUID REFERENCES archers (id) ON DELETE CASCADE,
-    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
-    tournament_id UUID REFERENCES tournaments (id) ON DELETE CASCADE,
+    archer_id UUID REFERENCES archer (id) ON DELETE CASCADE,
+    lane_id UUID REFERENCES lane (id) ON DELETE CASCADE,
+    tournament_id UUID REFERENCES tournament (id) ON DELETE CASCADE,
     UNIQUE (archer_id, tournament_id),
     UNIQUE (archer_id, lane_id, tournament_id)
 );
 
 -- Shots table
-CREATE TABLE IF NOT EXISTS shots (
+CREATE TABLE IF NOT EXISTS shot (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     arrow_engage_time BIGINT,
     arrow_disengage_time BIGINT,
@@ -196,8 +196,8 @@ CREATE TABLE IF NOT EXISTS shots (
     y_coordinate REAL,
     pull_length REAL,
     distance REAL,
-    lane_id UUID REFERENCES lanes (id) ON DELETE CASCADE,
-    arrow_id UUID REFERENCES arrows (id) ON DELETE CASCADE
+    lane_id UUID REFERENCES lane (id) ON DELETE CASCADE,
+    arrow_id UUID REFERENCES arrow (id) ON DELETE CASCADE
 );
 
 ---------------------------------------------------------------------------------------------------
@@ -210,14 +210,14 @@ CREATE TABLE IF NOT EXISTS shots (
 -- Create a trigger that calls the trigger function before inserting or updating rows in the lanes
 -- table
 CREATE TRIGGER check_lane_number_trigger
-BEFORE INSERT OR UPDATE ON lanes
+BEFORE INSERT OR UPDATE ON lane
 FOR EACH ROW
 EXECUTE FUNCTION check_lane_number();
 
--- Create a trigger that calls the trigger function before inserting or updating rows in the shots
+-- Create a trigger that calls the trigger function before inserting or updating rows in the shot
 -- table
 CREATE TRIGGER check_shot_coordinates_trigger
-BEFORE INSERT OR UPDATE ON shots
+BEFORE INSERT OR UPDATE ON shot
 FOR EACH ROW
 EXECUTE FUNCTION check_shot_coordinates();
 
@@ -228,7 +228,7 @@ EXECUTE FUNCTION check_shot_coordinates();
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
 
--- View for shots with calculated points
+-- View for shot with calculated points
 -- CREATE OR REPLACE VIEW shots_view AS
 -- SELECT
 --     s.distance,
@@ -242,9 +242,9 @@ EXECUTE FUNCTION check_shot_coordinates();
 --         t.radius,
 --         t.points
 --     ) AS shot_points
--- FROM shots AS s
+-- FROM shot AS s
 -- INNER JOIN
---     targets AS t ON s.target_id = t.id;
+--     target AS t ON s.target_id = t.id;
 
 -- CREATE OR REPLACE VIEW raw_data AS
 -- SELECT
@@ -262,8 +262,8 @@ EXECUTE FUNCTION check_shot_coordinates();
 --     t.points,
 --     t.height AS target_height,
 --     t.human_readable_name AS target_name
--- FROM shots AS s
--- INNER JOIN targets AS t ON s.target_id = t.id;
+-- FROM shot AS s
+-- INNER JOIN target AS t ON s.target_id = t.id;
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -272,55 +272,55 @@ EXECUTE FUNCTION check_shot_coordinates();
 ---------------------------------------------------------------------------------------------------
 
 
-COMMENT ON TABLE tournaments IS 'Each tournament must have a start time, an end time, and a number
+COMMENT ON TABLE tournament IS 'Each tournament must have a start time, an end time, and a number
 of lanes.
 Each tournament can have multiple archers.';
-COMMENT ON TABLE archers IS 'Each archer will have many arrows.
-Each archer will have one or more targets placed in a lane.
+COMMENT ON TABLE archer IS 'Each archer will have many arrows.
+Each archer will have one or more target placed in a lane.
 Each archer must be registered in only one tournament.
 Each archer will shoot in only one lane per tournament.
 Each archer can participate in only one tournament at the time.
-Each archer will fire many shots per tournament.
+Each archer will fire many shot per tournament.
 Each archer can exists in the system without any arrows but an arrow must have an archer.
 Each archer can exists in the system without any tournament but a tournament must have at least one
 archer.
 Multiple archers can shoot in the same lane but at different times.';
-COMMENT ON TABLE lanes IS 'Each lane can be used by only one archer at a time.
+COMMENT ON TABLE lane IS 'Each lane can be used by only one archer at a time.
 Each lane will have a limit of number of archers.
 Each lane will be available only for one tournament at a time.';
-COMMENT ON TABLE targets IS 'Each target will be set to a specific lane.';
-COMMENT ON COLUMN lanes.lane_number IS 'This will be a number from 1 to the number of lanes set in
+COMMENT ON TABLE target IS 'Each target will be set to a specific lane.';
+COMMENT ON COLUMN lane.lane_number IS 'This will be a number from 1 to the number of lanes set in
 the tournament.';
-COMMENT ON COLUMN lanes.max_x_coordinate IS 'the maximum x coordinate that the
+COMMENT ON COLUMN lane.max_x_coordinate IS 'the maximum x coordinate that the
 sensor will read. Coordinates are in centimeters.';
-COMMENT ON COLUMN lanes.max_y_coordinate IS 'the maximum y coordinate that the
+COMMENT ON COLUMN lane.max_y_coordinate IS 'the maximum y coordinate that the
 sensor will read. Coordinates are in centimeters.';
-COMMENT ON COLUMN arrows.id IS 'this will be extracted from a NFC tag.';
-COMMENT ON COLUMN arrows.weight IS 'The weight of the arrow in grains and it is optional because
+COMMENT ON COLUMN arrow.id IS 'this will be extracted from a NFC tag.';
+COMMENT ON COLUMN arrow.weight IS 'The weight of the arrow in grains and it is optional because
 not everyone will have a scale.';
-COMMENT ON COLUMN arrows.diameter IS 'The diameter of the arrow in millimeters and it is optional
+COMMENT ON COLUMN arrow.diameter IS 'The diameter of the arrow in millimeters and it is optional
 because not everyone will have a caliper.';
-COMMENT ON COLUMN arrows.length IS 'The length of the arrow in millimeters and it is required
+COMMENT ON COLUMN arrow.length IS 'The length of the arrow in millimeters and it is required
 because it will be used to do other calculations.';
-COMMENT ON COLUMN arrows.human_readable_name IS 'This is a label to identify the arrow easily.';
-COMMENT ON COLUMN targets.id IS 'human readable name is used to generate the uuid.';
-COMMENT ON COLUMN targets.human_readable_name IS 'This is a label to identify the target easily.';
-COMMENT ON COLUMN targets.height IS 'This is the height from the ground to the center of the
+COMMENT ON COLUMN arrow.human_readable_name IS 'This is a label to identify the arrow easily.';
+COMMENT ON COLUMN target.id IS 'human readable name is used to generate the uuid.';
+COMMENT ON COLUMN target.human_readable_name IS 'This is a label to identify the target easily.';
+COMMENT ON COLUMN target.height IS 'This is the height from the ground to the center of the
 target. Height is in centimeters.';
-COMMENT ON COLUMN targets.radius IS 'This is an array of x axis values that represent the radius 
+COMMENT ON COLUMN target.radius IS 'This is an array of x axis values that represent the radius 
 of the different rings in the target. Coordinates are in centimeters.';
-COMMENT ON COLUMN targets.points IS 'This is an array of points each ring in the target.';
-COMMENT ON COLUMN targets.x_coordinate IS 'x coordinate of the center of the target. Coordinates
+COMMENT ON COLUMN target.points IS 'This is an array of points each ring in the target.';
+COMMENT ON COLUMN target.x_coordinate IS 'x coordinate of the center of the target. Coordinates
 are in centimeters.';
-COMMENT ON COLUMN targets.y_coordinate IS 'y coordinate of the center of the target. Coordinates
+COMMENT ON COLUMN target.y_coordinate IS 'y coordinate of the center of the target. Coordinates
 are in centimeters.';
-COMMENT ON COLUMN shots.arrow_engage_time IS 'Time in seconds when the arrow is engaged in the bow.
+COMMENT ON COLUMN shot.arrow_engage_time IS 'Time in seconds when the arrow is engaged in the bow.
 ';
-COMMENT ON COLUMN shots.arrow_disengage_time IS 'Time in seconds when the arrow leave the bow.';
-COMMENT ON COLUMN shots.arrow_landing_time IS 'Time in seconds when the arrow hit the target.';
-COMMENT ON COLUMN shots.pull_length IS 'Distance from the knocking point to the sensor in the bow
+COMMENT ON COLUMN shot.arrow_disengage_time IS 'Time in seconds when the arrow leave the bow.';
+COMMENT ON COLUMN shot.arrow_landing_time IS 'Time in seconds when the arrow hit the target.';
+COMMENT ON COLUMN shot.pull_length IS 'Distance from the knocking point to the sensor in the bow
 at full draw. The measurement is in centimeters.';
-COMMENT ON COLUMN shots.distance IS 'The distance represented in meters from the archer to the
+COMMENT ON COLUMN shot.distance IS 'The distance represented in meters from the archer to the
 target.';
 
 ---------------------------------------------------------------------------------------------------
@@ -330,15 +330,15 @@ target.';
 ---------------------------------------------------------------------------------------------------
 
 
--- Insert into tournaments table
-INSERT INTO tournaments (
+-- Insert into tournament table
+INSERT INTO tournament (
     id, start_time, end_time, number_of_lanes, is_opened
 ) VALUES (
     '550e8400-e29b-41d4-a716-446655440000', '2023-01-01 09:00:00', NULL, 10, TRUE
 );
 
--- Insert into archers table
-INSERT INTO archers (
+-- Insert into archer table
+INSERT INTO archer (
     id, first_name, last_name, password, email, genre, type_of_archer, bow_poundage, created_at
 ) VALUES (
     '550e8400-e29b-41d4-a716-446655440001',
@@ -352,15 +352,15 @@ INSERT INTO archers (
     current_timestamp
 );
 
--- Insert into lanes table
-INSERT INTO lanes (
+-- Insert into lane table
+INSERT INTO lane (
     id, tournament_id, lane_number, number_of_archers,max_x_coordinate, max_y_coordinate
 ) VALUES (
     '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 1, 4, 100.0, 200.0
 );
 
--- Insert into targets table
-INSERT INTO targets (
+-- Insert into target table
+INSERT INTO target (
     id,
     x_coordinate,
     y_coordinate,
@@ -404,8 +404,8 @@ INSERT INTO targets (
 
 
 
--- Insert into arrows table
-INSERT INTO arrows (
+-- Insert into arrow table
+INSERT INTO arrow (
     id, weight, diameter, spine, length, human_readable_name, archer_id, label_position
 ) VALUES (
     '4c19ead8-9b49-4876-978c-f22b5ec5edbf',
