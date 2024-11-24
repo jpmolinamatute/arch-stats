@@ -1,6 +1,3 @@
-import glob
-from setuptools import setup
-from Cython.Build import cythonize
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -18,8 +15,5 @@ class Configuration(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
-
-py_files = glob.glob("**/*.py", recursive=True)
-setup(ext_modules=cythonize(py_files, nthreads=4))
 
 conf = Configuration()

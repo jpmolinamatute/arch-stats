@@ -20,7 +20,7 @@ This module involves the physical components needed for data collection:
 This module includes three Rust applications and a PostgreSQL database running on the Raspberry Pi:
 
 * arrow_reader: Handles arrow registration and programming.
-* target_reader: Collects and processes data from target sensors during target setup.
+* bow_reader: Collects and processes data from target sensors during target setup.
 * shot_reader: Records shot details from bow and target sensors during archers' shots.
 
 ### Personal and Registration Module
@@ -51,7 +51,7 @@ Provides multiple charts & tools to query archers data for their analysis so tha
       * diameter
       * spine
 2. Tournament Creation: Tournaments can be created with the status "open" if no other tournaments are currently active. The number of lanes is set with a maximum capacity (e.g., five lanes, two archers per lane).
-3. Tournament Registration: Archers in the system can register for tournaments and select an available lane. During this process target data is collected via WebUI and the target_reader app:
+3. Tournament Registration: Archers in the system can register for tournaments and select an available lane. During this process target data is collected via WebUI and the bow_reader app:
    * x_coordinate: Collected from target sensors.
    * y_coordinate: Collected from target sensors.
    * radius: Collected from target sensors.
@@ -80,7 +80,7 @@ The system relies on two primary sources of data:
 
 Sensors embedded in the archer's bow and the target provide real-time performance metrics. This data is collected and processed by three Rust applications:
 arrow_reader: Programs NFC tags on arrows and handles related data.
-target_reader: Collects data from target sensors, including x/y coordinates, radius, and height.
+bow_reader: Collects data from target sensors, including x/y coordinates, radius, and height.
 shot_reader: Gathers shooting metrics such as arrow engage/disengage times, landing times, and distances.
 
 ### Archers (User-Provided Data)
@@ -155,7 +155,7 @@ arch_stats
 │   ├── Cargo.toml
 │   └── src/
 │       └── main.rs
-├── target_reader/
+├── bow_reader/
 │   ├── Cargo.lock
 │   ├── Cargo.toml
 │   └── src/
@@ -214,7 +214,7 @@ Rust Applications:
         UUID, arrow engage/disengage times, landing time, x/y coordinates, pull length, and distance.
 -->
 
-### The Target Reader
+### The Bow Reader
 <!-- basically we need to copy code from the shot reader -->
 
 ### The Arrow Reader

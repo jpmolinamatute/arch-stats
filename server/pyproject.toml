@@ -23,6 +23,7 @@ black = "^24.10.0"
 invoke = "^2.2.0"
 types-invoke = "^2.0.0.10"
 bpython = "^0.24"
+diagrams = "^0.24.1"
 
 [build-system]
 requires = ["poetry-core"]

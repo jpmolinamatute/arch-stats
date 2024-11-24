@@ -10,3 +10,4 @@ yarn-error.log
 Thumbs.db
 **/.vscode/
 ./.env
+server/**/*.png
