@@ -1,96 +1,126 @@
-# Arch Stats
+# Arch Stats: Analyzing Archery Performance Through Data
 
-This project is designed to help archers enhance their performance through data-driven insights. By tracking shot accuracy, equipment details, and more, Arch Stats enables archers to monitor progress and make informed decisions. The goal is to capture reliable, actionable data and present it to the archer for their analysis.
+## Background
 
-To achieve this, the system is divided into four modules, each responsible for specific aspects of data collection, processing, and presentation:
+Practicing archery can feel inconsistent: some days, I see improvement; other days, it feels like I’ve hit a plateau—or even regressed. Tracking performance is challenging due to the numerous variables influencing each shot.
 
-## System Modules
+## The Problem
 
-### Hardware Module
+I need a method to objectively measure and track my archery performance over time.
 
-This module involves the physical components needed for data collection:
+## The Solution
 
-* Raspberry Pi as the central processing unit.
-* Sensors embedded in the archer's bow and the target, connected to the Raspberry Pi. (Specific sensor types will be determined later.)
-* Bluetooth Low Energy (BLE) Beacons.
-* Bluetooth tags for equipment identification.
+To address this, the solution involves:
 
-### Sensor Data Collection Module
+1. Identifying measurable variables that impact performance.
+2. Consistently collecting data on these variables.
+3. Recording the data over time.
+4. Presenting the information in an intuitive, actionable format.
 
-This module includes three Rust applications and a PostgreSQL database running on the Raspberry Pi:
+## The App
 
-* arrow_reader: Handles arrow registration and programming.
-* bow_reader: Collects and processes data from target sensors during target setup.
-* shot_reader: Records shot details from bow and target sensors during archers' shots.
+The application, Arch Stats, helps archers improve by providing data-driven insights. By tracking shot accuracy, equipment details, and other metrics, it enables archers to monitor progress and make informed decisions.
 
-### Personal and Registration Module
+## Actors
 
-This module manages user registration and equipment setup via:
+* Archer: A WebUI user who registers and competes in tournaments, and reviews their own performance data.
+* Tournament Organizer: A WebUI user who creates and manages tournaments and register new archers.
 
-* A Python web server running on the Raspberry Pi. The Python code will compiled using CPython
-* A WebUI built with Angular, served by the Python server.
+## Epic Overview
 
-### Data Visualization and Analysis Module
+To achieve this, the app includes four epics for data collection, processing, and presentation:
 
-Provides multiple charts & tools to query archers data for their analysis so that they draw a conclusion about their performance:
+### Hardware Integration
 
-* A Python web server.
-* A WebUI for presenting analysis, also built with Angular and integrated into the Python server.
+This epic enable Archer and Tournament Organizer to utilize hardware components for data collection this includes:
+
+* Raspberry Pi: Serves as the central processing unit.
+* Sensors: Embedded in the bow and target, connected to the Raspberry Pi.
+* Bluetooth Low Energy (BLE) Beacons: Used for short-range communication.
+* Bluetooth Tags: Identify equipment during data collection.
+* The Frame: Holds the sensors and Raspberry Pi in place.
+
+The goal of this Epic is to organize all user stories related to sensors, Raspberry Pi and the frame
+
+#### Out of Scope
+
+any software or coding
+
+### Data collection & storage
+
+This epic enables Archer to collect & store their metrics through sensors during shooting. This includes:
+
+* Rust Applications:
+  * arrow_reader: Registers and programs arrows.
+  * bow_reader: Collects data from bow sensors during setup.
+  * target_reader: Records details of each shot.
+* PostgreSQL Database: Stores the collected data.
+
+#### Out of Scope
+
+Any data processing or visualization
+
+### Archer & tournament management
+
+This epic enables Tournament Organizer to register new archers in the system and add them to tournaments. This includes registering the archer's personal and equipment details. This will be done through:
+
+* Python Web Server: Serves the interface (compiled with CPython).
+* WebUI: Built with Angular for a user-friendly interaction.
+
+### Data visualization & analysis
+
+This epic enables Archers to analyze their metrics & performance with visual aids, this includes:
+
+* Python Web Server: Processes data for visualization. (compiled with CPython).
+* WebUI: Displays user-friendly analytics, built with Angular.
+
+
 
 ## Workflow
 
-1. Archer Registration: Archers register in the system through the WebUI using Google OAuth authentication. During registration, they provide the following details:
-   * Full name.
-   * Email.
-   * Gender (male, female, no_specify).
-   * Archery style (e.g., compound, traditional, barebow, Olympic).
-   * Bow poundage.
-   * NFC programming for each arrow (via the arrow_reader app) and collect the following arrow information:
-      * length
-      * weight
-      * diameter
-      * spine
-2. Tournament Creation: Tournaments can be created with the status "open" if no other tournaments are currently active. The number of lanes is set with a maximum capacity (e.g., five lanes, two archers per lane).
-3. Tournament Registration: Archers in the system can register for tournaments and select an available lane. During this process target data is collected via WebUI and the bow_reader app:
-   * x_coordinate: Collected from target sensors.
-   * y_coordinate: Collected from target sensors.
-   * radius: Collected from target sensors.
-   * max_x_coordinate: Collected from target sensors.
-   * max_y_coordinate: Collected from target sensors.
-   * height: Collected from target sensors.
-   * points: Entered manually by the archer via WebUI.
-   * human-readable name: Entered manually by the archer via WebUI.
-   * Sensor ID: this will be provided by the sensor on the raspberry pi.
-4. Shooting and Data Collection: During a shooting session, data is captured and stored in real-time:
-   * Bow Sensors:
-      * Arrow engage time.
-      * Arrow disengage time.
-      * Pull length.
-      * Distance.
-   * Target Sensors:
-      * Arrow landing time.
-      * x_coordinate, y_coordinate.
-5. Tournament Completion: The tournament ends with the status "closed," halting further data collection.
+### Archer Registration
+
+Archers register using Google OAuth and provide:
+
+* Full name, email, and gender.
+* Archery style (e.g., compound, traditional, Olympic).
+* Bow poundage.
+* Arrow specifications (length, weight, diameter, spine) via NFC programming using arrow_reader.
+
+### Tournament Creation
+
+Tournaments are created with a status of "open" (if no others are active). Organizers specify the number of lanes (e.g., five lanes, two archers per lane).
+
+### Tournament Registration
+
+Archers register for tournaments via the WebUI, selecting lanes and entering target details. During this process, data is collected:
+
+* Target Sensors: Collect coordinates (x, y), radius, and height.
+* Manual Input: Archers enter points and human-readable names for targets.
+
+### Shooting and Data Collection
+
+During a session, the system captures real-time data:
+
+* Bow Sensors: Arrow engage/disengage times, pull length, and distance.
+* Target Sensors: Landing time and coordinates (x, y).
+
+### Tournament Completion
+
+Once completed, the tournament is marked "closed," and data collection halts.
 
 ## Data Sources
 
-The system relies on two primary sources of data:
-
 ### Sensors
 
-Sensors embedded in the archer's bow and the target provide real-time performance metrics. This data is collected and processed by three Rust applications:
-arrow_reader: Programs NFC tags on arrows and handles related data.
-bow_reader: Collects data from target sensors, including x/y coordinates, radius, and height.
-shot_reader: Gathers shooting metrics such as arrow engage/disengage times, landing times, and distances.
+Sensors in the bow and target capture:
 
-### Archers (User-Provided Data)
+* Bow Metrics: Pull length, engage/disengage times, and shot distance.
+* Target Metrics: Landing coordinates, radius, and height.
 
-Archers use the WebUI to enter information during specific activities:
-User Registration: Archers input personal and equipment details, such as name, email, archery style, bow poundage, and arrow specifications.
-Tournament Registration: Archers select a tournament and lane, providing target setup details when necessary.
-Target Setup: Archers configure targets by specifying human-readable names and additional information to supplement sensor data.
+### User-Provided Data
 
-All measurements are going to be stored and manipulated using the metric system. However, the measurements may be displayed in either in metric or imperial depending on user's preference.
+Archers input personal and equipment details (via WebUI) during registration and target setup.
 
 ## Data Source Integration in the Workflow
 
@@ -101,116 +131,38 @@ The following table illustrates the data sources at each step of the workflow:
 | User Registration       | Archer             | Personal and equipment data entered via WebUI. |
 | Tournament Registration | Archer             | Tournament selection and lane assignment provided via WebUI. |
 | Target Setup            | Archer and Sensors | Archers provide names; sensors supply x/y coordinates, radius, and height. |
-| Shooting                | Sensors            | Metrics collected in real-time via shot_reader and stored in the database. |
-
-## File structure
-
-The project's file organization is outlined below. This structure is a work in progress and will evolve during development:
-
-```sh
-tree  --gitignore -FalL3 -I .git
-```
-
-```plain
-
-arch_stats
-./
-├── arrow_reader/
-│   ├── Cargo.lock
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-├── bow_reader/
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-├── docker/
-│   ├── db.sql
-│   ├── docker-compose.yaml
-│   ├── README.md
-│   └── setup.cfg
-├── .gitignore
-├── LICENSE
-├── .mypy_cache/
-├── os/
-│   └── postgresql.conf
-├── README.md
-├── scripts/
-│   └── .gitkeep
-├── server/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py*
-│   │   ├── stats/
-│   │   └── tests/
-│   ├── docs/
-│   │   ├── apps_communication.py
-│   │   ├── data_flow.py
-│   │   ├── img/
-│   │   └── __init__.py
-│   ├── .mypy_cache/
-│   ├── poetry.lock
-│   ├── pyproject.toml
-│   ├── .python-version
-│   ├── README.md
-│   └── tasks.py
-├── shot_reader/
-│   ├── Cargo.lock
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-└── webui/
-    ├── angular.json
-    ├── .editorconfig
-    ├── package.json
-    ├── package-lock.json
-    ├── public/
-    │   └── favicon.ico
-    ├── README.md
-    ├── src/
-    │   ├── app/
-    │   ├── index.html
-    │   ├── main.ts
-    │   └── styles.css
-    ├── tsconfig.app.json
-    ├── tsconfig.json
-    └── tsconfig.spec.json
-
-```
+| Shooting                | Sensors            | Metrics collected in real-time via target_reader and stored in the database. |
 
 ## Raspberry Pi Setup
 
-the configuration of The Raspberry Pi will include PostgreSQL, systemd files, SSH, and Python (if needed) for our Raspberry Pi 5 with a 256GB NVMe SSD. We need to plan the distribution of memory and CPU usage among the different services. Our setup will include a Python server service, a read_shot service, and a PostgreSQL service.
+The Raspberry Pi 5 (256GB NVMe SSD) setup includes:
+
+* PostgreSQL for data storage.
+* Python and Rust services for data processing.
+* Proper allocation of memory and CPU resources to balance services.
 
 ## Work Effort
 
+The work is going to be tracked in [JIRA](https://jpmolinamatute.atlassian.net). However, we are going to have an introduction on each module in this repository as follow:
+
 * [The Server](./server/README.md)
 * [The WebUI](./webui/README.md)
-* [The Shot Reader](./shot_reader/README.md)
+* [The Shot Reader](./target_reader/README.md)
 * [The Bow Reader](./bow_reader/README.md)
 * [The Arrow Reader](./arrow_reader/README.md)
 * [The Database](./docker/README.md)
 * [The Raspberry Pi Setup](./os/README.md)
 * [Tools](./scripts/README.md)
 
-<!--
-we need to create a script that will:
-* compile the rust code and copy it to the raspberry pi.
-* compile the angular code and copy it to the raspberry pi.
-* compile the python code and copy it to the raspberry pi.
-
--->
-
 ### The Frame (structure to hold the sensors and the Raspberry Pi)
 
-## Blockers
-
-Since hardware availability is limited
-
-Database Design:
-    Defining the schema for efficient data storage and retrieval.
+TBD
 
 ## Future Features
+
+<!--
+@TODO: Under "Future Features," add more emphasis on the scalability strategy and potential roadmap for adding new technologies or integrations.
+-->
 
 In the initial stages, the system will support only one lane and one archer due to hardware and volunteer constraints. Future enhancements may include:
 
