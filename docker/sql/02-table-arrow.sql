@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS arrow (
 );
 -- Relationships:
 -- - M:1 with archer (each arrow belongs to one archer)
--- - 1:M with shot (each arrow can be used for multiple shots)
+-- - 1:M with shooting (each arrow can be used for multiple shots)
 COMMENT ON TABLE archer IS 'Each arrow will be owned by only one archer.
 An archer will have many arrows.';
 

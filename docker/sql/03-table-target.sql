@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS target (
 
 -- Relationships:
 -- - M:1 with lane (each target belongs to one lane)
--- - 1:M with shot (each target can receive multiple shots)
+-- - 1:M with shooting (each target can receive multiple shots)
 COMMENT ON TABLE target IS 'Each target will be set to a specific lane.
 Each target will be used by only one archer.
 An archer will have one or more target.';

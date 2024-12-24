@@ -78,9 +78,16 @@ This epic enables Archers to analyze their metrics & performance with visual aid
 
 So far there are 3 workflows identified:
 
-1. [Archer Registration.](./docs/archer_registration.png)
-2. [Tournament Creation.](./docs/tournament_creation.png)
-3. [Tournament.](./docs/tournament_flow.png)
+1. [Archer registration](./docs/archer_registration.png) with this tables:
+   1. [archer](./docker/sql/01-table-archer.sql)
+   2. [registration](./docker/sql/02-table-registration.sql)
+   3. [arrow](./docker/sql/02-table-arrow.sql)
+2. [Tournament creation](./docs/tournament_creation.png) with this tables:
+   1. [tournament](./docker/sql/01-table-tournament.sql)
+   2. [lane](./docker/sql/02-table-lane.sql)
+   3. [target](./docker/sql/03-table-target.sql)
+3. [Shooting flow](./docs/shooting_flow.png) with this tables:
+   1. [shooting](./docker/sql/03-table-shooting.sql)
 
 ### Shooting and Data Collection
 

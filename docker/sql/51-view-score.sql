@@ -12,7 +12,7 @@ DECLARE
     ring_index INT;
     shot_points INT;
 BEGIN
-    -- Calculate the distance from the shot to the center of the target
+    -- Calculate the distance from the shooting to the center of the target
     distance := SQRT(POWER(shot_x - target_x, 2) + POWER(shot_y - target_y, 2));
     
     -- Find the appropriate ring
@@ -23,12 +23,12 @@ BEGIN
         END IF;
     END LOOP;
     
-    -- If the shot is outside all rings, return 0 points
+    -- If the shooting is outside all rings, return 0 points
     RETURN 0;
 END;
 $$ LANGUAGE plpgsql;
 
---View for shot with calculated points
+--View for shooting with calculated points
 CREATE OR REPLACE VIEW shots_view AS
 SELECT
     s.distance,
@@ -42,6 +42,6 @@ SELECT
         t.radius,
         t.points
     ) AS shot_points
-FROM shot AS s
+FROM shooting AS s
 INNER JOIN
     target AS t ON s.target_id = t.id;

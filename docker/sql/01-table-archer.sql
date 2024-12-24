@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS archer (
 -- Relationships:
 -- * 1:M with arrow (each archer owns multiple arrows)
 -- * M:M with tournament through registration
--- * 1:M with shot (each archer can fire multiple shots)
+-- * 1:M with shooting (each archer can fire multiple shots)

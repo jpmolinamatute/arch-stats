@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
 from typing import Any, Mapping
+from pathlib import Path
 from graphviz import Digraph
 
 
-def tournament_flow(**opt: Mapping[str, Any]) -> None:
+def shooting_flow(**opt: Mapping[str, Any]) -> None:
     dot = Digraph(
-        comment="Tournament flow.",
+        comment="Shooting flow.",
         node_attr={"color": "yellow"},
         edge_attr={"color": "yellow"},
         graph_attr={
-            "label": "Tournament flow.",
+            "label": "Shooting flow.",
             "labelloc": "t",
             "labeljust": "c",
             "fontsize": "20",
@@ -18,7 +19,7 @@ def tournament_flow(**opt: Mapping[str, Any]) -> None:
     )
     dot.node("start", shape="circle", label="Start")
     dot.node("end", shape="doublecircle", label="End")
-    dot.render("tournament_flow", **opt)
+    dot.render("shooting_flow", **opt)
 
 
 def tournament_creation(**opt: Mapping[str, Any]) -> None:
@@ -106,16 +107,17 @@ def archer_registration(**opt: Mapping[str, Any]) -> None:
 
 
 def main() -> None:
-
+    docs_path = Path(__file__).parent
     opt: Mapping[str, Any] = {
         "overwrite_source": True,
         "format": "png",
         "view": True,
         "cleanup": True,
+        "directory": docs_path,
     }
     archer_registration(**opt)
     tournament_creation(**opt)
-    tournament_flow(**opt)
+    shooting_flow(**opt)
 
 
 if __name__ == "__main__":
