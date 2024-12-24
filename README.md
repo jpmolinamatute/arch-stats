@@ -74,29 +74,13 @@ This epic enables Archers to analyze their metrics & performance with visual aid
 * Python Web Server: Processes data for visualization. (compiled with CPython).
 * WebUI: Displays user-friendly analytics, built with Angular.
 
-
-
 ## Workflow
 
-### Archer Registration
+So far there are 3 workflows identified:
 
-Archers register using Google OAuth and provide:
-
-* Full name, email, and gender.
-* Archery style (e.g., compound, traditional, Olympic).
-* Bow poundage.
-* Arrow specifications (length, weight, diameter, spine) via NFC programming using arrow_reader.
-
-### Tournament Creation
-
-Tournaments are created with a status of "open" (if no others are active). Organizers specify the number of lanes (e.g., five lanes, two archers per lane).
-
-### Tournament Registration
-
-Archers register for tournaments via the WebUI, selecting lanes and entering target details. During this process, data is collected:
-
-* Target Sensors: Collect coordinates (x, y), radius, and height.
-* Manual Input: Archers enter points and human-readable names for targets.
+1. [Archer Registration.](./docs/archer_registration.png)
+2. [Tournament Creation.](./docs/tournament_creation.png)
+3. [Tournament.](./docs/tournament_flow.png)
 
 ### Shooting and Data Collection
 
@@ -104,10 +88,6 @@ During a session, the system captures real-time data:
 
 * Bow Sensors: Arrow engage/disengage times, pull length, and distance.
 * Target Sensors: Landing time and coordinates (x, y).
-
-### Tournament Completion
-
-Once completed, the tournament is marked "closed," and data collection halts.
 
 ## Data Sources
 

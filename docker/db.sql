@@ -1,6 +1,6 @@
 /*
 
-Most query will be done using archer_id and tournament_id
+Most query will be done using archer_id and/or tournament_id
 
 Flow of data:
 1. N/A
