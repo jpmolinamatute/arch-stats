@@ -21,10 +21,88 @@ To address this, the solution involves:
 
 The application, Arch Stats, helps archers improve by providing data-driven insights. By tracking shot accuracy, equipment details, and other metrics, it enables archers to monitor progress and make informed decisions.
 
-## Actors
+## User Roles
 
 * Archer: A WebUI user who registers and competes in tournaments, and reviews their own performance data.
 * Tournament Organizer: A WebUI user who creates and manages tournaments and register new archers.
+
+## Entities
+
+* **archer**: Represents an archer, including personal and equipment information. An archer has *arrows*, participates in *tournaments*, shoots at *targets*, tracks *shootings*, is registered in a *registration*, is positioned in a *lane*, and is assigned a *target_track*.
+
+* **arrow**: Represents an arrow, with details such as weight, length, diameter, spine, and name. An arrow is used by an *archer*, lands on a *target*, and is recorded by a *target_track*.
+
+* **tournament**: Represents an event where *archers* compete, with details like name, location, start time, end time. A tournament has *lanes* and involves *registrations*.
+
+* **lane**: Represents a lane in a tournament, with details such as number, distance, maximum x-coordinate, maximum y-coordinate, and number of archers. A lane contains *targets* and is where an *archer* stand. Contains a *target_track*.
+
+* **target**: Represents a target in a *lane*, with details such as radius, height, x-coordinate, and y-coordinate. A target is used by an *archer*, and where *arrows* land on it.
+
+* **registration**: Represents the process of registering *archers* for a *tournament*, assigning *target_tracks* to *archers*, and positioning them in *lanes*.
+
+* **shooting**: Represents a shot, with details such as arrow, target, x-coordinate, y-coordinate, landing time, engage time, disengage time, and pull length. A shooting is performed by an *archer* with an *arrow* and recorded by a *target_track*.
+
+* **target_track**: Represents a device equipped with sensors that reads *arrows*, records *shootings* and it's located in a *lane*.
+
+## Entities Constraints
+
+An archer can only be registered in one tournament at a time.
+An archer can only be positioned in one lane.
+An archer can only be assigned to one target_track.
+An archer can shoot at many targets.
+An archer can shoot many arrows.
+An archer can be registered in many tournaments at different times.
+An arrow can only be used by one archer.
+An arrow can only be recorded by one target_track.
+An arrow can be used in many shootings.
+Many arrows can land on a target.
+A tournament can have many lanes.
+A tournament can happen at a time.
+A registration can have many archers.
+A registration can have many target_tracks.
+A registration can have many tournaments.
+A registration can have many lanes.
+
+A lane can only one archer.
+A lane can have many targets.
+A lane can have only one target_track.
+A target_track can record many shootings.
+A target_track can be assigned to only one archer.
+A target_track can be positioned in one lane per tournament.
+There must be the same number of lanes, archers and target_tracks in a tournament.
+
+## Workflow
+
+So far there are 4 workflows identified:
+
+1. Archer creation. Including arrow registration.
+2. Tournament creation. Including lane and target creation.
+3. Registration. The archer, tournament and lane assignment.
+4. Shooting process
+
+## Data Sources
+
+### Sensors
+
+Sensors in the bow and target capture:
+
+* Bow Metrics: Pull length, engage/disengage times, and shot distance.
+* Target Metrics: Landing coordinates, radius, and height.
+
+### User-Provided Data
+
+Archers input personal and equipment details (via WebUI) during registration and target setup.
+
+## Data Source Integration in the Workflow
+
+The following table illustrates the data sources at each step of the workflow:
+
+| Step                    | Data Source        | Details                                        |
+| ----------------------- | -------------------| -----------------------------------------------|
+| User Registration       | Archer             | Personal and equipment data entered via WebUI. |
+| Tournament Registration | Archer             | Tournament selection and lane assignment provided via WebUI. |
+| Target Setup            | Archer and Sensors | Archers provide names; sensors supply x/y coordinates, radius, and height. |
+| Shooting                | Sensors            | Metrics collected in real-time via target_reader and stored in the database. |
 
 ## Epic Overview
 
@@ -64,68 +142,22 @@ Any data processing or visualization
 
 This epic enables Tournament Organizer to register new archers in the system and add them to tournaments. This includes registering the archer's personal and equipment details. This will be done through:
 
-* Python Web Server: Serves the interface (compiled with CPython).
+* Web Server: Serves the interface.
 * WebUI: Built with Angular for a user-friendly interaction.
 
 ### Data visualization & analysis
 
 This epic enables Archers to analyze their metrics & performance with visual aids, this includes:
 
-* Python Web Server: Processes data for visualization. (compiled with CPython).
+* Web Server: Processes data for visualization.
 * WebUI: Displays user-friendly analytics, built with Angular.
-
-## Workflow
-
-So far there are 3 workflows identified:
-
-1. [Archer registration](./docs/archer_registration.png) with this tables:
-   1. [archer](./docker/sql/01-table-archer.sql)
-   2. [registration](./docker/sql/02-table-registration.sql)
-   3. [arrow](./docker/sql/02-table-arrow.sql)
-2. [Tournament creation](./docs/tournament_creation.png) with this tables:
-   1. [tournament](./docker/sql/01-table-tournament.sql)
-   2. [lane](./docker/sql/02-table-lane.sql)
-   3. [target](./docker/sql/03-table-target.sql)
-3. [Shooting flow](./docs/shooting_flow.png) with this tables:
-   1. [shooting](./docker/sql/03-table-shooting.sql)
-
-### Shooting and Data Collection
-
-During a session, the system captures real-time data:
-
-* Bow Sensors: Arrow engage/disengage times, pull length, and distance.
-* Target Sensors: Landing time and coordinates (x, y).
-
-## Data Sources
-
-### Sensors
-
-Sensors in the bow and target capture:
-
-* Bow Metrics: Pull length, engage/disengage times, and shot distance.
-* Target Metrics: Landing coordinates, radius, and height.
-
-### User-Provided Data
-
-Archers input personal and equipment details (via WebUI) during registration and target setup.
-
-## Data Source Integration in the Workflow
-
-The following table illustrates the data sources at each step of the workflow:
-
-| Step                    | Data Source        | Details                                        |
-| ----------------------- | -------------------| -----------------------------------------------|
-| User Registration       | Archer             | Personal and equipment data entered via WebUI. |
-| Tournament Registration | Archer             | Tournament selection and lane assignment provided via WebUI. |
-| Target Setup            | Archer and Sensors | Archers provide names; sensors supply x/y coordinates, radius, and height. |
-| Shooting                | Sensors            | Metrics collected in real-time via target_reader and stored in the database. |
 
 ## Raspberry Pi Setup
 
 The Raspberry Pi 5 (256GB NVMe SSD) setup includes:
 
 * PostgreSQL for data storage.
-* Python and Rust services for data processing.
+* Rust services for data processing.
 * Proper allocation of memory and CPU resources to balance services.
 
 ## Work Effort

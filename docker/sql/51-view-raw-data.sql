@@ -13,6 +13,6 @@ SELECT
     t.radius,
     t.points,
     t.height AS target_height,
-    t.human_readable_name AS target_name
+    t.name AS target_name
 FROM shooting AS s
 INNER JOIN target AS t ON s.target_id = t.id;

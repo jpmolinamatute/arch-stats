@@ -1,63 +1,22 @@
--- Shots table
---
--- Tracks each shooting made by an archer during a tournament.
--- A shooting records the target, arrow, and precise coordinates.
-
 CREATE TABLE IF NOT EXISTS shooting (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_track_id UUID NOT NULL,
+    arrow_id UUID NOT NULL,
     arrow_engage_time BIGINT,
+    pull_length REAL,
     arrow_disengage_time BIGINT,
     arrow_landing_time BIGINT,
     x_coordinate REAL,
     y_coordinate REAL,
-    pull_length REAL,
-    target_id UUID REFERENCES target (id) ON DELETE CASCADE,
-    arrow_id UUID REFERENCES arrow (id) ON DELETE CASCADE,
+    FOREIGN KEY (arrow_id) REFERENCES arrow(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_track_id) REFERENCES target_track(id) ON DELETE CASCADE
 );
--- Through views, we can calculate score, aiming time, grouping size, speed
 
--- Relationships:
--- - M:1 with target (each shooting hits one target)
--- - M:1 with arrow (each shooting uses one arrow)
--- - Archer can be inferred from arrow -> archer relationship
-COMMENT ON COLUMN shooting.arrow_engage_time IS 'Time in seconds when the arrow is engaged in the bow.
-';
-COMMENT ON COLUMN shooting.arrow_disengage_time IS 'Time in seconds when the arrow leave the bow.';
-COMMENT ON COLUMN shooting.arrow_landing_time IS 'Time in seconds when the arrow hit the target.';
-COMMENT ON COLUMN shooting.pull_length IS 'Distance from the knocking point to the sensor in the bow
-at full draw. The measurement is in centimeters.';
-COMMENT ON COLUMN shooting.distance IS 'The distance represented in meters from the archer to the
-target.';
-
--- function check_shot_coordinates()
-CREATE OR REPLACE FUNCTION check_shot_coordinates() RETURNS TRIGGER AS $$
-DECLARE
-    max_x REAL;
-    max_y REAL;
-BEGIN
-    SELECT max_x_coordinate, max_y_coordinate
-    INTO max_x, max_y
-    FROM lane
-    WHERE id = NEW.lane_id;
-
-    IF NEW.x_coordinate < 0.0 OR NEW.x_coordinate > max_x THEN
-        RAISE EXCEPTION 'x_coordinate out of range';
-    END IF;
-
-    IF NEW.y_coordinate < 0.0 OR NEW.y_coordinate > max_y THEN
-        RAISE EXCEPTION 'y_coordinate out of range';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-CREATE TYPE archer_type AS ENUM ('compound', 'traditional', 'barebow', 'olympic');
-CREATE TYPE archer_genre AS ENUM ('male', 'female', 'no-answered');
-
-
--- Create a trigger that calls the trigger function before inserting or updating rows in the shooting
--- table
-CREATE TRIGGER check_shot_coordinates_trigger
-BEFORE INSERT OR UPDATE ON shooting
-FOR EACH ROW
-EXECUTE FUNCTION check_shot_coordinates();
+COMMENT ON COLUMN shooting.target_track_id IS 'it will be provided by the Raspberry Pi';
+COMMENT ON COLUMN shooting.arrow_id IS 'it will be read by the bow sensor and the target sensor';
+COMMENT ON COLUMN shooting.arrow_engage_time IS 'it will be read by the bow sensor';
+COMMENT ON COLUMN shooting.pull_length IS 'it will be read by the bow sensor';
+COMMENT ON COLUMN shooting.arrow_disengage_time IS 'it will be read by the bow sensor';
+COMMENT ON COLUMN shooting.arrow_landing_time IS 'it will be read by the target sensor';
+COMMENT ON COLUMN shooting.x_coordinate IS 'it will be read by the target sensor';
+COMMENT ON COLUMN shooting.y_coordinate IS 'it will be read by the target sensor';
