@@ -73,12 +73,10 @@ There must be the same number of lanes, archers and target_tracks in a tournamen
 
 ## Workflow
 
-So far there are 4 workflows identified:
+So far there are 2 workflows identified:
 
-1. Archer creation. Including arrow registration.
-2. Tournament creation. Including lane and target creation.
-3. Registration. The archer, tournament and lane assignment.
-4. Shooting process
+1. Tournament & Archer creation. Including lane and target creation and arrow registration.
+2. Shooting process
 
 ## Data Sources
 
