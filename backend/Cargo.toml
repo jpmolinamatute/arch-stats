@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "arrow_reader",
+    "bow_reader",
+    "create_uuid",
+    "server",
+    "target_reader",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Juan Pablo Molina Matute <jpmolinamatute@gmail.com>"]
+license = "MIT"
