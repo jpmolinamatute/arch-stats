@@ -5,3 +5,4 @@ yarn-error.log
 /.env
 /webui/.angular
 /webui/node_modules/
+/webui/dist/

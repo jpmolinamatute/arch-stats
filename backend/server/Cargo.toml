@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 actix-web = "*"
+actix-files = "*"
+dotenv = "0.15"
