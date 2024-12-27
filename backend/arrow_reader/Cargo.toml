@@ -1,6 +1,7 @@
+cargo-features = ["edition2024"]
 [package]
 name = "arrow_reader"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
