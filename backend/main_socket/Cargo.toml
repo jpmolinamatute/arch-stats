@@ -1,9 +1,12 @@
-cargo-features = ["edition2024"]
 [package]
 name = "main_socket"
-edition = "2024"
+edition = "2021"
 version.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
+tokio = { version = "*", features = ["full"] }
+tokio-tungstenite = "*"
+tungstenite = "*"
+futures-util = "*"

@@ -2,15 +2,15 @@
 members = [
     "arrow_reader",
     "bow_reader",
-    "create_uuid",
+    "install",
     "main_socket",
     "server",
     "target_reader",
 ]
 resolver = "2"
-cargo-features = ["edition2024"]
+
 [workspace.package]
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 authors = ["Juan Pablo Molina Matute <jpmolinamatute@gmail.com>"]
 license = "MIT"
