@@ -6,3 +6,4 @@ yarn-error.log
 /webui/.angular
 /webui/node_modules/
 /webui/dist/
+/docs/*.png

@@ -1,0 +1,3 @@
+CREATE ROLE root_user WITH LOGIN SUPERUSER PASSWORD '***';
+CREATE USER "arch-stats" WITH PASSWORD 'D}]wT2g0@Rkw>)7HZx}N';
+CREATE DATABASE "arch-stats" OWNER "arch-stats";

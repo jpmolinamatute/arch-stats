@@ -2,7 +2,8 @@
 members = [
     "arrow_reader",
     "bow_reader",
-    "create_uuid",
+    "install",
+    "main_socket",
     "server",
     "target_reader",
 ]

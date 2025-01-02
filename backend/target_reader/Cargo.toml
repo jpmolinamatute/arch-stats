@@ -1,7 +1,9 @@
 [package]
 name = "target_reader"
-version = "0.1.0"
 edition = "2021"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
 signal-hook = "0.3"
