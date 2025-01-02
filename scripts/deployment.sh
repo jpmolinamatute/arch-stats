@@ -2,6 +2,7 @@
 
 set -e
 
+LOCAL_USER="arch-stats"
 ROOT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
 
 print_out() {
@@ -28,11 +29,11 @@ move_rust_binaries() {
     local rust_binaries=("arrow_reader" "bow_reader" "create_uuid" "main_socket" "server" "target_reader")
     local release_dir="${ROOT_DIR}/backend/target/aarch64-unknown-linux-gnu/release"
 
-    print_out "Moving all Rust binaries to arch-stats1..."
+    print_out "Moving all Rust binaries to ${LOCAL_USER}1..."
     for binary in "${rust_binaries[@]}"; do
         if [[ -f "${release_dir}/${binary}" ]]; then
             print_out "Moving ${binary}..."
-            scp "${release_dir}/${binary}" arch-stats1:/opt/arch-stats/server
+            scp "${release_dir}/${binary}" "${LOCAL_USER}1:/opt/${LOCAL_USER}/backend"
         else
             print_err "Binary ${binary} not found"
         fi
@@ -50,8 +51,8 @@ build_webui() {
 
 move_webui_files() {
     local webui_dir="${ROOT_DIR}/dist/webui/browser"
-    print_out "Moving all Rust binaries to arch-stats1..."
-    if ! scp "${webui_dir}"/* arch-stats1:/opt/arch-stats/webui; then
+    print_out "Moving all Rust binaries to ${LOCAL_USER}1..."
+    if ! scp "${webui_dir}"/* "${LOCAL_USER}1:/opt/${LOCAL_USER}/webui"; then
         print_err "Failed to move WebUI files"
     fi
 }
