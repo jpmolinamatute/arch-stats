@@ -1,4 +1,6 @@
-CREATE TYPE ARCHER_TYPE AS ENUM ('traditional', 'compound', 'olympic', 'barebow');
+\c "arch-stats"
+
+CREATE TYPE archer_type AS ENUM ('traditional', 'compound', 'olympic', 'barebow');
 
 CREATE TABLE IF NOT EXISTS archer (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,8 +1,10 @@
 [package]
-name = "bow_reader"
+name = "hub"
 edition = "2021"
 version.workspace = true
 authors.workspace = true
 license.workspace = true
 
 [dependencies]
+postgres = { workspace = true }
+ctrlc = { workspace = true }

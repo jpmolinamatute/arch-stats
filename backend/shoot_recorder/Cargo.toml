@@ -1,5 +1,5 @@
 [package]
-name = "server"
+name = "shoot_recorder"
 edition = "2021"
 version.workspace = true
 authors.workspace = true
@@ -8,5 +8,5 @@ license.workspace = true
 [dependencies]
 postgres = { workspace = true }
 ctrlc = { workspace = true }
-actix-web = "*"
-actix-files = "*"
+uuid = { workspace = true }
+chrono = { workspace = true }

@@ -1,3 +1,5 @@
+\c "arch-stats"
+
 CREATE TABLE IF NOT EXISTS tournament (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     start_time TIMESTAMP NOT NULL,

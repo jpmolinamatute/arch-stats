@@ -3,6 +3,9 @@
 set -e
 
 LOCAL_USER="arch-stats"
+LOCAL_HOME="/opt/${LOCAL_USER}"
+LOCAL_WEBUI="${LOCAL_HOME}/webui"
+LOCAL_BACKEND="${LOCAL_HOME}/backend"
 ROOT_DIR="$(dirname "$(realpath "$0")")"
 
 print_out() {
@@ -30,14 +33,16 @@ install_postgresql() {
 }
 
 create_user() {
+    local my_uuid="${1}"
     print_out "Creating user ${LOCAL_USER}..."
-    sudo useradd -rm -d "/opt/${LOCAL_USER}" "${LOCAL_USER}"
-    sudo mkdir -p "/opt/${LOCAL_USER}/{backend,webui}"
-    uuidgen -r >"/opt/${LOCAL_USER}/backend/uuid"
-    sudo chown -R "${LOCAL_USER}:${LOCAL_USER}" "/opt/${LOCAL_USER}"
+    sudo useradd -rm -d "${LOCAL_HOME}" "${LOCAL_USER}"
+    sudo mkdir -p "${LOCAL_WEBUI}" "${LOCAL_BACKEND}"
+    echo "${my_uuid}" >"${LOCAL_BACKEND}/arch-stats-id"
+    sudo chown -R "${LOCAL_USER}:${LOCAL_USER}" "${LOCAL_HOME}"
 }
 
 init_postgresql() {
+    local my_uuid="${1}"
     print_out "Initializing PostgreSQL..."
     sudo -u postgres psql -c "CREATE ROLE root WITH LOGIN SUPERUSER PASSWORD '***';"
     sudo -u postgres psql -c "CREATE USER \"${LOCAL_USER}\" WITH PASSWORD '***';"
@@ -47,15 +52,19 @@ init_postgresql() {
             print_out "Running ${file}..."
             sudo -u "${LOCAL_USER}" psql -d "${LOCAL_USER}" -f "${file}"
         done
+        # we need to insert at least one row to avoid errors when adding shooting data
+        sudo -u "${LOCAL_USER}" psql -d "${LOCAL_USER}" -c "INSERT INTO target_track (id, name) VALUES ('${my_uuid}', 'prototype');"
     else
         print_err "Data directory not found"
     fi
 }
 
 main() {
-    create_user
+    local my_uuid
+    my_uuid=$(uuidgen -r)
+    create_user "${my_uuid}"
     install_postgresql
-    init_postgresql
+    init_postgresql "${my_uuid}"
 }
 
 main
