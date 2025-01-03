@@ -3,12 +3,12 @@ services:
     image: postgres:latest
     container_name: postgres_container
     env_file:
-      - ../.env
+      - ../backend/.env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
+      - ./data:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:

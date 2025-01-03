@@ -1,3 +1,5 @@
+\c "arch-stats"
+
 CREATE TABLE IF NOT EXISTS lane (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tournament_id UUID NOT NULL,
@@ -7,8 +9,8 @@ CREATE TABLE IF NOT EXISTS lane (
     max_x_coordinate REAL,
     max_y_coordinate REAL,
     UNIQUE (tournament_id, target_track_id),
-    FOREIGN KEY (target_track_id) REFERENCES target_track(id) ON DELETE CASCADE,
-    FOREIGN KEY (tournament_id) REFERENCES tournament(id) ON DELETE CASCADE
+    FOREIGN KEY (target_track_id) REFERENCES target_track (id) ON DELETE CASCADE,
+    FOREIGN KEY (tournament_id) REFERENCES tournament (id) ON DELETE CASCADE
 );
 
 COMMENT ON COLUMN lane.target_track_id IS 'it will be provided by the Raspberry Pi';

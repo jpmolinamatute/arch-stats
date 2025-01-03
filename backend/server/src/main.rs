@@ -1,8 +1,5 @@
-extern crate dotenv;
-
 use actix_files as fs;
 use actix_web::{App, HttpServer};
-use dotenv::dotenv;
 use std::env;
 use std::path::Path;
 
@@ -20,7 +17,6 @@ fn get_webui_path() -> String {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok();
     let webui_path = get_webui_path();
     HttpServer::new(move || {
         App::new().service(fs::Files::new("/", &webui_path).index_file("index.html"))

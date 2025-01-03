@@ -2,8 +2,9 @@
 npm-debug.log
 yarn-error.log
 /.vscode/
-/.env
+/backend/.env
 /webui/.angular
 /webui/node_modules/
 /webui/dist/
 /docs/*.png
+/ignore/*

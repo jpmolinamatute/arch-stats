@@ -1,12 +1,5 @@
 [workspace]
-members = [
-    "arrow_reader",
-    "bow_reader",
-    "install",
-    "main_socket",
-    "server",
-    "target_reader",
-]
+members = ["hub", "server", "shoot_recorder"]
 resolver = "2"
 
 [workspace.package]
@@ -14,3 +7,9 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Juan Pablo Molina Matute <jpmolinamatute@gmail.com>"]
 license = "MIT"
+
+[workspace.dependencies]
+postgres = "*"
+ctrlc = "*"
+chrono = "*"
+uuid = { version = "*", features = ["v4"] }
