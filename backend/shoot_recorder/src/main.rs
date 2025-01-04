@@ -8,8 +8,9 @@ use uuid::Uuid;
 
 struct SensorData {
     target_track_id: Uuid,
+    arrow_id: Uuid,
     arrow_engage_time: DateTime<Utc>,
-    draw_length: i32,
+    draw_length: f32,
     arrow_disengage_time: DateTime<Utc>,
     arrow_landing_time: DateTime<Utc>,
     x_coordinate: f32,
@@ -18,50 +19,46 @@ struct SensorData {
 
 fn initialize_db_connection() -> Client {
     let db_host = env::var("DB_HOST").ok();
-    let db_name = env::var("DB_NAME").ok();
     let db_port = env::var("DB_PORT").ok();
-    let db_user = env::var("DB_USER").ok();
+    let db_user = env::var("ARCH_STATS_USER").ok();
     let db_password = env::var("DB_PASSWORD").ok();
 
     let connection_string = if db_host.is_some()
-        && db_name.is_some()
         && db_port.is_some()
         && db_user.is_some()
         && db_password.is_some()
     {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            db_user.unwrap(),
-            db_password.unwrap(),
-            db_host.unwrap(),
-            db_port.unwrap(),
-            db_name.unwrap()
+            db_user.as_ref().unwrap(),
+            db_password.as_ref().unwrap(),
+            db_host.as_ref().unwrap(),
+            db_port.as_ref().unwrap(),
+            db_user.as_ref().unwrap()
         )
     } else {
         "host=/var/run/postgresql".to_string()
     };
-
+    println!("Connecting to {}", connection_string);
     Client::connect(&connection_string, NoTls).expect("Failed to initialize database connection")
 }
 
 fn write_to_db(client: &mut Client, data: &SensorData) {
-    // @TODO: I don't like this conversion, I need to find a better way to do this.
-    // I think we should reuse the same datatype (datetime) in the database and in the code.
-    let arrow_engage_time = data.arrow_engage_time.to_rfc3339();
-    let arrow_disengage_time = data.arrow_disengage_time.to_rfc3339();
-    let arrow_landing_time = data.arrow_landing_time.to_rfc3339();
-    let target_track_id = data.target_track_id.to_string();
+    println!("Writing data to the database...");
+    println!("Target Track ID: {}", data.target_track_id);
     client
         .execute(
-            "INSERT INTO shooting (target_track_id, arrow_engage_time, draw_length, arrow_disengage_time, arrow_landing_time, x_coordinate, y_coordinate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            "INSERT INTO shooting (target_track_id, arrow_id, arrow_engage_time, draw_length, arrow_disengage_time, arrow_landing_time, x_coordinate, y_coordinate) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
             &[
-                &target_track_id,
-                &arrow_engage_time,
+                &data.target_track_id,
+                &data.arrow_id,
+                &data.arrow_engage_time,
                 &data.draw_length,
-                &arrow_disengage_time,
-                &arrow_landing_time,
+                &data.arrow_disengage_time,
+                &data.arrow_landing_time,
                 &data.x_coordinate,
                 &data.y_coordinate,
+            
             ],
         )
         .expect("Failed to insert data into the database");
@@ -71,7 +68,7 @@ fn get_uuid() -> Uuid {
     let dir = env::var("ARCH_STATS_DIR").expect("ARCH_STATS_DIR environment variable is not set");
     let file_name =
         env::var("ARCH_STATS_ID_FILE").expect("ARCH_STATS_ID_FILE environment variable is not set");
-    let file_path = format!("{}/{}", dir, file_name);
+    let file_path = format!("{}/backend/{}", dir, file_name);
     let content = fs::read_to_string(&file_path).expect("Failed to read the UUID file");
 
     let uuid = Uuid::parse_str(content.trim()).expect("Invalid UUID format in the file");
@@ -82,8 +79,9 @@ fn read_sensor_data() -> SensorData {
     let now = Utc::now();
     SensorData {
         target_track_id: get_uuid(),
+        arrow_id: Uuid::new_v4(),
         arrow_engage_time: now,
-        draw_length: 30,
+        draw_length: 30.0,
         arrow_disengage_time: now,
         arrow_landing_time: now,
         x_coordinate: 10.0,
