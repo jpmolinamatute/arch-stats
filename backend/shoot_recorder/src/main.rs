@@ -44,7 +44,7 @@ fn initialize_db_connection() -> Client {
 }
 
 fn write_to_db(client: &mut Client, data: &SensorData) -> bool {
-    println!("Writing data to the database...");
+    println!("Writing arrow '{}' readings into the database...", data.arrow_id);
     let mut success: bool = true;
     if let Err(e) = client
         .execute(
