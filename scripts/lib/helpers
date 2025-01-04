@@ -1,0 +1,10 @@
+print_out() {
+    local msg="${1}"
+    echo -e "\e[1;32m${msg}\e[0m"
+}
+
+print_err() {
+    local msg="${1}"
+    echo -e "\e[1;31m${msg}\e[0m" >&2
+    exit 1
+}

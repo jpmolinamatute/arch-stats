@@ -9,7 +9,7 @@ use uuid::Uuid;
 struct SensorData {
     target_track_id: Uuid,
     arrow_engage_time: DateTime<Utc>,
-    draw_length: i32,
+    draw_length: f32,
     arrow_disengage_time: DateTime<Utc>,
     arrow_landing_time: DateTime<Utc>,
     x_coordinate: f32,
@@ -45,23 +45,20 @@ fn initialize_db_connection() -> Client {
 }
 
 fn write_to_db(client: &mut Client, data: &SensorData) {
-    // @TODO: I don't like this conversion, I need to find a better way to do this.
-    // I think we should reuse the same datatype (datetime) in the database and in the code.
-    let arrow_engage_time = data.arrow_engage_time.to_rfc3339();
-    let arrow_disengage_time = data.arrow_disengage_time.to_rfc3339();
-    let arrow_landing_time = data.arrow_landing_time.to_rfc3339();
-    let target_track_id = data.target_track_id.to_string();
+    println!("Writing data to the database...");
+    println!("Target Track ID: {}", data.target_track_id);
     client
         .execute(
             "INSERT INTO shooting (target_track_id, arrow_engage_time, draw_length, arrow_disengage_time, arrow_landing_time, x_coordinate, y_coordinate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
             &[
-                &target_track_id,
-                &arrow_engage_time,
+                &data.target_track_id,
+                &data.arrow_engage_time,
                 &data.draw_length,
-                &arrow_disengage_time,
-                &arrow_landing_time,
+                &data.arrow_disengage_time,
+                &data.arrow_landing_time,
                 &data.x_coordinate,
                 &data.y_coordinate,
+            
             ],
         )
         .expect("Failed to insert data into the database");
@@ -83,7 +80,7 @@ fn read_sensor_data() -> SensorData {
     SensorData {
         target_track_id: get_uuid(),
         arrow_engage_time: now,
-        draw_length: 30,
+        draw_length: 30.0,
         arrow_disengage_time: now,
         arrow_landing_time: now,
         x_coordinate: 10.0,

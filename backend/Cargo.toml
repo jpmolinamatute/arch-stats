@@ -9,7 +9,7 @@ authors = ["Juan Pablo Molina Matute <jpmolinamatute@gmail.com>"]
 license = "MIT"
 
 [workspace.dependencies]
-postgres = "*"
+postgres = { version = "*", features = ["with-uuid-1", "with-chrono-0_4"] }
 ctrlc = "*"
 chrono = "*"
 uuid = { version = "*", features = ["v4"] }
