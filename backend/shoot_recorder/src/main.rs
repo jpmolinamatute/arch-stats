@@ -12,7 +12,7 @@ struct SensorData {
     arrow_engage_time: DateTime<Utc>,
     draw_length: f32,
     arrow_disengage_time: DateTime<Utc>,
-    arrow_landing_time: DateTime<Utc>,
+    arrow_landing_time: Option<DateTime<Utc>>,
     x_coordinate: f32,
     y_coordinate: f32,
 }
@@ -43,10 +43,10 @@ fn initialize_db_connection() -> Client {
     Client::connect(&connection_string, NoTls).expect("Failed to initialize database connection")
 }
 
-fn write_to_db(client: &mut Client, data: &SensorData) {
+fn write_to_db(client: &mut Client, data: &SensorData) -> bool {
     println!("Writing data to the database...");
-    println!("Target Track ID: {}", data.target_track_id);
-    client
+    let mut success: bool = true;
+    if let Err(e) = client
         .execute(
             "INSERT INTO shooting (target_track_id, arrow_id, arrow_engage_time, draw_length, arrow_disengage_time, arrow_landing_time, x_coordinate, y_coordinate) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
             &[
@@ -60,11 +60,14 @@ fn write_to_db(client: &mut Client, data: &SensorData) {
                 &data.y_coordinate,
             
             ],
-        )
-        .expect("Failed to insert data into the database");
+        ){
+            eprintln!("Failed to insert data: {}", e);
+            success = false;
+        }
+        success
 }
 
-fn get_uuid() -> Uuid {
+fn get_target_track_id() -> Uuid {
     let dir = env::var("ARCH_STATS_DIR").expect("ARCH_STATS_DIR environment variable is not set");
     let file_name =
         env::var("ARCH_STATS_ID_FILE").expect("ARCH_STATS_ID_FILE environment variable is not set");
@@ -75,17 +78,55 @@ fn get_uuid() -> Uuid {
     uuid
 }
 
-fn read_sensor_data() -> SensorData {
-    let now = Utc::now();
-    SensorData {
-        target_track_id: get_uuid(),
-        arrow_id: Uuid::new_v4(),
-        arrow_engage_time: now,
-        draw_length: 30.0,
-        arrow_disengage_time: now,
-        arrow_landing_time: now,
-        x_coordinate: 10.0,
-        y_coordinate: 20.0,
+fn get_arrow_id() -> Option<Uuid> {
+    Some(Uuid::new_v4())
+}
+
+fn get_arrow_engage_time() -> Option<DateTime<Utc>> {
+    Some(Utc::now())
+}
+
+fn get_arrow_disengage_time() -> Option<DateTime<Utc>> {
+    Some(Utc::now())
+}
+
+fn get_arrow_landing_time() -> Option<DateTime<Utc>> {
+    Some(Utc::now())
+}
+
+fn get_x_coordinate() -> Option<f32> {
+    Some(10.0)
+}
+
+fn get_y_coordinate() -> Option<f32> {
+    Some(20.0)
+}
+
+fn get_draw_length() -> Option<f32> {
+    Some(30.0)
+}
+
+fn read_sensor_data(target_track_id: Uuid) -> Option<SensorData> {
+    let arrow_id = get_arrow_id();
+    let arrow_engage_time = get_arrow_engage_time();
+    let draw_length = get_draw_length();
+    let arrow_disengage_time = get_arrow_disengage_time();
+    let x_coordinate = get_x_coordinate();
+    let y_coordinate = get_y_coordinate();
+    if let (Some(arrow_id), Some(arrow_engage_time), Some(draw_length), Some(arrow_disengage_time), Some(x_coordinate), Some(y_coordinate)) = 
+    (arrow_id, arrow_engage_time, draw_length, arrow_disengage_time, x_coordinate, y_coordinate) {
+        Some(SensorData {
+            target_track_id,
+            arrow_id,
+            arrow_engage_time,
+            draw_length,
+            arrow_disengage_time,
+            arrow_landing_time: get_arrow_landing_time(),
+            x_coordinate,
+            y_coordinate,
+        })
+    } else {
+        None
     }
 }
 
@@ -94,7 +135,7 @@ fn main() {
     let mut client = initialize_db_connection();
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
-
+    let target_track_id = get_target_track_id();
     ctrlc::set_handler(move || {
         r.store(false, Ordering::SeqCst);
     })
@@ -103,8 +144,9 @@ fn main() {
     println!("Press Ctrl+C to exit...");
 
     while running.load(Ordering::SeqCst) {
-        let data = read_sensor_data();
-        write_to_db(&mut client, &data);
+        if let Some(data) = read_sensor_data(target_track_id) {
+            write_to_db(&mut client, &data);
+        }
     }
 
     println!("Shutting down gracefully...");

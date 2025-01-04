@@ -3,12 +3,12 @@ CREATE TABLE IF NOT EXISTS shooting (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     target_track_id UUID NOT NULL,
     arrow_id UUID NOT NULL,
-    arrow_engage_time TIMESTAMP WITH TIME ZONE,
-    draw_length REAL,
-    arrow_disengage_time TIMESTAMP WITH TIME ZONE,
+    arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    draw_length REAL NOT NULL,
+    arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
     arrow_landing_time TIMESTAMP WITH TIME ZONE,
-    x_coordinate REAL,
-    y_coordinate REAL,
+    x_coordinate REAL NOT NULL,
+    y_coordinate REAL NOT NULL,
     FOREIGN KEY (arrow_id) REFERENCES arrow (id) ON DELETE CASCADE,
     FOREIGN KEY (target_track_id) REFERENCES target_track (id) ON DELETE CASCADE
 );
