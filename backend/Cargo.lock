@@ -714,6 +714,7 @@ version = "0.1.0"
 dependencies = [
  "ctrlc",
  "postgres",
+ "shared",
 ]
 
 [[package]]
@@ -1398,6 +1399,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "postgres",
+]
+
+[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1410,6 +1418,7 @@ dependencies = [
  "chrono",
  "ctrlc",
  "postgres",
+ "shared",
  "uuid",
 ]
 

@@ -15,9 +15,6 @@ fi
 : "${ARCH_STATS_USER:?Environment variable ARCH_STATS_USER is not set}"
 : "${ARCH_STATS_DIR:?Environment variable ARCH_STATS_DIR is not set}"
 : "${ARCH_STATS_ID_FILE:?Environment variable ARCH_STATS_ID_FILE is not set}"
-: "${DB_PASSWORD:?Environment variable DB_PASSWORD is not set}"
-: "${DB_HOST:?Environment variable DB_HOST is not set}"
-: "${DB_PORT:?Environment variable DB_PORT is not set}"
 : "${POSTGRES_USER:?Environment variable POSTGRES_USER is not set}"
 : "${POSTGRES_PASSWORD:?Environment variable POSTGRES_PASSWORD is not set}"
 
@@ -25,7 +22,7 @@ run() {
     local file="${1}"
     print_out "Running ${file}..."
     if [[ -n ${DEV} ]]; then
-        PGPASSWORD=${DB_PASSWORD} psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${ARCH_STATS_USER}" -f "${file}"
+        psql -U "${ARCH_STATS_USER}" -f "${file}"
     else
         sudo -u "${ARCH_STATS_USER}" psql -f "${file}"
     fi
@@ -40,13 +37,13 @@ create_root_user() {
 }
 
 create_app_user() {
-    local create_user_sql="CREATE USER \"${ARCH_STATS_USER}\" WITH PASSWORD '${DB_PASSWORD}';"
+    local create_user_sql="CREATE USER \"${ARCH_STATS_USER}\";"
     local create_database_sql="CREATE DATABASE \"${ARCH_STATS_USER}\" OWNER \"${ARCH_STATS_USER}\";"
 
     print_out "Creating ${ARCH_STATS_USER} user..."
     if [[ -n ${DEV} ]]; then
-        PGPASSWORD=${POSTGRES_PASSWORD} psql -U "${POSTGRES_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -c "${create_user_sql}"
-        PGPASSWORD=${POSTGRES_PASSWORD} psql -U "${POSTGRES_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -c "${create_database_sql}"
+        psql -U "${POSTGRES_USER}" -c "${create_user_sql}"
+        psql -U "${POSTGRES_USER}" -c "${create_database_sql}"
     else
         sudo -u postgres psql -c "${create_user_sql}"
         sudo -u postgres psql -c "${create_database_sql}"
@@ -73,7 +70,7 @@ insert_target_track_data() {
     print_out "Inserting target_track data..."
 
     if [[ -n $DEV ]]; then
-        PGPASSWORD=${DB_PASSWORD} psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${ARCH_STATS_USER}" -c "${insert_sql}"
+        psql -U "${ARCH_STATS_USER}" -c "${insert_sql}"
     else
         sudo -u "${ARCH_STATS_USER}" psql -c "${insert_sql}"
     fi

@@ -21,3 +21,19 @@ COMMENT ON COLUMN shooting.arrow_disengage_time IS 'it will be read by the bow s
 COMMENT ON COLUMN shooting.arrow_landing_time IS 'it will be read by the target sensor';
 COMMENT ON COLUMN shooting.x_coordinate IS 'it will be read by the target sensor';
 COMMENT ON COLUMN shooting.y_coordinate IS 'it will be read by the target sensor';
+
+-- Create a function that will be called by the trigger 
+CREATE OR REPLACE FUNCTION notify_shooting_change() RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM pg_notify('shooting_change', json_build_object(
+        'operation', TG_OP,
+        'data', row_to_json(NEW)
+    )::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger that calls the function on INSERT or UPDATE
+CREATE TRIGGER shooting_change_trigger
+AFTER INSERT OR UPDATE ON shooting
+FOR EACH ROW EXECUTE FUNCTION notify_shooting_change();

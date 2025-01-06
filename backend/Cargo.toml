@@ -1,5 +1,5 @@
 [workspace]
-members = ["hub", "server", "shoot_recorder"]
+members = ["hub", "server", "shared", "shoot_recorder"]
 resolver = "2"
 
 [workspace.package]
