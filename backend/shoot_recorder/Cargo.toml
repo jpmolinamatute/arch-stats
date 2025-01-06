@@ -1,6 +1,6 @@
 [package]
 name = "shoot_recorder"
-edition = "2021"
+edition.workspace = true
 version.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -10,3 +10,4 @@ postgres = { workspace = true }
 ctrlc = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
+shared = { path = "../shared" }
