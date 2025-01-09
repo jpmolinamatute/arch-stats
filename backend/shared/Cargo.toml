@@ -1,9 +1,0 @@
-[package]
-name = "shared"
-edition.workspace = true
-version.workspace = true
-authors.workspace = true
-license.workspace = true
-
-[dependencies]
-postgres = { workspace = true }
