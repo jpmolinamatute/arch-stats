@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS shooting (
     draw_length REAL NOT NULL,
     arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
     arrow_landing_time TIMESTAMP WITH TIME ZONE,
+    distance REAL NOT NULL,
     x_coordinate REAL NOT NULL,
     y_coordinate REAL NOT NULL,
     FOREIGN KEY (arrow_id) REFERENCES arrow (id) ON DELETE CASCADE,

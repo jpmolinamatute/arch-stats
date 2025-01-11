@@ -3,8 +3,8 @@
 CREATE TABLE IF NOT EXISTS target (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lane_id UUID NOT NULL,
-    x_coordinate REAL,
-    y_coordinate REAL,
+    max_x_coordinate REAL,
+    max_y_coordinate REAL,
     radius REAL [],
     points INT [],
     height REAL,

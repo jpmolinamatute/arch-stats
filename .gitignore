@@ -1,8 +1,10 @@
 **/target/
 npm-debug.log
 yarn-error.log
+__pycache__/
 /.vscode/
 /.env
+.venv/
 /webui/.angular
 /webui/node_modules/
 /webui/dist/

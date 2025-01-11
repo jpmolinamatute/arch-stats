@@ -3,7 +3,7 @@ name = "arch-stats"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12.7"
-dependencies = ["fastapi>=0.115.6", "pydantic>=2.10.4"]
+dependencies = ["fastapi>=0.115.6", "psycopg2>=2.9.10", "uvicorn>=0.34.0"]
 
 [dependency-groups]
 dev = [
@@ -15,8 +15,7 @@ dev = [
 ]
 
 [tool.mypy]
-plugins = ["pydantic.mypy"]
-mypy_path = "app:k8s/uniradio"
+strict = true
 python_version = "3.12"
 sqlite_cache = true
 show_column_numbers = true
@@ -31,12 +30,6 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 ignore_missing_imports = true
 
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-
-
 [tool.black]
 line-length = 100
 target-version = ["py312"]
@@ -44,7 +37,7 @@ target-version = ["py312"]
 [tool.isort]
 profile = "black"
 line_length = 100
-py_version = "312"
+python_version = "312"
 lines_after_imports = 2
 virtual_env = "./.venv"
 
