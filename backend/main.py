@@ -13,50 +13,64 @@ import psycopg2
 from shared import get_logger, DataBase, SensorDataTuple, DataBaseError
 
 
-def write_sensor_data_to_db(conn: DataBase, data: SensorDataTuple) -> None:
-    insert_stm = """
-        INSERT INTO shooting (
-            target_track_id,
-            arrow_id,
-            arrow_engage_time,
-            draw_length,
-            arrow_disengage_time,
-            arrow_landing_time,
-            x_coordinate,
-            y_coordinate,
-            distance
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-    """
-    conn.insert(insert_stm, data)
+class SensorDataError(Exception):
+    pass
 
 
 def get_arrow_engage_time() -> datetime:
-    return datetime.now()
+    if True:
+        some_time = datetime.now()
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_time
 
 
 def get_draw_length() -> float:
-    return 0.0
+    if True:
+        some_draw_length = 0.0
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_draw_length
 
 
 def get_arrow_disengage_time() -> datetime:
-    return datetime.now()
+    if True:
+        some_time = datetime.now()
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_time
 
 
 def get_arrow_landing_time() -> datetime | None:
-    return datetime.now()
+    if True:
+        some_time = datetime.now()
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_time
 
 
 def get_x_coordinate() -> float | None:
-    return 0.0
+    if True:
+        some_coordinate = 0.0
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_coordinate
 
 
 def get_y_coordinate() -> float | None:
-    return 0.0
+    if True:
+        some_coordinate = 0.0
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_coordinate
 
 
 def get_distance() -> float:
-    return 0.0
+    if True:
+        some_distance = 0.0
+    else:
+        raise SensorDataError("Arrow engage time not found")
+    return some_distance
 
 
 def get_arrow_id() -> UUID:
@@ -105,8 +119,12 @@ def read_all_sensor_data(target_track_id: UUID) -> SensorDataTuple:
 
 
 def get_sensor_data(conn: DataBase, target_track_id: UUID) -> None:
-    all_data = read_all_sensor_data(target_track_id)
-    write_sensor_data_to_db(conn, all_data)
+    try:
+        all_data = read_all_sensor_data(target_track_id)
+    except SensorDataError:
+        pass
+    else:
+        conn.insert_shooting(all_data)
 
 
 def main() -> None:

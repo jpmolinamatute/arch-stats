@@ -6,6 +6,7 @@ from types import TracebackType
 import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import connection
+from shared.typed import SensorDataTuple
 
 
 class DataBaseError(Exception):
@@ -55,3 +56,20 @@ class DataBase:
             cursor.execute(query)
             result: list[tuple[Any, ...]] = cursor.fetchall()
             return result
+
+    def insert_shooting(self, data: SensorDataTuple) -> None:
+        insert_stm = """
+            INSERT INTO shooting (
+                target_track_id,
+                arrow_id,
+                arrow_engage_time,
+                draw_length,
+                arrow_disengage_time,
+                arrow_landing_time,
+                x_coordinate,
+                y_coordinate,
+                distance
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
+        self.insert(insert_stm, data)
