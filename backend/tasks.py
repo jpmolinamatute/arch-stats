@@ -1,7 +1,9 @@
 import shutil
 from pathlib import Path
 
-from invoke import Collection, Context, task
+from invoke.tasks import task
+from invoke.context import Context
+from invoke.collection import Collection
 
 
 CURRENT_SCRIPT = Path(__file__).resolve()

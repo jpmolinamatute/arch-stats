@@ -1,12 +1,14 @@
 import asyncio
 from os import getenv
+
 import psycopg
 from psycopg import sql
 
 # from psycopg.types.json import Json
 from websockets import Subprotocol
+from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosedOK
-from websockets.asyncio.server import serve, ServerConnection
+
 
 # WebSocket server details
 WEBSOCKET_HOST = "localhost"

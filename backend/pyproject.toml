@@ -43,7 +43,7 @@ target-version = ["py312"]
 [tool.isort]
 profile = "black"
 line_length = 100
-python_version = "312"
+py_version = 312
 lines_after_imports = 2
 virtual_env = "./.venv"
 

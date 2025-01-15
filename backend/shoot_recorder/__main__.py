@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 
 import logging
+import random
+import sys
+from datetime import datetime
 from os import getenv
 from pathlib import Path
-import random
-
-import sys
 from uuid import UUID
-from datetime import datetime
 
 import psycopg
 
-from shared import get_logger, SensorDataTuple, DataBaseError
+from shared import DataBaseError, SensorDataTuple, get_logger
 
 
 class SensorDataError(Exception):
