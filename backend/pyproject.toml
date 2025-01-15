@@ -16,7 +16,6 @@ dev = [
     "invoke>=2.2.0",
     "isort>=5.13.2",
     "mypy>=1.14.1",
-    "pylint-websockets>=0.1.2",
     "pylint>=3.3.3",
 ]
 
@@ -127,7 +126,7 @@ limit-inference-results = 100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-load-plugins = "pylint_websockets"
+# load-plugins = "pylint_websockets"
 
 # Pickle collected data for later comparisons.
 persistent = true

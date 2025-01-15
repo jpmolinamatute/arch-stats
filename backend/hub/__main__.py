@@ -1,5 +1,5 @@
-import sys
 import asyncio
+import sys
 from os import getenv
 
 import psycopg
@@ -8,6 +8,7 @@ from psycopg import sql
 # from psycopg.types.json import Json
 from websockets import ConnectionClosed, Subprotocol
 from websockets.asyncio.server import ServerConnection, serve
+
 
 # WebSocket server details
 WEBSOCKET_HOST = "localhost"
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Bye!")
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         print("An unexpected error occurred")
         EXIT_STATUS = 1
     finally:

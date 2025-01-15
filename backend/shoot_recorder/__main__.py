@@ -180,7 +180,7 @@ def main() -> None:
         exit_status = 1
     except KeyboardInterrupt:
         logger.info("Bye!")
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logger.exception("An unexpected error occurred")
         exit_status = 1
 
