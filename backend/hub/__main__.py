@@ -1,3 +1,4 @@
+import sys
 import asyncio
 from os import getenv
 
@@ -5,10 +6,8 @@ import psycopg
 from psycopg import sql
 
 # from psycopg.types.json import Json
-from websockets import Subprotocol
+from websockets import ConnectionClosed, Subprotocol
 from websockets.asyncio.server import ServerConnection, serve
-from websockets.exceptions import ConnectionClosedOK
-
 
 # WebSocket server details
 WEBSOCKET_HOST = "localhost"
@@ -26,10 +25,7 @@ async def notify_clients(message: str) -> None:
     """Send a message to all connected WebSocket clients."""
     async with CLIENTS_LOCK:
         for client in CONNECTED_CLIENTS:
-            try:
-                await client.send(message)
-            except ConnectionClosedOK:
-                pass
+            await client.send(message)
 
 
 async def listen_to_db() -> None:
@@ -61,6 +57,8 @@ async def websocket_handler(websocket: ServerConnection) -> None:
     CONNECTED_CLIENTS.add(websocket)
     try:
         await websocket.wait_closed()
+    except ConnectionClosed:
+        print("WebSocket connection closed.")
     finally:
         CONNECTED_CLIENTS.remove(websocket)
         print("WebSocket client disconnected.")
@@ -78,4 +76,13 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    EXIT_STATUS = 0
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Bye!")
+    except Exception:
+        print("An unexpected error occurred")
+        EXIT_STATUS = 1
+    finally:
+        sys.exit(EXIT_STATUS)

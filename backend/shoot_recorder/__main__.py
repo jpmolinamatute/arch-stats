@@ -6,11 +6,12 @@ import sys
 from datetime import datetime
 from os import getenv
 from pathlib import Path
+from time import sleep
 from uuid import UUID
 
 import psycopg
 
-from shared import DataBaseError, SensorDataTuple, get_logger
+from shared import SensorDataTuple, get_logger
 
 
 class SensorDataError(Exception):
@@ -173,12 +174,13 @@ def main() -> None:
         ) as conn:
             while True:
                 get_sensor_data(conn, target_track_id, logger)
+                sleep(5)
     except psycopg.Error:
         logger.exception("ERROR: a database error occurred")
         exit_status = 1
     except KeyboardInterrupt:
         logger.info("Bye!")
-    except DataBaseError:
+    except Exception:
         logger.exception("An unexpected error occurred")
         exit_status = 1
 
