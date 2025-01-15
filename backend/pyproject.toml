@@ -1,9 +1,14 @@
 [project]
 name = "arch-stats"
 version = "0.1.0"
-description = "Add your description here"
+description = "Archery Statics for data nerds"
 requires-python = ">=3.12.7"
-dependencies = ["fastapi>=0.115.6", "psycopg2>=2.9.10", "uvicorn>=0.34.0"]
+dependencies = [
+    "fastapi>=0.115.6",
+    "psycopg>=3.2.3",
+    "uvicorn>=0.34.0",
+    "websockets>=14.1",
+]
 
 [dependency-groups]
 dev = [
@@ -11,6 +16,7 @@ dev = [
     "invoke>=2.2.0",
     "isort>=5.13.2",
     "mypy>=1.14.1",
+    "pylint-websockets>=0.1.2",
     "pylint>=3.3.3",
 ]
 
@@ -121,7 +127,7 @@ limit-inference-results = 100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-# load-plugins =
+load-plugins = "pylint_websockets"
 
 # Pickle collected data for later comparisons.
 persistent = true
