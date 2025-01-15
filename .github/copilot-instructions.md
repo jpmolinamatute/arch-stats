@@ -1,4 +1,6 @@
-## Code Generation Instructions
+# Code Generation Instructions
 
-- real-time: the app should be able to process a large number of requests in real-time.
-- low latency: the app should respond to requests within a few milliseconds.
+- suggest code using python 3.12 and above
+- use uv to add or remove python packages
+- the code must be optimized for real-time transactions.
+- the code must be optimized for low latency responses.

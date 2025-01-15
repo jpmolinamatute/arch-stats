@@ -1,7 +1,9 @@
 import shutil
 from pathlib import Path
 
-from invoke import Collection, Context, task
+from invoke.collection import Collection
+from invoke.context import Context
+from invoke.tasks import task
 
 
 CURRENT_SCRIPT = Path(__file__).resolve()
@@ -10,6 +12,7 @@ SERVER_ROOT = PROJECT_ROOT.joinpath("server")
 HUB_ROOT = PROJECT_ROOT.joinpath("hub")
 SHOOT_RECORDER_ROOT = PROJECT_ROOT.joinpath("shoot_recorder")
 PYPROJECT = PROJECT_ROOT.joinpath("pyproject.toml")
+MAIN = PROJECT_ROOT.joinpath("main.py")
 
 PTY = True
 ECHO = True
@@ -35,25 +38,29 @@ def _log_open(msg: str) -> None:
 
 
 def _run_pylint(ctx: Context, ignore_failures: bool = True) -> None:
-    cmd = f"pylint --rcfile {PYPROJECT} ."
+    cmd = f"pylint --rcfile {PYPROJECT} "
+    cmd += f"{SERVER_ROOT} {HUB_ROOT} {SHOOT_RECORDER_ROOT} {CURRENT_SCRIPT} {MAIN}"
     _log_open("pylint")
     ctx.run(cmd, pty=PTY, echo=ECHO, warn=ignore_failures)
 
 
 def _run_black(ctx: Context, ignore_failures: bool = True) -> None:
-    cmd = f"black --config {PYPROJECT} ."
+    cmd = f"black --config {PYPROJECT} "
+    cmd += f"{SERVER_ROOT} {HUB_ROOT} {SHOOT_RECORDER_ROOT} {CURRENT_SCRIPT}  {MAIN}"
     _log_open("black")
     ctx.run(cmd, pty=PTY, echo=ECHO, warn=ignore_failures)
 
 
 def _run_isort(ctx: Context, ignore_failures: bool = True) -> None:
-    cmd = f"isort --settings-path {PYPROJECT} ."
+    cmd = f"isort --settings-path {PYPROJECT} "
+    cmd += f"{SERVER_ROOT} {HUB_ROOT} {SHOOT_RECORDER_ROOT} {CURRENT_SCRIPT}  {MAIN}"
     _log_open("isort")
     ctx.run(cmd, pty=PTY, echo=ECHO, warn=ignore_failures)
 
 
 def _run_mypy(ctx: Context, ignore_failures: bool = True) -> None:
-    cmd = f"mypy --config-file {PYPROJECT} ."
+    cmd = f"mypy --config-file {PYPROJECT} "
+    cmd += f"{SERVER_ROOT} {HUB_ROOT} {SHOOT_RECORDER_ROOT} {CURRENT_SCRIPT}  {MAIN}"
     _log_open("mypy")
     ctx.run(cmd, pty=PTY, echo=ECHO, warn=ignore_failures)
 

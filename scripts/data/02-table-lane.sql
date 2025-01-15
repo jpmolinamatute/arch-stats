@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS lane (
     tournament_id UUID NOT NULL,
     target_track_id UUID NOT NULL,
     lane_number INT NOT NULL,
-    distance REAL,
     max_x_coordinate REAL,
     max_y_coordinate REAL,
     UNIQUE (tournament_id, target_track_id),
