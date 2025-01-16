@@ -1,5 +1,7 @@
 from typing import TypedDict
+
 from fastapi import APIRouter, HTTPException
+
 
 router = APIRouter(prefix="/tournaments", tags=["Tournaments"])
 

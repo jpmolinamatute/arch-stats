@@ -4,6 +4,7 @@ from server.routers.shooting import router as router_shooting
 from server.routers.target import router as router_target
 from server.routers.tournament import router as router_tournament
 
+
 __all__ = [
     "router_archer",
     "router_lane",

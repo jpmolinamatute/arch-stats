@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import uvicorn
+
 from server.routers import (
     router_archer,
     router_lane,
@@ -25,8 +25,3 @@ def create_app() -> FastAPI:
         return {"message": "Welcome to the archery management system!"}
 
     return app
-
-
-if __name__ == "__main__":
-    APP = create_app()
-    uvicorn.run(APP, host="0.0.0.0", port=8000)
