@@ -1,49 +1,45 @@
-#!/usr/bin/env python
-import argparse
+from math import e
+from os import getenv
 import sys
-from asyncio import run
+import argparse
 
-import asyncpg
+import psycopg
+import uvicorn
 
-from hub import setup as setup_hub
-from server import setup as setup_server
+from server import create_app
 from shared import get_logger
-from shoot_recorder import setup as setup_shoot_recorder
+from shoot_recorder import setup
 
 
-logger = get_logger()
-
-
-async def run_async(cmd: str) -> None:
-    if cmd == "shoot_recorder":
-        await setup_shoot_recorder(logger)
-    elif cmd == "server":
-        await setup_server(logger)
-    elif cmd == "hub":
-        await setup_hub(logger)
-    else:
-        raise ValueError(f"Unknown command: {cmd}")
-
-
-def main(module_name: str) -> None:
+def main() -> None:
     exit_status = 0
+    logger = get_logger()
+    logger.info("Starting the hub...")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("cmd", help="Command to run", choices=["server", "setup"])
+    args = parser.parse_args()
+    server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
+    server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
     try:
-        run(run_async(module_name))
-    except asyncpg.PostgresError as e:
-        logger.exception("Database error occurred: %s", e)
+        if args.cmd == "setup":
+            setup(logger)
+        elif args.cmd == "server":
+            app = create_app()
+            uvicorn.run(app, host=server_name, port=server_port)
+        else:
+            logger.error("Unknown command %s", args.cmd)
+            exit_status = 1
+    except psycopg.Error:
+        logger.exception("ERROR: a database error occurred")
         exit_status = 1
     except KeyboardInterrupt:
-        logger.info("Main process interrupted by user")
-    except Exception as e:  # pylint: disable=broad-except
-        logger.exception("An unexpected error occurred: %s", e)
+        logger.info("Bye!")
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("An unexpected error occurred")
         exit_status = 1
-    finally:
-        logger.info("Exiting with status %d", exit_status)
-        sys.exit(exit_status)
+
+    sys.exit(exit_status)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("cmd", help="Command to run", choices=["server", "shoot_recorder", "hub"])
-    args = parser.parse_args()
-    main(args.cmd)
+    main()

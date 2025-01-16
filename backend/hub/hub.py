@@ -1,10 +1,9 @@
 import asyncio
-from logging import Logger
-from multiprocessing import Process
+import sys
 from os import getenv
-from uuid import UUID
 
-import asyncpg
+import psycopg
+from psycopg import sql
 
 # from psycopg.types.json import Json
 from websockets import ConnectionClosed, Subprotocol
@@ -26,74 +25,63 @@ async def notify_clients(message: str) -> None:
             await client.send(message)
 
 
-async def create_temporary_trigger(conn: asyncpg.Connection, archer_id: UUID) -> None:
-
-    trigger_creation = f"""
-    CREATE TEMP TRIGGER shooting_change_trigger
-    AFTER INSERT OR UPDATE ON shooting
-    FOR EACH ROW
-    EXECUTE FUNCTION notify_shooting_change({str(archer_id)});
-    """
-
-    await conn.execute(trigger_creation)
-
-
-async def listen_to_db(archer_id: UUID) -> None:
+async def listen_to_db() -> None:
     """Listen for notifications from PostgreSQL."""
     user = getenv("ARCH_STATS_USER")
-    listen_channel = "shooting_change"
     params = {}
     if user:
         params["user"] = user
-    conn = await asyncpg.connect(**params)
-    try:
-        await create_temporary_trigger(conn, archer_id)
-        await conn.add_listener(
-            listen_channel, lambda *args: asyncio.create_task(notify_clients(args[-1]))
-        )
-        print(f"Listening on channel '{listen_channel}'...")
+    async with await psycopg.AsyncConnection.connect(**params) as conn:  # type: ignore[arg-type]
+        # Ensure the channel is being listened to
+        async with conn.cursor() as cur:
+            await cur.execute(
+                sql.SQL("LISTEN {channel};").format(channel=sql.Identifier(LISTEN_CHANNEL))
+            )
+            await conn.commit()
+            print(f"Listening on channel '{LISTEN_CHANNEL}'...")
 
-        while True:
-            await asyncio.sleep(1)  # Keep the connection alive
-    finally:
-        await conn.close()
-
-
-def websocket_client_handler(archer_id: UUID) -> None:
-    """Handle WebSocket connections in a separate process."""
-    asyncio.run(listen_to_db(archer_id))
+            while True:
+                # Wait for notifications
+                async for notification in conn.notifies():
+                    print(f"Notification received: {notification.payload}")
+                    # Forward notification to all connected WebSocket clients
+                    await notify_clients(notification.payload)
 
 
 async def websocket_handler(websocket: ServerConnection) -> None:
     """Handle WebSocket connections."""
     print("New WebSocket client connected.")
     CONNECTED_CLIENTS.add(websocket)
-    process: Process | None = None
     try:
-        archer_id_str = await websocket.recv()
-        if isinstance(archer_id_str, str):  # Receive the archer_id from the client
-            archer_id = UUID(archer_id_str)
-            process = Process(target=websocket_client_handler, args=(archer_id,))
-            process.start()
-            await websocket.wait_closed()
-        else:
-            print("Invalid archer_id received.")
+        await websocket.wait_closed()
     except ConnectionClosed:
         print("WebSocket connection closed.")
     finally:
         CONNECTED_CLIENTS.remove(websocket)
-        if process:
-            process.terminate()
         print("WebSocket client disconnected.")
 
 
-async def setup(logger: Logger) -> None:
+async def main() -> None:
     # Run the WebSocket server
-    logger.info("Starting the hub...")
     websocket_port = int(getenv("ARCH_STATS_WS_PORT", "8765"))
     websocket_host = getenv("ARCH_STATS_HOSTNAME", "localhost")
-    async with serve(
+    websocket_server = serve(
         websocket_handler, websocket_host, websocket_port, subprotocols=[Subprotocol("shooting")]
-    ):
-        logger.info(f"WebSocket server running on ws://{websocket_host}:{websocket_port}")
-        await asyncio.Future()  # Run forever
+    )
+    print(f"WebSocket server running on ws://{websocket_host}:{websocket_port}")
+
+    # Run the PostgreSQL listener and WebSocket server concurrently
+    await asyncio.gather(listen_to_db(), websocket_server)
+
+
+if __name__ == "__main__":
+    EXIT_STATUS = 0
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Bye!")
+    except Exception:  # pylint: disable=broad-except
+        print("An unexpected error occurred")
+        EXIT_STATUS = 1
+    finally:
+        sys.exit(EXIT_STATUS)
