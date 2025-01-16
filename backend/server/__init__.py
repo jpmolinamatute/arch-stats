@@ -1,4 +1,4 @@
-from backend.server.__main__ import app
+from server.server import create_app
 
 
-__all__ = ["app"]
+__all__ = ["create_app"]

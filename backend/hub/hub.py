@@ -10,10 +10,6 @@ from websockets import ConnectionClosed, Subprotocol
 from websockets.asyncio.server import ServerConnection, serve
 
 
-# WebSocket server details
-WEBSOCKET_HOST = "localhost"
-WEBSOCKET_PORT = 8765
-
 # Channel to listen to in PostgreSQL
 LISTEN_CHANNEL = "shooting_change"
 
@@ -67,10 +63,12 @@ async def websocket_handler(websocket: ServerConnection) -> None:
 
 async def main() -> None:
     # Run the WebSocket server
+    websocket_port = int(getenv("ARCH_STATS_WS_PORT", "8765"))
+    websocket_host = getenv("ARCH_STATS_HOSTNAME", "localhost")
     websocket_server = serve(
-        websocket_handler, WEBSOCKET_HOST, WEBSOCKET_PORT, subprotocols=[Subprotocol("shooting")]
+        websocket_handler, websocket_host, websocket_port, subprotocols=[Subprotocol("shooting")]
     )
-    print(f"WebSocket server running on ws://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
+    print(f"WebSocket server running on ws://{websocket_host}:{websocket_port}")
 
     # Run the PostgreSQL listener and WebSocket server concurrently
     await asyncio.gather(listen_to_db(), websocket_server)

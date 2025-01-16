@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
-import logging
 import random
-import sys
 from datetime import datetime
+from logging import Logger
 from os import getenv
 from pathlib import Path
 from time import sleep
 from uuid import UUID
 
 import psycopg
+from psycopg import Connection
 
-from shared import SensorDataTuple, get_logger
+from shared import SensorDataTuple
 
 
 class SensorDataError(Exception):
@@ -128,9 +128,7 @@ def read_all_sensor_data(target_track_id: UUID) -> SensorDataTuple:
     )
 
 
-def get_sensor_data(
-    conn: psycopg.Connection, target_track_id: UUID, logger: logging.Logger
-) -> None:
+def get_sensor_data(conn: Connection, target_track_id: UUID, logger: Logger) -> None:
     try:
         all_data = read_all_sensor_data(target_track_id)
     except SensorDataError:
@@ -158,34 +156,16 @@ def get_sensor_data(
             conn.commit()
 
 
-def main() -> None:
-    exit_status = 0
-    logger = get_logger()
-    logger.info("Starting the hub...")
-    try:
-        target_track_id = get_target_track_id()
-        user = getenv("ARCH_STATS_USER")
-        params = {}
-        if user:
-            params["user"] = user
+def setup(logger: Logger) -> None:
+    target_track_id = get_target_track_id()
+    user = getenv("ARCH_STATS_USER")
+    params = {}
+    if user:
+        params["user"] = user
 
-        with psycopg.connect(  # pylint: disable=not-context-manager
-            **params,  # type: ignore[arg-type]
-        ) as conn:
-            while True:
-                get_sensor_data(conn, target_track_id, logger)
-                sleep(5)
-    except psycopg.Error:
-        logger.exception("ERROR: a database error occurred")
-        exit_status = 1
-    except KeyboardInterrupt:
-        logger.info("Bye!")
-    except Exception:  # pylint: disable=broad-except
-        logger.exception("An unexpected error occurred")
-        exit_status = 1
-
-    sys.exit(exit_status)
-
-
-if __name__ == "__main__":
-    main()
+    with psycopg.connect(  # pylint: disable=not-context-manager
+        **params,  # type: ignore[arg-type]
+    ) as conn:
+        while True:
+            get_sensor_data(conn, target_track_id, logger)
+            sleep(5)
