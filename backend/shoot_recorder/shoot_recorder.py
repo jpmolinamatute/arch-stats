@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 
+import asyncio
 import random
 from datetime import datetime
 from logging import Logger
 from os import getenv
 from pathlib import Path
-from time import sleep
 from uuid import UUID
 
-import psycopg
-from psycopg import Connection
+from asyncpg import Connection, connect
 
 from shared import SensorDataTuple
 
 
 class SensorDataError(Exception):
-    pass
+    """Custom exception for sensor data errors."""
 
 
 def fake_sensor_data(hardcoded: bool | None = True) -> bool:
+    """Simulate sensor data availability."""
     if hardcoded is not None:
         choice = hardcoded
     else:
@@ -28,59 +28,46 @@ def fake_sensor_data(hardcoded: bool | None = True) -> bool:
 
 
 def get_arrow_engage_time() -> datetime:
+    """Get the arrow engage time from the sensor."""
     if fake_sensor_data():
-        some_time = datetime.now()
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_time
+        return datetime.now()
+    raise SensorDataError("Arrow engage time not found")
 
 
 def get_draw_length() -> float:
     if fake_sensor_data():
-        some_draw_length = 0.0
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_draw_length
+        return 0.0
+    raise SensorDataError("Draw length not found")
 
 
 def get_arrow_disengage_time() -> datetime:
     if fake_sensor_data():
-        some_time = datetime.now()
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_time
+        return datetime.now()
+    raise SensorDataError("Arrow disengage time not found")
 
 
 def get_arrow_landing_time() -> datetime | None:
     if fake_sensor_data():
-        some_time = datetime.now()
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_time
+        return datetime.now()
+    raise SensorDataError("Arrow landing time not found")
 
 
 def get_x_coordinate() -> float | None:
     if fake_sensor_data():
-        some_coordinate = 0.0
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_coordinate
+        return 0.0
+    raise SensorDataError("x coordinate not found")
 
 
 def get_y_coordinate() -> float | None:
     if fake_sensor_data():
-        some_coordinate = 0.0
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_coordinate
+        return 0.0
+    raise SensorDataError("y coordinate not found")
 
 
 def get_distance() -> float:
     if fake_sensor_data():
-        some_distance = 0.0
-    else:
-        raise SensorDataError("Arrow engage time not found")
-    return some_distance
+        return 0.0
+    raise SensorDataError("distance not found")
 
 
 def get_arrow_id() -> UUID:
@@ -128,7 +115,8 @@ def read_all_sensor_data(target_track_id: UUID) -> SensorDataTuple:
     )
 
 
-def get_sensor_data(conn: Connection, target_track_id: UUID, logger: Logger) -> None:
+async def save_sensor_data(conn: Connection, target_track_id: UUID, logger: Logger) -> None:
+    """Save sensor data to the database."""
     try:
         all_data = read_all_sensor_data(target_track_id)
     except SensorDataError:
@@ -148,24 +136,23 @@ def get_sensor_data(conn: Connection, target_track_id: UUID, logger: Logger) -> 
                 y_coordinate,
                 distance
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
         """
-
-        with conn.cursor() as cur:
-            cur.execute(insert_stm, all_data)
-            conn.commit()
+        await conn.execute(insert_stm, *all_data)
 
 
-def setup(logger: Logger) -> None:
+async def setup(logger: Logger) -> None:
+    logger.info("Starting the shoot_recorder...")
     target_track_id = get_target_track_id()
     user = getenv("ARCH_STATS_USER")
     params = {}
     if user:
         params["user"] = user
 
-    with psycopg.connect(  # pylint: disable=not-context-manager
-        **params,  # type: ignore[arg-type]
-    ) as conn:
+    conn = await connect(**params)
+    try:
         while True:
-            get_sensor_data(conn, target_track_id, logger)
-            sleep(5)
+            await save_sensor_data(conn, target_track_id, logger)
+            await asyncio.sleep(5)
+    finally:
+        await conn.close()

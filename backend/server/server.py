@@ -20,7 +20,7 @@ def create_app() -> FastAPI:
     app.include_router(router_target, prefix="/api")
 
     @app.get("/", response_model=dict)
-    async def root() -> dict[str, str]:
+    async def fronted() -> dict[str, str]:
         # this route will serve the static files (HTML, JS, CSS) aka the frontend
         return {"message": "Welcome to the archery management system!"}
 
