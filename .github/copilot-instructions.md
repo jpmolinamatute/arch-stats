@@ -4,3 +4,5 @@
 - use uv to add or remove python packages
 - the code must be optimized for real-time transactions.
 - the code must be optimized for low latency responses.
+- use asyncpg for database operations.
+- use fastapi for the web server.
