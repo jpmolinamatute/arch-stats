@@ -22,15 +22,4 @@ COMMENT ON COLUMN shooting.arrow_disengage_time IS 'it will be read by the bow s
 COMMENT ON COLUMN shooting.arrow_landing_time IS 'it will be read by the target sensor';
 COMMENT ON COLUMN shooting.x_coordinate IS 'it will be read by the target sensor';
 COMMENT ON COLUMN shooting.y_coordinate IS 'it will be read by the target sensor';
-
--- Create a function that will be called by the trigger 
-CREATE OR REPLACE FUNCTION notify_shooting_change(archer_id UUID)
-RETURNS TRIGGER AS $$
-BEGIN
-    RAISE NOTICE 'The function notify_shooting_change was called';
-    IF EXISTS (SELECT 1 FROM arrow WHERE id = NEW.arrow_id AND archer_id = archer_id) THEN
-        PERFORM pg_notify('shooting_change', row_to_json(NEW)::text);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+COMMENT ON COLUMN shooting.distance IS 'it will be provided by the arrow sensor';

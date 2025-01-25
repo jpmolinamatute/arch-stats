@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16.6
+    image: postgres:17.2
     container_name: postgres_container
     env_file:
       - ../.env
@@ -9,6 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - /var/run/postgresql:/var/run/postgresql
+      - ../scripts/data/postgresql.conf:/etc/postgresql/17/main/postgresql.conf
 
 volumes:
   postgres_data:

@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS lane (
 COMMENT ON COLUMN lane.target_track_id IS 'it will be provided by the Raspberry Pi';
 COMMENT ON COLUMN lane.max_x_coordinate IS 'it will be read by the target sensor';
 COMMENT ON COLUMN lane.max_y_coordinate IS 'it will be read by the target sensor';
-COMMENT ON COLUMN lane.distance IS 'it will be provided by Tournament Organizer';
 COMMENT ON COLUMN lane.lane_number IS 'it will be provided by Tournament Organizer';
 COMMENT ON COLUMN lane.tournament_id IS 'it will be provided by the WebUI';
 

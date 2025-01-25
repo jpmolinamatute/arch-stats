@@ -13,6 +13,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=24.10.0",
+    "bpython>=0.25",
     "invoke>=2.2.0",
     "isort>=5.13.2",
     "mypy>=1.14.1",

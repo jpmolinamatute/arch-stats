@@ -22,17 +22,17 @@ run() {
     local file="${1}"
     print_out "Running ${file}..."
     if [[ -n ${DEV} ]]; then
-        psql -U "${ARCH_STATS_USER}" -f "${file}"
+        psql -U "${ARCH_STATS_USER}" -b -q -f "${file}"
     else
-        sudo -u "${ARCH_STATS_USER}" psql -f "${file}"
+        sudo -u "${ARCH_STATS_USER}" psql -b -q -f "${file}"
     fi
 }
 
 create_root_user() {
     if [[ -z ${DEV} ]]; then
         print_out "Creating ${POSTGRES_USER} user..."
-        sudo -u postgres psql -c "CREATE ROLE ${POSTGRES_USER} WITH LOGIN SUPERUSER PASSWORD '${POSTGRES_PASSWORD}';"
-        sudo -u postgres psql -c "CREATE DATABASE ${POSTGRES_USER} OWNER ${POSTGRES_USER};"
+        sudo -u postgres psql -b -q -c "CREATE ROLE ${POSTGRES_USER} WITH LOGIN SUPERUSER PASSWORD '${POSTGRES_PASSWORD}';"
+        sudo -u postgres psql -b -q -c "CREATE DATABASE ${POSTGRES_USER} OWNER ${POSTGRES_USER};"
     fi
 }
 
@@ -42,11 +42,11 @@ create_app_user() {
 
     print_out "Creating ${ARCH_STATS_USER} user..."
     if [[ -n ${DEV} ]]; then
-        psql -U "${POSTGRES_USER}" -c "${create_user_sql}"
-        psql -U "${POSTGRES_USER}" -c "${create_database_sql}"
+        psql -U "${POSTGRES_USER}" -b -q -c "${create_user_sql}"
+        psql -U "${POSTGRES_USER}" -b -q -c "${create_database_sql}"
     else
-        sudo -u postgres psql -c "${create_user_sql}"
-        sudo -u postgres psql -c "${create_database_sql}"
+        sudo -u postgres psql -b -q -c "${create_user_sql}"
+        sudo -u postgres psql -b -q -c "${create_database_sql}"
     fi
 }
 
@@ -70,9 +70,9 @@ insert_target_track_data() {
     print_out "Inserting target_track data..."
 
     if [[ -n $DEV ]]; then
-        psql -U "${ARCH_STATS_USER}" -c "${insert_sql}"
+        psql -U "${ARCH_STATS_USER}" -b -q -c "${insert_sql}"
     else
-        sudo -u "${ARCH_STATS_USER}" psql -c "${insert_sql}"
+        sudo -u "${ARCH_STATS_USER}" psql -b -q -c "${insert_sql}"
     fi
 }
 
