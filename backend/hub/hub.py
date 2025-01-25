@@ -1,6 +1,6 @@
 import asyncio
-import multiprocessing
 from logging import Logger
+from multiprocessing import Process
 from os import getenv
 from uuid import UUID
 
@@ -68,11 +68,12 @@ async def websocket_handler(websocket: ServerConnection) -> None:
     """Handle WebSocket connections."""
     print("New WebSocket client connected.")
     CONNECTED_CLIENTS.add(websocket)
+    process: Process | None = None
     try:
         archer_id_str = await websocket.recv()
         if isinstance(archer_id_str, str):  # Receive the archer_id from the client
             archer_id = UUID(archer_id_str)
-            process = multiprocessing.Process(target=websocket_client_handler, args=(archer_id,))
+            process = Process(target=websocket_client_handler, args=(archer_id,))
             process.start()
             await websocket.wait_closed()
         else:

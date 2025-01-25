@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import asyncio
 import random
+from asyncio import sleep
 from datetime import datetime
 from logging import Logger
 from os import getenv
@@ -106,9 +106,9 @@ def read_all_sensor_data(target_track_id: UUID) -> SensorDataTuple:
         target_track_id,
         get_arrow_id(),
         get_arrow_engage_time(),
-        get_draw_length(),
         get_arrow_disengage_time(),
         get_arrow_landing_time(),
+        get_draw_length(),
         get_x_coordinate(),
         get_y_coordinate(),
         get_distance(),
@@ -129,9 +129,9 @@ async def save_sensor_data(conn: Connection, target_track_id: UUID, logger: Logg
                 target_track_id,
                 arrow_id,
                 arrow_engage_time,
-                draw_length,
                 arrow_disengage_time,
                 arrow_landing_time,
+                draw_length,
                 x_coordinate,
                 y_coordinate,
                 distance
@@ -153,6 +153,6 @@ async def setup(logger: Logger) -> None:
     try:
         while True:
             await save_sensor_data(conn, target_track_id, logger)
-            await asyncio.sleep(5)
+            await sleep(2)
     finally:
         await conn.close()

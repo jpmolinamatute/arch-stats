@@ -9,14 +9,14 @@ class SensorData(TypedDict, total=False):
     target_track_id: UUID
     arrow_id: UUID
     arrow_engage_time: datetime
-    draw_length: float
     arrow_disengage_time: datetime
     arrow_landing_time: datetime | None
+    draw_length: float
     x_coordinate: float | None
     y_coordinate: float | None
     distance: float
 
 
 SensorDataTuple = tuple[
-    UUID, UUID, datetime, float, datetime, datetime | None, float | None, float | None, float
+    UUID, UUID, datetime, datetime, datetime | None, float, float | None, float | None, float
 ]
