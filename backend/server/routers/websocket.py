@@ -1,4 +1,4 @@
-from asyncio import CancelledError, Lock, sleep
+from asyncio import Lock, sleep
 from typing import Any, MutableMapping
 from uuid import UUID
 
@@ -11,6 +11,8 @@ from shared.logger import get_logger
 
 router = APIRouter()
 Message = MutableMapping[str, Any]
+RATE_LIMIT_INTERVAL = 0.5  # 0.5 seconds between messages
+MAX_MESSAGE_SIZE = 1024  # 1 KB maximum message size
 
 
 async def pg_listener(_: Connection, pid: int, channel: str, message: Message) -> None:
@@ -25,7 +27,7 @@ class ConnectionManager:
     def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
         self.lock = Lock()
-        self.logger = get_logger()
+        self.logger = get_logger(__name__)
 
     async def connect(self, websocket: WebSocket) -> None:
         """Accepts new WebSocket connection."""
@@ -49,8 +51,17 @@ class ConnectionManager:
         """Sends a message to all connected clients."""
         async with self.lock:
             for connection in self.active_connections:
-                self.logger.info("Broadcasting message: %s", message)
-                await connection.send_json(message)
+                try:
+                    self.logger.info("Broadcasting message: %s", message)
+                    await connection.send_json(message)
+                except Exception as e:
+                    self.logger.error("Error broadcasting to WebSocket: %s", e)
+                    await self.disconnect(connection)
+
+    async def prune_inactive_connections(self) -> None:
+        """Periodically check/removes stale WebSocket connections."""
+
+        await self.broadcast({"ping": "health_check"})
 
     def get_partial_archer_id(self, archer_id: str) -> str:
         """Extracts the partial archer_id from the full archer_id."""
@@ -115,7 +126,8 @@ class ConnectionManager:
     async def keep_conn_alive(self) -> None:
         """Keeps the connection alive."""
         while True:
-            await sleep(1)
+            await sleep(30)  # Adjust interval as needed
+            await self.prune_inactive_connections()
 
     def validate_archer_id(self, archer_id: str) -> bool:
         """Validates the archer_id."""
@@ -159,8 +171,21 @@ async def websocket_endpoint(websocket: WebSocket, db_pool: Pool = Depends(get_d
         await manager.connect(websocket)
         try:
             while True:
+                # Receive text from WebSocket
                 archer_id = await websocket.receive_text()
-                if manager.validate_archer_id(archer_id):
-                    await manager.listen(archer_id, conn)
+
+                # Validate input size
+                if len(archer_id) > MAX_MESSAGE_SIZE:
+                    await websocket.send_json({"error": "Message size exceeds limit."})
+                    continue
+
+                # Validate Archer ID
+                if not manager.validate_archer_id(archer_id):
+                    await websocket.send_json({"error": "Invalid archer ID format."})
+                    continue
+
+                # Handle listening logic
+                await manager.listen(archer_id, conn)
+                await sleep(RATE_LIMIT_INTERVAL)
         except WebSocketDisconnect:
             await manager.disconnect(websocket)
