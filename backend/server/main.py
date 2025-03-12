@@ -1,5 +1,5 @@
-from asyncio import CancelledError
 import logging
+from asyncio import CancelledError
 from contextlib import asynccontextmanager
 from os import getenv
 from pathlib import Path
@@ -59,7 +59,15 @@ async def setup(logger: logging.Logger) -> None:
     logger.info("Development mode: %s", dev_mode)
     app = create_app()
     config = uvicorn.Config(
-        app, host=server_name, port=server_port, loop="asyncio", lifespan="on", reload=dev_mode
+        app,
+        host=server_name,
+        port=server_port,
+        loop="uvloop",
+        lifespan="on",
+        reload=dev_mode,
+        ws="websockets",
+        http="h11",
+        workers=4,
     )
     server = uvicorn.Server(config)
     await server.serve()
