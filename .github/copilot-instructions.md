@@ -8,3 +8,4 @@
 - use fastapi for the web server.
 - when suggestion python code, always provide code with proper hint typing for parameters and return values
 - suggest vanilla typescript/javascript for frontend code.
+- suggest code compatible with SQLAlchemy +2.0
