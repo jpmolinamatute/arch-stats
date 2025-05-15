@@ -3,8 +3,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Boolean, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP
+from sqlalchemy import String, CheckConstraint
+from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, BOOLEAN
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base_model import Base
@@ -16,7 +16,7 @@ class Sessions(Base):
     __tablename__ = "sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    is_opened: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    is_opened: Mapped[bool] = mapped_column(BOOLEAN, nullable=False)
     start_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     location: Mapped[str] = mapped_column(String(255), nullable=False)
