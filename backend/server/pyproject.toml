@@ -1,0 +1,22 @@
+[project]
+name = "server"
+version = "0.1.0"
+description = "arch-stats: Web Server Module"
+authors = [
+    { name = "Juan Pablo Molina Matute", email = "jpmolinamatute@gmail.com" }
+]
+requires-python = ">=3.12.7"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "fastapi-sqlalchemy>=0.2.1",
+    "fastapi[standard]>=0.115.12",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "pylint>=3.3.7",
+    "pytest>=8.3.5",
+]

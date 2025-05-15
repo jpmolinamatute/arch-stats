@@ -3,10 +3,10 @@ npm-debug.log
 yarn-error.log
 __pycache__/
 /.vscode/
-/.env
+.env
 .venv/
 /webui/.angular
 /webui/node_modules/
 /webui/dist/
-/docs/*.png
+/backend/docs/*.png
 /ignore/*

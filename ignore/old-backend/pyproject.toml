@@ -1,16 +1,27 @@
 [project]
-name = "docs"
+name = "arch-stats"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Archery Statics for data nerds"
 requires-python = ">=3.12.7"
 dependencies = [
-    "graphviz>=0.20.3",
+    "asyncpg>=0.30.0",
+    "fastapi>=0.115.6",
+    "uvicorn[standard]>=0.34.0",
+    "websockets>=14.1",
 ]
 
 [dependency-groups]
-dev = ["black>=24.10.0", "isort>=5.13.2", "mypy>=1.14.0", "pylint>=3.3.2"]
+dev = [
+    "black>=24.10.0",
+    "bpython>=0.25",
+    "invoke>=2.2.0",
+    "isort>=5.13.2",
+    "mypy>=1.14.1",
+    "pylint>=3.3.3",
+]
+
 [tool.mypy]
+strict = true
 python_version = "3.12"
 sqlite_cache = true
 show_column_numbers = true
@@ -32,7 +43,7 @@ target-version = ["py312"]
 [tool.isort]
 profile = "black"
 line_length = 100
-py_version = "312"
+py_version = 312
 lines_after_imports = 2
 virtual_env = "./.venv"
 
@@ -116,7 +127,7 @@ limit-inference-results = 100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-# load-plugins =
+# load-plugins = "pylint_websockets"
 
 # Pickle collected data for later comparisons.
 persistent = true
