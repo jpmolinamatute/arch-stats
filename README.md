@@ -1,187 +1,304 @@
 # Arch Stats: Analyzing Archery Performance Through Data
 
-## Background
+## 1. Introduction
+
+### 1.1 Background
 
 Practicing archery can feel inconsistent: some days, I see improvement; other days, it feels like I’ve hit a plateau—or even regressed. Tracking performance is challenging due to the numerous variables influencing each shot.
 
-## The Problem
+### 1.2 The Problem
 
 I need a method to objectively measure and track my archery performance over time.
 
-## The Solution
+### 1.3 The Solution
 
-To address this, the solution involves:
+The Arch Stats app will provide a comprehensive platform to:
 
-1. Identifying measurable variables that impact performance.
-2. Consistently collecting data on these variables.
-3. Recording the data over time.
-4. Presenting the information in an intuitive, actionable format.
+* Identifying measurable variables that impact performance.
+* Consistently collect data on these variables using specialized hardware.
+* Record the data in a structured database.
+* resent the information in an intuitive, actionable format through a WebUI.
 
-## The App
+### 1.4 Goals
 
-The application, Arch Stats, helps archers improve by providing data-driven insights. By tracking shot accuracy, equipment details, and other metrics, it enables archers to monitor progress and make informed decisions.
+* Provide objective insights into archery performance.
+* Identify areas for improvement.
+* Track progress over time.
 
-## User Roles
+### 1.5 Constraint
 
-* Archer: A WebUI user who registers and competes in tournaments, and reviews their own performance data.
-* Tournament Organizer: A WebUI user who creates and manages tournaments and register new archers.
+* The app will track only one archer.
+* The archer will have only one bow with a fixed bow weight.
+* The archer will have a fixed draw length.
+* The archer will be shooting in the same lane within a session.
+* The archer will be shooting at the same distance within a session.
+* There will be only one session open at the time.
 
-## Entities
+## 2. Requirements
 
-* **archer**: Represents an archer, including personal and equipment information. An archer has *arrows*, participates in *tournaments*, shoots at *targets*, tracks *shootings*, is registered in a *registration*, is positioned in a *lane*, and is assigned a *target_track*.
+### 2.1 Functional Requirements
 
-* **arrow**: Represents an arrow, with details such as weight, length, diameter, spine, and name. An arrow is used by an *archer*, lands on a *target*, and is recorded by a *target_track*.
+* **Data Acquisition:**
+  * Capture arrow variables (weight, length, identifier, spine, diameter).
+  * Capture shooting variables (arrow engage time, arrow disengage time, arrow landing time, X coordinate, Y coordinate).
+  * Capture session variables (distance, max X coordinate, max Y coordinate, location, start/end time).
+* **Data Management:**
+  * Store all data in a PostgreSQL database.
+  * Provide CRUD (Create, Read, Update, Delete) operations for arrows, sessions, and shots.
+* **User Interface:**
+  * Allow the user to register arrows.
+  * Allow the user to open and close sessions.
+  * Visualize shot data in real-time and over time.
+  * Display key performance indicators (KPIs).
+* **Hardware Integration:**
+  * The arch stat app will run in a Raspberry Pi 5.
+  * There will be a sensor (Bow Reader) attached to the archer's bow. The type of sensor is TBD.
+  * There will be a sensor (Arrow Reader) attached to the Raspberry Pi. The type of sensor is TBD.
+  * There will be a sensor (Target Reader) attached to the Raspberry Pi. The type of sensor is TBD.
+  * Communicate with the Arrow Reader to assign IDs to arrows.
+  * Receive shot data from the Bow Reader and Target Reader.
 
-* **tournament**: Represents an event where *archers* compete, with details like name, location, start time, end time. A tournament has *lanes* and involves *registrations*.
+### 2.2 Non-Functional Requirements
 
-* **lane**: Represents a lane in a tournament, with details such as number, distance, maximum x-coordinate, maximum y-coordinate, and number of archers. A lane contains *targets* and is where an *archer* stand. Contains a *target_track*.
+We'll come up with some metrics later on to measure the following points:
 
-* **target**: Represents a target in a *lane*, with details such as radius, height, x-coordinate, and y-coordinate. A target is used by an *archer*, and where *arrows* land on it.
+* **Performance:** The system should provide near real-time feedback on shots.
+* **Reliability:** The system should be reliable and minimize data loss.
+* **Usability:** The user interface should be intuitive and easy to use.
+* **Maintainability:** The codebase should be well-organized and easy to maintain.
 
-* **registration**: Represents the process of registering *archers* for a *tournament*, assigning *target_tracks* to *archers*, and positioning them in *lanes*.
+## 3. System Architecture
 
-* **shooting**: Represents a shot, with details such as arrow, target, x-coordinate, y-coordinate, landing time, engage time, disengage time, and pull length. A shooting is performed by an *archer* with an *arrow* and recorded by a *target_track*.
+### 3.1 Modules
 
-* **target_track**: Represents a device equipped with sensors that reads *arrows*, records *shootings* and it's located in a *lane*.
+The system will consist of the following modules:
 
-## Entities Constraints
+* **WebUI:** Provides the user interface for data visualization and interaction.
+* **Web Server:** Acts as the central coordinator, handling data flow and communication between modules.
+* **Database:** Stores all application data.
+* **Arrow Reader:** Reads and assigns unique identifiers to arrows.
+* **Bow Reader:** Captures arrow engage and disengage times.
+* **Target Reader:** Captures arrow landing time and coordinates on the target.
 
-An archer can only be registered in one tournament at a time.
-An archer can only be positioned in one lane.
-An archer can only be assigned to one target_track.
-An archer can shoot at many targets.
-An archer can shoot many arrows.
-An archer can be registered in many tournaments at different times.
-An arrow can only be used by one archer.
-An arrow can only be recorded by one target_track.
-An arrow can be used in many shootings.
-Many arrows can land on a target.
-A tournament can have many lanes.
-A tournament can happen at a time.
-A registration can have many archers.
-A registration can have many target_tracks.
-A registration can have many tournaments.
-A registration can have many lanes.
+### 3.2 Data Flow Diagram
 
-A lane can only one archer.
-A lane can have many targets.
-A lane can have only one target_track.
-A target_track can record many shootings.
-A target_track can be assigned to only one archer.
-A target_track can be positioned in one lane per tournament.
-There must be the same number of lanes, archers and target_tracks in a tournament.
+#### 3.2.1 Arrow Registration
 
-## Workflow
+WIP
 
-So far there are 2 workflows identified:
+#### 3.2.2 Sessions
 
-1. Tournament & Archer creation. Including lane and target creation and arrow registration.
-2. Shooting process
+WIP
 
-## Data Sources
+#### 3.2.3 Shots
 
-### Sensors
+WIP
 
-Sensors in the bow and target capture:
+### 3.3 Module Details
 
-* Bow Metrics: Pull length, engage/disengage times, and shot distance.
-* Target Metrics: Landing coordinates, radius, and height.
+#### 3.3.1 WebUI
 
-### User-Provided Data
+* **Technology:** Vanilla TypeScript, HTML, CSS.
+* **Hardware:** Raspberry Pi 5
+* **Responsibilities:**
+  * User interface for arrow registration, session management, and data visualization.
+  * Real-time display of shot data via WebSockets.
+  * Historical data filtering and analysis through charts.
+* **UI Elements:**
+  * Arrow registration form.
+  * Session start/end controls.
+  * Data visualizations (scatter plots, time series, etc.).
+  * Dashboard with KPIs.
+* **Future Considerations:**
+  * Allow multiple users to use the app at the same time.
+  * Support tournaments
+  * User authentication/authorization.
+  * More advanced data analysis tools.
 
-Archers input personal and equipment details (via WebUI) during registration and target setup.
+#### 3.3.2 Web Server
 
-## Data Source Integration in the Workflow
+* **Technology:** Python with FastAPI, Pydantic, SQLAlchemy
+* **Hardware:** Raspberry Pi 5
+* **Responsibilities:**
+  * API endpoints for data access (arrows, sessions, shots).
+  * WebSocket communication with the WebUI for real-time updates.
+  * Coordination of the Arrow Reader.
+  * Data validation and error handling.
+  * Database interaction.
+* **API Endpoints:**
+  * shot
+    * POST /shot
+    * GET /shot
+    * DELETE /shot/{shoot_id}
+  * session
+    * POST /session
+    * GET /session
+    * DELETE /session/{session_id}
+    * PUT /session/{session_id}
+  * arrow
+    * POST /arrow
+    * GET /arrow
+    * DELETE /arrow/{arrow_id}
+    * PUT /arrow/{arrow_id}
+* **WebSockets:**
+  * `arrow_id`: Sends the assigned arrow ID from the Arrow Reader to the WebUI.
+  * `shot_information`: Sends shot data from the Web Server to the WebUI.
+* **Error Handling:**
+  * Logging of errors.
+  * Appropriate HTTP status codes.
+  * Potential for alerts (future).
+* **Data Validation:**
+  * Validate data types and ranges.
+  * Handle missing or invalid data.
 
-The following table illustrates the data sources at each step of the workflow:
+#### 3.3.3 Arrow Reader
 
-| Step                    | Data Source        | Details                                        |
-| ----------------------- | -------------------| -----------------------------------------------|
-| User Registration       | Archer             | Personal and equipment data entered via WebUI. |
-| Tournament Registration | Archer             | Tournament selection and lane assignment provided via WebUI. |
-| Target Setup            | Archer and Sensors | Archers provide names; sensors supply x/y coordinates, radius, and height. |
-| Shooting                | Sensors            | Metrics collected in real-time via target_reader and stored in the database. |
+* **Technology:** Python
+* **Hardware:** TBD
+* **Responsibilities:**
+  * Listens for a signal from the hardware when an arrow is presented.
+  * Generates a unique UUID for the arrow.
+  * Writes the UUID to the arrow's TBD.
+  * Sends the UUID to the Web Server via a WebSocket.
+* **Process:**
+  1. Infinite loop waiting for arrow presentation.
+  2. Generate UUID.
+  3. Write UUID to arrow sticker.
+  4. Send UUID to Web Server.
+* **Error Handling:**
+  * Handle hardware read/write errors.
+  * Log errors.
 
-## Epic Overview
+#### 3.3.4 Bow Reader
 
-To achieve this, the app includes four epics for data collection, processing, and presentation:
+* **Technology:** Python
+* **Hardware:** TBD
+* **Responsibilities:**
+  * Detects arrow engage time.
+  * Detects arrow disengage time.
+  * Sends the timestamps to the Web Server.
+* **Data Acquisition:**
+  * [Describe the specific process of how the sensors capture the data and how it's processed.]
+* **Calibration:**
+  * [Describe the calibration process for the sensors.]
+* **Synchronization:**
+  * [Explain how the Bow Reader's timestamps are synchronized with the Target Reader (e.g., using a shared timestamp or a synchronization signal).]
+* **Error Handling:**
+  * Sensor failures.
+  * Communication errors.
 
-### Hardware Integration
+#### 3.3.5 Target Reader
 
-This epic enable Archer and Tournament Organizer to utilize hardware components for data collection this includes:
+* **Technology:** Python
+* **Hardware:** TBD
+* **Responsibilities:**
+  * Detects arrow landing time.
+  * Determines the X and Y coordinates of the arrow impact.
+  * Sends the data to the Web Server.
+* **Image/Data Processing:**
+  * [Describe the image or data processing techniques used to identify the arrow impact.]
+  * [Explain how the X and Y coordinates are calculated and calibrated.]
+* **Missed Shot Detection:**
+  * If no arrow landing time is detected within a specified time frame, the shot is marked as missed, and X/Y coordinates are set to null.
+* **Calibration:**
+  * [Describe the calibration process for the target (e.g., camera calibration, coordinate system calibration).]
+* **Synchronization:**
+  * [Explain how the Target Reader's data is synchronized with the Bow Reader (e.g., using a shared timestamp or a synchronization signal).]
+* **Error Handling:**
+  * Image processing errors.
+  * Communication errors.
 
-* Raspberry Pi: Serves as the central processing unit.
-* Sensors: Embedded in the bow and target, connected to the Raspberry Pi.
-* Bluetooth Low Energy (BLE) Beacons: Used for short-range communication.
-* Bluetooth Tags: Identify equipment during data collection.
-* The Frame: Holds the sensors and Raspberry Pi in place.
+#### 3.3.6 Database
 
-The goal of this Epic is to organize all user stories related to sensors, Raspberry Pi and the frame
+* **Technology:** PostgreSQL
+* **Responsibilities:**
+  * Stores all application data (arrows, sessions, shots).
+  * Ensures data integrity and consistency.
+  * Provides efficient data retrieval.
+* **Schema:**
+  * **arrows**
 
-#### Out of Scope
+    ```sql
+    CREATE TABLE IF NOT EXISTS arrows (
+        id UUID PRIMARY KEY,
+        weight REAL DEFAULT 0.0,
+        diameter REAL DEFAULT 0.0,
+        spine REAL DEFAULT 0.0,
+        length REAL NOT NULL,
+        human_identifier VARCHAR(10),
+        label_position REAL NOT NULL,
+        UNIQUE (human_identifier)
+    );
+    ```
 
-any software or coding
+  * **sessions**
 
-### Data collection & storage
+    ```sql
+    CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY,
+        is_opened BOOLEAN NOT NULL,
+        start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        end_time TIMESTAMP WITH TIME ZONE,
+        location VARCHAR(255) NOT NULL,
+        CONSTRAINT open_session_no_end_time CHECK (
+            (is_opened = TRUE AND end_time IS NULL) OR (is_opened = FALSE)
+        ),
+        CONSTRAINT closed_session_with_end_time CHECK (
+            (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
+        )
+    );
+    ```
 
-This epic enables Archer to collect & store their metrics through sensors during shooting. This includes:
+  * **shots**
 
-* Rust Applications:
-  * arrow_reader: Registers and programs arrows.
-  * bow_reader: Collects data from bow sensors during setup.
-  * target_reader: Records details of each shot.
-* PostgreSQL Database: Stores the collected data.
+    ```sql
+    CREATE TABLE IF NOT EXISTS shots (
+        id UUID PRIMARY KEY,
+        arrow_id UUID NOT NULL,
+        session_id UUID NOT NULL,
+        arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        arrow_landing_time TIMESTAMP WITH TIME ZONE,
+        x_coordinate REAL,
+        y_coordinate REAL,
+        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+    );
+    ```
 
-#### Out of Scope
+  * **targets**
 
-Any data processing or visualization
+    ```sql
+    CREATE TABLE IF NOT EXISTS targets (
+        id UUID PRIMARY KEY,
+        max_x_coordinate REAL NOT NULL,
+        max_y_coordinate REAL NOT NULL,
+        radius REAL [] NOT NULL,
+        points INT [] NOT NULL,
+        height REAL NOT NULL,
+        human_identifier VARCHAR(10),
+        session_id UUID NOT NULL,
+        CHECK (array_length(radius, 1) = array_length(points, 1)),
+        UNIQUE (session_id, human_identifier),
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+    );
+    ```
 
-### Archer & tournament management
+* **Database Scripts:**
+  * Scripts for creating and updating the database schema.
+  * Scripts for initial data setup (if any).
+* **Connection Details:**
+  * [Specify how the Web Server and other modules will connect to the database (e.g., connection string, credentials).]
 
-This epic enables Tournament Organizer to register new archers in the system and add them to tournaments. This includes registering the archer's personal and equipment details. This will be done through:
+#### 3.3.7 Testing
 
-* Web Server: Serves the interface.
-* WebUI: Built with Angular for a user-friendly interaction.
+* Python unit tests using pytest for:
+  * Arrow Reader module.
+  * Bow Reader module.
+  * Target Reader module.
+  * Web Server module.
+* TypeScript unit tests using Jest for the WebUI module.
 
-### Data visualization & analysis
+## 4. Development Plan
 
-This epic enables Archers to analyze their metrics & performance with visual aids, this includes:
-
-* Web Server: Processes data for visualization.
-* WebUI: Displays user-friendly analytics, built with Angular.
-
-## Raspberry Pi Setup
-
-The Raspberry Pi 5 (256GB NVMe SSD) setup includes:
-
-* PostgreSQL for data storage.
-* Rust services for data processing.
-* Proper allocation of memory and CPU resources to balance services.
-
-## Work Effort
-
-The work is going to be tracked in [JIRA](https://jpmolinamatute.atlassian.net). However, we are going to have an introduction on each module in this repository as follow:
-
-* [The Server](./server/README.md)
-* [The WebUI](./webui/README.md)
-* [The Shot Reader](./target_reader/README.md)
-* [The Bow Reader](./bow_reader/README.md)
-* [The Arrow Reader](./arrow_reader/README.md)
-* [The Database](./docker/README.md)
-* [The Raspberry Pi Setup](./os/README.md)
-* [Tools](./scripts/README.md)
-
-### The Frame (structure to hold the sensors and the Raspberry Pi)
-
-TBD
-
-## Future Features
-
-<!--
-@TODO: Under "Future Features," add more emphasis on the scalability strategy and potential roadmap for adding new technologies or integrations.
--->
-
-In the initial stages, the system will support only one lane and one archer due to hardware and volunteer constraints. Future enhancements may include:
-
-Expanding the number of lanes and archers by integrating additional Raspberry Pis and sensors.
-Developing a networked database to handle data from multiple Raspberry Pis, with authentication for secure data writing.
+The core application logic, API, and WebUI will be built using **dummy data** to simulate input from the hardware sensors. Once the software is stable, the focus will shift to define and integrate the actual hardware to be used as sensors.

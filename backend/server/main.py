@@ -3,21 +3,14 @@ from asyncio import CancelledError
 from contextlib import asynccontextmanager
 from os import getenv
 from pathlib import Path
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from server.db import DBState  # Import database functions
-from server.routers import (
-    router_archer,
-    router_lane,
-    router_shooting,
-    router_target,
-    router_tournament,
-    router_websocket,
-)
+from server.routes import arrow, session, shot
 
 
 @asynccontextmanager
@@ -36,12 +29,12 @@ def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan, openapi_url="/api/openapi.json", title="Arch Stats API")
 
     # Include blueprints
-    app.include_router(router_tournament, prefix="/api")
-    app.include_router(router_archer, prefix="/api")
-    app.include_router(router_lane, prefix="/api")
-    app.include_router(router_shooting, prefix="/api")
-    app.include_router(router_target, prefix="/api")
-    app.include_router(router_websocket)
+    app.include_router(arrow, prefix="/api")
+    app.include_router(shot, prefix="/api")
+    app.include_router(session, prefix="/api")
+    # app.include_router(router_shooting, prefix="/api")
+    # app.include_router(router_target, prefix="/api")
+    # app.include_router(router_websocket)
     current_file_path = Path(__file__).parent
     frontend_path = current_file_path.joinpath("frontend")
     app.mount(
