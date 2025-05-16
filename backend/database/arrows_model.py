@@ -1,9 +1,10 @@
 import uuid
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID, REAL
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base_model import Base
+from database.shots_model import Shots
 
 # pylint: disable=too-few-public-methods
 
@@ -18,3 +19,5 @@ class Arrows(Base):
     spine: Mapped[float | None] = mapped_column(REAL, nullable=True)
     length: Mapped[float | None] = mapped_column(REAL, nullable=True)
     label_position: Mapped[float | None] = mapped_column(REAL, nullable=True)
+
+    shots: Mapped[list[Shots]] = relationship(back_populates="arrow", cascade="all, delete-orphan")
