@@ -7,7 +7,6 @@ members = [
     "arch-stats",
     "arrow-reader",
     "bow-reader",
-    "docs",
     "server",
     "target-reader",
 ]
@@ -216,17 +215,6 @@ wheels = [
 ]
 
 [[package]]
-name = "docs"
-version = "0.1.0"
-source = { virtual = "docs" }
-dependencies = [
-    { name = "graphviz" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "graphviz", specifier = ">=0.20.3" }]
-
-[[package]]
 name = "email-validator"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -293,15 +281,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d5/1d/c08c99b2be52d822323840a7acc8f17df5bc3963e5e3431b4cedc0838b2f/FastAPI-SQLAlchemy-0.2.1.tar.gz", hash = "sha256:7a9d44e46cbc73c3f5ee8c444f7e0bcd3d01370a878740abd4cd4d2e900ce9af", size = 4415 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/8d/eb73397313152277934e6d9891786affe12704ddfb5a1ae1e9a869c98c53/FastAPI_SQLAlchemy-0.2.1-py3-none-any.whl", hash = "sha256:d3bfc6d9388a73a2c3726bc6bd7764cd82debfa71c16e3991c544b9701f48d96", size = 5689 },
-]
-
-[[package]]
-name = "graphviz"
-version = "0.20.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fa/83/5a40d19b8347f017e417710907f824915fba411a9befd092e52746b63e9f/graphviz-0.20.3.zip", hash = "sha256:09d6bc81e6a9fa392e7ba52135a9d49f1ed62526f96499325930e87ca1b5925d", size = 256455 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/be/d59db2d1d52697c6adc9eacaf50e8965b6345cc143f671e1ed068818d5cf/graphviz-0.20.3-py3-none-any.whl", hash = "sha256:81f848f2904515d8cd359cc611faba817598d2feaac4027b266aa3eda7b3dde5", size = 47126 },
 ]
 
 [[package]]
