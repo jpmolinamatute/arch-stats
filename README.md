@@ -69,6 +69,8 @@ We'll come up with some metrics later on to measure the following points:
 
 ## 3. System Architecture
 
+Since I'm developing this app by myself, I have decided to use python workspace, multi module in a monorepo in order to simply the development process.
+
 ### 3.1 Modules
 
 The system will consist of the following modules:
@@ -84,7 +86,59 @@ The system will consist of the following modules:
 
 #### 3.2.1 Arrow Registration
 
-WIP
+```mermaid
+    flowchart TB
+
+    START(["Start Arrow Registration"])
+    Q1{"registering a new arrow?"}
+    R1["system:Request new UUID"]
+    F1["system: Ask for arrow name"]
+    U1["user: Provides arrow name"]
+    F2["system: Ask for the whole<br/>arrow information"]
+    R2["system: Request arrow's<br/>UUID"]
+    U2["user: Provides arrow<br/>information"]
+    S1["system: Validate arrow's name<br/>and save info in DB"]
+    S2["system: Update arrow's<br/>'is_programmed' column in DB"]
+    END1["End."]
+    subgraph PROGRAM_ARROW["Program the arrow"]
+        SCAN["user: Scans arrow sticker<br/>to program UUID"]
+        SQ1{"Did it work?"}
+        FAIL["system: Return false<br/>and light red"]
+        SUCCESS["system: Return true<br/>and light green"]
+        SQ2{"Try again?"}
+        END2["End."]
+
+        SCAN --> SQ1
+        SQ1 -->|Yes.|SUCCESS
+        SQ1 -->|No.|FAIL
+        FAIL --> SQ2
+        SQ2 -->|Yes.|SCAN
+        SQ2 -->|No.|END2
+        SUCCESS --> END2
+    end
+
+    START --> Q1
+    Q1 -->|Yes.|R1
+    Q1 -->|No.|F1
+
+    R1 --> F2
+    F1 --> U1
+    U1 --> R2
+    R2 --> S2
+    R2 --> PROGRAM_ARROW
+    F2 --> U2
+    U2 --> S1
+    U2 --> PROGRAM_ARROW
+    S1 --> END1
+    S2 --> END1
+
+    class SCAN,U1,U2 user
+    class R1,F1,F2,R2,FAIL,SUCCESS,S1,S2 system
+
+    classDef user fill:#d1f0ff,stroke:#00a0e3;
+    classDef system fill:#fff3cd,stroke:#ffcc00;
+
+```
 
 #### 3.2.2 Sessions
 
@@ -227,6 +281,7 @@ WIP
         length REAL NOT NULL,
         human_identifier VARCHAR(10),
         label_position REAL NOT NULL,
+        is_programmed BOOLEAN NOT NULL DEFAULT FALSE,
         UNIQUE (human_identifier)
     );
     ```
@@ -255,14 +310,12 @@ WIP
     CREATE TABLE IF NOT EXISTS shots (
         id UUID PRIMARY KEY,
         arrow_id UUID NOT NULL,
-        session_id UUID NOT NULL,
         arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_landing_time TIMESTAMP WITH TIME ZONE,
         x_coordinate REAL,
         y_coordinate REAL,
-        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE
     );
     ```
 

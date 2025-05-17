@@ -9,7 +9,7 @@ requires-python = ">=3.12.7"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["arrow_reader", "bow_reader", "server", "target_reader", "docs"]
+members = ["arrow_reader", "bow_reader", "server", "target_reader"]
 
 [dependency-groups]
 dev = [
