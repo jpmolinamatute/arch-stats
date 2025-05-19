@@ -84,37 +84,46 @@ The system will consist of the following modules:
 
 ### 3.2 Data Flow Diagram
 
+Data will be collected through 3 entities:
+
+* App (Software)
+* Sensors (Hardware)
+* User input
+
+The following flow charts show how the 3 entities interact with each other.
+
 #### 3.2.1 Arrow Registration
 
 ```mermaid
     flowchart TB
+    classDef user fill:#e3f2fd,stroke:#2196f3,color:#0d47a1,font-weight:bold;
+    classDef app fill:#e8f5e9,stroke:#43a047,color:#1b5e20,font-weight:bold;
+    classDef sensor fill:#fff3e0,stroke:#ff9800,color:#e65100,font-weight:bold;
+    classDef subgraphStyle fill:#f9f9f9,stroke:#cccccc,color:#444;
 
     START(["Start Arrow Registration"])
     Q1{"registering a new arrow?"}
-    R1["system:Request new UUID"]
-    F1["system: Ask for arrow name"]
-    U1["user: Provides arrow name"]
-    F2["system: Ask for the whole<br/>arrow information"]
-    R2["system: Request arrow's<br/>UUID"]
-    U2["user: Provides arrow<br/>information"]
-    S1["system: Validate arrow's name<br/>and save info in DB"]
-    S2["system: Update arrow's<br/>'is_programmed' column in DB"]
-    END1["End."]
-    subgraph PROGRAM_ARROW["Program the arrow"]
-        SCAN["user: Scans arrow sticker<br/>to program UUID"]
-        SQ1{"Did it work?"}
-        FAIL["system: Return false<br/>and light red"]
-        SUCCESS["system: Return true<br/>and light green"]
-        SQ2{"Try again?"}
-        END2["End."]
-
-        SCAN --> SQ1
-        SQ1 -->|Yes.|SUCCESS
-        SQ1 -->|No.|FAIL
-        FAIL --> SQ2
-        SQ2 -->|Yes.|SCAN
-        SQ2 -->|No.|END2
-        SUCCESS --> END2
+    R1["app: generates a<br />new UUID"]:::app
+    F1["app: ask for<br />'human_identifier'"]:::app
+    U1["user: provides arrow's<br />'human_identifier'"]:::user
+    F2["app: ask for<br />'weight'<br />'diameter'<br />'spine'<br />'length'<br />'human_identifier'<br />'label_position'"]:::app
+    R2["app: pulls arrow's data"]:::app
+    U2["user: provides arrow<br />information"]:::user
+    S1["app: validate arrow's<br />'human_identifier' and set<br />'is_programmed' to false<br />generate payload"]:::app
+    S2["app: update arrow's<br />'is_programmed' to true<br />in arrows table"]:::app
+    S3["app: update arrow's<br />'is_programmed' to true<br />in payload"]:::app
+    S4["app: save payload into<br />arrows table"]:::app
+    END1(["End."])
+    subgraph PROGRAM["Program arrow with a UUID"]
+        class PROGRAM subgraphStyle;
+        SCAN["sensor: scan arrow"]:::sensor
+        VERIFY{"app: Success?"}:::app
+        SUCCESS["app: display<br />an OK on WebUI"]:::app
+        FAIL["app:  display<br />a Retry? on WebUI"]:::app
+        SCAN --> VERIFY
+        VERIFY -->|Yes| SUCCESS
+        VERIFY -->|No| FAIL
+        FAIL -->|Yes| SCAN
     end
 
     START --> Q1
@@ -124,29 +133,88 @@ The system will consist of the following modules:
     R1 --> F2
     F1 --> U1
     U1 --> R2
-    R2 --> S2
-    R2 --> PROGRAM_ARROW
+    
+    R2 --> PROGRAM
     F2 --> U2
     U2 --> S1
-    U2 --> PROGRAM_ARROW
-    S1 --> END1
+    PROGRAM --> S2
     S2 --> END1
-
-    class SCAN,U1,U2 user
-    class R1,F1,F2,R2,FAIL,SUCCESS,S1,S2 system
-
-    classDef user fill:#d1f0ff,stroke:#00a0e3;
-    classDef system fill:#fff3cd,stroke:#ffcc00;
-
+    S1 --> PROGRAM
+    PROGRAM --> S3
+    S3 --> S4
+    S4 --> END1
 ```
 
-#### 3.2.2 Sessions
+#### 3.2.2 Sessions &amp; Shots flow
 
-WIP
+```mermaid
+    flowchart TB
+    classDef user fill:#e3f2fd,stroke:#2196f3,color:#0d47a1,font-weight:bold;
+    classDef app fill:#e8f5e9,stroke:#43a047,color:#1b5e20,font-weight:bold;
+    classDef sensor fill:#fff3e0,stroke:#ff9800,color:#e65100,font-weight:bold;
+    classDef subgraphStyle fill:#f9f9f9,stroke:#cccccc,color:#444;
 
-#### 3.2.3 Shots
+    START(["Open a session"])
+    S1["app: get current datetime<br />as 'start_time' and set<br />'is_opened' to true"]:::app
+    U1["user: provides 'location'"]:::user
 
-WIP
+    S2["app: add a new row<br />in the sessions table and<br />one or more rows in<br />targets table"]:::app
+    U4["user: close session"]:::user
+    S3["app: get current datetime<br />as 'end_time' and set<br />'is_opened' to false"]:::app
+    S4["app: update the<br />session table"]:::app
+    ENDS(["Session is closed"])
+
+    subgraph TARGET_CALIBRATION["Target(s) calibration*"]
+        class TARGET_CALIBRATION subgraphStyle;
+        SU1["user: installs<br />target sensors in butt"]:::user
+        SU2["user: setup pin<br />for target face(s) center"]:::user
+        SU3["user: setup pin<br />for target face(s) rings"]:::user
+        SS1["sensor: reads pins"]:::sensor
+        SS2["app: display info back<br />to user through WebUI"]:::app
+        VERIFY{"System: Success?"}:::app
+        SUCCESS["System: OK"]:::app
+        FAIL["System: Retry?"]:::app
+
+        SU1 --> SU2
+        SU2 --> SU3
+        SU3 --> SS1
+        SS1 --> VERIFY
+        VERIFY -->|Yes| SUCCESS
+        VERIFY -->|No| FAIL
+        FAIL -->|Yes| SS1
+        SUCCESS --> SS2
+    end
+    subgraph SHOOTING["User shoots arrows"]
+        class SHOOTING subgraphStyle;
+        SU4["user: set arrow in bow"]:::user
+        HW1["sensor: bow sensor set<br />'arrow_id'<br />'arrow_engage_time'"]:::sensor
+        SU5["user: fires arrow"]:::user
+        HW2["sensor: bow sensor set<br />'arrow_disengage_time'"]:::sensor
+        Q1{"did the target sensor<br />registered an arrow in less<br />than X seconds?"}
+        HW3["sensor: target sensor set<br />'arrow_landing_time'<br />'x_coordinate'<br />'y_coordinate'"]:::sensor
+        SS3["app: collect data<br />and save it into shots table"]:::app
+        MISS["Shot missed"]
+
+        SU4 --> HW1
+        HW1 --> SU5
+        SU5 --> HW2
+        HW2 --> Q1
+        Q1 -->|Yes| HW3
+        Q1 -->|No| MISS
+        MISS --> SU4
+        HW3 --> SS3
+    end
+
+    START --> S1
+    S1 --> U1
+    U1 --> TARGET_CALIBRATION
+    TARGET_CALIBRATION --> S2
+    S2 --> SHOOTING
+    SHOOTING --> U4
+    U4 --> S3
+    S3 --> S4
+    S4 --> ENDS
+```
 
 ### 3.3 Module Details
 
