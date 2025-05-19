@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from server.db import DBState  # Import database functions
-from server.routes import arrow, session, shot
+from server.routers import arrow, session, shot
 
 
 @asynccontextmanager

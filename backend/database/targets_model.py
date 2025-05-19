@@ -15,7 +15,9 @@ from database.sessions_model import Sessions
 class Targets(Base):
     __tablename__ = "targets"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    _id: Mapped[uuid.UUID] = mapped_column(
+        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     max_x_coordinate: Mapped[float] = mapped_column(REAL, nullable=False)
     max_y_coordinate: Mapped[float] = mapped_column(REAL, nullable=False)
     radius: Mapped[list[float]] = mapped_column(ARRAY(REAL), nullable=False)

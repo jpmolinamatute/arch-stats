@@ -12,7 +12,9 @@ from database.shots_model import Shots
 class Arrows(Base):
     __tablename__ = "arrows"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    _id: Mapped[uuid.UUID] = mapped_column(
+        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     human_identifier: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
     is_programmed: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
     weight: Mapped[float | None] = mapped_column(REAL, nullable=True)

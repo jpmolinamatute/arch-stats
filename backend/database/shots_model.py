@@ -16,7 +16,9 @@ from database.arrows_model import Arrows
 class Shots(Base):
     __tablename__ = "shots"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    _id: Mapped[uuid.UUID] = mapped_column(
+        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     arrow_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("arrows.id", ondelete="CASCADE"), nullable=False
     )

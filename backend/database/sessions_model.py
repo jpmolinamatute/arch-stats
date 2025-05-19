@@ -15,7 +15,9 @@ from database.targets_model import Targets
 class Sessions(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    _id: Mapped[uuid.UUID] = mapped_column(
+        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     is_opened: Mapped[bool] = mapped_column(BOOLEAN, nullable=False)
     start_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
