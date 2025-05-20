@@ -1,16 +1,22 @@
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter  # , HTTPException
+from fastapi import APIRouter, status  # , HTTPException
 
-from server.schema.arrow import ArrowCreate, ArrowRead, ArrowUpdate
+from server.schema import ArrowCreate, ArrowRead, ArrowUpdate, HTTPResponse
+from database import ArrowsDB, DBState
 
 ArrowRouter = APIRouter(prefix="/arrow")
 
 
 # GET all arrows
-@ArrowRouter.get("/", response_model=list[ArrowRead])
-async def get_all_arrows() -> list[ArrowRead]:
-    return []
+@ArrowRouter.get("/", response_model=HTTPResponse[list[ArrowRead]])
+async def get_all_arrows() -> HTTPResponse[list[ArrowRead]]:
+    pool = await DBState.get_db_pool()
+    arrows = ArrowsDB(pool)
+    data = await arrows.get_all()
+    arrows_list = [ArrowRead(**dict(item)) for item in data]
+    resp = HTTPResponse[list[ArrowRead]](code=status.HTTP_200_OK, data=arrows_list)
+    return resp
 
 
 # POST a new arrow

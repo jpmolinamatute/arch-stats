@@ -1,4 +1,4 @@
-from target_reader.main import setup
+from target_reader.setup import setup
 
 
 __all__ = ["setup"]

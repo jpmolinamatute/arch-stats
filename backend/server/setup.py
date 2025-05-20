@@ -14,15 +14,8 @@ from database import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowRouter, SessionsRouter, ShotsRouter, TargetsRouter
 
 
-async def get_db_pool() -> Pool:
-    """Dependency to get the PostgreSQL connection pool."""
-    if DBState.db_pool is None:
-        raise RuntimeError("Database connection pool is not initialized")
-    return DBState.db_pool
-
-
 async def create_tables() -> None:
-    pool = await get_db_pool()
+    pool = await DBState.get_db_pool()
     arrows = ArrowsDB(pool)
     shots = ShotsDB(pool)
     sessions = SessionsDB(pool)
@@ -78,9 +71,15 @@ async def setup(logger: logging.Logger) -> None:
     dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
     logger.info("Starting the server on %s:%d", server_name, server_port)
     logger.info("Development mode: %s", dev_mode)
-    app = create_app()
+
+    if dev_mode:
+        worker = None
+        color = True
+    else:
+        worker = 4
+        color = None
     config = uvicorn.Config(
-        app,
+        app=create_app(),
         host=server_name,
         port=server_port,
         loop="uvloop",
@@ -88,7 +87,8 @@ async def setup(logger: logging.Logger) -> None:
         reload=dev_mode,
         ws="websockets",
         http="h11",
-        workers=4,
+        workers=worker,
+        use_colors=color,
     )
     server = uvicorn.Server(config)
 

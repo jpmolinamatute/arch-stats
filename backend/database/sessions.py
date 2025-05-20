@@ -10,8 +10,8 @@ class SessionsDB(DBBase):
             id UUID PRIMARY KEY,
             is_opened BOOLEAN NOT NULL,
             start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-            end_time TIMESTAMP WITH TIME ZONE,
             location VARCHAR(255) NOT NULL,
+            end_time TIMESTAMP WITH TIME ZONE,
             CONSTRAINT open_session_no_end_time CHECK (
                 (is_opened = TRUE AND end_time IS NULL) OR (is_opened = FALSE)
             ),

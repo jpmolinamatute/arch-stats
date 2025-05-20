@@ -10,3 +10,4 @@ __pycache__/
 /webui/dist/
 /backend/docs/*.png
 /ignore/*
+/backend/shared/logs/*.log

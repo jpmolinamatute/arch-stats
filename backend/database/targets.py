@@ -14,7 +14,7 @@ class TargetsDB(DBBase):
             radius REAL [] NOT NULL,
             points INT [] NOT NULL,
             height REAL NOT NULL,
-            human_identifier VARCHAR(10),
+            human_identifier VARCHAR(10) NOT NULL,
             session_id UUID NOT NULL,
             CHECK (array_length(radius, 1) = array_length(points, 1)),
             UNIQUE (session_id, human_identifier),

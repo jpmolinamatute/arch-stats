@@ -7,6 +7,7 @@ import sys
 from asyncio import run
 
 import asyncpg
+from dotenv import load_dotenv
 
 # from hub import setup as setup_hub
 from server import setup as setup_server
@@ -31,6 +32,7 @@ async def run_async(cmd: str) -> None:
 def main(module_name: str) -> None:
     exit_status = 0
     try:
+        load_dotenv()
         run(run_async(module_name))
     except asyncpg.PostgresError as e:
         logger.exception("Database error occurred: %s", e)
