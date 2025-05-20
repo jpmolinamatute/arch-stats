@@ -6,7 +6,6 @@ from os import getenv
 from pathlib import Path
 
 import uvicorn
-from asyncpg import Pool
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 

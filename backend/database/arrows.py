@@ -1,11 +1,12 @@
 from asyncpg import Pool
 
 from database.base import DBBase
+from database.schema import ArrowBase
 
 # pylint: disable=too-few-public-methods
 
 
-class ArrowsDB(DBBase):
+class ArrowsDB(DBBase[ArrowBase]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
             id UUID PRIMARY KEY,
@@ -18,4 +19,4 @@ class ArrowsDB(DBBase):
             spine REAL,
             UNIQUE (human_identifier)
         """
-        super().__init__("arrows", schema, db_pool)
+        super().__init__("arrows", schema, ArrowBase, db_pool)
