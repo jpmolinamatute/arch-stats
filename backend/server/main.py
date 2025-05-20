@@ -1,22 +1,43 @@
 import logging
 from asyncio import CancelledError
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from os import getenv
 from pathlib import Path
-from collections.abc import AsyncGenerator
 
 import uvicorn
+from asyncpg import Pool
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from database.db_state import DBState  # Import database functions
-from server.routers import arrow, session, shot
+from database import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
+from server.routers import ArrowRouter, SessionsRouter, ShotsRouter, TargetsRouter
+
+
+async def get_db_pool() -> Pool:
+    """Dependency to get the PostgreSQL connection pool."""
+    if DBState.db_pool is None:
+        raise RuntimeError("Database connection pool is not initialized")
+    return DBState.db_pool
+
+
+async def create_tables() -> None:
+    pool = await get_db_pool()
+    arrows = ArrowsDB(pool)
+    shots = ShotsDB(pool)
+    sessions = SessionsDB(pool)
+    targets = TargetsDB(pool)
+    await arrows.create_table()
+    await sessions.create_table()
+    await shots.create_table()
+    await targets.create_table()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
     await DBState.init_db()  # Initialize database
+    await create_tables()
     try:
         yield
     except CancelledError:
@@ -26,14 +47,21 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(lifespan=lifespan, openapi_url="/api/openapi.json", title="Arch Stats API")
-
+    version = "0.1.0"
+    app = FastAPI(
+        lifespan=lifespan,
+        openapi_url="/api/openapi.json",
+        title="Arch Stats API",
+        version=version,
+    )
+    mayor_version = f"v{version[0]}"
     # Include blueprints
-    app.include_router(arrow, prefix="/api")
-    app.include_router(shot, prefix="/api")
-    app.include_router(session, prefix="/api")
-    # app.include_router(router_shooting, prefix="/api")
-    # app.include_router(router_target, prefix="/api")
+    app.include_router(ArrowRouter, prefix=f"/api/{mayor_version}")
+    app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
+    app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
+    app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
+    # app.include_router(router_shooting, prefix=f"/api/{mayor_version}")
+    # app.include_router(router_target, prefix=f"/api/{mayor_version}")
     # app.include_router(router_websocket)
     current_file_path = Path(__file__).parent
     frontend_path = current_file_path.joinpath("frontend")
@@ -63,4 +91,5 @@ async def setup(logger: logging.Logger) -> None:
         workers=4,
     )
     server = uvicorn.Server(config)
+
     await server.serve()

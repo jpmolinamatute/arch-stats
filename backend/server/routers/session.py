@@ -1,4 +1,0 @@
-from fastapi import APIRouter  # , HTTPException
-
-
-SessionsRouter = APIRouter(prefix="/session")

@@ -22,6 +22,7 @@ async def add_arrow() -> ArrowCreate:
 # GET a specific arrow by ID
 @ArrowRouter.get("/{arrow_id}", response_model=ArrowRead)
 async def get_arrow(arrow_id: UUID) -> ArrowRead:
+    print(f"This is arrow_id {arrow_id}")
     return {}
 
 
@@ -34,6 +35,7 @@ async def delete_arrow(arrow_id: UUID) -> dict[str, str]:
 # PATCH (partial update) a specific arrow by ID
 @ArrowRouter.patch("/{arrow_id}", response_model=ArrowRead)
 async def patch_arrow(arrow_id: UUID, update: ArrowUpdate) -> ArrowRead:
+    print(f"This is arrow_id {arrow_id} update {update}")
     return {}
 
 
