@@ -1,25 +1,21 @@
-import uuid
-from sqlalchemy import String
-from sqlalchemy.dialects.postgresql import UUID, REAL, BOOLEAN
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from asyncpg import Pool
 
-from database.base_model import Base
-from database.shots_model import Shots
+from database.base import DBBase
 
 # pylint: disable=too-few-public-methods
 
 
-class Arrows(Base):
-    __tablename__ = "arrows"
-
-    _id: Mapped[uuid.UUID] = mapped_column(
-        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    human_identifier: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
-    is_programmed: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
-    weight: Mapped[float | None] = mapped_column(REAL, nullable=True)
-    diameter: Mapped[float | None] = mapped_column(REAL, nullable=True)
-    spine: Mapped[float | None] = mapped_column(REAL, nullable=True)
-    length: Mapped[float | None] = mapped_column(REAL, nullable=True)
-    label_position: Mapped[float | None] = mapped_column(REAL, nullable=True)
-    shots: Mapped[list[Shots]] = relationship(back_populates="arrow", cascade="all, delete-orphan")
+class ArrowsDB(DBBase):
+    def __init__(self, db_pool: Pool) -> None:
+        schema = """
+            id UUID PRIMARY KEY,
+            weight REAL DEFAULT 0.0,
+            diameter REAL DEFAULT 0.0,
+            spine REAL DEFAULT 0.0,
+            length REAL NOT NULL,
+            human_identifier VARCHAR(10),
+            label_position REAL NOT NULL,
+            is_programmed BOOLEAN NOT NULL DEFAULT FALSE,
+            UNIQUE (human_identifier)
+        """
+        super().__init__("arrows", schema, db_pool)

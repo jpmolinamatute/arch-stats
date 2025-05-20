@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from server.db import DBState  # Import database functions
+from database.db_state import DBState  # Import database functions
 from server.routers import arrow, session, shot
 
 

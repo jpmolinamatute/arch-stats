@@ -1,38 +1,23 @@
-from __future__ import annotations
+from asyncpg import Pool
 
-import uuid
-
-from sqlalchemy import String, CheckConstraint, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, ARRAY, REAL, INTEGER
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from database.base_model import Base
-from database.sessions_model import Sessions
+from database.base import DBBase
 
 # pylint: disable=too-few-public-methods
 
 
-class Targets(Base):
-    __tablename__ = "targets"
-
-    _id: Mapped[uuid.UUID] = mapped_column(
-        "id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    max_x_coordinate: Mapped[float] = mapped_column(REAL, nullable=False)
-    max_y_coordinate: Mapped[float] = mapped_column(REAL, nullable=False)
-    radius: Mapped[list[float]] = mapped_column(ARRAY(REAL), nullable=False)
-    points: Mapped[list[int]] = mapped_column(ARRAY(INTEGER), nullable=False)
-    height: Mapped[float] = mapped_column(REAL, nullable=False)
-    human_identifier: Mapped[str | None] = mapped_column(String(10))
-    session_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
-    )
-
-    __table_args__ = (
-        CheckConstraint(
-            "array_length(radius, 1) = array_length(points, 1)", name="radius_points_length_check"
-        ),
-        UniqueConstraint("session_id", "human_identifier", name="unique_session_human_identifier"),
-    )
-
-    session: Mapped[Sessions] = relationship(back_populates="targets")
+class TargetsDB(DBBase):
+    def __init__(self, db_pool: Pool) -> None:
+        schema = """
+            id UUID PRIMARY KEY,
+            max_x_coordinate REAL NOT NULL,
+            max_y_coordinate REAL NOT NULL,
+            radius REAL [] NOT NULL,
+            points INT [] NOT NULL,
+            height REAL NOT NULL,
+            human_identifier VARCHAR(10),
+            session_id UUID NOT NULL,
+            CHECK (array_length(radius, 1) = array_length(points, 1)),
+            UNIQUE (session_id, human_identifier),
+            FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+        """
+        super().__init__("targets", schema, db_pool)

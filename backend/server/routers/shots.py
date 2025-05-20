@@ -1,4 +1,4 @@
 from fastapi import APIRouter  # , HTTPException
 
 
-SessionsRouter = APIRouter(prefix="/session")
+ShotsRouter = APIRouter(prefix="/shot")

@@ -1,11 +1,11 @@
-from database.sessions_model import Sessions
-from database.targets_model import Targets
-from database.arrows_model import Arrows
-from database.shots_model import Shots
+from database.sessions import SessionsDB
+from database.targets import TargetsDB
+from database.arrows import ArrowsDB
+from database.shots import ShotsDB
 
 __all__ = [
-    "Arrows",
-    "Targets",
-    "Sessions",
-    "Shots",
+    "SessionsDB",
+    "TargetsDB",
+    "ArrowsDB",
+    "ShotsDB",
 ]
