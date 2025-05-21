@@ -1,10 +1,11 @@
 from asyncpg import Pool
 
 from database.base import DBBase
+from database.schema import SessionsCreate, SessionsRead, SessionsUpdate
 
 
 # pylint: disable=too-few-public-methods
-class SessionsDB(DBBase):
+class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
             id UUID PRIMARY KEY,
@@ -19,4 +20,4 @@ class SessionsDB(DBBase):
                 (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
             )
         """
-        super().__init__("sessions", schema, db_pool)
+        super().__init__("sessions", schema, SessionsRead, db_pool)

@@ -1,9 +1,10 @@
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, status  # , HTTPException
+from fastapi import APIRouter, status
 
+from database import ArrowsDB, DBException, DBState
 from database.schema import ArrowCreate, ArrowRead, ArrowUpdate, HTTPResponse
-from database import ArrowsDB, DBState
+
 
 ArrowRouter = APIRouter(prefix="/arrow")
 
@@ -11,9 +12,14 @@ ArrowRouter = APIRouter(prefix="/arrow")
 # GET all arrows
 @ArrowRouter.get("/", response_model=HTTPResponse[list[ArrowRead]])
 async def get_all_arrows() -> HTTPResponse[list[ArrowRead]]:
-    pool = await DBState.get_db_pool()
-    arrows = ArrowsDB(pool)
-    resp = HTTPResponse[list[ArrowRead]](code=status.HTTP_200_OK, data=await arrows.get_all())
+    try:
+        pool = await DBState.get_db_pool()
+        arrows = ArrowsDB(pool)
+        resp = HTTPResponse[list[ArrowRead]](code=status.HTTP_200_OK, data=await arrows.get_all())
+    except Exception as e:
+        resp = HTTPResponse[list[ArrowRead]](
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR, data=None, errors=[str(e)]
+        )
     return resp
 
 
@@ -30,16 +36,21 @@ async def add_arrow(arrow_data: ArrowCreate) -> HTTPResponse[None]:
 # GET a specific arrow by ID
 @ArrowRouter.get("/{arrow_id}", response_model=HTTPResponse[ArrowRead | None])
 async def get_arrow(arrow_id: UUID) -> HTTPResponse[ArrowRead | None]:
-    pool = await DBState.get_db_pool()
-    arrows = ArrowsDB(pool)
-    result = await arrows.get_one(arrow_id)
-    if result:
-        resp = HTTPResponse[ArrowRead | None](code=status.HTTP_200_OK, data=result)
-    else:
+    try:
+        pool = await DBState.get_db_pool()
+        arrows = ArrowsDB(pool)
+        result = await arrows.get_one(arrow_id)
+        if result:
+            resp = HTTPResponse[ArrowRead | None](code=status.HTTP_200_OK, data=result)
+        else:
+            resp = HTTPResponse[ArrowRead | None](
+                code=status.HTTP_404_NOT_FOUND,
+                data=None,
+                errors=[f"Arrow with id '{arrow_id}' was not found"],
+            )
+    except Exception as e:
         resp = HTTPResponse[ArrowRead | None](
-            code=status.HTTP_404_NOT_FOUND,
-            data=None,
-            errors=[f"Arrow with id '{arrow_id}' was not found"],
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR, data=None, errors=[str(e)]
         )
     return resp
 
@@ -47,10 +58,17 @@ async def get_arrow(arrow_id: UUID) -> HTTPResponse[ArrowRead | None]:
 # DELETE a specific arrow by ID
 @ArrowRouter.delete("/{arrow_id}", response_model=HTTPResponse[None])
 async def delete_arrow(arrow_id: UUID) -> HTTPResponse[None]:
-    pool = await DBState.get_db_pool()
-    arrows = ArrowsDB(pool)
-    await arrows.delete_one(arrow_id)
-    return HTTPResponse[None](code=status.HTTP_204_NO_CONTENT, data=None)
+    try:
+        pool = await DBState.get_db_pool()
+        arrows = ArrowsDB(pool)
+        await arrows.delete_one(arrow_id)
+        return HTTPResponse[None](code=status.HTTP_204_NO_CONTENT, data=None)
+    except DBException as e:
+        return HTTPResponse[None](code=status.HTTP_404_NOT_FOUND, data=None, errors=[str(e)])
+    except Exception as e:
+        return HTTPResponse[None](
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR, data=None, errors=[str(e)]
+        )
 
 
 # PATCH (partial update) a specific arrow by ID

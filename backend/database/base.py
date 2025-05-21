@@ -1,16 +1,22 @@
 from abc import ABC
+from typing import Generic, TypeVar
 from uuid import UUID
-from typing import TypeVar, Generic
-
 
 from asyncpg import Pool
 from pydantic import BaseModel
 
+
 ValuesList = list[str | float | bool | int | UUID]
-MODELTYPE = TypeVar("MODELTYPE", bound=BaseModel)
+CREATETYPE = TypeVar("CREATETYPE", bound=BaseModel)
+UPDATETYPE = TypeVar("UPDATETYPE", bound=BaseModel)
+READTYPE = TypeVar("READTYPE", bound=BaseModel)
 
 
-class DBBase(Generic[MODELTYPE], ABC):
+class DBException(Exception):
+    pass
+
+
+class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
     """
     Base class for database operations using asyncpg.
 
@@ -18,20 +24,29 @@ class DBBase(Generic[MODELTYPE], ABC):
     """
 
     def __init__(
-        self, table_name: str, table_schema: str, schema_class: type[MODELTYPE], db_pool: Pool
+        self,
+        table_name: str,
+        table_schema: str,
+        read_schema: type[READTYPE],
+        db_pool: Pool,
     ) -> None:
         self.table_name = table_name
         self.table_schema = table_schema
+        self.read_schema = read_schema
         self.db_pool = db_pool
-        self.schema_class = schema_class
 
-    async def execute(self, sql_statement: str, values: ValuesList | None = None) -> None:
-        # assert DBBase.db_pool is not None, "Database pool is not initialized."
+    async def execute(self, sql_statement: str, values: ValuesList | None = None) -> int:
         async with self.db_pool.acquire() as conn:
             if values is None:
-                await conn.execute(sql_statement)
+                result = await conn.execute(sql_statement)
             else:
-                await conn.execute(sql_statement, *values)
+                result = await conn.execute(sql_statement, *values)
+        # result is a string like 'UPDATE 1' or 'DELETE 0' or 'INSERT 1'
+        try:
+            affected = int(result.split()[-1])
+        except (IndexError, ValueError):
+            affected = 0  # default to 0 if parsing fails
+        return affected
 
     async def create_table(self) -> None:
         """
@@ -40,7 +55,7 @@ class DBBase(Generic[MODELTYPE], ABC):
         sql_statement = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({self.table_schema});"
         await self.execute(sql_statement)
 
-    async def insert_one(self, data: MODELTYPE) -> None:
+    async def insert_one(self, data: CREATETYPE) -> None:
         """
         Insert a new record into the table.
         """
@@ -57,9 +72,11 @@ class DBBase(Generic[MODELTYPE], ABC):
         Delete a record from the table.
         """
         sql_statement = f"DELETE FROM {self.table_name} WHERE id = $1;"
-        await self.execute(sql_statement, [_id])
+        affected = await self.execute(sql_statement, [_id])
+        if affected == 0:
+            raise DBException(f"{self.table_name}: No record found with id={_id}")
 
-    async def update_one(self, _id: UUID, data: MODELTYPE) -> None:
+    async def update_one(self, _id: UUID, data: UPDATETYPE) -> None:
         """
         Update a record in the table.
         """
@@ -70,22 +87,28 @@ class DBBase(Generic[MODELTYPE], ABC):
         # The id is the last parameter
         sql_statement = f"UPDATE {self.table_name} SET {set_clause} WHERE id = ${len(keys)+1};"
         values.append(_id)
-        await self.execute(sql_statement, values)
+        affected = await self.execute(sql_statement, values)
+        if affected == 0:
+            raise DBException(f"{self.table_name}: No record found with id={_id}")
 
-    async def get_one(self, _id: UUID) -> MODELTYPE | None:
+    async def get_one(self, _id: UUID) -> READTYPE:
         """
         Retrieve a record from the table.
         """
         sql_statement = f"SELECT * FROM {self.table_name} WHERE id = $1;"
         async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(sql_statement, _id)
-            return self.schema_class(**dict(row)) if row else None
+            if row:
+                result = self.read_schema(**dict(row))
+            else:
+                raise DBException(f"{self.table_name}: No record found with id={_id}")
+            return result
 
-    async def get_all(self) -> list[MODELTYPE]:
+    async def get_all(self) -> list[READTYPE]:
         """
         Retrieve all records from the table.
         """
         sql_statement = f"SELECT * FROM {self.table_name};"
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(sql_statement)
-            return [self.schema_class(**dict(row)) for row in rows]
+            return [self.read_schema(**dict(row)) for row in rows]

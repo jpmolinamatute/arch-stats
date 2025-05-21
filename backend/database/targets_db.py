@@ -1,11 +1,13 @@
 from asyncpg import Pool
 
 from database.base import DBBase
+from database.schema import TargetsCreate, TargetsRead, TargetsUpdate
+
 
 # pylint: disable=too-few-public-methods
 
 
-class TargetsDB(DBBase):
+class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
             id UUID PRIMARY KEY,
@@ -20,4 +22,4 @@ class TargetsDB(DBBase):
             UNIQUE (session_id, human_identifier),
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
-        super().__init__("targets", schema, db_pool)
+        super().__init__("targets", schema, TargetsRead, db_pool)

@@ -1,8 +1,9 @@
-from database.arrows import ArrowsDB
+from database.arrows_db import ArrowsDB
+from database.base import DBException
 from database.db_state import DBState
-from database.sessions import SessionsDB
-from database.shots import ShotsDB
-from database.targets import TargetsDB
+from database.sessions_db import SessionsDB
+from database.shots_db import ShotsDB
+from database.targets_db import TargetsDB
 
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "ArrowsDB",
     "ShotsDB",
     "DBState",
+    "DBException",
 ]

@@ -39,7 +39,7 @@ def main(module_name: str) -> None:
         exit_status = 1
     except KeyboardInterrupt:
         logger.info("Main process interrupted by user")
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         logger.exception("An unexpected error occurred: %s", e)
         exit_status = 1
     finally:
