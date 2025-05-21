@@ -3,8 +3,8 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, status, Depends
 
 from database import ArrowsDB, DBState
-from database.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate, HTTPResponse
-from server.routers.utils import db_response
+from database.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+from server.routers.utils import db_response, HTTPResponse
 
 ArrowsRouter = APIRouter(prefix="/arrow")
 

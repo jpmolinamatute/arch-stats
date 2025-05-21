@@ -2,11 +2,10 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from database.base import DBBase
+from database.base_db import DBBase
 from database.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
 
 
-# pylint: disable=too-few-public-methods
 class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate, ArrowsRead]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """

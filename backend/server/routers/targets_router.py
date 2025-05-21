@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, status, Depends
 
 from database import TargetsDB, DBState
-from database.schema import TargetsCreate, TargetsRead, TargetsUpdate, HTTPResponse
-from server.routers.utils import db_response
+from database.schema import TargetsCreate, TargetsRead, TargetsUpdate
+from server.routers.utils import db_response, HTTPResponse
 
 TargetsRouter = APIRouter(prefix="/target")
 

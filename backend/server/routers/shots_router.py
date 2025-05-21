@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, status, Depends
 
 from database import ShotsDB, DBState
-from database.schema import ShotsRead, HTTPResponse
-from server.routers.utils import db_response
+from database.schema import ShotsRead
+from server.routers.utils import db_response, HTTPResponse
 
 ShotsRouter = APIRouter(prefix="/shot")
 

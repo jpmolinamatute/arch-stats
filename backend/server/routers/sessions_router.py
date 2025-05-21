@@ -3,8 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, status, Depends
 
 from database import SessionsDB, DBState
-from database.schema import SessionsCreate, SessionsRead, SessionsUpdate, HTTPResponse
-from server.routers.utils import db_response
+from database.schema import SessionsCreate, SessionsRead, SessionsUpdate
+from server.routers.utils import db_response, HTTPResponse
 
 SessionsRouter = APIRouter(prefix="/session")
 

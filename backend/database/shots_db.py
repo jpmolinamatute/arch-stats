@@ -1,6 +1,6 @@
 from asyncpg import Pool
 
-from database.base import DBBase
+from database.base_db import DBBase
 from database.schema import ShotsCreate, ShotsRead, ShotsUpdate
 
 
