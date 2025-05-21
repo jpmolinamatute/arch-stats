@@ -3,7 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class ArrowCreate(BaseModel):
+class ArrowsCreate(BaseModel):
     arrow_id: UUID = Field(
         ...,
         alias="id",
@@ -46,7 +46,7 @@ class ArrowCreate(BaseModel):
     )
 
 
-class ArrowUpdate(BaseModel):
+class ArrowsUpdate(BaseModel):
     is_programmed: bool | None = Field(
         None,
         description="Whether the arrow has been programmed with a UUID",
@@ -84,7 +84,7 @@ class ArrowUpdate(BaseModel):
     )
 
 
-class ArrowRead(BaseModel):
+class ArrowsRead(BaseModel):
     arrow_id: UUID = Field(
         ...,
         alias="id",

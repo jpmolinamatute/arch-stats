@@ -16,6 +16,10 @@ class DBException(Exception):
     pass
 
 
+class DBNotFound(Exception):
+    pass
+
+
 class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
     """
     Base class for database operations using asyncpg.
@@ -36,11 +40,15 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         self.db_pool = db_pool
 
     async def execute(self, sql_statement: str, values: ValuesList | None = None) -> int:
+
         async with self.db_pool.acquire() as conn:
-            if values is None:
-                result = await conn.execute(sql_statement)
-            else:
-                result = await conn.execute(sql_statement, *values)
+            try:
+                if values is None:
+                    result = await conn.execute(sql_statement)
+                else:
+                    result = await conn.execute(sql_statement, *values)
+            except Exception as e:
+                raise DBException(e) from e
         # result is a string like 'UPDATE 1' or 'DELETE 0' or 'INSERT 1'
         try:
             affected = int(result.split()[-1])
@@ -74,7 +82,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         sql_statement = f"DELETE FROM {self.table_name} WHERE id = $1;"
         affected = await self.execute(sql_statement, [_id])
         if affected == 0:
-            raise DBException(f"{self.table_name}: No record found with id={_id}")
+            raise DBNotFound(f"{self.table_name}: No record found with id={_id}")
 
     async def update_one(self, _id: UUID, data: UPDATETYPE) -> None:
         """
@@ -89,7 +97,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         values.append(_id)
         affected = await self.execute(sql_statement, values)
         if affected == 0:
-            raise DBException(f"{self.table_name}: No record found with id={_id}")
+            raise DBNotFound(f"{self.table_name}: No record found with id={_id}")
 
     async def get_one(self, _id: UUID) -> READTYPE:
         """
@@ -101,7 +109,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
             if row:
                 result = self.read_schema(**dict(row))
             else:
-                raise DBException(f"{self.table_name}: No record found with id={_id}")
+                raise DBNotFound(f"{self.table_name}: No record found with id={_id}")
             return result
 
     async def get_all(self) -> list[READTYPE]:
