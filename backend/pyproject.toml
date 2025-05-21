@@ -18,6 +18,7 @@ dev = [
     "mypy>=1.15.0",
     "pylint>=3.3.7",
     "pytest>=8.3.5",
+    "python-dotenv>=1.1.0",
 ]
 
 [tool.mypy]
@@ -462,6 +463,8 @@ disable = [
     "missing-module-docstring",
     "missing-class-docstring",
     "no-else-raise",
+    "broad-except",
+    "too-few-public-methods",
 ]
 
 # Enable the message, report, category or checker with the given id(s). You can
