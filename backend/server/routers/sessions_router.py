@@ -1,10 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
-from database import SessionsDB, DBState
-from database.schema import SessionsCreate, SessionsRead, SessionsUpdate
-from server.routers.utils import db_response, HTTPResponse
+from server.models import DBState, SessionsDB
+from server.routers.utils import HTTPResponse, db_response
+from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
+
 
 SessionsRouter = APIRouter(prefix="/session")
 
@@ -18,7 +20,7 @@ async def get_sessions_db() -> SessionsDB:
 @SessionsRouter.get("/", response_model=HTTPResponse[list[SessionsRead]])
 async def get_all_sessions(
     sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> HTTPResponse[list[SessionsRead]]:
+) -> JSONResponse:
     """
     Retrieve all sessions.
 
@@ -33,7 +35,7 @@ async def get_all_sessions(
 async def add_session(
     session_data: SessionsCreate,
     sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Create and register a new session.
 
@@ -51,7 +53,7 @@ async def add_session(
 async def get_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> HTTPResponse[SessionsRead]:
+) -> JSONResponse:
     """
     Retrieve details for a specific session by its unique ID.
 
@@ -69,7 +71,7 @@ async def get_session(
 async def delete_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Delete a session by its unique ID.
 
@@ -88,7 +90,7 @@ async def patch_session(
     session_id: UUID,
     update: SessionsUpdate,
     sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Partially update an existing session's data.
 

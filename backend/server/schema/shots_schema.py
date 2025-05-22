@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ShotsCreate(BaseModel):
@@ -39,6 +39,4 @@ class ShotsRead(BaseModel):
     x_coordinate: float | None = Field(None, description="X coordinate of the arrow on the target")
     y_coordinate: float | None = Field(None, description="Y coordinate of the arrow on the target")
 
-    class Config:
-        allow_population_by_field_name = True  # Still useful!
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")

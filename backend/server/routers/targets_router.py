@@ -1,10 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
-from database import TargetsDB, DBState
-from database.schema import TargetsCreate, TargetsRead, TargetsUpdate
-from server.routers.utils import db_response, HTTPResponse
+from server.models import DBState, TargetsDB
+from server.routers.utils import HTTPResponse, db_response
+from server.schema import TargetsCreate, TargetsRead, TargetsUpdate
+
 
 TargetsRouter = APIRouter(prefix="/target")
 
@@ -18,7 +20,7 @@ async def get_targets_db() -> TargetsDB:
 @TargetsRouter.get("/", response_model=HTTPResponse[list[TargetsRead]])
 async def get_all_targets(
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[list[TargetsRead]]:
+) -> JSONResponse:
     """
     Retrieve all target configurations.
 
@@ -33,7 +35,7 @@ async def get_all_targets(
 async def add_target(
     target_data: TargetsCreate,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Create and register a new target.
 
@@ -51,7 +53,7 @@ async def add_target(
 async def get_target(
     target_id: UUID,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[TargetsRead]:
+) -> JSONResponse:
     """
     Retrieve details for a specific target by its unique ID.
 
@@ -69,7 +71,7 @@ async def get_target(
 async def delete_target(
     target_id: UUID,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Delete a target configuration by its unique ID.
 
@@ -88,7 +90,7 @@ async def patch_target(
     target_id: UUID,
     update: TargetsUpdate,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Partially update an existing target's configuration.
 

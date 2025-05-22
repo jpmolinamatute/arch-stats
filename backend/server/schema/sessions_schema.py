@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SessionsCreate(BaseModel):
@@ -28,6 +28,4 @@ class SessionsRead(BaseModel):
     is_opened: bool = Field(..., description="Is the session currently open?")
     location: str = Field(..., max_length=255, description="Location of the session")
 
-    class Config:
-        allow_population_by_field_name = True  # Still useful!
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")

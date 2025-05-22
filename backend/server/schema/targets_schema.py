@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class TargetsCreate(BaseModel):
@@ -38,6 +38,4 @@ class TargetsRead(BaseModel):
     human_identifier: str = Field(..., description="Optional human-friendly identifier")
     session_id: UUID = Field(..., description="ID of the session this target belongs to")
 
-    class Config:
-        allow_population_by_field_name = True  # Still useful!
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")

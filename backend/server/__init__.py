@@ -1,4 +1,7 @@
-from server.setup import setup
+from server.setup import setup, create_app
 
 
-__all__ = ["setup"]
+__all__ = [
+    "setup",
+    "create_app",
+]

@@ -1,10 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
-from database import ShotsDB, DBState
-from database.schema import ShotsRead
-from server.routers.utils import db_response, HTTPResponse
+from server.models import DBState, ShotsDB
+from server.routers.utils import HTTPResponse, db_response
+from server.schema import ShotsRead
+
 
 ShotsRouter = APIRouter(prefix="/shot")
 
@@ -18,7 +20,7 @@ async def get_shots_db() -> ShotsDB:
 @ShotsRouter.get("/", response_model=HTTPResponse[list[ShotsRead]])
 async def get_all_shots(
     shots_db: ShotsDB = Depends(get_shots_db),
-) -> HTTPResponse[list[ShotsRead]]:
+) -> JSONResponse:
     """
     Retrieve all recorded shots.
 
@@ -33,7 +35,7 @@ async def get_all_shots(
 async def delete_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Delete a specific shot by its unique ID.
 

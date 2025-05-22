@@ -1,7 +1,7 @@
 from asyncpg import Pool
 
-from database.base_db import DBBase
-from database.schema import ShotsCreate, ShotsRead, ShotsUpdate
+from server.models.base_db import DBBase
+from server.schema import ShotsCreate, ShotsRead, ShotsUpdate
 
 
 # pylint: disable=too-few-public-methods

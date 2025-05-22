@@ -1,10 +1,12 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
-from database import ArrowsDB, DBState
-from database.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
-from server.routers.utils import db_response, HTTPResponse
+from server.models import ArrowsDB, DBState
+from server.routers.utils import HTTPResponse, db_response
+from server.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+
 
 ArrowsRouter = APIRouter(prefix="/arrow")
 
@@ -18,7 +20,7 @@ async def get_arrows_db() -> ArrowsDB:
 @ArrowsRouter.get("/", response_model=HTTPResponse[list[ArrowsRead]])
 async def get_all_arrows(
     arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> HTTPResponse[list[ArrowsRead]]:
+) -> JSONResponse:
     """
     Retrieve all arrows registered in the system.
 
@@ -33,7 +35,7 @@ async def get_all_arrows(
 async def add_arrow(
     arrow_data: ArrowsCreate,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Create and register a new arrow.
 
@@ -51,7 +53,7 @@ async def add_arrow(
 async def get_arrow(
     arrow_id: UUID,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> HTTPResponse[ArrowsRead]:
+) -> JSONResponse:
     """
     Retrieve details for a single arrow by its unique ID.
 
@@ -69,7 +71,7 @@ async def get_arrow(
 async def delete_arrow(
     arrow_id: UUID,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Delete an arrow from the database by its unique ID.
 
@@ -88,7 +90,7 @@ async def patch_arrow(
     arrow_id: UUID,
     update: ArrowsUpdate,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Partially update an existing arrow's data.
 
@@ -100,15 +102,3 @@ async def patch_arrow(
         HTTPResponse: Success/failure message.
     """
     return await db_response(arrows_db.update_one, status.HTTP_204_NO_CONTENT, arrow_id, update)
-
-
-# GET a new UUID string
-@ArrowsRouter.get("/new_id", response_model=str)
-async def get_arrow_uuid() -> str:
-    """
-    Generate and return a new unique UUID for use with arrow registration.
-
-    Returns:
-        str: A new UUID as a string.
-    """
-    return str(uuid4())

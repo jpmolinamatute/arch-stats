@@ -2,8 +2,8 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from database.base_db import DBBase
-from database.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+from server.models.base_db import DBBase
+from server.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
 
 
 class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate, ArrowsRead]):

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ArrowsCreate(BaseModel):
@@ -126,6 +126,4 @@ class ArrowsRead(BaseModel):
         examples=[10.0],
     )
 
-    class Config:
-        allow_population_by_field_name = True  # Still useful!
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
