@@ -44,6 +44,7 @@ class ArrowsCreate(BaseModel):
         description="Position of label from nock in cm",
         examples=[10.0],
     )
+    model_config = ConfigDict(extra="forbid")
 
 
 class ArrowsUpdate(BaseModel):
@@ -82,6 +83,7 @@ class ArrowsUpdate(BaseModel):
         description="Position of label from nock in cm",
         examples=[10.0],
     )
+    model_config = ConfigDict(extra="forbid")
 
 
 class ArrowsRead(BaseModel):

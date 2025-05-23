@@ -63,6 +63,13 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         sql_statement = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({self.table_schema});"
         await self.execute(sql_statement)
 
+    async def drop_table(self) -> None:
+        """
+        Drop the table from the database.
+        """
+        sql_statement = f"DROP TABLE IF EXISTS {self.table_name};"
+        await self.execute(sql_statement)
+
     async def insert_one(self, data: CREATETYPE) -> None:
         """
         Insert a new record into the table.

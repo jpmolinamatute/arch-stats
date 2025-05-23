@@ -76,6 +76,7 @@ async def setup(logger: logging.Logger) -> None:
     else:
         worker = 4
         color = None
+
     config = uvicorn.Config(
         app=create_app(),
         host=server_name,

@@ -10,7 +10,8 @@ class DBStateError(Exception):
 class DBState:
     db_pool: Pool | None = None
 
-    def check_envs(self) -> None:
+    @classmethod
+    def check_envs(cls) -> None:
         env_to_check = [
             "POSTGRES_USER",
             "POSTGRES_DB",
@@ -27,6 +28,7 @@ class DBState:
     @classmethod
     async def init_db(cls) -> None:
         """Create and store the database connection pool."""
+        cls.check_envs()
         if cls.db_pool is None:
             params = {
                 "user": getenv("POSTGRES_USER"),
