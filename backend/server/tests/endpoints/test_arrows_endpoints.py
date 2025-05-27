@@ -25,20 +25,22 @@ def arrow_payload(**overrides: Any) -> dict[str, object]:
     return data
 
 
+@pytest.mark.asyncio
 async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> None:
     # --- Create Arrow ---
     arrow_id = str(uuid4())
     human_identifier = faker.word()
     payload = arrow_payload(**{"id": arrow_id, "human_identifier": human_identifier})
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     resp_data = resp.json()
 
     assert resp.status_code == 201
     assert resp_data["code"] == 201
+    assert resp_data["data"] == arrow_id
     assert resp_data["errors"] == []
 
-    # --- Get All Arrows ---
-    resp = await async_client.get(f"{ARROWS_ENDPOINT}/")
+    # # --- Get All Arrows ---
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}")
     assert resp.status_code == 200
     arrows = resp.json()["data"]
     assert isinstance(arrows, list)
@@ -67,7 +69,8 @@ async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> N
 
     # --- Confirm Update ---
     resp = await async_client.get(f"{ARROWS_ENDPOINT}/{arrow_id}")
-    updated = resp.json()["data"]
+    resp_json = resp.json()
+    updated = resp_json["data"]
     assert updated["length"] == 30.0
     assert updated["is_programmed"] is True
     assert updated["human_identifier"] == "A2"
@@ -82,30 +85,32 @@ async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> N
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_arrow_duplicate_human_identifier(async_client: AsyncClient, faker: Faker) -> None:
     """Should not allow two arrows with the same human_identifier (UNIQUE constraint)."""
     human_identifier = faker.word()
     payload = arrow_payload(**{"id": str(uuid4()), "human_identifier": human_identifier})
 
     # Insert an arrow the first time
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
 
     assert resp.status_code == 201
     assert resp.json()["errors"] == []
 
     # Insert the same arrow a second time
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     assert resp.status_code == 400
     assert resp.json()["errors"]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("missing_field", ["id", "length", "human_identifier", "is_programmed"])
 async def test_arrow_missing_required_fields(async_client: AsyncClient, missing_field: str) -> None:
     """Should fail when required fields are missing."""
     payload = arrow_payload()
     # Remove the required field
     payload.pop(missing_field, None)
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     assert (
         resp.status_code == 422
     ), f"Expected 422 when missing {missing_field}, got {resp.status_code}\n{resp.text}"
@@ -119,6 +124,7 @@ async def test_arrow_missing_required_fields(async_client: AsyncClient, missing_
     assert any(missing_field in str(item["loc"]) for item in result["detail"]), missing_message
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "field, wrong_value",
     [
@@ -141,7 +147,7 @@ async def test_arrow_wrong_data_type(
     # Replace the field with an invalid value
     payload[field] = wrong_value
 
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     wrong_message = (
         f"Expected 422 for field {field} with value {wrong_value!r}, got "
         f"{resp.status_code}\n{resp.text}"
@@ -153,9 +159,10 @@ async def test_arrow_wrong_data_type(
     assert any(field in str(item["loc"]) for item in result["detail"]), f"{result['detail']}"
 
 
+@pytest.mark.asyncio
 async def test_arrow_get_new_id(async_client: AsyncClient) -> None:
-    """Should return a valid UUID string from /arrow/new_id."""
-    resp = await async_client.get("/api/v0/new_arrow/")
+    """Should return a valid UUID string from /arrow/new_arrow_uuid."""
+    resp = await async_client.get("/api/v0/arrow/new_arrow_uuid")
     assert resp.status_code == 200
     new_id = resp.json()
     # Should be a valid UUID
@@ -163,34 +170,38 @@ async def test_arrow_get_new_id(async_client: AsyncClient) -> None:
     assert str(uuid_obj) == new_id
 
 
+@pytest.mark.asyncio
 async def test_patch_arrow_with_no_fields(async_client: AsyncClient) -> None:
     arrow_id = str(uuid4())
     payload = arrow_payload(id=arrow_id)
-    await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
+    await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     resp = await async_client.patch(f"{ARROWS_ENDPOINT}/{arrow_id}", json={})
     assert resp.status_code == 400
 
 
+@pytest.mark.asyncio
 async def test_patch_nonexistent_arrow(async_client: AsyncClient) -> None:
     resp = await async_client.patch(f"{ARROWS_ENDPOINT}/{uuid4()}", json={"length": 30.0})
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_delete_nonexistent_arrow(async_client: AsyncClient) -> None:
     resp = await async_client.delete(f"{ARROWS_ENDPOINT}/{uuid4()}")
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_get_all_arrows_empty(async_client: AsyncClient) -> None:
-    resp = await async_client.get(f"{ARROWS_ENDPOINT}/")
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}")
     assert resp.status_code == 200
     arrows = resp.json()["data"]
     assert arrows == [] or arrows is None
 
 
+@pytest.mark.asyncio
 async def test_post_arrow_with_extra_field(async_client: AsyncClient) -> None:
     payload = arrow_payload()
     payload["unexpected_field"] = "should be forbidden"
-    resp = await async_client.post(f"{ARROWS_ENDPOINT}/", json=payload)
-    # Depending on your config, this could be 422 or 400
+    resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     assert resp.status_code == 422

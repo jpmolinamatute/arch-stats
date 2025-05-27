@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, ArrowUUIDRouter
+from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter
 
 
 async def create_tables() -> None:
@@ -52,7 +52,6 @@ def create_app() -> FastAPI:
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
-    app.include_router(ArrowUUIDRouter, prefix=f"/api/{mayor_version}")
     # app.include_router(router_websocket)
     current_file_path = Path(__file__).parent
     frontend_path = current_file_path.joinpath("frontend")

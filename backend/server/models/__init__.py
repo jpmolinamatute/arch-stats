@@ -1,5 +1,5 @@
 from server.models.arrows_db import ArrowsDB
-from server.models.base_db import DBException, DBNotFound
+from server.models.base_db import DBException, DBNotFound, DictValues
 from server.models.db_state import DBState
 from server.models.sessions_db import SessionsDB
 from server.models.shots_db import ShotsDB
@@ -14,4 +14,5 @@ __all__ = [
     "DBState",
     "DBException",
     "DBNotFound",
+    "DictValues",
 ]

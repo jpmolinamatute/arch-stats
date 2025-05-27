@@ -1,12 +1,10 @@
-from uuid import UUID
-
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
-from server.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+from server.schema import ArrowsCreate, ArrowsUpdate
 
 
-class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate, ArrowsRead]):
+class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
             id UUID PRIMARY KEY,
@@ -19,10 +17,4 @@ class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate, ArrowsRead]):
             spine REAL,
             UNIQUE (human_identifier)
         """
-        super().__init__("arrows", schema, ArrowsRead, db_pool)
-
-    async def insert_one(self, data: ArrowsCreate) -> None:
-        await super().insert_one(data)
-
-    async def update_one(self, _id: UUID, data: ArrowsUpdate) -> None:
-        await super().update_one(_id, data)
+        super().__init__("arrows", schema, db_pool)

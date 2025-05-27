@@ -1,11 +1,11 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.responses import JSONResponse
 
-from server.models import ArrowsDB, DBState
+from server.models import ArrowsDB, DBState, DictValues
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+from server.schema import ArrowsCreate, ArrowsUpdate
 
 
 ArrowsRouter = APIRouter(prefix="/arrow")
@@ -16,22 +16,47 @@ async def get_arrows_db() -> ArrowsDB:
     return ArrowsDB(db_pool)
 
 
-# GET all arrows
-@ArrowsRouter.get("/", response_model=HTTPResponse[list[ArrowsRead]])
+@ArrowsRouter.get("/new_arrow_uuid", response_model=str)
+async def get_arrow_uuid() -> str:
+    """
+    Generate and return a new unique UUID for use with arrow registration.
+
+    Returns:
+        str: A new UUID as a string.
+    """
+    return str(uuid4())
+
+
+@ArrowsRouter.get("", response_model=HTTPResponse[list[DictValues]])
 async def get_all_arrows(
+    request: Request,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Retrieve all arrows registered in the system.
+    """
+    filters = dict(request.query_params.items())
+    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters)
+
+
+@ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[DictValues])
+async def get_arrow(
+    arrow_id: UUID,
+    arrows_db: ArrowsDB = Depends(get_arrows_db),
+) -> JSONResponse:
+    """
+    Retrieve an arrow from the database by its unique ID.
+
+    Args:
+        arrow_id (UUID): The unique identifier of the arrow to delete.
 
     Returns:
-        HTTPResponse: A list of all arrow objects currently stored in the database.
+        HTTPResponse: Success/failure message.
     """
-    return await db_response(arrows_db.get_all, status.HTTP_200_OK)
+    return await db_response(arrows_db.get_one_by_id, status.HTTP_200_OK, arrow_id)
 
 
-# POST a new arrow
-@ArrowsRouter.post("/", response_model=HTTPResponse[None])
+@ArrowsRouter.post("", response_model=HTTPResponse[UUID])
 async def add_arrow(
     arrow_data: ArrowsCreate,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
@@ -48,25 +73,6 @@ async def add_arrow(
     return await db_response(arrows_db.insert_one, status.HTTP_201_CREATED, arrow_data)
 
 
-# GET a specific arrow by ID
-@ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[ArrowsRead])
-async def get_arrow(
-    arrow_id: UUID,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> JSONResponse:
-    """
-    Retrieve details for a single arrow by its unique ID.
-
-    Args:
-        arrow_id (UUID): The unique identifier of the arrow.
-
-    Returns:
-        HTTPResponse: The arrow object if found, or error message if not found.
-    """
-    return await db_response(arrows_db.get_one, status.HTTP_200_OK, arrow_id)
-
-
-# DELETE a specific arrow by ID
 @ArrowsRouter.delete("/{arrow_id}", response_model=HTTPResponse[None])
 async def delete_arrow(
     arrow_id: UUID,
@@ -84,7 +90,6 @@ async def delete_arrow(
     return await db_response(arrows_db.delete_one, status.HTTP_204_NO_CONTENT, arrow_id)
 
 
-# PATCH (partial update) a specific arrow by ID
 @ArrowsRouter.patch("/{arrow_id}", response_model=HTTPResponse[None])
 async def patch_arrow(
     arrow_id: UUID,

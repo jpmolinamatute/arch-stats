@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, SessionsDB
+from server.models import DBState, SessionsDB, DictValues
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
+from server.schema import SessionsCreate, SessionsUpdate
 
 
 SessionsRouter = APIRouter(prefix="/session")
@@ -16,22 +16,36 @@ async def get_sessions_db() -> SessionsDB:
     return SessionsDB(db_pool)
 
 
-# GET all sessions
-@SessionsRouter.get("/", response_model=HTTPResponse[list[SessionsRead]])
-async def get_all_sessions(
+@SessionsRouter.get("", response_model=HTTPResponse[list[DictValues]])
+async def get_sessions(
+    request: Request,
     sessions_db: SessionsDB = Depends(get_sessions_db),
 ) -> JSONResponse:
     """
     Retrieve all sessions.
+    """
+    filters = dict(request.query_params.items())
+    return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters)
+
+
+@SessionsRouter.get("/{session_id}", response_model=HTTPResponse[DictValues])
+async def get_session(
+    session_id: UUID,
+    sessions_db: SessionsDB = Depends(get_sessions_db),
+) -> JSONResponse:
+    """
+    Get a session by its unique ID.
+
+    Args:
+        session_id (UUID): The unique identifier of the session to delete.
 
     Returns:
-        HTTPResponse: A list of all session records in the database.
+        HTTPResponse: Success or error message.
     """
-    return await db_response(sessions_db.get_all, status.HTTP_200_OK)
+    return await db_response(sessions_db.get_one_by_id, status.HTTP_200_OK, session_id)
 
 
-# POST a new session
-@SessionsRouter.post("/", response_model=HTTPResponse[None])
+@SessionsRouter.post("", response_model=HTTPResponse[None])
 async def add_session(
     session_data: SessionsCreate,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -48,25 +62,6 @@ async def add_session(
     return await db_response(sessions_db.insert_one, status.HTTP_200_OK, session_data)
 
 
-# GET a specific session by ID
-@SessionsRouter.get("/{session_id}", response_model=HTTPResponse[SessionsRead])
-async def get_session(
-    session_id: UUID,
-    sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> JSONResponse:
-    """
-    Retrieve details for a specific session by its unique ID.
-
-    Args:
-        session_id (UUID): The unique identifier of the session.
-
-    Returns:
-        HTTPResponse: The session record if found, or an error message if not found.
-    """
-    return await db_response(sessions_db.get_one, status.HTTP_200_OK, session_id)
-
-
-# DELETE a specific session by ID
 @SessionsRouter.delete("/{session_id}", response_model=HTTPResponse[None])
 async def delete_session(
     session_id: UUID,
@@ -84,7 +79,6 @@ async def delete_session(
     return await db_response(sessions_db.delete_one, status.HTTP_204_NO_CONTENT, session_id)
 
 
-# PATCH (partial update) a specific session by ID
 @SessionsRouter.patch("/{session_id}", response_model=HTTPResponse[None])
 async def patch_session(
     session_id: UUID,
@@ -101,4 +95,4 @@ async def patch_session(
     Returns:
         HTTPResponse: Success or error message.
     """
-    return await db_response(sessions_db.delete_one, status.HTTP_202_ACCEPTED, session_id, update)
+    return await db_response(sessions_db.update_one, status.HTTP_202_ACCEPTED, session_id, update)

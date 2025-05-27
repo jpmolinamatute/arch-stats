@@ -1,16 +1,16 @@
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
-from server.schema import TargetsCreate, TargetsRead, TargetsUpdate
+from server.schema import TargetsCreate, TargetsUpdate
 
 
 # pylint: disable=too-few-public-methods
 
 
-class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
+class TargetsDB(DBBase[TargetsCreate, TargetsUpdate]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
-            id UUID PRIMARY KEY,
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             max_x_coordinate REAL NOT NULL,
             max_y_coordinate REAL NOT NULL,
             radius REAL [] NOT NULL,
@@ -22,4 +22,4 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
             UNIQUE (session_id, human_identifier),
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
-        super().__init__("targets", schema, TargetsRead, db_pool)
+        super().__init__("targets", schema, db_pool)
