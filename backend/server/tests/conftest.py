@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from asyncpg import Pool
 
 from server import create_app, create_tables
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
@@ -28,3 +29,9 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
         yield ac
     await drop_tables()
     await DBState.close_db()
+
+
+@pytest_asyncio.fixture
+async def db_pool() -> AsyncGenerator[Pool, None]:
+    pool = await DBState.get_db_pool()
+    yield pool

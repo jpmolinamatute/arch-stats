@@ -15,7 +15,7 @@ async def get_shots_db() -> ShotsDB:
     return ShotsDB(db_pool)
 
 
-@ShotsRouter.get("/", response_model=HTTPResponse[list[DictValues] | DictValues])
+@ShotsRouter.get("", response_model=HTTPResponse[list[DictValues]])
 async def get_all_shots(
     request: Request,
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -26,6 +26,14 @@ async def get_all_shots(
     filters = dict(request.query_params.items())
 
     return await db_response(shots_db.get_all, status.HTTP_200_OK, filters)
+
+
+@ShotsRouter.get("/{shot_id}", response_model=HTTPResponse[DictValues])
+async def get_shot(
+    shot_id: UUID,
+    shots_db: ShotsDB = Depends(get_shots_db),
+) -> JSONResponse:
+    return await db_response(shots_db.get_one_by_id, status.HTTP_200_OK, shot_id)
 
 
 @ShotsRouter.delete("/{shot_id}", response_model=HTTPResponse[None])
