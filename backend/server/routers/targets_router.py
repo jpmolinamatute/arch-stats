@@ -1,10 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import JSONResponse
 
-from database import TargetsDB, DBState
-from database.schema import TargetsCreate, TargetsRead, TargetsUpdate, HTTPResponse
-from server.routers.utils import db_response
+from server.models import DBState, DictValues, TargetsDB
+from server.routers.utils import HTTPResponse, db_response, get_all
+from server.schema import TargetsCreate, TargetsUpdate
+
 
 TargetsRouter = APIRouter(prefix="/target")
 
@@ -14,26 +16,54 @@ async def get_targets_db() -> TargetsDB:
     return TargetsDB(db_pool)
 
 
-# GET all targets
-@TargetsRouter.get("/", response_model=HTTPResponse[list[TargetsRead]])
-async def get_all_targets(
+def fix_targets_filter_types(filters_str: dict[str, str]) -> DictValues:
+    # Cast each filter value to the proper type for the column
+
+    float_fields = {"max_x_coordinate", "max_y_coordinate", "height"}
+    uuid_fields = {"session_id"}
+    str_fields = {"human_identifier"}
+    filters: DictValues = {}
+    for key, value in filters_str.items():
+        if key in uuid_fields:
+            filters[key] = UUID(value)
+        elif key in float_fields:
+            filters[key] = float(value)
+        elif key in str_fields:
+            filters[key] = value
+        else:
+            raise ValueError(f"ERROR: unknown field '{key}'")
+
+    return filters
+
+
+@TargetsRouter.get("", response_model=HTTPResponse[list[DictValues]])
+async def get_targets(
+    request: Request,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[list[TargetsRead]]:
+) -> JSONResponse:
     """
-    Retrieve all target configurations.
-
-    Returns:
-        HTTPResponse: A list of all targets stored in the system.
+    Retrieve all targets.
     """
-    return await db_response(targets_db.get_all, status.HTTP_200_OK)
+    return await get_all(
+        request,
+        fix_targets_filter_types,
+        targets_db.get_all,
+    )
 
 
-# POST a new target
-@TargetsRouter.post("/", response_model=HTTPResponse[None])
+@TargetsRouter.get("/{target_id}", response_model=HTTPResponse[DictValues])
+async def get_target(
+    target_id: UUID,
+    targets_db: TargetsDB = Depends(get_targets_db),
+) -> JSONResponse:
+    return await db_response(targets_db.get_one_by_id, status.HTTP_200_OK, target_id)
+
+
+@TargetsRouter.post("", response_model=HTTPResponse[None])
 async def add_target(
     target_data: TargetsCreate,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Create and register a new target.
 
@@ -43,33 +73,15 @@ async def add_target(
     Returns:
         HTTPResponse: Success or error message. Does not return the created target.
     """
-    return await db_response(targets_db.insert_one, status.HTTP_200_OK, target_data)
+
+    return await db_response(targets_db.insert_one, status.HTTP_201_CREATED, target_data)
 
 
-# GET a specific target by ID
-@TargetsRouter.get("/{target_id}", response_model=HTTPResponse[TargetsRead])
-async def get_target(
-    target_id: UUID,
-    targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[TargetsRead]:
-    """
-    Retrieve details for a specific target by its unique ID.
-
-    Args:
-        target_id (UUID): The unique identifier of the target.
-
-    Returns:
-        HTTPResponse: The target object if found, or an error message if not found.
-    """
-    return await db_response(targets_db.get_one, status.HTTP_200_OK, target_id)
-
-
-# DELETE a specific target by ID
 @TargetsRouter.delete("/{target_id}", response_model=HTTPResponse[None])
 async def delete_target(
     target_id: UUID,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Delete a target configuration by its unique ID.
 
@@ -82,13 +94,12 @@ async def delete_target(
     return await db_response(targets_db.delete_one, status.HTTP_204_NO_CONTENT, target_id)
 
 
-# PATCH (partial update) a specific target by ID
 @TargetsRouter.patch("/{target_id}", response_model=HTTPResponse[None])
 async def patch_target(
     target_id: UUID,
     update: TargetsUpdate,
     targets_db: TargetsDB = Depends(get_targets_db),
-) -> HTTPResponse[None]:
+) -> JSONResponse:
     """
     Partially update an existing target's configuration.
 
@@ -99,4 +110,4 @@ async def patch_target(
     Returns:
         HTTPResponse: Success or error message.
     """
-    return await db_response(targets_db.delete_one, status.HTTP_202_ACCEPTED, target_id, update)
+    return await db_response(targets_db.update_one, status.HTTP_202_ACCEPTED, target_id, update)

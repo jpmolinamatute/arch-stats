@@ -1,14 +1,14 @@
 from asyncpg import Pool
 
-from database.base import DBBase
-from database.schema import SessionsCreate, SessionsRead, SessionsUpdate
+from server.models.base_db import DBBase
+from server.schema import SessionsCreate, SessionsUpdate
 
 
 # pylint: disable=too-few-public-methods
-class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
+class SessionsDB(DBBase[SessionsCreate, SessionsUpdate]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
-            id UUID PRIMARY KEY,
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             is_opened BOOLEAN NOT NULL,
             start_time TIMESTAMP WITH TIME ZONE NOT NULL,
             location VARCHAR(255) NOT NULL,
@@ -20,4 +20,4 @@ class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
                 (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
             )
         """
-        super().__init__("sessions", schema, SessionsRead, db_pool)
+        super().__init__("sessions", schema, db_pool)

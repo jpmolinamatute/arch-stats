@@ -249,19 +249,27 @@ The following flow charts show how the 3 entities interact with each other.
   * Database interaction.
 * **API Endpoints:**
   * shot
-    * POST /shot
-    * GET /shot
+    * GET /shot?start_date=SOME_DATE&end_date=SOME_DATE_OR_NOW (get shots by sessions start/end date)
+    * GET /shot (gets all shots)
     * DELETE /shot/{shoot_id}
+  * target
+    * GET /target?session=SESSION_ID (get targets by session_id)
+    * GET /target (get targets all targets)
+    * POST /target (returns new target UUID)
+    * DELETE /target/{target_id}
+    * PATCH /target/{target_id}
   * session
-    * POST /session
-    * GET /session
+    * GET /session?open=True (gets the open session)
+    * GET /session (gets all sessions)
+    * POST /session (returns new session UUID)
     * DELETE /session/{session_id}
-    * PUT /session/{session_id}
+    * PATCH /session/{session_id}
   * arrow
-    * POST /arrow
-    * GET /arrow
+    * GET /arrow?arrow_id=ARROW_ID
+    * GET /arrow (gets all arrows)
+    * POST /arrow (returns new arrow UUID)
     * DELETE /arrow/{arrow_id}
-    * PUT /arrow/{arrow_id}
+    * PATCH /arrow/{arrow_id}
 * **WebSockets:**
   * `arrow_id`: Sends the assigned arrow ID from the Arrow Reader to the WebUI.
   * `shot_information`: Sends shot data from the Web Server to the WebUI.

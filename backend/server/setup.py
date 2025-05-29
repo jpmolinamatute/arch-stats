@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from database import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
+from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter
 
 
@@ -75,6 +75,7 @@ async def setup(logger: logging.Logger) -> None:
     else:
         worker = 4
         color = None
+
     config = uvicorn.Config(
         app=create_app(),
         host=server_name,

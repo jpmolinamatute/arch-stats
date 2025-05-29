@@ -8,3 +8,4 @@ services:
     volumes:
       - /var/run/postgresql:/var/run/postgresql
       - ./conf/postgresql.conf:/etc/postgresql/17/main/postgresql.conf
+      - ./scripts/db_init.sql:/docker-entrypoint-initdb.d/db_init.sql
