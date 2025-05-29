@@ -1,10 +1,11 @@
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from server.models import ArrowsDB, DBState, DictValues
-from server.routers.utils import HTTPResponse, db_response
+from server.routers.utils import HTTPResponse, db_response, get_all
 from server.schema import ArrowsCreate, ArrowsUpdate
 
 
@@ -16,15 +17,42 @@ async def get_arrows_db() -> ArrowsDB:
     return ArrowsDB(db_pool)
 
 
-@ArrowsRouter.get("/new_arrow_uuid", response_model=str)
-async def get_arrow_uuid() -> str:
+def fix_arrows_filter_types(filters_str: dict[str, str]) -> DictValues:
+    # Cast each filter value to the proper type for the column
+    bool_fields = {"is_programmed"}
+    float_fields = {"length", "label_position", "weight", "diameter"}
+    int_fields = {"spine"}
+    str_fields = {"human_identifier"}
+    filters: DictValues = {}
+    for key, value in filters_str.items():
+        if key in bool_fields:
+            if isinstance(value, str):
+                filters[key] = value.lower() == "true"
+        elif key in float_fields:
+            filters[key] = float(value)
+        elif key in int_fields:
+            filters[key] = int(value)
+        elif key in str_fields:
+            filters[key] = value
+        else:
+            raise ValueError(f"ERROR: unknown field '{key}'")
+
+    return filters
+
+
+@ArrowsRouter.get("/new_arrow_uuid", response_model=HTTPResponse[str])
+async def get_arrow_uuid() -> JSONResponse:
     """
     Generate and return a new unique UUID for use with arrow registration.
 
     Returns:
         str: A new UUID as a string.
     """
-    return str(uuid4())
+    resp = HTTPResponse[UUID](code=status.HTTP_200_OK, data=uuid4(), errors=[])
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=jsonable_encoder(resp),
+    )
 
 
 @ArrowsRouter.get("", response_model=HTTPResponse[list[DictValues]])
@@ -33,10 +61,13 @@ async def get_all_arrows(
     arrows_db: ArrowsDB = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
-    Retrieve all arrows registered in the system.
+    Retrieve all arrows.
     """
-    filters = dict(request.query_params.items())
-    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters)
+    return await get_all(
+        request,
+        fix_arrows_filter_types,
+        arrows_db.get_all,
+    )
 
 
 @ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[DictValues])
@@ -68,7 +99,7 @@ async def add_arrow(
         arrow_data (ArrowsCreate): The data for the arrow to be created.
 
     Returns:
-        HTTPResponse: Success/failure message. Does not return the created arrow.
+        HTTPResponse: Success/failure message.
     """
     return await db_response(arrows_db.insert_one, status.HTTP_201_CREATED, arrow_data)
 
@@ -106,4 +137,4 @@ async def patch_arrow(
     Returns:
         HTTPResponse: Success/failure message.
     """
-    return await db_response(arrows_db.update_one, status.HTTP_204_NO_CONTENT, arrow_id, update)
+    return await db_response(arrows_db.update_one, status.HTTP_202_ACCEPTED, arrow_id, update)

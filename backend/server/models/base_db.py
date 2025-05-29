@@ -7,7 +7,7 @@ from asyncpg import Pool
 from pydantic import BaseModel
 
 
-Values = str | float | bool | int | UUID | datetime | None
+Values = str | float | bool | int | UUID | datetime | None | list[int] | list[float]
 DictValues = dict[str, Values]
 ValuesList = list[Values]
 CREATETYPE = TypeVar("CREATETYPE", bound=BaseModel)

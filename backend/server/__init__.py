@@ -1,4 +1,4 @@
-from server.setup import setup, create_app, create_tables
+from server.setup import create_app, create_tables, setup
 
 
 __all__ = [

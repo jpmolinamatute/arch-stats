@@ -1,10 +1,11 @@
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, SessionsDB, DictValues
-from server.routers.utils import HTTPResponse, db_response
+from server.models import DBState, DictValues, SessionsDB
+from server.routers.utils import HTTPResponse, db_response, get_all
 from server.schema import SessionsCreate, SessionsUpdate
 
 
@@ -16,6 +17,23 @@ async def get_sessions_db() -> SessionsDB:
     return SessionsDB(db_pool)
 
 
+def fix_sessions_filter_types(filters_str: dict[str, str]) -> DictValues:
+    date_fields = {"start_time", "end_time"}
+    bool_fields = {"is_opened"}
+    string_fields = {"location"}
+    filters: DictValues = {}
+    for key, value in filters_str.items():
+        if key in date_fields:
+            filters[key] = datetime.fromisoformat(value)
+        elif key in bool_fields:
+            filters[key] = value.lower() == "true"
+        elif key in string_fields:
+            filters[key] = value
+        else:
+            raise ValueError(f"ERROR: unknown field '{key}'")
+    return filters
+
+
 @SessionsRouter.get("", response_model=HTTPResponse[list[DictValues]])
 async def get_sessions(
     request: Request,
@@ -24,8 +42,11 @@ async def get_sessions(
     """
     Retrieve all sessions.
     """
-    filters = dict(request.query_params.items())
-    return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters)
+    return await get_all(
+        request,
+        fix_sessions_filter_types,
+        sessions_db.get_all,
+    )
 
 
 @SessionsRouter.get("/{session_id}", response_model=HTTPResponse[DictValues])
@@ -59,7 +80,7 @@ async def add_session(
     Returns:
         HTTPResponse: Success or error message. Does not return the created session.
     """
-    return await db_response(sessions_db.insert_one, status.HTTP_200_OK, session_data)
+    return await db_response(sessions_db.insert_one, status.HTTP_201_CREATED, session_data)
 
 
 @SessionsRouter.delete("/{session_id}", response_model=HTTPResponse[None])

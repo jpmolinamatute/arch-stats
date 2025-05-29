@@ -1,56 +1,80 @@
-import datetime
+import math
+import urllib.parse
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
 
+from server.models.base_db import DictValues
+from server.tests.endpoints.test_sessions_endpoints import (
+    create_many_sessions,
+    create_sessions_payload,
+)
+
 
 TARGETS_ENDPOINT = "/api/v0/target"
 
 
-def targets_payload(**overrides: Any) -> dict[str, object]:
+def create_targets_payload(session_id: str, **overrides: Any) -> DictValues:
     """
     Generate a valid payload for TargetsCreate.
     Adjust the fields to match your schema exactly!
     """
-    # Example fields (adjust as needed):
-    data = {
+
+    data: DictValues = {
         "max_x_coordinate": 122.0,
         "max_y_coordinate": 122.0,
         "radius": [3.0, 6.0, 9.0, 12.0, 15.0],
         "points": [10, 8, 6, 4, 2],
         "height": 140.0,
         "human_identifier": "T1",
-        "session_id": str(uuid4()),
+        "session_id": session_id,
     }
     data.update(overrides)
     return data
 
 
-async def create_session(async_client: AsyncClient) -> str:
-    payload = {
-        "is_opened": True,
-        "start_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "location": "Test Range",
-    }
+async def insert_session(async_client: AsyncClient) -> str:
+    payload = create_sessions_payload()
     resp = await async_client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 200
-    session_id: str = resp.json()["data"]
-    return session_id
+    resp_json = resp.json()
+    data: str = resp_json["data"]
+    assert resp.status_code == 201
+    return data
+
+
+async def create_many_targets(
+    async_client: AsyncClient,
+    sessions: list[DictValues],
+    count: int = 5,
+) -> list[DictValues]:
+    targets = []
+    for i in range(count):
+        payload = create_targets_payload(
+            session_id=sessions[i]["id"],  # type: ignore[arg-type]
+            max_x_coordinate=120.0 + i,
+            max_y_coordinate=121.0 + i,
+            height=140.0 + i,
+            human_identifier=f"target_{i}",
+        )
+        resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+        assert resp.status_code == 201
+        targets.append(payload)
+    return targets
 
 
 @pytest.mark.asyncio
 async def test_target_crud_workflow(async_client: AsyncClient) -> None:
     # --- Create a session first ---
-    session_id = await create_session(async_client)
+    session_id = await insert_session(async_client)
 
     # --- Create Target ---
-    payload = targets_payload(session_id=session_id)
+    payload = create_targets_payload(session_id=session_id)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
     data = resp.json()
-    assert resp.status_code == 200
-    assert data["code"] == 200
+    assert resp.status_code == 201
+    assert data["code"] == 201
     assert data["errors"] == []
 
     # If you return the created target's id, extract it here
@@ -121,7 +145,7 @@ async def test_target_crud_workflow(async_client: AsyncClient) -> None:
 async def test_target_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
-    payload = targets_payload()
+    payload = create_targets_payload(str(uuid4()))
     payload.pop(missing_field, None)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
     assert resp.status_code == 422
@@ -152,7 +176,52 @@ async def test_get_all_targets_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
-    payload = targets_payload()
+    payload = create_targets_payload(str(uuid4()))
     payload["unexpected_field"] = "forbidden"
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_targets_filtering(async_client: AsyncClient) -> None:
+    sessions = await create_many_sessions(async_client, 5)
+    targets = await create_many_targets(async_client, sessions, 5)
+
+    # --- Filter by session_id ---
+    session_id = sessions[2]["id"]
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={session_id}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(t["session_id"] == session_id for t in data)
+
+    # --- Filter by max_x_coordinate (float, use math.isclose) ---
+    mx_val: float = targets[4]["max_x_coordinate"]  # type: ignore[assignment]
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x_coordinate={mx_val}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(math.isclose(float(t["max_x_coordinate"]), mx_val, rel_tol=1e-6) for t in data)
+
+    # --- Filter by human_identifier ---
+    hid: str = targets[3]["human_identifier"]  # type: ignore[assignment]
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?human_identifier={urllib.parse.quote(hid)}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(t["human_identifier"] == hid for t in data)
+
+    # --- Filter by multiple fields ---
+    multi_sid: str = sessions[1]["id"]  # type: ignore[assignment]
+    multi_hid: str = targets[4]["human_identifier"]  # type: ignore[assignment]
+    resp = await async_client.get(
+        f"{TARGETS_ENDPOINT}?session_id={multi_sid}&human_identifier={urllib.parse.quote(multi_hid)}"
+    )
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(t["session_id"] == multi_sid and t["human_identifier"] == multi_hid for t in data)
+
+
+@pytest.mark.asyncio
+async def test_targets_filter_no_match(async_client: AsyncClient) -> None:
+    fake_uuid = str(uuid4())
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={fake_uuid}")
+    assert resp.status_code == 200
+    assert resp.json()["data"] == []

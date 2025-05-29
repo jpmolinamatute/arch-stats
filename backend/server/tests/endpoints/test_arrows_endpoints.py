@@ -1,3 +1,4 @@
+import random
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -5,16 +6,18 @@ import pytest
 from faker import Faker
 from httpx import AsyncClient
 
+from server.models.base_db import DictValues
+
 
 ARROWS_ENDPOINT = "/api/v0/arrow"
 
 
-def arrow_payload(**overrides: Any) -> dict[str, object]:
-    fake = Faker()
-    data = {
+def create_arrow_payload(**overrides: Any) -> DictValues:
+    ran_int = random.randint(1, 100)
+    data: DictValues = {
         "id": str(uuid4()),
         "length": 29.0,
-        "human_identifier": fake.word(),
+        "human_identifier": f"arrow-{ran_int}",
         "is_programmed": False,
         "label_position": 1.0,
         "weight": 350.0,
@@ -25,12 +28,32 @@ def arrow_payload(**overrides: Any) -> dict[str, object]:
     return data
 
 
+async def create_many_arrows(async_client: AsyncClient, count: int = 5) -> list[str]:
+    arrows = []
+    for i in range(count):
+        payload = create_arrow_payload(
+            is_programmed=bool(i % 2),
+            spine=400 + 10 * i,
+            weight=350.0 + 5 * i,
+            human_identifier=f"arrow_{i}",
+            length=29.0 + i,
+            label_position=1.0 + 0.5 * i,
+            diameter=5.7 + 0.1 * i,
+        )
+        resp = await async_client.post(ARROWS_ENDPOINT, json=payload)
+
+        assert resp.status_code == 201
+        _id = payload["id"]
+        arrows.append(_id)
+    return arrows  # type: ignore[return-value]
+
+
 @pytest.mark.asyncio
 async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> None:
     # --- Create Arrow ---
     arrow_id = str(uuid4())
     human_identifier = faker.word()
-    payload = arrow_payload(**{"id": arrow_id, "human_identifier": human_identifier})
+    payload = create_arrow_payload(**{"id": arrow_id, "human_identifier": human_identifier})
     resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     resp_data = resp.json()
 
@@ -64,7 +87,7 @@ async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> N
         "spine": 410,
     }
     resp = await async_client.patch(f"{ARROWS_ENDPOINT}/{arrow_id}", json=patch)
-    assert resp.status_code == 204
+    assert resp.status_code == 202
     assert resp.json()["errors"] == []
 
     # --- Confirm Update ---
@@ -89,7 +112,7 @@ async def test_arrow_crud_workflow(async_client: AsyncClient, faker: Faker) -> N
 async def test_arrow_duplicate_human_identifier(async_client: AsyncClient, faker: Faker) -> None:
     """Should not allow two arrows with the same human_identifier (UNIQUE constraint)."""
     human_identifier = faker.word()
-    payload = arrow_payload(**{"id": str(uuid4()), "human_identifier": human_identifier})
+    payload = create_arrow_payload(**{"id": str(uuid4()), "human_identifier": human_identifier})
 
     # Insert an arrow the first time
     resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
@@ -107,7 +130,7 @@ async def test_arrow_duplicate_human_identifier(async_client: AsyncClient, faker
 @pytest.mark.parametrize("missing_field", ["id", "length", "human_identifier", "is_programmed"])
 async def test_arrow_missing_required_fields(async_client: AsyncClient, missing_field: str) -> None:
     """Should fail when required fields are missing."""
-    payload = arrow_payload()
+    payload = create_arrow_payload()
     # Remove the required field
     payload.pop(missing_field, None)
     resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
@@ -130,7 +153,7 @@ async def test_arrow_missing_required_fields(async_client: AsyncClient, missing_
     [
         ("id", "not-a-uuid"),
         ("length", "not-a-float"),
-        ("human_identifier", 12345),  # expecting str
+        ("human_identifier", 12345),
         ("is_programmed", "not-a-bool"),
         ("label_position", "not-a-float"),
         ("weight", "not-a-float"),
@@ -143,7 +166,7 @@ async def test_arrow_wrong_data_type(
 ) -> None:
     """Should fail after validation."""
     # Start with a valid payload
-    payload = arrow_payload()
+    payload = create_arrow_payload()
     # Replace the field with an invalid value
     payload[field] = wrong_value
 
@@ -155,7 +178,6 @@ async def test_arrow_wrong_data_type(
     assert resp.status_code == 422, wrong_message
     result = resp.json()
     assert "detail" in result
-    # Optionally, check that the correct field is mentioned in the error
     assert any(field in str(item["loc"]) for item in result["detail"]), f"{result['detail']}"
 
 
@@ -164,8 +186,9 @@ async def test_arrow_get_new_id(async_client: AsyncClient) -> None:
     """Should return a valid UUID string from /arrow/new_arrow_uuid."""
     resp = await async_client.get("/api/v0/arrow/new_arrow_uuid")
     assert resp.status_code == 200
-    new_id = resp.json()
+    resp_json = resp.json()
     # Should be a valid UUID
+    new_id = resp_json["data"]
     uuid_obj = UUID(new_id)
     assert str(uuid_obj) == new_id
 
@@ -173,7 +196,7 @@ async def test_arrow_get_new_id(async_client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_patch_arrow_with_no_fields(async_client: AsyncClient) -> None:
     arrow_id = str(uuid4())
-    payload = arrow_payload(id=arrow_id)
+    payload = create_arrow_payload(id=arrow_id)
     await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     resp = await async_client.patch(f"{ARROWS_ENDPOINT}/{arrow_id}", json={})
     assert resp.status_code == 400
@@ -201,7 +224,49 @@ async def test_get_all_arrows_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_arrow_with_extra_field(async_client: AsyncClient) -> None:
-    payload = arrow_payload()
+    payload = create_arrow_payload()
     payload["unexpected_field"] = "should be forbidden"
     resp = await async_client.post(f"{ARROWS_ENDPOINT}", json=payload)
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_arrows_filtering(async_client: AsyncClient) -> None:
+    """Test filtering arrows by various fields."""
+    # Create multiple arrows
+    await create_many_arrows(async_client, 6)
+
+    # --- Test filter by is_programmed ---
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}?is_programmed=true")
+    resp_json = resp.json()
+    data = resp_json["data"]
+
+    assert resp.status_code == 200
+    # Only arrows with is_programmed=True
+    assert all(a["is_programmed"] is True for a in data)
+
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}?is_programmed=false")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(a["is_programmed"] is False for a in data)
+
+    # --- Test filter by specific spine value ---
+    spine_value = 410
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}?spine={spine_value}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(a["spine"] == spine_value for a in data)
+
+    # --- Test filter by human_identifier ---
+    hid = "arrow_3"
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}?human_identifier={hid}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert len(data) == 1
+    assert data[0]["human_identifier"] == hid
+
+    # --- Test filter by multiple fields ---
+    resp = await async_client.get(f"{ARROWS_ENDPOINT}?spine=420&is_programmed=true")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert all(a["spine"] == 420 and a["is_programmed"] is True for a in data)

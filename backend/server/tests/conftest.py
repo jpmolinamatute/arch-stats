@@ -1,8 +1,8 @@
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
 from asyncpg import Pool
+from httpx import ASGITransport, AsyncClient
 
 from server import create_app, create_tables
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
