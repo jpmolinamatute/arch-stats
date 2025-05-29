@@ -1,12 +1,12 @@
 from collections.abc import Awaitable, Callable
 from typing import Any, Generic, TypeVar
 
-from fastapi import status, Request
+from fastapi import status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from server.models import DBException, DBNotFound, DictValues
+from server.models import DBException, DBNotFound
 
 
 GenericData = TypeVar("GenericData")  # This will be the inner data type (ArrowsRead, etc.)
@@ -62,27 +62,3 @@ async def db_response(
             content=jsonable_encoder(resp, by_alias=True),
         )
     return json_response
-
-
-async def get_all(
-    request: Request,
-    filter_types_fn: Callable[[dict[str, str]], DictValues],
-    db_get_all_fn: Callable[..., Awaitable[GenericData]],
-) -> JSONResponse:
-    """
-    Generalized handler for 'get all with filters' endpoints.
-    """
-    try:
-        filters_str = dict(request.query_params.items())
-        filters = filter_types_fn(filters_str)
-        return await db_response(db_get_all_fn, status.HTTP_200_OK, filters)
-    except ValueError as e:
-        resp = HTTPResponse[None](
-            code=status.HTTP_400_BAD_REQUEST,
-            data=None,
-            errors=[str(e)],
-        )
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=jsonable_encoder(resp, by_alias=True),
-        )

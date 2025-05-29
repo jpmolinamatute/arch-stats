@@ -16,3 +16,11 @@ class SessionsUpdate(BaseModel):
     start_time: datetime | None = Field(None, description="Session start time")
     end_time: datetime | None = Field(None, description="Session end time")
     model_config = ConfigDict(extra="forbid")
+
+
+class SessionsFilters(BaseModel):
+    is_opened: bool | None = Field(None, description="Filter by open/closed state")
+    start_time: datetime | None = Field(None, description="Filter by session start time")
+    end_time: datetime | None = Field(None, description="Filter by session end time")
+    location: str | None = Field(None, max_length=255, description="Filter by session location")
+    model_config = ConfigDict(extra="forbid")

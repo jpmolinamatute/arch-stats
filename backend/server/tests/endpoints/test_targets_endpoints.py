@@ -46,13 +46,13 @@ async def insert_session(async_client: AsyncClient) -> str:
 
 async def create_many_targets(
     async_client: AsyncClient,
-    sessions: list[DictValues],
+    session_id: str,
     count: int = 5,
 ) -> list[DictValues]:
     targets = []
     for i in range(count):
         payload = create_targets_payload(
-            session_id=sessions[i]["id"],  # type: ignore[arg-type]
+            session_id=session_id,
             max_x_coordinate=120.0 + i,
             max_y_coordinate=121.0 + i,
             height=140.0 + i,
@@ -184,11 +184,12 @@ async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_targets_filtering(async_client: AsyncClient) -> None:
-    sessions = await create_many_sessions(async_client, 5)
-    targets = await create_many_targets(async_client, sessions, 5)
+    sessions = await create_many_sessions(async_client, 1)
+    session_id: str = sessions[0]["id"]  # type: ignore[assignment]
+    targets = await create_many_targets(async_client, session_id, 5)
 
     # --- Filter by session_id ---
-    session_id = sessions[2]["id"]
+
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={session_id}")
     assert resp.status_code == 200
     data = resp.json()["data"]
@@ -209,14 +210,14 @@ async def test_targets_filtering(async_client: AsyncClient) -> None:
     assert all(t["human_identifier"] == hid for t in data)
 
     # --- Filter by multiple fields ---
-    multi_sid: str = sessions[1]["id"]  # type: ignore[assignment]
+
     multi_hid: str = targets[4]["human_identifier"]  # type: ignore[assignment]
-    resp = await async_client.get(
-        f"{TARGETS_ENDPOINT}?session_id={multi_sid}&human_identifier={urllib.parse.quote(multi_hid)}"
-    )
+    url = f"{TARGETS_ENDPOINT}?session_id={session_id}&"
+    url += f"human_identifier={urllib.parse.quote(multi_hid)}"
+    resp = await async_client.get(url)
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(t["session_id"] == multi_sid and t["human_identifier"] == multi_hid for t in data)
+    assert all(t["session_id"] == session_id and t["human_identifier"] == multi_hid for t in data)
 
 
 @pytest.mark.asyncio

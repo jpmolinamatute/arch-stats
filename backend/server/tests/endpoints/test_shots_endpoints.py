@@ -9,21 +9,20 @@ from asyncpg import Pool
 from httpx import AsyncClient
 
 from server.models.base_db import DictValues
-from server.tests.endpoints.test_arrows_endpoints import (
-    create_arrow_payload,
-    create_many_arrows,
-)
+from server.tests.endpoints.test_arrows_endpoints import create_many_arrows
+from server.tests.endpoints.test_sessions_endpoints import create_many_sessions
 
 
 SHOTS_ENDPOINT = "/api/v0/shot"
 ARROWS_ENDPOINT = "/api/v0/arrow"
 
 
-def create_shots_payload(arrow_id: str, **overrides: Any) -> DictValues:
+def create_shots_payload(arrow_id: str, session_id: str, **overrides: Any) -> DictValues:
     now = datetime.datetime.now(datetime.timezone.utc)
     data: DictValues = {
         "id": uuid4(),
         "arrow_id": arrow_id,
+        "session_id": session_id,
         "arrow_engage_time": now,
         "arrow_disengage_time": now + datetime.timedelta(seconds=2),
         "arrow_landing_time": now + datetime.timedelta(seconds=4),
@@ -34,27 +33,19 @@ def create_shots_payload(arrow_id: str, **overrides: Any) -> DictValues:
     return data
 
 
-async def insert_arrow(async_client: AsyncClient) -> str:
-    payload = create_arrow_payload()
-    resp = await async_client.post(ARROWS_ENDPOINT, json=payload)
-    resp_json = resp.json()
-    data: str = resp_json["data"]
-    assert resp.status_code == 201
-    return data
-
-
 async def insert_shot_direct(db_pool: Pool, shot_row: DictValues) -> None:
     # Direct DB insert; adjust as per your pool/library setup
     async with db_pool.acquire() as conn:
         await conn.execute(
             """
             INSERT INTO shots (
-                id, arrow_id, arrow_engage_time, arrow_disengage_time, 
+                id, arrow_id, session_id, arrow_engage_time, arrow_disengage_time, 
                 arrow_landing_time, x_coordinate, y_coordinate
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             """,
             shot_row["id"],
             shot_row["arrow_id"],
+            shot_row["session_id"],
             shot_row["arrow_engage_time"],
             shot_row["arrow_disengage_time"],
             shot_row["arrow_landing_time"],
@@ -64,11 +55,11 @@ async def insert_shot_direct(db_pool: Pool, shot_row: DictValues) -> None:
 
 
 async def create_many_shots(
-    db_pool: Pool, arrows_id: list[str], count: int = 5
+    db_pool: Pool, arrows_id: list[str], session_id: str, count: int = 5
 ) -> list[DictValues]:
     shots = []
     for i in range(count):
-        shot_row = create_shots_payload(arrows_id[i])
+        shot_row = create_shots_payload(arrows_id[i], session_id)
         await insert_shot_direct(db_pool, shot_row)
         shots.append(shot_row)
     return shots
@@ -77,11 +68,14 @@ async def create_many_shots(
 @pytest.mark.asyncio
 async def test_shot_read_and_delete(async_client: AsyncClient, db_pool: Pool) -> None:
     # Insert arrow via API
-    arrow_id = await insert_arrow(async_client)
+    arrows = await create_many_arrows(async_client, 5)
+    session = await create_many_sessions(async_client, 1)
+
+    session_id: str = session[0]["id"]  # type: ignore[assignment]
     # Insert shot directly in the DB
-    shot_row = create_shots_payload(arrow_id)
-    await insert_shot_direct(db_pool, shot_row)
-    shot_id = shot_row["id"]
+    shot_row = await create_many_shots(db_pool, arrows, session_id, 5)
+    shot_id = shot_row[0]["id"]
+    arrow_id = shot_row[0]["arrow_id"]
 
     # --- Get all shots ---
     resp = await async_client.get(SHOTS_ENDPOINT)
@@ -135,7 +129,9 @@ async def test_get_nonexistent_shot(async_client: AsyncClient) -> None:
 async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
     # Create arrows and shots
     arrows = await create_many_arrows(async_client, 5)
-    shots = await create_many_shots(db_pool, arrows, 5)
+    session = await create_many_sessions(async_client, 1)
+    session_id: str = session[0]["id"]  # type: ignore[assignment]
+    shots = await create_many_shots(db_pool, arrows, session_id, 5)
 
     # --- Filter by arrow_id ---
     arrow_id = arrows[2]

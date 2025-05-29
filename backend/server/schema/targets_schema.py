@@ -26,3 +26,12 @@ class TargetsUpdate(BaseModel):
     human_identifier: str | None = Field(None, description="Optional human-friendly identifier")
     session_id: UUID | None = Field(None, description="ID of the session this target belongs to")
     model_config = ConfigDict(extra="forbid")
+
+
+class TargetsFilters(BaseModel):
+    max_x_coordinate: float | None = Field(None, description="Max X coordinate of the target")
+    max_y_coordinate: float | None = Field(None, description="Max Y coordinate of the target")
+    height: float | None = Field(None, description="Height of the target")
+    human_identifier: str | None = Field(None, description="Optional human-friendly identifier")
+    session_id: UUID | None = Field(None, description="ID of the session this target belongs to")
+    model_config = ConfigDict(extra="forbid")
