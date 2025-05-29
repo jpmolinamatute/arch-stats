@@ -43,9 +43,9 @@ async def create_many_arrows(async_client: AsyncClient, count: int = 5) -> list[
         resp = await async_client.post(ARROWS_ENDPOINT, json=payload)
 
         assert resp.status_code == 201
-        _id = payload["id"]
+        _id: str = payload["id"]  # type: ignore[assignment]
         arrows.append(_id)
-    return arrows  # type: ignore[return-value]
+    return arrows
 
 
 @pytest.mark.asyncio

@@ -366,7 +366,7 @@ The following flow charts show how the 3 entities interact with each other.
 
     ```sql
     CREATE TABLE IF NOT EXISTS sessions (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         is_opened BOOLEAN NOT NULL,
         start_time TIMESTAMP WITH TIME ZONE NOT NULL,
         end_time TIMESTAMP WITH TIME ZONE,
@@ -384,14 +384,16 @@ The following flow charts show how the 3 entities interact with each other.
 
     ```sql
     CREATE TABLE IF NOT EXISTS shots (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         arrow_id UUID NOT NULL,
+        session_id UUID NOT NULL,
         arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_landing_time TIMESTAMP WITH TIME ZONE,
         x_coordinate REAL,
         y_coordinate REAL,
-        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE
+        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
     );
     ```
 
@@ -399,7 +401,7 @@ The following flow charts show how the 3 entities interact with each other.
 
     ```sql
     CREATE TABLE IF NOT EXISTS targets (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         max_x_coordinate REAL NOT NULL,
         max_y_coordinate REAL NOT NULL,
         radius REAL [] NOT NULL,

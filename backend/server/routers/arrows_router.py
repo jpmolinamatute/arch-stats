@@ -1,12 +1,12 @@
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from server.models import ArrowsDB, DBState, DictValues
-from server.routers.utils import HTTPResponse, db_response, get_all
-from server.schema import ArrowsCreate, ArrowsUpdate
+from server.routers.utils import HTTPResponse, db_response
+from server.schema import ArrowsCreate, ArrowsFilters, ArrowsUpdate
 
 
 ArrowsRouter = APIRouter(prefix="/arrow")
@@ -15,29 +15,6 @@ ArrowsRouter = APIRouter(prefix="/arrow")
 async def get_arrows_db() -> ArrowsDB:
     db_pool = await DBState.get_db_pool()
     return ArrowsDB(db_pool)
-
-
-def fix_arrows_filter_types(filters_str: dict[str, str]) -> DictValues:
-    # Cast each filter value to the proper type for the column
-    bool_fields = {"is_programmed"}
-    float_fields = {"length", "label_position", "weight", "diameter"}
-    int_fields = {"spine"}
-    str_fields = {"human_identifier"}
-    filters: DictValues = {}
-    for key, value in filters_str.items():
-        if key in bool_fields:
-            if isinstance(value, str):
-                filters[key] = value.lower() == "true"
-        elif key in float_fields:
-            filters[key] = float(value)
-        elif key in int_fields:
-            filters[key] = int(value)
-        elif key in str_fields:
-            filters[key] = value
-        else:
-            raise ValueError(f"ERROR: unknown field '{key}'")
-
-    return filters
 
 
 @ArrowsRouter.get("/new_arrow_uuid", response_model=HTTPResponse[str])
@@ -57,17 +34,14 @@ async def get_arrow_uuid() -> JSONResponse:
 
 @ArrowsRouter.get("", response_model=HTTPResponse[list[DictValues]])
 async def get_all_arrows(
-    request: Request,
+    filters: ArrowsFilters = Depends(),
     arrows_db: ArrowsDB = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Retrieve all arrows.
     """
-    return await get_all(
-        request,
-        fix_arrows_filter_types,
-        arrows_db.get_all,
-    )
+    filters_dict = filters.model_dump(exclude_none=True)
+    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
 @ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[DictValues])

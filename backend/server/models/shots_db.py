@@ -11,11 +11,13 @@ class ShotsDB(DBBase[ShotsCreate, ShotsUpdate]):
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             arrow_id UUID NOT NULL,
+            session_id UUID NOT NULL,
             arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
             arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
             arrow_landing_time TIMESTAMP WITH TIME ZONE,
             x_coordinate REAL,
             y_coordinate REAL,
-            FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE
+            FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
+            FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
         super().__init__("shots", schema, db_pool)
