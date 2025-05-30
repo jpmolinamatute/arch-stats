@@ -1,7 +1,8 @@
 from typing import Any
 from uuid import UUID
 
-from httpx import AsyncClient
+from asyncpg import Pool
+
 
 from server.schema import TargetsCreate, TargetsRead
 
@@ -27,20 +28,38 @@ def create_fake_target(session_id: UUID, **overrides: Any) -> TargetsCreate:
 
 
 async def create_many_targets(
-    async_client: AsyncClient, session_id: UUID, count: int = 5
+    db_pool: Pool,
+    session_id: UUID,
+    count: int = 5,
 ) -> list[TargetsRead]:
     targets = []
     for i in range(count):
-        payload = create_fake_target(
+        target = create_fake_target(
             session_id=session_id,
             max_x_coordinate=120.0 + i,
             max_y_coordinate=121.0 + i,
             height=140.0 + i,
             human_identifier=f"target_{i}",
         )
-        payload_dict = payload.model_dump(mode="json", by_alias=True)
-        resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
-        assert resp.status_code == 201
-        payload_dict["id"] = resp.json()["data"]
+        insert_sql = """
+            INSERT INTO targets (
+                max_x_coordinate, max_y_coordinate, radius, points, height, human_identifier, session_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+        """
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                insert_sql,
+                target.max_x_coordinate,
+                target.max_y_coordinate,
+                target.radius,
+                target.points,
+                target.height,
+                target.human_identifier,
+                target.session_id,
+            )
+            assert row is not None
+        payload_dict = target.model_dump(mode="json", by_alias=True)
+        payload_dict["id"] = row["id"]
         targets.append(TargetsRead(**payload_dict))
     return targets

@@ -2,6 +2,7 @@ import math
 import urllib.parse
 from uuid import uuid4
 
+from asyncpg import Pool
 import pytest
 from httpx import AsyncClient
 
@@ -12,9 +13,9 @@ TARGETS_ENDPOINT = "/api/v0/target"
 
 
 @pytest.mark.asyncio
-async def test_target_crud_workflow(async_client: AsyncClient) -> None:
+async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) -> None:
     # --- Create a session first ---
-    session = await create_many_sessions(async_client, 1)
+    session = await create_many_sessions(db_pool, 1)
     session_id = session[0].session_id
     # --- Create Target ---
     target = create_fake_target(session_id=session_id)
@@ -133,11 +134,11 @@ async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_targets_filtering(async_client: AsyncClient) -> None:
-    sessions = await create_many_sessions(async_client, 1)
+async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
+    sessions = await create_many_sessions(db_pool, 1)
     session_uuid = sessions[0].session_id
     session_id = str(session_uuid)
-    targets = await create_many_targets(async_client, session_uuid, 5)
+    targets = await create_many_targets(db_pool, session_uuid, 5)
 
     # --- Filter by session_id ---
 

@@ -53,7 +53,7 @@ async def create_many_shots(
     for i in range(count):
         payload = create_fake_shot(arrows_id[i], session_id)
         shot_id = await insert_shot_db(db_pool, payload)
-        payload_dict = payload.model_dump(mode="json", by_alias=True)
+        payload_dict = payload.model_dump(exclude_none=True, by_alias=True)
         payload_dict["id"] = shot_id
         shots.append(ShotsRead(**payload_dict))
     return shots

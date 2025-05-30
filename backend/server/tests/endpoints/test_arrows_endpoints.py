@@ -1,4 +1,5 @@
 from uuid import UUID, uuid4
+from asyncpg import Pool
 import pytest
 from faker import Faker
 from httpx import AsyncClient
@@ -199,10 +200,10 @@ async def test_post_arrow_with_extra_field(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_arrows_filtering(async_client: AsyncClient) -> None:
+async def test_arrows_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
     """Test filtering arrows by various fields."""
     # Create multiple arrows
-    await create_many_arrows(async_client, 6)
+    await create_many_arrows(db_pool, 6)
 
     # --- Test filter by is_programmed ---
     resp = await async_client.get(f"{ARROWS_ENDPOINT}?is_programmed=true")

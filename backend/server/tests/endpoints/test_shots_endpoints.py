@@ -20,12 +20,12 @@ SHOTS_ENDPOINT = "/api/v0/shot"
 @pytest.mark.asyncio
 async def test_shot_read_and_delete(async_client: AsyncClient, db_pool: Pool) -> None:
     # Insert arrow via API
-    arrows = await create_many_arrows(async_client, 5)
-    session = await create_many_sessions(async_client, 1)
-
+    arrows = await create_many_arrows(db_pool, 5)
+    session = await create_many_sessions(db_pool, 1)
+    arrows_ids = [r.arrow_id for r in arrows]
     session_id = session[0].session_id
     # Insert shot directly in the DB
-    shot_row = await create_many_shots(db_pool, arrows, session_id, 5)
+    shot_row = await create_many_shots(db_pool, arrows_ids, session_id, 5)
     shot_uuid = shot_row[0].shot_id
     shot_id = str(shot_uuid)
     arrow_uuid = shot_row[0].arrow_id
@@ -82,13 +82,14 @@ async def test_get_nonexistent_shot(async_client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
     # Create arrows and shots
-    arrows = await create_many_arrows(async_client, 5)
-    session = await create_many_sessions(async_client, 1)
+    arrows = await create_many_arrows(db_pool, 5)
+    session = await create_many_sessions(db_pool, 1)
+    arrows_ids = [r.arrow_id for r in arrows]
     session_id = session[0].session_id
-    shots = await create_many_shots(db_pool, arrows, session_id, 5)
+    shots = await create_many_shots(db_pool, arrows_ids, session_id, 5)
 
     # --- Filter by arrow_id ---
-    arrow_id = arrows[2]
+    arrow_id = str(arrows[2].arrow_id)
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?arrow_id={arrow_id}")
     assert resp.status_code == 200
     data = resp.json()["data"]
@@ -124,7 +125,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     assert data[0]["arrow_engage_time"].startswith(dt_iso[:19])  # ignore microseconds
 
     # --- Filter by multiple fields ---
-    multi_arrow_id = arrows[1]
+    multi_arrow_id = str(arrows[1].arrow_id)
     multi_x = shots[1].x_coordinate or 0.0
     resp = await async_client.get(
         f"{SHOTS_ENDPOINT}?arrow_id={multi_arrow_id}&x_coordinate={multi_x}"

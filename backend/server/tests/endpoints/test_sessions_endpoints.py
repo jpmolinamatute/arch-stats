@@ -2,6 +2,7 @@ import datetime
 import urllib.parse
 from uuid import UUID, uuid4
 
+from asyncpg import Pool
 import pytest
 from httpx import AsyncClient
 
@@ -111,9 +112,9 @@ async def test_post_session_with_extra_field(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sessions_filtering(async_client: AsyncClient) -> None:
+async def test_sessions_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
     # Create multiple sessions
-    sessions = await create_many_sessions(async_client, 6)
+    sessions = await create_many_sessions(db_pool, 6)
 
     # --- Filter by is_opened ---
     resp = await async_client.get(f"{SESSIONS_ENDPOINT}?is_opened=true")

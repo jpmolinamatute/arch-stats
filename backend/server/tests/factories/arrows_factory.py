@@ -1,8 +1,8 @@
 import random
 from typing import Any
-from uuid import uuid4, UUID
+from uuid import uuid4
 
-from httpx import AsyncClient
+from asyncpg import Pool
 
 from server.schema import ArrowsCreate
 
@@ -24,10 +24,10 @@ def create_fake_arrow(**overrides: Any) -> ArrowsCreate:
     return data.model_copy(update=overrides)
 
 
-async def create_many_arrows(async_client: AsyncClient, count: int = 5) -> list[UUID]:
+async def create_many_arrows(db_pool: Pool, count: int = 5) -> list[ArrowsCreate]:
     arrows = []
     for i in range(count):
-        arrow = create_fake_arrow(
+        arrow_data = create_fake_arrow(
             is_programmed=bool(i % 2),
             spine=400 + 10 * i,
             weight=350.0 + 5 * i,
@@ -36,10 +36,25 @@ async def create_many_arrows(async_client: AsyncClient, count: int = 5) -> list[
             label_position=1.0 + 0.5 * i,
             diameter=5.7 + 0.1 * i,
         )
-        payload = arrow.model_dump(mode="json", by_alias=True)
-        resp = await async_client.post(ARROWS_ENDPOINT, json=payload)
-
-        assert resp.status_code == 201
-        _id = payload["id"]
-        arrows.append(_id)
+        # Prepare SQL for insert (with all columns)
+        insert_sql = """
+            INSERT INTO arrows (
+                id, length, human_identifier, is_programmed, label_position, weight, diameter, spine
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id
+        """
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                insert_sql,
+                arrow_data.arrow_id,
+                arrow_data.length,
+                arrow_data.human_identifier,
+                arrow_data.is_programmed,
+                arrow_data.label_position,
+                arrow_data.weight,
+                arrow_data.diameter,
+                arrow_data.spine,
+            )
+            assert row is not None
+            arrows.append(arrow_data)
     return arrows
