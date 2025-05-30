@@ -1,62 +1,21 @@
 import datetime
 import urllib.parse
-from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
 from httpx import AsyncClient
 
-from server.models.base_db import DictValues
-
+from server.tests.factories import create_fake_sessions, create_many_sessions
 
 SESSIONS_ENDPOINT = "/api/v0/session"
-
-
-def create_sessions_payload(**overrides: Any) -> DictValues:
-    """
-    Default payload for session creation, with overrides for specific test cases.
-    """
-    data: DictValues = {
-        "is_opened": True,
-        "start_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "location": "Test Range",
-    }
-    data.update(overrides)
-    return data
-
-
-async def create_many_sessions(async_client: AsyncClient, count: int = 5) -> list[DictValues]:
-    sessions = []
-    for i in range(count):
-        is_opened = bool(i % 2)
-        start_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=i)
-
-        payload = create_sessions_payload(
-            location=f"Range_{i%2}",
-            start_time=start_time.isoformat(),
-        )
-        resp = await async_client.post(SESSIONS_ENDPOINT, json=payload)
-        resp_json = resp.json()
-        _id = resp_json["data"]
-        payload["id"] = _id
-        assert resp.status_code == 201
-        if not is_opened:
-            end_time = (start_time + datetime.timedelta(hours=1)).isoformat()
-            await async_client.patch(
-                f"{SESSIONS_ENDPOINT}/{_id}",
-                json={"end_time": end_time, "is_opened": is_opened},
-            )
-            assert resp.status_code == 201
-            payload["end_time"] = end_time
-        sessions.append(payload)
-    return sessions
 
 
 @pytest.mark.asyncio
 async def test_session_crud_workflow(async_client: AsyncClient) -> None:
     # --- Create Session ---
-    payload = create_sessions_payload()
-    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload)
+    payload = create_fake_sessions()
+    payload_dict = payload.model_dump(mode="json", by_alias=True)
+    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)
     data = resp.json()
     assert resp.status_code == 201
     assert data["code"] == 201
@@ -112,9 +71,10 @@ async def test_session_crud_workflow(async_client: AsyncClient) -> None:
 async def test_session_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
-    payload = create_sessions_payload()
-    payload.pop(missing_field, None)
-    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload)
+    payload = create_fake_sessions()
+    payload_dict = payload.model_dump(mode="json", by_alias=True)
+    payload_dict.pop(missing_field, None)
+    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)
     assert resp.status_code == 422
     result = resp.json()
     assert "detail" in result
@@ -143,9 +103,10 @@ async def test_get_all_sessions_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_session_with_extra_field(async_client: AsyncClient) -> None:
-    payload = create_sessions_payload()
-    payload["unexpected_field"] = "forbidden"
-    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload)
+    payload = create_fake_sessions()
+    payload_dict = payload.model_dump(mode="json", by_alias=True)
+    payload_dict["unexpected_field"] = "forbidden"
+    resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)
     assert resp.status_code == 422
 
 
@@ -174,7 +135,7 @@ async def test_sessions_filtering(async_client: AsyncClient) -> None:
     assert all(s["location"] == location for s in data)
 
     # --- Filter by specific start_time (should be 1 match) ---
-    target_time: str = sessions[2]["start_time"]  # type: ignore
+    target_time = sessions[2].start_time.isoformat()
     encoded_time = urllib.parse.quote(target_time, safe="")
     resp = await async_client.get(f"{SESSIONS_ENDPOINT}?start_time={encoded_time}")
     assert resp.status_code == 200

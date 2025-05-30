@@ -1,68 +1,20 @@
-import datetime
 import math
 import urllib.parse
-from typing import Any
+
 from uuid import uuid4
 
-import pytest
 from asyncpg import Pool
+import pytest
 from httpx import AsyncClient
 
-from server.models.base_db import DictValues
-from server.tests.endpoints.test_arrows_endpoints import create_many_arrows
-from server.tests.endpoints.test_sessions_endpoints import create_many_sessions
 
+from server.tests.factories import (
+    create_many_shots,
+    create_many_arrows,
+    create_many_sessions,
+)
 
 SHOTS_ENDPOINT = "/api/v0/shot"
-ARROWS_ENDPOINT = "/api/v0/arrow"
-
-
-def create_shots_payload(arrow_id: str, session_id: str, **overrides: Any) -> DictValues:
-    now = datetime.datetime.now(datetime.timezone.utc)
-    data: DictValues = {
-        "id": uuid4(),
-        "arrow_id": arrow_id,
-        "session_id": session_id,
-        "arrow_engage_time": now,
-        "arrow_disengage_time": now + datetime.timedelta(seconds=2),
-        "arrow_landing_time": now + datetime.timedelta(seconds=4),
-        "x_coordinate": 10.1,
-        "y_coordinate": 5.3,
-    }
-    data.update(overrides)
-    return data
-
-
-async def insert_shot_direct(db_pool: Pool, shot_row: DictValues) -> None:
-    # Direct DB insert; adjust as per your pool/library setup
-    async with db_pool.acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO shots (
-                id, arrow_id, session_id, arrow_engage_time, arrow_disengage_time, 
-                arrow_landing_time, x_coordinate, y_coordinate
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            """,
-            shot_row["id"],
-            shot_row["arrow_id"],
-            shot_row["session_id"],
-            shot_row["arrow_engage_time"],
-            shot_row["arrow_disengage_time"],
-            shot_row["arrow_landing_time"],
-            shot_row["x_coordinate"],
-            shot_row["y_coordinate"],
-        )
-
-
-async def create_many_shots(
-    db_pool: Pool, arrows_id: list[str], session_id: str, count: int = 5
-) -> list[DictValues]:
-    shots = []
-    for i in range(count):
-        shot_row = create_shots_payload(arrows_id[i], session_id)
-        await insert_shot_direct(db_pool, shot_row)
-        shots.append(shot_row)
-    return shots
 
 
 @pytest.mark.asyncio
@@ -71,23 +23,25 @@ async def test_shot_read_and_delete(async_client: AsyncClient, db_pool: Pool) ->
     arrows = await create_many_arrows(async_client, 5)
     session = await create_many_sessions(async_client, 1)
 
-    session_id: str = session[0]["id"]  # type: ignore[assignment]
+    session_id = session[0].session_id
     # Insert shot directly in the DB
     shot_row = await create_many_shots(db_pool, arrows, session_id, 5)
-    shot_id = shot_row[0]["id"]
-    arrow_id = shot_row[0]["arrow_id"]
+    shot_uuid = shot_row[0].shot_id
+    shot_id = str(shot_uuid)
+    arrow_uuid = shot_row[0].arrow_id
+    arrow_id = str(arrow_uuid)
 
     # --- Get all shots ---
     resp = await async_client.get(SHOTS_ENDPOINT)
     assert resp.status_code == 200
     shots = resp.json()["data"]
-    assert any(str(s["id"]) == str(shot_id) for s in shots)
+    assert any(s["id"] == shot_id for s in shots)
 
     # --- Get shot by id ---
     resp = await async_client.get(f"{SHOTS_ENDPOINT}/{shot_id}")
     assert resp.status_code == 200
     shot = resp.json()["data"]
-    assert str(shot["id"]) == str(shot_id)
+    assert shot["id"] == shot_id
     assert shot["arrow_id"] == arrow_id
 
     # --- Filter by arrow_id ---
@@ -130,7 +84,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     # Create arrows and shots
     arrows = await create_many_arrows(async_client, 5)
     session = await create_many_sessions(async_client, 1)
-    session_id: str = session[0]["id"]  # type: ignore[assignment]
+    session_id = session[0].session_id
     shots = await create_many_shots(db_pool, arrows, session_id, 5)
 
     # --- Filter by arrow_id ---
@@ -142,7 +96,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     assert len(data) >= 1
 
     # --- Filter by x_coordinate ---
-    x_val: float = shots[3]["x_coordinate"]  # type: ignore[assignment]
+    x_val = shots[3].x_coordinate or 0.0
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?x_coordinate={x_val}")
     resp_json = resp.json()
 
@@ -152,7 +106,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     assert len(data) >= 1
 
     # --- Filter by y_coordinate ---
-    y_val: float = shots[4]["y_coordinate"]  # type: ignore[assignment]
+    y_val = shots[4].y_coordinate or 0.0
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?y_coordinate={y_val}")
     assert resp.status_code == 200
     data = resp.json()["data"]
@@ -161,7 +115,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
 
     # --- Filter by arrow_engage_time ---
 
-    dt_iso: str = shots[1]["arrow_engage_time"].isoformat()  # type: ignore[union-attr]
+    dt_iso = shots[1].arrow_engage_time.isoformat()
     dt_encoded = urllib.parse.quote(dt_iso, safe="")
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?arrow_engage_time={dt_encoded}")
     assert resp.status_code == 200
@@ -171,7 +125,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
 
     # --- Filter by multiple fields ---
     multi_arrow_id = arrows[1]
-    multi_x: float = shots[1]["x_coordinate"]  # type: ignore[assignment]
+    multi_x = shots[1].x_coordinate or 0.0
     resp = await async_client.get(
         f"{SHOTS_ENDPOINT}?arrow_id={multi_arrow_id}&x_coordinate={multi_x}"
     )

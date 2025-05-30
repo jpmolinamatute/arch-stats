@@ -123,3 +123,7 @@ class ArrowsFilters(BaseModel):
         examples=[10.0],
     )
     model_config = ConfigDict(extra="forbid")
+
+
+class ArrowsRead(ArrowsCreate):
+    pass
