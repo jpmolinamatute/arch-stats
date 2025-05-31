@@ -511,6 +511,7 @@ dev = [
     { name = "mypy" },
     { name = "pylint" },
     { name = "pytest" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -522,6 +523,7 @@ dev = [
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "pylint", specifier = ">=3.3.7" },
     { name = "pytest", specifier = ">=8.3.5" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
 ]
 
 [[package]]

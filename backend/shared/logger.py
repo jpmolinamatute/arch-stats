@@ -42,6 +42,7 @@ def create_stream_handler(formatter: Formatter, log_lever: LogLevel) -> Handler:
 
 def get_logger(file_name: str, log_lever: LogLevel) -> logging.Logger:
     logger = logging.getLogger(file_name)
+    logger.setLevel(log_lever)
     if not logger.hasHandlers():
         formatter = Formatter(
             "%(asctime)s|%(pathname)s:%(lineno)d|%(message)s", datefmt="%Y-%m-%d %H:%M:%S"

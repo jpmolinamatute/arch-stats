@@ -1,4 +1,7 @@
+import asyncio
+import atexit
 import logging
+import sys
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -11,6 +14,9 @@ from fastapi.staticfiles import StaticFiles
 
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter
+from shared import LogLevel, get_logger
+
+LOGGER = get_logger(__name__, LogLevel.INFO)
 
 
 async def create_tables() -> None:
@@ -33,7 +39,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     try:
         yield
     except CancelledError:
-        print("Shutdown interrupted. Cleaning up...")
+        LOGGER.info("Shutdown interrupted. Cleaning up...")
     finally:
         await DBState.close_db()  # Close database safely
 
@@ -62,12 +68,12 @@ def create_app() -> FastAPI:
     return app
 
 
-async def setup(logger: logging.Logger) -> None:
+async def setup() -> None:
     server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
     server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
     dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
-    logger.info("Starting the server on %s:%d", server_name, server_port)
-    logger.info("Development mode: %s", dev_mode)
+    LOGGER.info("Starting the server on %s:%d", server_name, server_port)
+    LOGGER.info("Development mode: %s", dev_mode)
 
     if dev_mode:
         worker = None
@@ -91,3 +97,16 @@ async def setup(logger: logging.Logger) -> None:
     server = uvicorn.Server(config)
 
     await server.serve()
+
+
+if __name__ == "__main__":
+    EXIT_CODE = 0
+    atexit.register(logging.shutdown)
+    try:
+        asyncio.run(setup())
+    except (KeyboardInterrupt, SystemExit):
+        LOGGER.info("Bye!")
+    except Exception as e:
+        LOGGER.exception(e)
+        EXIT_CODE = 1
+    sys.exit(EXIT_CODE)
