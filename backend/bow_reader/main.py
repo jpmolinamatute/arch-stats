@@ -1,6 +1,5 @@
-def main():
-    print("Hello from bow-reader!")
+import logging
 
 
-if __name__ == "__main__":
-    main()
+async def run(logger: logging.Logger) -> None:
+    logger.info("Hello from bow-reader!")

@@ -26,19 +26,20 @@ async def create_tables() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
+    logger: logging.Logger = getattr(app.state, "logger")
     await DBState.init_db()  # Initialize database
     await create_tables()
     try:
         yield
     except CancelledError:
-        print("Shutdown interrupted. Cleaning up...")
+        logger.info("Shutdown interrupted. Cleaning up...")
     finally:
         await DBState.close_db()  # Close database safely
 
 
-def create_app() -> FastAPI:
+def create_app(logger: logging.Logger) -> FastAPI:
     version = "0.1.0"
     app = FastAPI(
         lifespan=lifespan,
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
     )
     mayor_version = f"v{version[0]}"
     # Include blueprints
+    app.state.logger = logger
     app.include_router(ArrowsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
@@ -62,7 +64,7 @@ def create_app() -> FastAPI:
     return app
 
 
-async def setup(logger: logging.Logger) -> None:
+async def run(logger: logging.Logger) -> None:
     server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
     server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
     dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
@@ -77,7 +79,7 @@ async def setup(logger: logging.Logger) -> None:
         color = None
 
     config = uvicorn.Config(
-        app=create_app(),
+        app=create_app(logger),
         host=server_name,
         port=server_port,
         loop="uvloop",

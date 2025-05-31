@@ -1,8 +1,8 @@
-from server.setup import create_app, create_tables, setup
+from server.app import create_app, create_tables, run
 
 
 __all__ = [
-    "setup",
+    "run",
     "create_app",
     "create_tables",
 ]

@@ -1,77 +1,26 @@
 import math
 import urllib.parse
-from typing import Any
 from uuid import uuid4
 
 import pytest
+from asyncpg import Pool
 from httpx import AsyncClient
 
-from server.models.base_db import DictValues
-from server.tests.endpoints.test_sessions_endpoints import (
-    create_many_sessions,
-    create_sessions_payload,
-)
+from server.tests.factories import create_fake_target, create_many_sessions, create_many_targets
 
 
 TARGETS_ENDPOINT = "/api/v0/target"
 
 
-def create_targets_payload(session_id: str, **overrides: Any) -> DictValues:
-    """
-    Generate a valid payload for TargetsCreate.
-    Adjust the fields to match your schema exactly!
-    """
-
-    data: DictValues = {
-        "max_x_coordinate": 122.0,
-        "max_y_coordinate": 122.0,
-        "radius": [3.0, 6.0, 9.0, 12.0, 15.0],
-        "points": [10, 8, 6, 4, 2],
-        "height": 140.0,
-        "human_identifier": "T1",
-        "session_id": session_id,
-    }
-    data.update(overrides)
-    return data
-
-
-async def insert_session(async_client: AsyncClient) -> str:
-    payload = create_sessions_payload()
-    resp = await async_client.post("/api/v0/session", json=payload)
-    resp_json = resp.json()
-    data: str = resp_json["data"]
-    assert resp.status_code == 201
-    return data
-
-
-async def create_many_targets(
-    async_client: AsyncClient,
-    session_id: str,
-    count: int = 5,
-) -> list[DictValues]:
-    targets = []
-    for i in range(count):
-        payload = create_targets_payload(
-            session_id=session_id,
-            max_x_coordinate=120.0 + i,
-            max_y_coordinate=121.0 + i,
-            height=140.0 + i,
-            human_identifier=f"target_{i}",
-        )
-        resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
-        assert resp.status_code == 201
-        targets.append(payload)
-    return targets
-
-
 @pytest.mark.asyncio
-async def test_target_crud_workflow(async_client: AsyncClient) -> None:
+async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) -> None:
     # --- Create a session first ---
-    session_id = await insert_session(async_client)
-
+    session = await create_many_sessions(db_pool, 1)
+    session_id = session[0].session_id
     # --- Create Target ---
-    payload = create_targets_payload(session_id=session_id)
-    resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+    target = create_fake_target(session_id=session_id)
+    payload_dict = target.model_dump(mode="json", by_alias=True)
+    resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
     data = resp.json()
     assert resp.status_code == 201
     assert data["code"] == 201
@@ -89,8 +38,8 @@ async def test_target_crud_workflow(async_client: AsyncClient) -> None:
     found = None
     for t in targets:
         if (
-            t["human_identifier"] == payload["human_identifier"]
-            and t["session_id"] == payload["session_id"]
+            t["human_identifier"] == payload_dict["human_identifier"]
+            and t["session_id"] == payload_dict["session_id"]
         ):
             found = t
             break
@@ -101,8 +50,8 @@ async def test_target_crud_workflow(async_client: AsyncClient) -> None:
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={session_id}")
     resp_json = resp.json()
     assert resp.status_code == 200
-    target = resp_json["data"]
-    assert target[0]["id"] == target_id
+    target_data = resp_json["data"]
+    assert target_data[0]["id"] == target_id
 
     # --- Update (Patch) Target ---
     patch = {
@@ -145,9 +94,10 @@ async def test_target_crud_workflow(async_client: AsyncClient) -> None:
 async def test_target_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
-    payload = create_targets_payload(str(uuid4()))
-    payload.pop(missing_field, None)
-    resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+    payload = create_fake_target(uuid4())
+    payload_dict = payload.model_dump(mode="json", by_alias=True)
+    payload_dict.pop(missing_field, None)
+    resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
     assert resp.status_code == 422
     result = resp.json()
     assert "detail" in result
@@ -176,17 +126,19 @@ async def test_get_all_targets_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
-    payload = create_targets_payload(str(uuid4()))
-    payload["unexpected_field"] = "forbidden"
-    resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+    payload = create_fake_target(uuid4())
+    payload_dict = payload.model_dump(mode="json", by_alias=True)
+    payload_dict["unexpected_field"] = "forbidden"
+    resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
     assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_targets_filtering(async_client: AsyncClient) -> None:
-    sessions = await create_many_sessions(async_client, 1)
-    session_id: str = sessions[0]["id"]  # type: ignore[assignment]
-    targets = await create_many_targets(async_client, session_id, 5)
+async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
+    sessions = await create_many_sessions(db_pool, 1)
+    session_uuid = sessions[0].session_id
+    session_id = str(session_uuid)
+    targets = await create_many_targets(db_pool, session_uuid, 5)
 
     # --- Filter by session_id ---
 
@@ -196,14 +148,14 @@ async def test_targets_filtering(async_client: AsyncClient) -> None:
     assert all(t["session_id"] == session_id for t in data)
 
     # --- Filter by max_x_coordinate (float, use math.isclose) ---
-    mx_val: float = targets[4]["max_x_coordinate"]  # type: ignore[assignment]
+    mx_val: float = targets[4].max_x_coordinate
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x_coordinate={mx_val}")
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert all(math.isclose(float(t["max_x_coordinate"]), mx_val, rel_tol=1e-6) for t in data)
 
     # --- Filter by human_identifier ---
-    hid: str = targets[3]["human_identifier"]  # type: ignore[assignment]
+    hid: str = targets[3].human_identifier
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?human_identifier={urllib.parse.quote(hid)}")
     assert resp.status_code == 200
     data = resp.json()["data"]
@@ -211,7 +163,7 @@ async def test_targets_filtering(async_client: AsyncClient) -> None:
 
     # --- Filter by multiple fields ---
 
-    multi_hid: str = targets[4]["human_identifier"]  # type: ignore[assignment]
+    multi_hid: str = targets[4].human_identifier
     url = f"{TARGETS_ENDPOINT}?session_id={session_id}&"
     url += f"human_identifier={urllib.parse.quote(multi_hid)}"
     resp = await async_client.get(url)

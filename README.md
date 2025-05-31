@@ -393,8 +393,20 @@ The following flow charts show how the 3 entities interact with each other.
         x_coordinate REAL,
         y_coordinate REAL,
         FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
-    );
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
+        CHECK (
+            (
+                arrow_landing_time IS NOT NULL AND
+                x_coordinate IS NOT NULL AND
+                y_coordinate IS NOT NULL
+            )
+            OR
+            (
+                arrow_landing_time IS NULL AND
+                x_coordinate IS NULL AND
+                y_coordinate IS NULL
+            )
+        );
     ```
 
   * **targets**
