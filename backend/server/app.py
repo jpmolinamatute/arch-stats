@@ -1,7 +1,4 @@
-import asyncio
-import atexit
 import logging
-import sys
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -14,9 +11,6 @@ from fastapi.staticfiles import StaticFiles
 
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter
-from shared import LogLevel, get_logger
-
-LOGGER = get_logger(__name__, LogLevel.INFO)
 
 
 async def create_tables() -> None:
@@ -32,19 +26,20 @@ async def create_tables() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
+    logger: logging.Logger = getattr(app.state, "logger")
     await DBState.init_db()  # Initialize database
     await create_tables()
     try:
         yield
     except CancelledError:
-        LOGGER.info("Shutdown interrupted. Cleaning up...")
+        logger.info("Shutdown interrupted. Cleaning up...")
     finally:
         await DBState.close_db()  # Close database safely
 
 
-def create_app() -> FastAPI:
+def create_app(logger: logging.Logger) -> FastAPI:
     version = "0.1.0"
     app = FastAPI(
         lifespan=lifespan,
@@ -54,6 +49,7 @@ def create_app() -> FastAPI:
     )
     mayor_version = f"v{version[0]}"
     # Include blueprints
+    app.state.logger = logger
     app.include_router(ArrowsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
@@ -68,12 +64,12 @@ def create_app() -> FastAPI:
     return app
 
 
-async def setup() -> None:
+async def run(logger: logging.Logger) -> None:
     server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
     server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
     dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
-    LOGGER.info("Starting the server on %s:%d", server_name, server_port)
-    LOGGER.info("Development mode: %s", dev_mode)
+    logger.info("Starting the server on %s:%d", server_name, server_port)
+    logger.info("Development mode: %s", dev_mode)
 
     if dev_mode:
         worker = None
@@ -83,7 +79,7 @@ async def setup() -> None:
         color = None
 
     config = uvicorn.Config(
-        app=create_app(),
+        app=create_app(logger),
         host=server_name,
         port=server_port,
         loop="uvloop",
@@ -97,16 +93,3 @@ async def setup() -> None:
     server = uvicorn.Server(config)
 
     await server.serve()
-
-
-if __name__ == "__main__":
-    EXIT_CODE = 0
-    atexit.register(logging.shutdown)
-    try:
-        asyncio.run(setup())
-    except (KeyboardInterrupt, SystemExit):
-        LOGGER.info("Bye!")
-    except Exception as e:
-        LOGGER.exception(e)
-        EXIT_CODE = 1
-    sys.exit(EXIT_CODE)

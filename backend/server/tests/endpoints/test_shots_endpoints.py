@@ -1,18 +1,17 @@
 import math
 import urllib.parse
-
 from uuid import uuid4
 
-from asyncpg import Pool
 import pytest
+from asyncpg import Pool
 from httpx import AsyncClient
 
-
 from server.tests.factories import (
-    create_many_shots,
     create_many_arrows,
     create_many_sessions,
+    create_many_shots,
 )
+
 
 SHOTS_ENDPOINT = "/api/v0/shot"
 

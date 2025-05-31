@@ -3,8 +3,8 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-
 from server.schema import TargetsCreate, TargetsRead
+
 
 TARGETS_ENDPOINT = "/api/v0/target"
 

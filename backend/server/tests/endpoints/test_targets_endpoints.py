@@ -2,11 +2,11 @@ import math
 import urllib.parse
 from uuid import uuid4
 
-from asyncpg import Pool
 import pytest
+from asyncpg import Pool
 from httpx import AsyncClient
 
-from server.tests.factories import create_many_sessions, create_fake_target, create_many_targets
+from server.tests.factories import create_fake_target, create_many_sessions, create_many_targets
 
 
 TARGETS_ENDPOINT = "/api/v0/target"

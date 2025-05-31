@@ -6,6 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from server import create_app, create_tables
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
+from shared import get_logger, LogLevel
 
 
 async def drop_tables() -> None:
@@ -24,7 +25,8 @@ async def drop_tables() -> None:
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     await DBState.init_db()
     await create_tables()
-    app = create_app()
+    logger = get_logger("test", LogLevel.DEBUG)
+    app = create_app(logger)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
     await drop_tables()

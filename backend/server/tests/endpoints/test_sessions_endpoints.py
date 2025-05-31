@@ -2,11 +2,12 @@ import datetime
 import urllib.parse
 from uuid import UUID, uuid4
 
-from asyncpg import Pool
 import pytest
+from asyncpg import Pool
 from httpx import AsyncClient
 
 from server.tests.factories import create_fake_sessions, create_many_sessions
+
 
 SESSIONS_ENDPOINT = "/api/v0/session"
 

@@ -1,9 +1,12 @@
 from uuid import UUID, uuid4
-from asyncpg import Pool
+
 import pytest
+from asyncpg import Pool
 from faker import Faker
 from httpx import AsyncClient
+
 from server.tests.factories import create_fake_arrow, create_many_arrows
+
 
 ARROWS_ENDPOINT = "/api/v0/arrow"
 

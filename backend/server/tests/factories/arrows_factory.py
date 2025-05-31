@@ -6,6 +6,7 @@ from asyncpg import Pool
 
 from server.schema import ArrowsCreate
 
+
 ARROWS_ENDPOINT = "/api/v0/arrow"
 
 
