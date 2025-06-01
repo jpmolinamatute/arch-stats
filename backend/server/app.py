@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter
+from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
 
 
 async def create_tables() -> None:
@@ -22,6 +22,7 @@ async def create_tables() -> None:
     await arrows.create_table()
     await sessions.create_table()
     await shots.create_table()
+    await shots.create_notification("archy")
     await targets.create_table()
 
 
@@ -54,7 +55,7 @@ def create_app(logger: logging.Logger) -> FastAPI:
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
-    # app.include_router(router_websocket)
+    app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
     current_file_path = Path(__file__).parent
     frontend_path = current_file_path.joinpath("frontend")
     app.mount(
@@ -89,6 +90,8 @@ async def run(logger: logging.Logger) -> None:
         http="h11",
         workers=worker,
         use_colors=color,
+        log_level=logger.level,
+        timeout_graceful_shutdown=10,
     )
     server = uvicorn.Server(config)
 

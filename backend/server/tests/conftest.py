@@ -6,7 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from server import create_app, create_tables
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-from shared import get_logger, LogLevel
+from shared import LogLevel, get_logger
 
 
 async def drop_tables() -> None:

@@ -2,6 +2,7 @@ from server.routers.arrows_router import ArrowsRouter
 from server.routers.sessions_router import SessionsRouter
 from server.routers.shots_router import ShotsRouter
 from server.routers.targets_router import TargetsRouter
+from server.routers.websocket import WSRouter
 
 
 __all__ = [
@@ -9,4 +10,5 @@ __all__ = [
     "ShotsRouter",
     "SessionsRouter",
     "TargetsRouter",
+    "WSRouter",
 ]

@@ -8,7 +8,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import ShotsFilters
 
 
-ShotsRouter = APIRouter(prefix="/shot")
+ShotsRouter = APIRouter()
 
 
 async def get_shots_db() -> ShotsDB:
@@ -16,7 +16,7 @@ async def get_shots_db() -> ShotsDB:
     return ShotsDB(db_pool)
 
 
-@ShotsRouter.get("", response_model=HTTPResponse[list[DictValues]])
+@ShotsRouter.get("/shot", response_model=HTTPResponse[list[DictValues]])
 async def get_all_shots(
     filters: ShotsFilters = Depends(),
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -28,7 +28,7 @@ async def get_all_shots(
     return await db_response(shots_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@ShotsRouter.get("/{shot_id}", response_model=HTTPResponse[DictValues])
+@ShotsRouter.get("/shot/{shot_id}", response_model=HTTPResponse[DictValues])
 async def get_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -36,7 +36,7 @@ async def get_shot(
     return await db_response(shots_db.get_one_by_id, status.HTTP_200_OK, shot_id)
 
 
-@ShotsRouter.delete("/{shot_id}", response_model=HTTPResponse[None])
+@ShotsRouter.delete("/shot/{shot_id}", response_model=HTTPResponse[None])
 async def delete_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
