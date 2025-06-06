@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 from asyncpg import Pool
 
-from server.models import ShotsDB, DBNotFound, DBException
+from server.models import DBException, DBNotFound, ShotsDB
 from server.schema import ShotsCreate, ShotsUpdate
 from server.tests.factories import create_fake_shot, create_many_arrows, create_many_sessions
 

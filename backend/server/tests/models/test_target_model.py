@@ -1,8 +1,9 @@
 from uuid import uuid4
+
 import pytest
 from asyncpg import Pool
 
-from server.models import TargetsDB, DBNotFound
+from server.models import DBNotFound, TargetsDB
 from server.schema import TargetsUpdate
 from server.tests.factories import create_fake_target, create_many_sessions
 

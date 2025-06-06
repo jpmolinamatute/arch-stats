@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
+
 import pytest
 from asyncpg import Pool
 
-from server.models import SessionsDB, DBNotFound
+from server.models import DBNotFound, SessionsDB
 from server.schema import SessionsUpdate
 from server.tests.factories import create_fake_session
 
