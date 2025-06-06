@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Generic, Protocol, TypeVar
 from uuid import UUID
 
 from asyncpg import Pool
@@ -10,8 +10,15 @@ from pydantic import BaseModel
 Values = str | float | bool | int | UUID | datetime | None | list[int] | list[float]
 DictValues = dict[str, Values]
 ValuesList = list[Values]
+
+
+class HasId(Protocol):
+    def get_id(self) -> UUID: ...
+
+
 CREATETYPE = TypeVar("CREATETYPE", bound=BaseModel)
 UPDATETYPE = TypeVar("UPDATETYPE", bound=BaseModel)
+READTYPE = TypeVar("READTYPE", bound=HasId)
 
 
 class DBException(Exception):
@@ -22,7 +29,7 @@ class DBNotFound(Exception):
     pass
 
 
-class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
+class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
     """
     Base class for database operations using asyncpg.
 
@@ -30,13 +37,11 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
     """
 
     def __init__(
-        self,
-        table_name: str,
-        table_schema: str,
-        db_pool: Pool,
+        self, table_name: str, table_schema: str, db_pool: Pool, read_schema: type[READTYPE]
     ) -> None:
         self.table_name = table_name
         self.table_schema = table_schema
+        self.read_schema = read_schema
         self.db_pool = db_pool
 
     async def execute(self, sql_statement: str, values: ValuesList | None = None) -> int:
@@ -83,9 +88,8 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
         await self.execute(sql_statement, values)
         try:
             row = await self.get_one_by_filters(data_dict)
-            if "id" in row and isinstance(row["id"], UUID):
-                _id = row["id"]
-            else:
+            _id = row.get_id()
+            if not isinstance(_id, UUID):
                 raise DBException("Insert failed to return id")
         except Exception as e:
             raise DBException(e) from e
@@ -115,7 +119,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
         if affected == 0:
             raise DBNotFound(f"{self.table_name}: No record found with id={_id}")
 
-    async def get_one_by_filters(self, where_stm: DictValues) -> DictValues:
+    async def get_one_by_filters(self, where_stm: DictValues) -> READTYPE:
         """
         Retrieve a record from the table.
         """
@@ -129,13 +133,11 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
         values = list(where_stm.values())
         async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(select_stm, *values)
-            if row:
-                result = dict(row)
-            else:
+            if not row:
                 raise DBNotFound(f"{self.table_name}: No record found with {where_stm=}")
-            return result
+            return self.read_schema(**dict(row))
 
-    async def get_one_by_id(self, _id: UUID) -> DictValues:
+    async def get_one_by_id(self, _id: UUID) -> READTYPE:
         """
         Retrieve a record from the table by its ID.
         This is an alias for get_one.
@@ -143,7 +145,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
 
         return await self.get_one_by_filters({"id": _id})
 
-    async def get_all(self, where_stm: DictValues | None = None) -> list[DictValues]:
+    async def get_all(self, where_stm: DictValues | None = None) -> list[READTYPE]:
         """
         Retrieve all records from the table.
         """
@@ -161,4 +163,4 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE], ABC):
                 if values
                 else await conn.fetch(sql_statement)
             )
-            return [dict(row) for row in rows]
+            return [self.read_schema(**dict(row)) for row in rows]

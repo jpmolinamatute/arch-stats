@@ -8,7 +8,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import SessionsCreate, SessionsFilters, SessionsUpdate
 
 
-SessionsRouter = APIRouter(prefix="/session")
+SessionsRouter = APIRouter()
 
 
 async def get_sessions_db() -> SessionsDB:
@@ -16,7 +16,7 @@ async def get_sessions_db() -> SessionsDB:
     return SessionsDB(db_pool)
 
 
-@SessionsRouter.get("", response_model=HTTPResponse[list[DictValues]])
+@SessionsRouter.get("/session", response_model=HTTPResponse[list[DictValues]])
 async def get_sessions(
     filters: SessionsFilters = Depends(),
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -28,7 +28,7 @@ async def get_sessions(
     return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@SessionsRouter.get("/{session_id}", response_model=HTTPResponse[DictValues])
+@SessionsRouter.get("/session/{session_id}", response_model=HTTPResponse[DictValues])
 async def get_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -45,7 +45,7 @@ async def get_session(
     return await db_response(sessions_db.get_one_by_id, status.HTTP_200_OK, session_id)
 
 
-@SessionsRouter.post("", response_model=HTTPResponse[None])
+@SessionsRouter.post("/session", response_model=HTTPResponse[None])
 async def add_session(
     session_data: SessionsCreate,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -62,7 +62,7 @@ async def add_session(
     return await db_response(sessions_db.insert_one, status.HTTP_201_CREATED, session_data)
 
 
-@SessionsRouter.delete("/{session_id}", response_model=HTTPResponse[None])
+@SessionsRouter.delete("/session/{session_id}", response_model=HTTPResponse[None])
 async def delete_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -79,7 +79,7 @@ async def delete_session(
     return await db_response(sessions_db.delete_one, status.HTTP_204_NO_CONTENT, session_id)
 
 
-@SessionsRouter.patch("/{session_id}", response_model=HTTPResponse[None])
+@SessionsRouter.patch("/session/{session_id}", response_model=HTTPResponse[None])
 async def patch_session(
     session_id: UUID,
     update: SessionsUpdate,

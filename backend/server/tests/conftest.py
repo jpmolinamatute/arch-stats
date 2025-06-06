@@ -6,7 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from server import create_app, create_tables
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-from shared import get_logger, LogLevel
+from shared import LogLevel, get_logger
 
 
 async def drop_tables() -> None:
@@ -24,7 +24,8 @@ async def drop_tables() -> None:
 @pytest_asyncio.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     await DBState.init_db()
-    await create_tables()
+    pool = await DBState.get_db_pool()
+    await create_tables(pool)
     logger = get_logger("test", LogLevel.DEBUG)
     app = create_app(logger)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
@@ -37,3 +38,13 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
 async def db_pool() -> AsyncGenerator[Pool, None]:
     pool = await DBState.get_db_pool()
     yield pool
+
+
+@pytest_asyncio.fixture
+async def db_pool_initialed() -> AsyncGenerator[Pool, None]:
+    await DBState.init_db()
+    pool = await DBState.get_db_pool()
+    await create_tables(pool)
+    yield pool
+    await drop_tables()
+    await DBState.close_db()

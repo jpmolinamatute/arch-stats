@@ -77,7 +77,10 @@ def main() -> None:
     logger = get_logger(__name__, args.log_level)
     logger.info("Starting module: %s (log level: %s)", args.module, args.log_level)
     run_fn = get_run_fn(args.module)
-    asyncio.run(run_with_shutdown(logger, run_fn))
+    try:
+        asyncio.run(run_with_shutdown(logger, run_fn))
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt received, shutting down...")
 
 
 if __name__ == "__main__":
