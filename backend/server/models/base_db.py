@@ -79,7 +79,10 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         """
         Insert a new record into the table.
         """
-        data_dict = data.model_dump(by_alias=True)
+
+        data_dict = data.model_dump(by_alias=True, exclude_unset=True)
+        if not data_dict:
+            raise DBException("Error: invalid 'data' provided to insert_one method.")
         keys = list(data_dict.keys())
         values = list(data_dict.values())
         columns = ", ".join(keys)
@@ -87,7 +90,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         sql_statement = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders});"
         await self.execute(sql_statement, values)
         try:
-            row = await self.get_one_by_filters(data_dict)
+            row = await self.get_by_filters(data_dict)
             _id = row.get_id()
             if not isinstance(_id, UUID):
                 raise DBException("Insert failed to return id")
@@ -99,6 +102,8 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         """
         Delete a record from the table.
         """
+        if not _id or not isinstance(_id, UUID):
+            raise DBException("Error: invalid '_id' provided to delete_one method.")
         sql_statement = f"DELETE FROM {self.table_name} WHERE id = $1;"
         affected = await self.execute(sql_statement, [_id])
         if affected == 0:
@@ -108,7 +113,10 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         """
         Update a record in the table.
         """
+
         data_dict = data.model_dump(exclude_unset=True)
+        if not data_dict:
+            raise DBException("Error: invalid 'data' provided to update_one method.")
         keys = list(data_dict.keys())
         values = list(data_dict.values())
         set_clause = ", ".join(f"{key} = ${i+1}" for i, key in enumerate(keys))
@@ -119,7 +127,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         if affected == 0:
             raise DBNotFound(f"{self.table_name}: No record found with id={_id}")
 
-    async def get_one_by_filters(self, where_stm: DictValues) -> READTYPE:
+    async def get_by_filters(self, where: DictValues) -> READTYPE:
         """
         Retrieve a record from the table.
         """
@@ -128,13 +136,13 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
             FROM {self.table_name}
             WHERE
         """
-        conditions = " AND ".join(f"{key} = ${i+1}" for i, key in enumerate(where_stm.keys()))
+        conditions = " AND ".join(f"{key} = ${i+1}" for i, key in enumerate(where.keys()))
         select_stm += f"{conditions};"
-        values = list(where_stm.values())
+        values = list(where.values())
         async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(select_stm, *values)
             if not row:
-                raise DBNotFound(f"{self.table_name}: No record found with {where_stm=}")
+                raise DBNotFound(f"{self.table_name}: No record found with {where=}")
             return self.read_schema(**dict(row))
 
     async def get_one_by_id(self, _id: UUID) -> READTYPE:
@@ -142,8 +150,9 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         Retrieve a record from the table by its ID.
         This is an alias for get_one.
         """
-
-        return await self.get_one_by_filters({"id": _id})
+        if not _id or not isinstance(_id, UUID):
+            raise DBException("Error: invalid '_id' provided to delete_one method.")
+        return await self.get_by_filters({"id": _id})
 
     async def get_all(self, where_stm: DictValues | None = None) -> list[READTYPE]:
         """

@@ -6,7 +6,7 @@ import pytest
 from asyncpg import Pool
 from httpx import AsyncClient
 
-from server.tests.factories import create_fake_sessions, create_many_sessions
+from server.tests.factories import create_fake_session, create_many_sessions
 
 
 SESSIONS_ENDPOINT = "/api/v0/session"
@@ -15,7 +15,7 @@ SESSIONS_ENDPOINT = "/api/v0/session"
 @pytest.mark.asyncio
 async def test_session_crud_workflow(async_client: AsyncClient) -> None:
     # --- Create Session ---
-    payload = create_fake_sessions()
+    payload = create_fake_session()
     payload_dict = payload.model_dump(mode="json", by_alias=True)
     resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)
     data = resp.json()
@@ -73,7 +73,7 @@ async def test_session_crud_workflow(async_client: AsyncClient) -> None:
 async def test_session_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
-    payload = create_fake_sessions()
+    payload = create_fake_session()
     payload_dict = payload.model_dump(mode="json", by_alias=True)
     payload_dict.pop(missing_field, None)
     resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)
@@ -105,7 +105,7 @@ async def test_get_all_sessions_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_session_with_extra_field(async_client: AsyncClient) -> None:
-    payload = create_fake_sessions()
+    payload = create_fake_session()
     payload_dict = payload.model_dump(mode="json", by_alias=True)
     payload_dict["unexpected_field"] = "forbidden"
     resp = await async_client.post(SESSIONS_ENDPOINT, json=payload_dict)

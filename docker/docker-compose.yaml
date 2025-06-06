@@ -1,3 +1,9 @@
+name: arch-stats
+
+networks:
+  arch-stats:
+    driver: bridge
+
 services:
   db:
     image: postgres:17.2
@@ -5,6 +11,8 @@ services:
       - ./.env
     ports:
       - "5432:5432"
+    networks:
+      - arch-stats
     volumes:
       - /var/run/postgresql:/var/run/postgresql
       - ./conf/postgresql.conf:/etc/postgresql/17/main/postgresql.conf

@@ -9,7 +9,7 @@ from server.schema import SessionsCreate, SessionsRead
 SESSIONS_ENDPOINT = "/api/v0/session"
 
 
-def create_fake_sessions(**overrides: Any) -> SessionsCreate:
+def create_fake_session(**overrides: Any) -> SessionsCreate:
     """
     Default payload for session creation, with overrides for specific test cases.
     """
@@ -26,7 +26,7 @@ async def create_many_sessions(db_pool: Pool, count: int = 5) -> list[SessionsRe
     for i in range(count):
         is_opened = bool(i % 2)
         start_time = datetime.now(timezone.utc) + timedelta(days=i)
-        session = create_fake_sessions(
+        session = create_fake_session(
             location=f"Range_{i%2}",
             start_time=start_time,
         )
