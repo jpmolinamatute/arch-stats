@@ -4,9 +4,8 @@ import pytest
 import pytest_asyncio
 from asyncpg import Pool
 
-from server.models.base_db import DBNotFound
-from server.models.shots_db import ShotsDB
-from server.schema import ShotsCreate
+from server.models import ShotsDB, DBNotFound, DBException
+from server.schema import ShotsCreate, ShotsUpdate
 from server.tests.factories import create_fake_shot, create_many_arrows, create_many_sessions
 
 
@@ -70,3 +69,18 @@ async def test_delete_nonexistent_raises(db_pool_initialed: Pool) -> None:
     non_existing_id = uuid4()
     with pytest.raises(DBNotFound):
         await shots_db.delete_one(non_existing_id)
+
+
+@pytest.mark.asyncio
+async def test_get_nonexistent_shot_raises(db_pool_initialed: Pool) -> None:
+    shots_db = ShotsDB(db_pool_initialed)
+    with pytest.raises(DBNotFound):
+        await shots_db.get_one_by_id(uuid4())
+
+
+@pytest.mark.asyncio
+async def test_update_nonexistent_shot_raises(db_pool_initialed: Pool) -> None:
+    shots_db = ShotsDB(db_pool_initialed)
+    update = ShotsUpdate()
+    with pytest.raises(DBException):
+        await shots_db.update_one(uuid4(), update)
