@@ -1,11 +1,11 @@
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
-from server.schema import SessionsCreate, SessionsUpdate
+from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
 
 
 # pylint: disable=too-few-public-methods
-class SessionsDB(DBBase[SessionsCreate, SessionsUpdate]):
+class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
     def __init__(self, db_pool: Pool) -> None:
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -20,4 +20,4 @@ class SessionsDB(DBBase[SessionsCreate, SessionsUpdate]):
                 (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
             )
         """
-        super().__init__("sessions", schema, db_pool)
+        super().__init__("sessions", schema, db_pool, SessionsRead)

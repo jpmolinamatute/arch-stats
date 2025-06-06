@@ -6,6 +6,7 @@ from os import getenv
 from pathlib import Path
 
 import uvicorn
+from asyncpg import Pool
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -13,8 +14,7 @@ from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
 
 
-async def create_tables() -> None:
-    pool = await DBState.get_db_pool()
+async def create_tables(pool: Pool) -> None:
     arrows = ArrowsDB(pool)
     shots = ShotsDB(pool)
     sessions = SessionsDB(pool)
@@ -31,7 +31,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
     logger: logging.Logger = getattr(app.state, "logger")
     await DBState.init_db()  # Initialize database
-    await create_tables()
+    pool = await DBState.get_db_pool()
+    await create_tables(pool)
     try:
         yield
     except CancelledError:

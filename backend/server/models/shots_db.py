@@ -1,11 +1,11 @@
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
-from server.schema import ShotsCreate, ShotsUpdate
+from server.schema import ShotsCreate, ShotsRead, ShotsUpdate
 
 
 # pylint: disable=too-few-public-methods
-class ShotsDB(DBBase[ShotsCreate, ShotsUpdate]):
+class ShotsDB(DBBase[ShotsCreate, ShotsUpdate, ShotsRead]):
 
     def __init__(self, db_pool: Pool) -> None:
         schema = """
@@ -33,7 +33,7 @@ class ShotsDB(DBBase[ShotsCreate, ShotsUpdate]):
                 )
             )
         """
-        super().__init__("shots", schema, db_pool)
+        super().__init__("shots", schema, db_pool, ShotsRead)
 
     async def create_notification(self, channel: str) -> None:
         """Ensure the notification function and trigger exist for new shots inserts."""

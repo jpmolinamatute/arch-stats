@@ -1,5 +1,5 @@
 import json
-from asyncio import sleep, CancelledError
+from asyncio import CancelledError, sleep
 
 from asyncpg import Pool
 from asyncpg.connection import Connection
