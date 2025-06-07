@@ -3,10 +3,11 @@ import { ShotsPage } from "./pages/shotspage";
 import { ArrowsPage } from "./pages/arrowspage";
 import { SessionsPage } from "./pages/sessionspage";
 import { TargetsPage } from "./pages/targetspage";
-
+import { LandingPage } from "./pages/landingpage";
 
 const routes: Record<string, () => HTMLElement> = {
-    "/": ShotsPage,
+    "/": LandingPage,
+    "/shot": ShotsPage,
     "/arrows": ArrowsPage,
     "/sessions": SessionsPage,
     "/targets": TargetsPage,

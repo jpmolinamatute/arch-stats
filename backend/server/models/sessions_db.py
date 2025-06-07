@@ -1,6 +1,6 @@
 from asyncpg import Pool
 
-from server.models.base_db import DBBase
+from server.models.base_db import DBBase, DBNotFound
 from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
 
 
@@ -21,3 +21,11 @@ class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
             )
         """
         super().__init__("sessions", schema, db_pool, SessionsRead)
+
+    async def get_open_session(self) -> SessionsRead | None:
+        result = None
+        try:
+            result = await self.get_by_filters({"is_opened": True})
+        except DBNotFound:
+            pass
+        return result

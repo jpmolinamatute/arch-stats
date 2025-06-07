@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from server.models import ArrowsDB, DBState, DictValues
+from server.models import ArrowsDB, DBState
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import ArrowsCreate, ArrowsFilters, ArrowsUpdate
+from server.schema import ArrowsCreate, ArrowsFilters, ArrowsUpdate, ArrowsRead
 
 
 ArrowsRouter = APIRouter()
@@ -32,7 +32,7 @@ async def get_arrow_uuid() -> JSONResponse:
     )
 
 
-@ArrowsRouter.get("/arrow", response_model=HTTPResponse[list[DictValues]])
+@ArrowsRouter.get("/arrow", response_model=HTTPResponse[list[ArrowsRead]])
 async def get_all_arrows(
     filters: ArrowsFilters = Depends(),
     arrows_db: ArrowsDB = Depends(get_arrows_db),
@@ -44,7 +44,7 @@ async def get_all_arrows(
     return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@ArrowsRouter.get("/arrow/{arrow_id}", response_model=HTTPResponse[DictValues])
+@ArrowsRouter.get("/arrow/{arrow_id}", response_model=HTTPResponse[ArrowsRead])
 async def get_arrow(
     arrow_id: UUID,
     arrows_db: ArrowsDB = Depends(get_arrows_db),

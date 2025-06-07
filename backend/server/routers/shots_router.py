@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, DictValues, ShotsDB
+from server.models import DBState, ShotsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import ShotsFilters
+from server.schema import ShotsFilters, ShotsRead
 
 
 ShotsRouter = APIRouter()
@@ -16,7 +16,7 @@ async def get_shots_db() -> ShotsDB:
     return ShotsDB(db_pool)
 
 
-@ShotsRouter.get("/shot", response_model=HTTPResponse[list[DictValues]])
+@ShotsRouter.get("/shot", response_model=HTTPResponse[list[ShotsRead]])
 async def get_all_shots(
     filters: ShotsFilters = Depends(),
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -28,7 +28,7 @@ async def get_all_shots(
     return await db_response(shots_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@ShotsRouter.get("/shot/{shot_id}", response_model=HTTPResponse[DictValues])
+@ShotsRouter.get("/shot/{shot_id}", response_model=HTTPResponse[ShotsRead])
 async def get_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),

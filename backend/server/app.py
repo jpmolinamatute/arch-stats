@@ -41,9 +41,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await DBState.close_db()  # Close database safely
 
 
-def create_app(logger: logging.Logger) -> FastAPI:
+def create_app(logger: logging.Logger, dev_mode: bool) -> FastAPI:
     version = "0.1.0"
     app = FastAPI(
+        debug=dev_mode,
         lifespan=lifespan,
         openapi_url="/api/openapi.json",
         title="Arch Stats API",
@@ -52,9 +53,9 @@ def create_app(logger: logging.Logger) -> FastAPI:
     mayor_version = f"v{version[0]}"
     # Include blueprints
     app.state.logger = logger
+    app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ArrowsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
-    app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
     current_file_path = Path(__file__).parent
@@ -77,9 +78,9 @@ async def run(logger: logging.Logger) -> None:
     server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
     dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
     logger.info("Starting the server on %s:%d", server_name, server_port)
-    logger.info("Development mode: %s", dev_mode)
 
     if dev_mode:
+        logger.info("Development mode active")
         worker = None
         color = True
     else:
@@ -87,7 +88,7 @@ async def run(logger: logging.Logger) -> None:
         color = None
 
     config = uvicorn.Config(
-        app=create_app(logger),
+        app=create_app(logger, dev_mode),
         host=server_name,
         port=server_port,
         loop="uvloop",

@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, DictValues, SessionsDB
+from server.models import DBState, SessionsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import SessionsCreate, SessionsFilters, SessionsUpdate
+from server.schema import SessionsCreate, SessionsFilters, SessionsUpdate, SessionsRead
 
 
 SessionsRouter = APIRouter()
@@ -16,7 +16,7 @@ async def get_sessions_db() -> SessionsDB:
     return SessionsDB(db_pool)
 
 
-@SessionsRouter.get("/session", response_model=HTTPResponse[list[DictValues]])
+@SessionsRouter.get("/session", response_model=HTTPResponse[list[SessionsRead]])
 async def get_sessions(
     filters: SessionsFilters = Depends(),
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -28,7 +28,14 @@ async def get_sessions(
     return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@SessionsRouter.get("/session/{session_id}", response_model=HTTPResponse[DictValues])
+@SessionsRouter.get("/session/open", response_model=HTTPResponse[SessionsRead])
+async def get_open_session(
+    sessions_db: SessionsDB = Depends(get_sessions_db),
+) -> JSONResponse:
+    return await db_response(sessions_db.get_open_session, status.HTTP_200_OK)
+
+
+@SessionsRouter.get("/session/{session_id}", response_model=HTTPResponse[SessionsRead])
 async def get_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
