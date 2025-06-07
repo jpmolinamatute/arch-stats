@@ -58,9 +58,15 @@ def create_app(logger: logging.Logger) -> FastAPI:
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
     current_file_path = Path(__file__).parent
-    frontend_path = current_file_path.joinpath("frontend")
     app.mount(
-        "/ui/", StaticFiles(directory=frontend_path, html=True, check_dir=True), name="frontend"
+        "/",
+        StaticFiles(
+            directory=current_file_path.joinpath("frontend"),
+            html=True,
+            check_dir=True,
+            follow_symlink=True,
+        ),
+        name="frontend",
     )
 
     return app
