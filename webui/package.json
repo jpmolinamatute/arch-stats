@@ -1,31 +1,33 @@
 {
-  "name": "arch-stats",
-  "version": "1.0.0",
-  "description": "",
-  "homepage": "https://github.com/jpmolinamatute/arch-stats#readme",
-  "bugs": {
-    "url": "https://github.com/jpmolinamatute/arch-stats/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/jpmolinamatute/arch-stats.git"
-  },
-  "license": "ISC",
-  "author": "Juan Pablo Molina Matute",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "eslint": "^9.17.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "globals": "^15.14.0",
-    "http-server": "^14.1.1",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.1"
-  }
+    "name": "arch-stats",
+    "version": "1.0.0",
+    "description": "",
+    "homepage": "https://github.com/jpmolinamatute/arch-stats#readme",
+    "bugs": {
+        "url": "https://github.com/jpmolinamatute/arch-stats/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/jpmolinamatute/arch-stats.git"
+    },
+    "license": "ISC",
+    "author": "Juan Pablo Molina Matute",
+    "type": "commonjs",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.17.0",
+        "eslint": "^9.17.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.2.1",
+        "globals": "^15.14.0",
+        "http-server": "^14.1.1",
+        "prettier": "^3.4.2",
+        "typescript": "^5.7.2",
+        "typescript-eslint": "^8.19.1",
+        "vite": "^6.3.5"
+    }
 }
