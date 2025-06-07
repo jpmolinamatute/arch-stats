@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, DictValues, TargetsDB
+from server.models import DBState, TargetsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import TargetsCreate, TargetsFilters, TargetsUpdate
+from server.schema import TargetsCreate, TargetsFilters, TargetsUpdate, TargetsRead
 
 
 TargetsRouter = APIRouter()
@@ -16,7 +16,7 @@ async def get_targets_db() -> TargetsDB:
     return TargetsDB(db_pool)
 
 
-@TargetsRouter.get("/target", response_model=HTTPResponse[list[DictValues]])
+@TargetsRouter.get("/target", response_model=HTTPResponse[list[TargetsRead]])
 async def get_targets(
     filters: TargetsFilters = Depends(),
     targets_db: TargetsDB = Depends(get_targets_db),
@@ -28,7 +28,7 @@ async def get_targets(
     return await db_response(targets_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
-@TargetsRouter.get("/target/{target_id}", response_model=HTTPResponse[DictValues])
+@TargetsRouter.get("/target/{target_id}", response_model=HTTPResponse[TargetsRead])
 async def get_target(
     target_id: UUID,
     targets_db: TargetsDB = Depends(get_targets_db),
