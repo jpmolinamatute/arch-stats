@@ -1,0 +1,189 @@
+{
+    "cSpell.words": [
+        "abstractproperty",
+        "actix",
+        "analyse",
+        "Analyse",
+        "analysed",
+        "Archy",
+        "argparse",
+        "arrowspage",
+        "asdict",
+        "ASGI",
+        "asyncio",
+        "autouse",
+        "booleaness",
+        "bpython",
+        "chrono",
+        "classmethod",
+        "consts",
+        "contextlib",
+        "contextmanager",
+        "CREATETYPE",
+        "Cython",
+        "cythonize",
+        "Datagram",
+        "dbname",
+        "docstrings",
+        "Docstrings",
+        "executemany",
+        "fetchrow",
+        "FETCHTYPE",
+        "fetchval",
+        "FIXIT",
+        "inlinevar",
+        "ixin",
+        "jsonable",
+        "keepalive",
+        "landingpage",
+        "levelname",
+        "loglever",
+        "Matute",
+        "metaclass",
+        "minversion",
+        "MODELTYPE",
+        "msvs",
+        "mymodule",
+        "mypackage",
+        "neato",
+        "nosec",
+        "nthreads",
+        "ondelete",
+        "optparse",
+        "overgeneral",
+        "parseable",
+        "Pydantic",
+        "pygtk",
+        "READTYPE",
+        "realpath",
+        "rgxs",
+        "scopedstyle",
+        "sessionspage",
+        "setuptools",
+        "shotspage",
+        "targetspage",
+        "testarrow",
+        "testdb",
+        "testpaths",
+        "tungstenite",
+        "typealias",
+        "typevar",
+        "Uvicorn",
+        "VARCHAR",
+        "webui"
+    ],
+    "[markdown]": {
+        "editor.unicodeHighlight.nonBasicASCII": false
+    },
+    "cSpell.ignoreWords": [
+        "PGPASSWORD",
+        "changeme",
+        "fontsize",
+        "labeljust",
+        "labelloc",
+        "pgcrypto",
+        "serde",
+        "signum",
+        "uuidgen",
+        "wscat",
+        "asyncpg"
+    ],
+    "mypy-type-checker.args": [
+        "--config-file",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "mypy-type-checker.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "mypy-type-checker.cwd": "${workspaceFolder}/backend",
+    "mypy-type-checker.path": [
+        "${workspaceFolder}/backend/.venv/bin/mypy"
+    ],
+    "pylint.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "pylint.cwd": "${workspaceFolder}/backend",
+    "pylint.path": [
+        "${workspaceFolder}/backend/.venv/bin/pylint"
+    ],
+    "pylint.args": [
+        "--rcfile",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "black-formatter.cwd": "${workspaceFolder}/backend",
+    "black-formatter.args": [
+        "--config",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "black-formatter.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "black-formatter.path": [
+        "${workspaceFolder}/backend/.venv/bin/black"
+    ],
+    "isort.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "isort.path": [
+        "${workspaceFolder}/backend/.venv/bin/isort"
+    ],
+    "isort.args": [
+        "--settings-file",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "shellcheck.customArgs": [
+        "--shell=bash",
+        "--color=never",
+        "--source-path=${workspaceFolder}/scripts",
+        "--external-sources"
+    ],
+    "terminal.integrated.cwd": "${workspaceFolder}/backend",
+    "pylint.ignorePatterns": [
+        "**/ignore/"
+    ],
+    "mypy-type-checker.ignorePatterns": [
+        "**/ignore/"
+    ],
+    "markdown.preview.scrollEditorWithPreview": false,
+    "markdown.preview.scrollPreviewWithEditor": false,
+    "python.analysis.exclude": [
+        "**/ignore/",
+        "**/.venv/",
+        "**/.git"
+    ],
+    "python.testing.pytestArgs": [
+        "-v",
+        "--rootdir=${workspaceFolder}/backend",
+        "server/tests"
+    ],
+    "python.testing.cwd": "${workspaceFolder}/backend",
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+    },
+    "typescript.tsdk": "./webui/node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
+    "eslint.validate": [
+        "javascript",
+        "typescript"
+    ],
+    "eslint.format.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.fixAll.eslint": "explicit"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.tabSize": 4
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.tabSize": 4
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.tabSize": 4
+    }
+}

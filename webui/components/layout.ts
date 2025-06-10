@@ -1,10 +1,10 @@
 export function Layout(children: HTMLElement): HTMLElement {
     const container = document.createElement('div');
-    container.className = "layout";
+    container.className = 'layout';
 
     // Navigation bar
     const nav = document.createElement('nav');
-    nav.className = "navbar";
+    nav.className = 'navbar';
     nav.innerHTML = `
         <ul>
             <li><a href="#/" id="nav-home">Shots</a></li>

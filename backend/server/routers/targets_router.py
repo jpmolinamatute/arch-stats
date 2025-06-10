@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from server.models import DBState, TargetsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import TargetsCreate, TargetsFilters, TargetsUpdate, TargetsRead
+from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 
 
 TargetsRouter = APIRouter()

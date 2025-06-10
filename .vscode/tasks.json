@@ -1,0 +1,59 @@
+    {
+        // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Start Docker Compose",
+                "type": "shell",
+                "command": "docker compose -f docker/docker-compose.yaml up -d --build",
+                "problemMatcher": [],
+                "detail": "Start and build containers using docker-compose"
+            },
+            {
+                "label": "Stop Docker Compose",
+                "type": "shell",
+                "command": "docker compose -f docker/docker-compose.yaml down",
+                "problemMatcher": [],
+                "detail": "Stop and remove containers using docker-compose",
+                "dependsOn": [
+                    "Start Docker Compose"
+                ],
+            },
+            {
+                "label": "Stop & Remove Volumes",
+                "type": "shell",
+                "command": "docker compose -f 'docker/docker-compose.yaml' down -v",
+                "problemMatcher": [],
+                "detail": "Stop, remove containers and delete associated volumes",
+                "dependsOn": [
+                    "Start Docker Compose"
+                ],
+            },
+            {
+                "label": "Start Uvicorn Dev Server",
+                "type": "shell",
+                "options": {
+                    "cwd": "${workspaceFolder}/backend/server"
+                },
+                "command": "exec uvicorn --loop uvloop --lifespan on --reload --ws websockets --http h11 --use-colors --log-level debug --timeout-graceful-shutdown 10 --factory 'app:run'",
+                "problemMatcher": [],
+                "detail": "Start FastAPI dev server with Uvicorn in backend/server",
+                "dependsOn": [
+                    "Start Docker Compose"
+                ],
+            },
+            {
+                "label": "Start Vite Frontend",
+                "type": "shell",
+                "options": {
+                    "cwd": "${workspaceFolder}/webui"
+                },
+                "dependsOn": [
+                    "Start Uvicorn Dev Server"
+                ],
+                "command": "npm run dev",
+                "problemMatcher": [],
+                "detail": "Start Vite dev server for frontend"
+            }
+        ]
+    }

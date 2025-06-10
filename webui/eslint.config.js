@@ -1,23 +1,16 @@
-export default {
-    env: {
-        browser: true,
-        es2021: true,
+import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
+import prettierPlugin from 'eslint-plugin-prettier';
+
+export default [
+    js.configs.recommended,
+    ...tseslint.configs.recommended,
+    {
+        plugins: { prettier: prettierPlugin },
+        rules: {
+            'prettier/prettier': 'error',
+        },
     },
-    extends: [
-        'eslint:recommended',
-        'plugin:@typescript-eslint/recommended',
-    ],
-    parser: '@typescript-eslint/parser',
-    parserOptions: {
-        ecmaVersion: 12,
-        sourceType: 'module',
-    },
-    plugins: [
-        '@typescript-eslint',
-    ],
-    rules: {
-        'no-unused-vars': 'warn',
-        'no-console': 'off',
-        '@typescript-eslint/no-unused-vars': 'warn',
-    },
-};
+    prettier,
+];

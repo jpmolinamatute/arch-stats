@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from os import getenv
 from pathlib import Path
 
-import uvicorn
 from asyncpg import Pool
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -41,8 +40,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await DBState.close_db()  # Close database safely
 
 
-def create_app(logger: logging.Logger, dev_mode: bool) -> FastAPI:
+def run() -> FastAPI:
+    logger = logging.getLogger("arch-stats")
+    server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
+    server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
+    dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
     version = "0.1.0"
+    if dev_mode:
+        logger.info("Starting the server on %s:%d", server_name, server_port)
+    else:
+        logger.info("Starting the server in production mode on %s:%d", server_name, server_port)
     app = FastAPI(
         debug=dev_mode,
         lifespan=lifespan,
@@ -73,34 +80,7 @@ def create_app(logger: logging.Logger, dev_mode: bool) -> FastAPI:
     return app
 
 
-async def run(logger: logging.Logger) -> None:
-    server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
-    server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
-    dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
-    logger.info("Starting the server on %s:%d", server_name, server_port)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 
-    if dev_mode:
-        logger.info("Development mode active")
-        worker = None
-        color = True
-    else:
-        worker = 4
-        color = None
-
-    config = uvicorn.Config(
-        app=create_app(logger, dev_mode),
-        host=server_name,
-        port=server_port,
-        loop="uvloop",
-        lifespan="on",
-        reload=dev_mode,
-        ws="websockets",
-        http="h11",
-        workers=worker,
-        use_colors=color,
-        log_level=logger.level,
-        timeout_graceful_shutdown=10,
-    )
-    server = uvicorn.Server(config)
-
-    await server.serve()
+    run()

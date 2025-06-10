@@ -16,9 +16,8 @@ TARGETS_ENDPOINT = "/api/v0/target"
 async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) -> None:
     # --- Create a session first ---
     session = await create_many_sessions(db_pool, 1)
-    session_id = session[0].session_id
     # --- Create Target ---
-    target = create_fake_target(session_id=session_id)
+    target = create_fake_target(session_id=session[0].session_id)
     payload_dict = target.model_dump(mode="json", by_alias=True)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
     data = resp.json()
@@ -47,7 +46,7 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     target_id = found["id"]
 
     # --- Get Target by session_id ---
-    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={session_id}")
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={session[0].session_id}")
     resp_json = resp.json()
     assert resp.status_code == 200
     target_data = resp_json["data"]

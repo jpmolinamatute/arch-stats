@@ -12,22 +12,24 @@
     },
     "license": "ISC",
     "author": "Juan Pablo Molina Matute",
-    "type": "commonjs",
+    "type": "module",
     "main": "index.js",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "lint": "eslint --config ./eslint.config.js --fix .",
+        "format": "prettier ."
     },
     "devDependencies": {
-        "@eslint/js": "^9.17.0",
-        "eslint": "^9.17.0",
+        "@eslint/js": "^9.28.0",
+        "eslint": "^9.28.0",
         "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-prettier": "^5.2.1",
-        "globals": "^15.14.0",
+        "eslint-plugin-prettier": "^5.4.1",
+        "globals": "^15.15.0",
         "http-server": "^14.1.1",
-        "prettier": "^3.4.2",
+        "prettier": "^3.5.3",
         "typescript": "^5.7.2",
-        "typescript-eslint": "^8.19.1",
+        "typescript-eslint": "^8.33.1",
         "vite": "^6.3.5"
     }
 }
