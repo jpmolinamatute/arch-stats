@@ -84,8 +84,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     arrows = await create_many_arrows(db_pool, 5)
     session = await create_many_sessions(db_pool, 1)
     arrows_ids = [r.arrow_id for r in arrows]
-    session_id = session[0].session_id
-    shots = await create_many_shots(db_pool, arrows_ids, session_id, 5)
+    shots = await create_many_shots(db_pool, arrows_ids, session[0].session_id, 5)
 
     # --- Filter by arrow_id ---
     arrow_id = str(arrows[2].arrow_id)
@@ -98,10 +97,9 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     # --- Filter by x_coordinate ---
     x_val = shots[3].x_coordinate or 0.0
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?x_coordinate={x_val}")
-    resp_json = resp.json()
 
     assert resp.status_code == 200
-    data = resp_json["data"]
+    data = resp.json()["data"]
     assert all(math.isclose(float(s["x_coordinate"]), x_val, rel_tol=1e-6) for s in data)
     assert len(data) >= 1
 
@@ -130,8 +128,7 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
         f"{SHOTS_ENDPOINT}?arrow_id={multi_arrow_id}&x_coordinate={multi_x}"
     )
     assert resp.status_code == 200
-    resp_json = resp.json()
-    data = resp_json["data"]
+    data = resp.json()["data"]
     assert all(
         s["arrow_id"] == multi_arrow_id
         and math.isclose(float(s["x_coordinate"]), multi_x, rel_tol=1e-6)

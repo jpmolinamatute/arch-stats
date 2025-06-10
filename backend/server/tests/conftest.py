@@ -4,9 +4,8 @@ import pytest_asyncio
 from asyncpg import Pool
 from httpx import ASGITransport, AsyncClient
 
-from server import create_app, create_tables
+from server.app import create_tables, run
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-from shared import LogLevel, get_logger
 
 
 async def drop_tables() -> None:
@@ -26,8 +25,7 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
     await DBState.init_db()
     pool = await DBState.get_db_pool()
     await create_tables(pool)
-    logger = get_logger("test", LogLevel.DEBUG)
-    app = create_app(logger)
+    app = run()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
     await drop_tables()

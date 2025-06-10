@@ -1,12 +1,14 @@
-import { createScopedStyle } from "../utils/scopedstyle";
+import { createScopedStyle } from '../utils/scopedstyle';
 
 export function LandingPage(): HTMLElement {
     // Elements
-    const container = document.createElement("div");
-    container.className = "landing-page";
+    const container = document.createElement('div');
+    container.className = 'landing-page';
 
     // Scoped CSS
-    createScopedStyle(container, `
+    createScopedStyle(
+        container,
+        `
         .landing-page {
             padding: 2rem;
         }
@@ -62,18 +64,19 @@ export function LandingPage(): HTMLElement {
             margin-top: 2rem;
             font-size: 1.3rem;
         }
-    `);
+    `,
+    );
 
     // UI Elements
-    const header = document.createElement("div");
-    header.className = "landing-header";
+    const header = document.createElement('div');
+    header.className = 'landing-header';
 
-    const status = document.createElement("span");
-    status.className = "session-status";
-    status.innerText = "Loading session...";
+    const status = document.createElement('span');
+    status.className = 'session-status';
+    status.innerText = 'Loading session...';
 
-    const actions = document.createElement("div");
-    actions.className = "landing-actions";
+    const actions = document.createElement('div');
+    actions.className = 'landing-actions';
     // Route navigation (you may need to trigger your router)
     actions.innerHTML = `
         <button id="btn-register-arrows">Register Arrows</button>
@@ -85,22 +88,22 @@ export function LandingPage(): HTMLElement {
     container.appendChild(header);
 
     // Shots Table or No Session Message
-    const tableWrapper = document.createElement("div");
+    const tableWrapper = document.createElement('div');
     container.appendChild(tableWrapper);
 
     // Data State
     let sessionId: string | null = null;
-    let shots: any[] = [];
+    let shots: [] = [];
 
     function renderShotsTable() {
-        tableWrapper.innerHTML = "";
+        tableWrapper.innerHTML = '';
         if (!shots.length) {
             tableWrapper.innerHTML = `<div class="no-session">No shots recorded in this session yet.</div>`;
             return;
         }
 
-        const table = document.createElement("table");
-        table.className = "shots-table";
+        const table = document.createElement('table');
+        table.className = 'shots-table';
         table.innerHTML = `
             <thead>
                 <tr>
@@ -114,44 +117,48 @@ export function LandingPage(): HTMLElement {
                 </tr>
             </thead>
             <tbody>
-                ${shots.map((shot, idx) => `
+                ${shots
+                    .map(
+                        (shot, idx) => `
                     <tr>
                         <td>${idx + 1}</td>
                         <td>${shot.arrow_id}</td>
-                        <td>${shot.arrow_engage_time ? new Date(shot.arrow_engage_time).toLocaleTimeString() : "-"}</td>
-                        <td>${shot.arrow_disengage_time ? new Date(shot.arrow_disengage_time).toLocaleTimeString() : "-"}</td>
-                        <td>${shot.arrow_landing_time ? new Date(shot.arrow_landing_time).toLocaleTimeString() : "-"}</td>
-                        <td>${shot.x_coordinate ?? "-"}</td>
-                        <td>${shot.y_coordinate ?? "-"}</td>
+                        <td>${shot.arrow_engage_time ? new Date(shot.arrow_engage_time).toLocaleTimeString() : '-'}</td>
+                        <td>${shot.arrow_disengage_time ? new Date(shot.arrow_disengage_time).toLocaleTimeString() : '-'}</td>
+                        <td>${shot.arrow_landing_time ? new Date(shot.arrow_landing_time).toLocaleTimeString() : '-'}</td>
+                        <td>${shot.x_coordinate ?? '-'}</td>
+                        <td>${shot.y_coordinate ?? '-'}</td>
                     </tr>
-                `).join("")}
+                `,
+                    )
+                    .join('')}
             </tbody>
         `;
         tableWrapper.appendChild(table);
     }
 
     function renderNoSession() {
-        status.innerText = "No session open";
+        status.innerText = 'No session open';
         tableWrapper.innerHTML = `<div class="no-session">No session open. Please open a session to start recording shots.</div>`;
     }
 
     // Navigation handlers (update as needed for your router)
-    actions.querySelector("#btn-register-arrows")?.addEventListener("click", () => {
-        window.location.hash = "#/arrows";
+    actions.querySelector('#btn-register-arrows')?.addEventListener('click', () => {
+        window.location.hash = '#/arrows';
     });
-    actions.querySelector("#btn-manage-session")?.addEventListener("click", () => {
-        window.location.hash = "#/session";
+    actions.querySelector('#btn-manage-session')?.addEventListener('click', () => {
+        window.location.hash = '#/session';
     });
 
     // Load session and shots
     async function loadSessionAndShots() {
-        status.innerText = "Loading session...";
+        status.innerText = 'Loading session...';
         // 1. Get open session
-        const resp = await fetch("/api/v0/session/open");
+        const resp = await fetch('/api/v0/session/open');
         const json = await resp.json();
         if (json.data && json.data.id) {
             sessionId = json.data.id;
-            status.innerText = "Session: OPEN";
+            status.innerText = 'Session: OPEN';
             // 2. Get shots for session
             await loadShots();
             listenWebSocket();
@@ -187,7 +194,7 @@ export function LandingPage(): HTMLElement {
                     renderShotsTable();
                 }
             } catch (e) {
-                // ignore for now
+                console.log(e);
             }
         };
         ws.onclose = () => {
@@ -199,4 +206,4 @@ export function LandingPage(): HTMLElement {
     loadSessionAndShots();
 
     return container;
-};
+}

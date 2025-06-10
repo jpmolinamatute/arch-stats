@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from server.models import ArrowsDB, DBState
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import ArrowsCreate, ArrowsFilters, ArrowsUpdate, ArrowsRead
+from server.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 
 
 ArrowsRouter = APIRouter()

@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from server.models import DBState, SessionsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import SessionsCreate, SessionsFilters, SessionsUpdate, SessionsRead
+from server.schema import SessionsCreate, SessionsFilters, SessionsRead, SessionsUpdate
 
 
 SessionsRouter = APIRouter()
