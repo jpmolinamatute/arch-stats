@@ -11,7 +11,6 @@ const routes: Record<string, () => HTMLElement> = {
     '/arrows': ArrowsPage,
     '/sessions': SessionsPage,
     '/targets': TargetsPage,
-    // ...add others
 };
 
 function render() {

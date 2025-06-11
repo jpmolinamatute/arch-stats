@@ -1,5 +1,5 @@
 import { createScopedStyle } from '../utils/scopedstyle';
-
+import type { components } from '../types/types.generated';
 export function LandingPage(): HTMLElement {
     // Elements
     const container = document.createElement('div');
@@ -93,7 +93,8 @@ export function LandingPage(): HTMLElement {
 
     // Data State
     let sessionId: string | null = null;
-    let shots: [] = [];
+    type Shot = components['schemas']['ShotsRead'];
+    let shots: Shot[] = [];
 
     function renderShotsTable() {
         tableWrapper.innerHTML = '';
@@ -123,9 +124,21 @@ export function LandingPage(): HTMLElement {
                     <tr>
                         <td>${idx + 1}</td>
                         <td>${shot.arrow_id}</td>
-                        <td>${shot.arrow_engage_time ? new Date(shot.arrow_engage_time).toLocaleTimeString() : '-'}</td>
-                        <td>${shot.arrow_disengage_time ? new Date(shot.arrow_disengage_time).toLocaleTimeString() : '-'}</td>
-                        <td>${shot.arrow_landing_time ? new Date(shot.arrow_landing_time).toLocaleTimeString() : '-'}</td>
+                        <td>${
+                            shot.arrow_engage_time
+                                ? new Date(shot.arrow_engage_time).toLocaleTimeString()
+                                : '-'
+                        }</td>
+                        <td>${
+                            shot.arrow_disengage_time
+                                ? new Date(shot.arrow_disengage_time).toLocaleTimeString()
+                                : '-'
+                        }</td>
+                        <td>${
+                            shot.arrow_landing_time
+                                ? new Date(shot.arrow_landing_time).toLocaleTimeString()
+                                : '-'
+                        }</td>
                         <td>${shot.x_coordinate ?? '-'}</td>
                         <td>${shot.y_coordinate ?? '-'}</td>
                     </tr>

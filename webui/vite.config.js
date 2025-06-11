@@ -1,10 +1,13 @@
-export default {
+import { defineConfig } from 'vite';
+
+export default defineConfig({
     build: {
         outDir: '../backend/server/frontend',
     },
     server: {
         proxy: {
-            '/api': 'http://localhost:8000', // Forward /api to your backend
+            '/api': 'http://localhost:8000',
         },
+        strictPort: true,
     },
-};
+});
