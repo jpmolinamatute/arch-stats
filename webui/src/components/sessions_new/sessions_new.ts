@@ -1,3 +1,5 @@
+import { loadComponentAssets } from '../component_loader';
+
 export let session_id: string | null = null;
 
 export async function checkSessionOpen(): Promise<boolean> {
@@ -23,7 +25,6 @@ export async function checkSessionOpen(): Promise<boolean> {
 
 export async function closeSessionFlow(): Promise<void> {
     if (!session_id) {
-        // No session to close; optionally show an error or return silently
         return;
     }
 
@@ -43,22 +44,11 @@ export async function closeSessionFlow(): Promise<void> {
 }
 
 export async function openSessionFlow(container: HTMLElement, onSuccess?: () => void) {
-    const static_path = '/src/components/sessions_new/sessions_new';
-    const html = await fetch(`${static_path}.html`).then((r) => r.text());
-    container.innerHTML = html;
-
-    // Inject CSS if not already present
-    const styleId = 'session-css';
-    if (!document.getElementById(styleId)) {
-        const cssText = await fetch(`${static_path}.css`).then((r) => r.text());
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = cssText;
-        document.head.appendChild(style);
-    }
+    // Load HTML & CSS using the utility
+    const root = await loadComponentAssets(container, 'sessions_new');
 
     // Pre-fill start_time to now (ISO format for input[type=datetime-local])
-    const startTimeInput = document.getElementById('start_time') as HTMLInputElement;
+    const startTimeInput = root.querySelector('#start_time') as HTMLInputElement | null;
     if (startTimeInput) {
         const now = new Date();
         const pad = (n: number) => n.toString().padStart(2, '0');
@@ -67,14 +57,13 @@ export async function openSessionFlow(container: HTMLElement, onSuccess?: () => 
     }
 
     // Handle form submit
-    const form = document.getElementById('session-form') as HTMLFormElement | null;
-    const errorDiv = document.getElementById('session-form-error');
+    const form = root.querySelector('#session-form') as HTMLFormElement | null;
+    const errorDiv = root.querySelector('#session-form-error');
     if (form) {
         form.onsubmit = async (event) => {
             event.preventDefault();
             if (errorDiv) errorDiv.textContent = '';
 
-            // Collect values
             const data = {
                 is_opened: true,
                 start_time: (form.elements.namedItem('start_time') as HTMLInputElement).value,

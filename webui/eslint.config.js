@@ -17,6 +17,8 @@ export default tseslint.config(
             semi: 'error',
             'prefer-const': 'error',
             'prettier/prettier': 'error',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'warn',
         },
         plugins: {
             prettier: prettierPlugin,
