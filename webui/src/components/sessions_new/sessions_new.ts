@@ -43,13 +43,14 @@ export async function closeSessionFlow(): Promise<void> {
 }
 
 export async function openSessionFlow(container: HTMLElement, onSuccess?: () => void) {
-    const html = await fetch('/src/components/sessions/sessions.html').then((r) => r.text());
+    const static_path = '/src/components/sessions_new/sessions_new';
+    const html = await fetch(`${static_path}.html`).then((r) => r.text());
     container.innerHTML = html;
 
     // Inject CSS if not already present
     const styleId = 'session-css';
     if (!document.getElementById(styleId)) {
-        const cssText = await fetch('/src/components/sessions/sessions.css').then((r) => r.text());
+        const cssText = await fetch(`${static_path}.css`).then((r) => r.text());
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = cssText;
