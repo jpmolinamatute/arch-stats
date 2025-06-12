@@ -2,7 +2,7 @@ import {
     checkSessionOpen,
     openSessionFlow,
     closeSessionFlow,
-} from './components/sessions/sessions';
+} from './components/sessions_new/sessions_new';
 
 const appSection = document.getElementById('app');
 const sessionBtn = document.getElementById('session-btn');
