@@ -5,9 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png">
     <title>Arch Stats</title>
+    <link rel="stylesheet" href="/src/styles/global.css">
   </head>
   <body>
-    <div id="app">Loading...</div>
+    <nav>
+        <button class="nav-btn" id="session-btn"></button>
+        <button class="nav-btn" id="session-history-btn">Session History</button>
+        <button class="nav-btn" id="register-arrows-btn">Register Arrows</button>
+    </nav>
+    <main>
+        <section id="app">
+            <!-- Dynamic content will be loaded here -->
+        </section>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,30 +1,35 @@
-import { Layout } from './components/layout';
-import { ShotsPage } from './pages/shotspage';
-import { ArrowsPage } from './pages/arrowspage';
-import { SessionsPage } from './pages/sessionspage';
-import { TargetsPage } from './pages/targetspage';
-import { LandingPage } from './pages/landingpage';
+import {
+    checkSessionOpen,
+    openSessionFlow,
+    closeSessionFlow,
+} from './components/sessions/sessions';
 
-const routes: Record<string, () => HTMLElement> = {
-    '/': LandingPage,
-    '/shot': ShotsPage,
-    '/arrows': ArrowsPage,
-    '/sessions': SessionsPage,
-    '/targets': TargetsPage,
-};
+const appSection = document.getElementById('app');
+const sessionBtn = document.getElementById('session-btn');
 
-function render() {
-    const app = document.getElementById('app');
-    if (!app) return;
-    // Parse hash
-    const path = location.hash.replace(/^#/, '') || '/';
-    const Page = routes[path] || ShotsPage;
-    const pageEl = Page();
-    // Clear and render
-    app.innerHTML = '';
-    app.appendChild(Layout(pageEl));
+async function setupSessionBtn() {
+    if (!sessionBtn || !appSection) return;
+    const isOpen = await checkSessionOpen();
+    if (isOpen) {
+        sessionBtn.textContent = 'Close Session';
+        sessionBtn.onclick = async () => {
+            await closeSessionFlow();
+            sessionBtn.textContent = 'Open Session';
+            appSection.innerHTML = '';
+            setupSessionBtn();
+        };
+    } else {
+        sessionBtn.textContent = 'Open Session';
+        sessionBtn.onclick = async () => {
+            await openSessionFlow(appSection, setupSessionBtn);
+        };
+    }
+}
+
+function main() {
+    setupSessionBtn();
 }
 
 // Listen for route changes
-window.addEventListener('hashchange', render);
-window.addEventListener('DOMContentLoaded', render);
+window.addEventListener('hashchange', main);
+window.addEventListener('DOMContentLoaded', main);
