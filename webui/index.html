@@ -1,13 +1,23 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Arch Stats</title>
-        <script type="module" crossorigin src="/assets/index-CrQ9MItp.js"></script>
-        <link rel="stylesheet" crossorigin href="/assets/index-DyxBAIU-.css" />
-    </head>
-    <body>
-        <div id="app">Loading...</div>
-    </body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>Arch Stats</title>
+    <link rel="stylesheet" href="/src/styles/global.css">
+  </head>
+  <body>
+    <nav>
+        <button class="nav-btn" id="session-btn"></button>
+        <button class="nav-btn" id="session-history-btn">Session History</button>
+        <button class="nav-btn" id="register-arrows-btn">Register Arrows</button>
+    </nav>
+    <main>
+        <section id="app">
+            <!-- Dynamic content will be loaded here -->
+        </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

@@ -1,0 +1,39 @@
+.session-header {
+  color: #1976d2;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+.form-group input {
+  padding: 0.4rem 0.7rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-submit-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.form-submit-btn:hover {
+  background: #115293;
+}
+.form-error {
+  color: #d32f2f;
+  margin-top: 1rem;
+  font-size: 1rem;
+  min-height: 1.2em;
+}

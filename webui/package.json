@@ -1,36 +1,24 @@
 {
-    "name": "arch-stats",
-    "version": "1.0.0",
-    "description": "",
-    "homepage": "https://github.com/jpmolinamatute/arch-stats#readme",
-    "bugs": {
-        "url": "https://github.com/jpmolinamatute/arch-stats/issues"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+ssh://git@github.com/jpmolinamatute/arch-stats.git"
-    },
-    "license": "ISC",
-    "author": "Juan Pablo Molina Matute",
+    "name": "webui",
+    "private": true,
+    "version": "0.0.0",
     "type": "module",
-    "main": "index.js",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
         "lint": "eslint --config ./eslint.config.js --fix .",
-        "format": "prettier ."
+        "format": "prettier .",
+        "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --check --output src/types/types.generated.ts"
     },
     "devDependencies": {
-        "@eslint/js": "^9.28.0",
         "@typescript-eslint/eslint-plugin": "^8.34.0",
         "@typescript-eslint/parser": "^8.34.0",
         "eslint": "^9.28.0",
         "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-prettier": "^5.4.1",
-        "globals": "^15.15.0",
-        "http-server": "^14.1.1",
-        "prettier": "^3.5.3",
-        "typescript": "^5.8.3",
+        "openapi-typescript": "^7.8.0",
+        "typescript": "~5.8.3",
         "typescript-eslint": "^8.34.0",
         "vite": "^6.3.5"
     }

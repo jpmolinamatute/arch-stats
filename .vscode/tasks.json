@@ -17,7 +17,7 @@
                 "detail": "Stop and remove containers using docker-compose",
                 "dependsOn": [
                     "Start Docker Compose"
-                ],
+                ]
             },
             {
                 "label": "Stop & Remove Volumes",
@@ -27,33 +27,68 @@
                 "detail": "Stop, remove containers and delete associated volumes",
                 "dependsOn": [
                     "Start Docker Compose"
-                ],
+                ]
             },
             {
                 "label": "Start Uvicorn Dev Server",
                 "type": "shell",
                 "options": {
+                    "env": {
+                        "PATH": "~/.pyenv/shims:${env:PATH}"
+                    },
                     "cwd": "${workspaceFolder}/backend/server"
                 },
-                "command": "exec uvicorn --loop uvloop --lifespan on --reload --ws websockets --http h11 --use-colors --log-level debug --timeout-graceful-shutdown 10 --factory 'app:run'",
+                "command": "uv",
+                "args": [
+                    "run",
+                    "uvicorn",
+                    "--loop",
+                    "uvloop",
+                    "--lifespan",
+                    "on",
+                    "--reload",
+                    "--ws",
+                    "websockets",
+                    "--http",
+                    "h11",
+                    "--use-colors",
+                    "--log-level",
+                    "debug",
+                    "--timeout-graceful-shutdown",
+                    "10",
+                    "--factory",
+                    "app:run"
+                ],
                 "problemMatcher": [],
+                "presentation": {
+                    "panel": "new"
+                },
                 "detail": "Start FastAPI dev server with Uvicorn in backend/server",
                 "dependsOn": [
                     "Start Docker Compose"
-                ],
+                ]
             },
             {
                 "label": "Start Vite Frontend",
-                "type": "shell",
+                "type": "npm",
+                "script": "dev",
                 "options": {
                     "cwd": "${workspaceFolder}/webui"
                 },
-                "dependsOn": [
-                    "Start Uvicorn Dev Server"
-                ],
-                "command": "npm run dev",
+                "presentation": {
+                    "panel": "new"
+                },
                 "problemMatcher": [],
                 "detail": "Start Vite dev server for frontend"
+            },
+            {
+                "label": "Start All Dev Servers",
+                "dependsOn": [
+                    "Start Uvicorn Dev Server",
+                    "Start Vite Frontend"
+                ],
+                "dependsOrder": "parallel",
+                "problemMatcher": []
             }
         ]
     }
