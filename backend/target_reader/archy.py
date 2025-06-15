@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 #!/usr/bin/env python
 import asyncio
-from datetime import datetime, timedelta
 import logging
+import random
 import sys
+from datetime import datetime, timedelta
 from os import getenv
 from uuid import UUID, uuid4
 
@@ -11,7 +12,7 @@ import asyncpg
 from asyncpg.connection import Connection
 from asyncpg.pool import Pool
 
-from shared import get_logger, LogLevel
+from shared import LogLevel, get_logger
 
 
 class ArchyException(Exception):
@@ -234,36 +235,17 @@ class ArchyApp:
 
 async def run() -> None:
     logger = get_logger(file_name=__name__, log_lever=LogLevel.INFO)
-async def run() -> None:
-    logger = get_logger(file_name=__name__, log_lever=LogLevel.INFO)
     app = ArchyApp(logger)
     try:
         await app.start()
-    except asyncio.exceptions.CancelledError:
-        pass
     except asyncio.exceptions.CancelledError:
         pass
     except ArchyException as e:
         logger.exception(e)
     except Exception as e:
         logger.exception("Unexpected error: %s", e)
-        logger.exception("Unexpected error: %s", e)
     finally:
         await app.close_db_pool()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    EXIT_STATUS = 0
-    try:
-        asyncio.run(run())
-    except KeyboardInterrupt:
-        pass
-    except Exception as e:
-        print(e)
-        EXIT_STATUS = 2
-    finally:
-        sys.exit(EXIT_STATUS)
 
 
 if __name__ == "__main__":
