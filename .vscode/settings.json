@@ -141,18 +141,27 @@
     "terminal.integrated.cwd": "${workspaceFolder}/backend",
     "pylint.ignorePatterns": [
         "**/ignore/",
-        "**/.venv"
+        "**/.venv/",
+        "**/__pycache__/",
+        "**/.mypy_cache/",
+        "**/.pytest_cache/",
     ],
     "mypy-type-checker.ignorePatterns": [
         "**/ignore/",
-        "**/.venv"
+        "**/.venv/",
+        "**/__pycache__/",
+        "**/.mypy_cache/",
+        "**/.pytest_cache/",
     ],
     "markdown.preview.scrollEditorWithPreview": false,
     "markdown.preview.scrollPreviewWithEditor": false,
     "python.analysis.exclude": [
         "**/ignore/",
+        "**/.git/",
         "**/.venv/",
-        "**/.git"
+        "**/__pycache__/",
+        "**/.mypy_cache/",
+        "**/.pytest_cache/",
     ],
     "python.testing.pytestArgs": [
         "-v",

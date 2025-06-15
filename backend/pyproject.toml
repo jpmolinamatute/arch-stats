@@ -36,10 +36,13 @@ follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
 ignore_missing_imports = true
+exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
+
 
 [tool.black]
 line-length = 100
 target-version = ["py312"]
+exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
 
 [tool.isort]
 profile = "black"
@@ -47,7 +50,12 @@ line_length = 100
 py_version = 312
 lines_after_imports = 2
 virtual_env = "./.venv"
-skip_glob = ["*/.venv/*"]
+skip_glob = [
+    "*/.venv/*",
+    "*/__pycache__/*",
+    "*/.mypy_cache/*",
+    "*/.pytest_cache/*",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -91,19 +99,13 @@ fail-under = 10
 # from-stdin =
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore = ["CVS"]
+ignore = ["CVS", ".venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".git"]
 
 # Add files or directories matching the regular expressions patterns to the
 # ignore-list. The regex matches against paths and can be in Posix or Windows
 # format. Because '\\' represents the directory delimiter on Windows systems, it
 # can't be used as an escape character.
-ignore-paths = [
-    "\\.venv",
-    "__pycache__",
-    "\\.mypy_cache",
-    "\\.pytest_cache",
-    "\\.git",
-]
+# ignore-paths = []
 
 # Files or directories matching the regular expression patterns are skipped. The
 # regex matches against base names, not paths. The default value ignores Emacs
