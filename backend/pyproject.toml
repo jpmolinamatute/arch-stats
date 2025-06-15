@@ -47,6 +47,7 @@ line_length = 100
 py_version = 312
 lines_after_imports = 2
 virtual_env = "./.venv"
+skip_glob = ["*/.venv/*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

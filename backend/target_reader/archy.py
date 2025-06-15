@@ -1,6 +1,8 @@
+#!/usr/bin/env python
 import asyncio
-import logging
 from datetime import datetime, timedelta
+import logging
+import sys
 from os import getenv
 import random
 from uuid import UUID, uuid4
@@ -8,6 +10,8 @@ from uuid import UUID, uuid4
 import asyncpg
 from asyncpg.connection import Connection
 from asyncpg.pool import Pool
+
+from shared import get_logger, LogLevel
 
 
 class ArchyException(Exception):
@@ -228,15 +232,30 @@ class ArchyApp:
             self.logger.info("Database pool closed.")
 
 
-async def run(logger: logging.Logger) -> None:
+async def run() -> None:
+    logger = get_logger(file_name=__name__, log_lever=LogLevel.INFO)
     app = ArchyApp(logger)
     try:
         await app.start()
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Bye!")
+    except asyncio.exceptions.CancelledError:
+        pass
     except ArchyException as e:
         logger.exception(e)
     except Exception as e:
-        logger.exception(f"Unexpected error: {e!r}")
+        logger.exception("Unexpected error: %s", e)
     finally:
         await app.close_db_pool()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    EXIT_STATUS = 0
+    try:
+        asyncio.run(run())
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(e)
+        EXIT_STATUS = 2
+    finally:
+        sys.exit(EXIT_STATUS)

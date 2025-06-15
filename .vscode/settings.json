@@ -69,6 +69,7 @@
         "typealias",
         "typevar",
         "Uvicorn",
+        "uvloop",
         "VARCHAR",
         "webui"
     ],
@@ -139,10 +140,12 @@
     ],
     "terminal.integrated.cwd": "${workspaceFolder}/backend",
     "pylint.ignorePatterns": [
-        "**/ignore/"
+        "**/ignore/",
+        "**/.venv"
     ],
     "mypy-type-checker.ignorePatterns": [
-        "**/ignore/"
+        "**/ignore/",
+        "**/.venv"
     ],
     "markdown.preview.scrollEditorWithPreview": false,
     "markdown.preview.scrollPreviewWithEditor": false,
