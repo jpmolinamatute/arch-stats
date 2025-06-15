@@ -1,35 +1,8 @@
-import {
-    checkSessionOpen,
-    openSessionFlow,
-    closeSessionFlow,
-} from './components/sessions_new/sessions_new';
+import { createApp } from 'vue';
+import './style.css';
+import App from './App.vue';
 
-const appSection = document.getElementById('app');
-const sessionBtn = document.getElementById('session-btn');
+import { fetchOpenSession } from './state/session';
 
-async function setupSessionBtn() {
-    if (!sessionBtn || !appSection) return;
-    const isOpen = await checkSessionOpen();
-    if (isOpen) {
-        sessionBtn.textContent = 'Close Session';
-        sessionBtn.onclick = async () => {
-            await closeSessionFlow();
-            sessionBtn.textContent = 'Open Session';
-            appSection.innerHTML = '';
-            setupSessionBtn();
-        };
-    } else {
-        sessionBtn.textContent = 'Open Session';
-        sessionBtn.onclick = async () => {
-            await openSessionFlow(appSection, setupSessionBtn);
-        };
-    }
-}
-
-function main() {
-    setupSessionBtn();
-}
-
-// Listen for route changes
-window.addEventListener('hashchange', main);
-window.addEventListener('DOMContentLoaded', main);
+fetchOpenSession();
+createApp(App).mount('#app');

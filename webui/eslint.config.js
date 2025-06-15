@@ -4,6 +4,10 @@ import prettierConfig from 'eslint-config-prettier';
 import eslint from '@eslint/js';
 import prettierPlugin from 'eslint-plugin-prettier';
 import tseslint from 'typescript-eslint';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
     eslint.configs.recommended,
@@ -12,11 +16,13 @@ export default tseslint.config(
     prettierConfig,
     {
         files: ['./**/*.{js,jsx,ts,tsx}'],
-        ignores: ['./eslint.config.js', './vite.config.js'],
+        ignores: ['./vite.config.ts', './eslint.config.js'],
         rules: {
             semi: 'error',
             'prefer-const': 'error',
             'prettier/prettier': 'error',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'warn',
         },
         plugins: {
             prettier: prettierPlugin,
@@ -26,7 +32,8 @@ export default tseslint.config(
             parserOptions: {
                 ecmaVersion: 2022,
                 sourceType: 'module',
-                project: './tsconfig.json',
+                project: './tsconfig.app.json',
+                tsconfigRootDir: __dirname,
             },
             globals: {
                 document: 'readonly',

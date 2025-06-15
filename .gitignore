@@ -5,7 +5,7 @@ __pycache__/
 .env
 .venv/
 
-webui/node_modules/
+node_modules/
 webui/src/types/**
 !webui/src/types/.gitkeep
 ignore/*

@@ -5,68 +5,76 @@
             {
                 "label": "Start Docker Compose",
                 "type": "shell",
-                "command": "docker compose -f docker/docker-compose.yaml up -d --build",
+                "command": "docker",
+                "args": [
+                    "compose",
+                    "-f",
+                    "${workspaceFolder}/docker/docker-compose.yaml",
+                    "up",
+                    "--build",
+                    "--detach"
+                ],
                 "problemMatcher": [],
+                "presentation": {
+                    "reveal": "silent",
+                    "close": true,
+                    "panel": "new",
+                    "echo": false
+                },
                 "detail": "Start and build containers using docker-compose"
             },
             {
                 "label": "Stop Docker Compose",
                 "type": "shell",
-                "command": "docker compose -f docker/docker-compose.yaml down",
+                "command": "docker",
+                "args": [
+                    "compose",
+                    "-f",
+                    "${workspaceFolder}/docker/docker-compose.yaml",
+                    "down",
+                ],
+                "presentation": {
+                    "reveal": "silent",
+                    "close": true,
+                    "panel": "new",
+                    "echo": false
+                },
                 "problemMatcher": [],
-                "detail": "Stop and remove containers using docker-compose",
-                "dependsOn": [
-                    "Start Docker Compose"
-                ]
+                "detail": "Stop and remove containers using docker-compose"
             },
             {
                 "label": "Stop & Remove Volumes",
                 "type": "shell",
-                "command": "docker compose -f 'docker/docker-compose.yaml' down -v",
+                "command": "docker",
+                "args": [
+                    "compose",
+                    "-f",
+                    "${workspaceFolder}/docker/docker-compose.yaml",
+                    "down",
+                    "-v",
+                ],
+                "presentation": {
+                    "reveal": "silent",
+                    "close": true,
+                    "panel": "new",
+                    "echo": false
+                },
                 "problemMatcher": [],
-                "detail": "Stop, remove containers and delete associated volumes",
-                "dependsOn": [
-                    "Start Docker Compose"
-                ]
+                "detail": "Stop, remove containers and delete associated volumes"
             },
             {
                 "label": "Start Uvicorn Dev Server",
                 "type": "shell",
-                "options": {
-                    "env": {
-                        "PATH": "~/.pyenv/shims:${env:PATH}"
-                    },
-                    "cwd": "${workspaceFolder}/backend/server"
-                },
-                "command": "uv",
-                "args": [
-                    "run",
-                    "uvicorn",
-                    "--loop",
-                    "uvloop",
-                    "--lifespan",
-                    "on",
-                    "--reload",
-                    "--ws",
-                    "websockets",
-                    "--http",
-                    "h11",
-                    "--use-colors",
-                    "--log-level",
-                    "debug",
-                    "--timeout-graceful-shutdown",
-                    "10",
-                    "--factory",
-                    "app:run"
-                ],
+                "command": "${workspaceFolder}/tools/start_uvicorn.sh",
                 "problemMatcher": [],
                 "presentation": {
-                    "panel": "new"
+                    "echo": true,
+                    "reveal": "always",
+                    "close": false,
+                    "focus": false,
+                    "panel": "dedicated"
                 },
-                "detail": "Start FastAPI dev server with Uvicorn in backend/server",
-                "dependsOn": [
-                    "Start Docker Compose"
-                ]
+                "detail": "Start FastAPI dev server with Uvicorn in backend/server"
             },
             {
                 "label": "Start Vite Frontend",
@@ -76,19 +84,28 @@
                     "cwd": "${workspaceFolder}/webui"
                 },
                 "presentation": {
-                    "panel": "new"
+                    "echo": true,
+                    "reveal": "always",
+                    "close": false,
+                    "focus": false,
+                    "panel": "dedicated"
                 },
                 "problemMatcher": [],
                 "detail": "Start Vite dev server for frontend"
             },
             {
-                "label": "Start All Dev Servers",
-                "dependsOn": [
-                    "Start Uvicorn Dev Server",
-                    "Start Vite Frontend"
-                ],
-                "dependsOrder": "parallel",
-                "problemMatcher": []
+                "label": "Start Archy bot",
+                "type": "shell",
+                "command": "${workspaceFolder}/tools/start_archy_bot.sh",
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "close": false,
+                    "focus": false,
+                    "panel": "dedicated"
+                },
+                "problemMatcher": [],
+                "detail": "This bot emulate an archer shooting arrows"
             }
         ]
     }
