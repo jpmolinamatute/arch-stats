@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 import asyncio
-from datetime import datetime, timedelta
 import logging
-import sys
-from os import getenv
 import random
+import sys
+from datetime import datetime, timedelta
+from os import getenv
 from uuid import UUID, uuid4
 
 import asyncpg
 from asyncpg.connection import Connection
 from asyncpg.pool import Pool
 
-from shared import get_logger, LogLevel
+from shared import LogLevel, get_logger
 
 
 class ArchyException(Exception):
