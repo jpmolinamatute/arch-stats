@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from server.models import DBState
 from server.settings import settings
 
+
 WSRouter = APIRouter()
 
 
