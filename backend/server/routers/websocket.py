@@ -6,7 +6,7 @@ from asyncpg.connection import Connection
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from server.models import DBState
-
+from server.settings import settings
 
 WSRouter = APIRouter()
 
@@ -16,14 +16,11 @@ async def get_db_pool() -> Pool:
 
 
 @WSRouter.websocket("/ws/shot")
-async def websocket_shot(
-    websocket: WebSocket,
-    db_pool: Pool = Depends(get_db_pool),
-    channel: str = "new_shot",
-) -> None:
+async def websocket_shot(websocket: WebSocket, db_pool: Pool = Depends(get_db_pool)) -> None:
     """WebSocket endpoint for real-time communication."""
     await websocket.accept()
     should_run = True
+    channel = settings.arch_stats_ws_channel
 
     async def handle_notification(_: Connection, __: int, ___: str, payload: str) -> None:
         # Parse payload and send via websocket
@@ -31,7 +28,7 @@ async def websocket_shot(
         try:
             data = json.loads(payload)
         except Exception:
-            data = payload  # fallback to raw
+            data = payload
         if should_run:
             try:
                 await websocket.send_json(data)
