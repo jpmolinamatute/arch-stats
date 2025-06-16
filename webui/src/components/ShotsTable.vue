@@ -26,7 +26,7 @@
 
     // Connect websocket
     function connectSocket() {
-        socket = new WebSocket(`ws://${window.location.host}/api/v0/ws/shot`);
+        socket = new WebSocket(`ws://${window.location.host}/api/v0/ws/shot`, 'shooting');
         socket.onmessage = (event) => {
             const data: ShotsRead = JSON.parse(event.data);
             shots.value.push(data);

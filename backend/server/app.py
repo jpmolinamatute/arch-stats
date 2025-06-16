@@ -2,7 +2,6 @@ import logging
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from os import getenv
 from pathlib import Path
 
 from asyncpg import Pool
@@ -11,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
+from server.settings import settings
 
 
 async def create_tables(pool: Pool) -> None:
@@ -18,10 +18,11 @@ async def create_tables(pool: Pool) -> None:
     shots = ShotsDB(pool)
     sessions = SessionsDB(pool)
     targets = TargetsDB(pool)
+    channel = settings.arch_stats_ws_channel
     await arrows.create_table()
     await sessions.create_table()
     await shots.create_table()
-    await shots.create_notification("archy")
+    await shots.create_notification(channel)
     await targets.create_table()
 
 
@@ -42,9 +43,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 def run() -> FastAPI:
     logger = logging.getLogger("arch-stats")
-    server_name = getenv("ARCH_STATS_HOSTNAME", "localhost")
-    server_port = int(getenv("ARCH_STATS_SERVER_PORT", "8000"))
-    dev_mode = getenv("ARCH_STATS_DEV_MODE", "False").lower() == "true"
+    server_name = settings.postgres_host
+    server_port = settings.arch_stats_server_port
+    dev_mode = settings.arch_stats_dev_mode
     version = "0.1.0"
     if dev_mode:
         logger.info("Starting the server on %s:%d", server_name, server_port)
@@ -67,7 +68,7 @@ def run() -> FastAPI:
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
     current_file_path = Path(__file__).parent
     app.mount(
-        "/",
+        "/app",
         StaticFiles(
             directory=current_file_path.joinpath("frontend"),
             html=True,

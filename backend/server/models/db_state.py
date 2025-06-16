@@ -1,6 +1,6 @@
-from os import getenv
-
 from asyncpg import Pool, create_pool
+
+from server.settings import settings
 
 
 class DBStateError(Exception):
@@ -11,29 +11,13 @@ class DBState:
     db_pool: Pool | None = None
 
     @classmethod
-    def check_envs(cls) -> None:
-        env_to_check = [
-            "POSTGRES_USER",
-            "POSTGRES_DB",
-            "POSTGRES_SOCKET_DIR",
-        ]
-        missing_env = []
-        for env in env_to_check:
-            if getenv(env, None) is None:
-                missing_env.append(env)
-        if missing_env:
-            message = ", ".join(missing_env)
-            raise DBStateError(f"ERROR: environment variables missing '{message}'")
-
-    @classmethod
     async def init_db(cls) -> None:
         """Create and store the database connection pool."""
-        cls.check_envs()
         if cls.db_pool is None:
             params = {
-                "user": getenv("POSTGRES_USER"),
-                "database": getenv("POSTGRES_DB"),
-                "host": getenv("POSTGRES_SOCKET_DIR"),
+                "user": settings.postgres_user,
+                "database": settings.postgres_db,
+                "host": settings.postgres_socket_dir,
                 "min_size": 1,
                 "max_size": 10,
                 "max_queries": 50000,
