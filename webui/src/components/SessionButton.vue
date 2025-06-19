@@ -6,16 +6,17 @@
     const emit = defineEmits<{ (e: 'requestOpenForm'): void }>();
 
     const buttonText = computed(() => {
-        return openSession.id ? 'Close Session' : 'Open Session';
+        return openSession.is_opened === true ? 'Close Session' : 'Open Session';
     });
 
     function handleClick() {
-        if (openSession.id) {
+        if (openSession.is_opened === true) {
             closeSession();
         } else {
             emit('requestOpenForm');
         }
     }
+    console.log('SessionButton openSession:', openSession);
 </script>
 
 <template>

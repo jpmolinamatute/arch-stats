@@ -25,7 +25,7 @@ class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
     async def get_open_session(self) -> SessionsRead | None:
         result = None
         try:
-            result = await self.get_by_filters({"is_opened": True})
+            result = await self.get_one({"is_opened": True})
         except DBNotFound:
             pass
         return result

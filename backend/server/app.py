@@ -23,6 +23,7 @@ async def create_tables(pool: Pool) -> None:
     await sessions.create_table()
     await shots.create_table()
     await shots.create_notification(channel)
+    await targets.create_validation_function()
     await targets.create_table()
 
 

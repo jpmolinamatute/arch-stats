@@ -5,4 +5,9 @@ import App from './App.vue';
 import { fetchOpenSession } from './state/session';
 
 fetchOpenSession();
-createApp(App).mount('#app');
+const app = createApp(App);
+app.mount('#app');
+
+app.config.errorHandler = (err) => {
+    console.error('Global error handler:', err);
+};
