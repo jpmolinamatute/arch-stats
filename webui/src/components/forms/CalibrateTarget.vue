@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { reactive, computed } from 'vue';
-    import { openSession } from '../state/session';
+    import { openSession } from '../../state/session';
 
     interface Face {
         center_x: number;

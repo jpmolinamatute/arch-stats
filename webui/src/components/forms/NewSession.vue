@@ -1,11 +1,11 @@
 <script setup lang="ts">
     import { ref, computed } from 'vue';
-    import { createSession } from '../composables/useSession';
+    import { createSession } from '../../composables/useSession';
 
     const emit = defineEmits<{ submit: [] }>();
 
     const location = ref('club');
-    const startTime = ref(new Date().toISOString());
+    const startTime = ref(new Date().toISOString().slice(0, 16));
 
     const errors = ref({
         location: '',
@@ -67,7 +67,7 @@
                 type="text"
                 v-model="location"
                 required
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p v-if="errors.location" class="text-red-600 text-sm mt-1">{{ errors.location }}</p>
         </div>
@@ -78,7 +78,7 @@
                 type="datetime-local"
                 v-model="startTime"
                 required
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p v-if="errors.startTime" class="text-red-600 text-sm mt-1">{{ errors.startTime }}</p>
         </div>

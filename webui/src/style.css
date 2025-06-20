@@ -1,4 +1,10 @@
 @import 'tailwindcss';
+
+html {
+    height: 100%;
+    width: 100%;
+}
+
 :root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
@@ -24,11 +30,25 @@ a:hover {
 }
 
 body {
+    height: 100%;
+    width: 100%;
     margin: 0;
     display: flex;
+    flex-direction: column;
     place-items: center;
-    min-width: 320px;
-    min-height: 100vh;
+}
+
+section#app{
+    max-width: 100%;
+    width: 100%;
+    flex-grow: 1;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+}
+
+main {
+    width: 100%;
 }
 
 h1 {
@@ -57,13 +77,6 @@ button:focus-visible {
 
 .card {
     padding: 2em;
-}
-
-#app {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
 }
 
 @media (prefers-color-scheme: light) {

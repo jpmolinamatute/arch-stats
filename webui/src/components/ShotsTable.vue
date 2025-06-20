@@ -50,7 +50,7 @@
     // React to openSession.id changes
     watch(
         () => openSession.id,
-        (newId, oldId) => {
+        (newId) => {
             if (newId) {
                 fetchShots(newId);
                 connectSocket();
