@@ -25,23 +25,19 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     assert data["code"] == 201
     assert data["errors"] == []
 
-    # If you return the created target's id, extract it here
-    # target_id = data["data"]
-    # Otherwise, fetch from the list
-
     # --- Get All Targets ---
     resp = await async_client.get(TARGETS_ENDPOINT)
     assert resp.status_code == 200
     targets = resp.json()["data"]
-    # Find our just-created target (by session_id or human_identifier)
+
     found = None
     for t in targets:
-        if (
-            t["human_identifier"] == payload_dict["human_identifier"]
-            and t["session_id"] == payload_dict["session_id"]
-        ):
-            found = t
-            break
+        if t["session_id"] == payload_dict["session_id"]:
+            for face in t["faces"]:
+                for face_payload in payload_dict["faces"]:
+                    if face["human_identifier"] == face_payload["human_identifier"]:
+                        found = t
+                        break
     assert found is not None
     target_id = found["id"]
 
@@ -51,21 +47,6 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     assert resp.status_code == 200
     target_data = resp_json["data"]
     assert target_data[0]["id"] == target_id
-
-    # --- Update (Patch) Target ---
-    patch = {
-        "height": 145.0,
-        "human_identifier": "T2",
-    }
-    resp = await async_client.patch(f"{TARGETS_ENDPOINT}/{target_id}", json=patch)
-    assert resp.status_code == 202
-    assert resp.json()["errors"] == []
-
-    # --- Confirm Update ---
-    resp = await async_client.get(f"{TARGETS_ENDPOINT}/{target_id}")
-    updated = resp.json()["data"]
-    assert updated["height"] == 145.0
-    assert updated["human_identifier"] == "T2"
 
     # --- Delete Target ---
     resp = await async_client.delete(f"{TARGETS_ENDPOINT}/{target_id}")
@@ -83,10 +64,7 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     [
         "max_x_coordinate",
         "max_y_coordinate",
-        "radius",
-        "points",
-        "height",
-        "human_identifier",
+        "faces",
         "session_id",
     ],
 )
@@ -101,12 +79,6 @@ async def test_target_missing_required_fields(
     result = resp.json()
     assert "detail" in result
     assert any(missing_field in str(item["loc"]) for item in result["detail"])
-
-
-@pytest.mark.asyncio
-async def test_patch_nonexistent_target(async_client: AsyncClient) -> None:
-    resp = await async_client.patch(f"{TARGETS_ENDPOINT}/{str(uuid4())}", json={"height": 123.0})
-    assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -154,21 +126,25 @@ async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> No
     assert all(math.isclose(float(t["max_x_coordinate"]), mx_val, rel_tol=1e-6) for t in data)
 
     # --- Filter by human_identifier ---
-    hid: str = targets[3].human_identifier
+    hid: str = targets[3].faces[0].human_identifier
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?human_identifier={urllib.parse.quote(hid)}")
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(t["human_identifier"] == hid for t in data)
+    assert all(any(face["human_identifier"] == hid for face in t["faces"]) for t in data)
 
     # --- Filter by multiple fields ---
 
-    multi_hid: str = targets[4].human_identifier
+    multi_hid: str = targets[4].faces[0].human_identifier
     url = f"{TARGETS_ENDPOINT}?session_id={session_id}&"
     url += f"human_identifier={urllib.parse.quote(multi_hid)}"
     resp = await async_client.get(url)
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(t["session_id"] == session_id and t["human_identifier"] == multi_hid for t in data)
+    assert all(
+        t["session_id"] == session_id
+        and any(face["human_identifier"] == multi_hid for face in t["faces"])
+        for t in data
+    )
 
 
 @pytest.mark.asyncio

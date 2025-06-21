@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { onMounted, onUnmounted, ref, watch } from 'vue';
+    import { onMounted, onUnmounted, ref } from 'vue';
     import { openSession } from '../state/session';
     import type { components } from '../types/types.generated';
 
@@ -26,6 +26,7 @@
 
     // Connect websocket
     function connectSocket() {
+        console.debug('Starting WS connection');
         socket = new WebSocket(`ws://${window.location.host}/api/v0/ws/shot`, 'shooting');
         socket.onmessage = (event) => {
             const data: ShotsRead = JSON.parse(event.data);
@@ -41,27 +42,13 @@
 
     // Cleanup websocket
     function closeSocket() {
+        console.debug('Closing WS connection');
         if (socket) {
             socket.close();
             socket = null;
         }
     }
 
-    // React to openSession.id changes
-    watch(
-        () => openSession.id,
-        (newId, oldId) => {
-            if (newId) {
-                fetchShots(newId);
-                connectSocket();
-            } else {
-                closeSocket();
-                shots.value = [];
-            }
-        },
-    );
-
-    // Or initialize on mount (if openSession is already populated)
     onMounted(() => {
         if (openSession.id) {
             fetchShots(openSession.id);
@@ -75,7 +62,7 @@
 </script>
 
 <template>
-    <table v-if="shots.length > 0" class="shot-table">
+    <table v-if="openSession.is_opened === true" class="shot-table">
         <thead>
             <tr>
                 <th>ID</th>

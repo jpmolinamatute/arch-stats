@@ -5,7 +5,7 @@ type SessionsCreate = components['schemas']['SessionsCreate'];
 type SessionsUpdate = components['schemas']['SessionsUpdate'];
 
 export async function createSession(payload: SessionsCreate): Promise<void> {
-    if (openSession.id) {
+    if (openSession.is_opened === true) {
         console.warn('A session is already open. Cannot create a new session.');
         return;
     }
@@ -28,7 +28,7 @@ export async function createSession(payload: SessionsCreate): Promise<void> {
 }
 
 export async function closeSession(): Promise<void> {
-    if (!openSession.id) return;
+    if (!openSession.is_opened) return;
     try {
         const response = await fetch(`/api/v0/session/${openSession.id}`, {
             method: 'PATCH',

@@ -1,32 +1,55 @@
 <script setup lang="ts">
-    import { ref, watch } from 'vue';
+    import { computed } from 'vue';
+    import { uiManagerStore } from './state/uiManagerStore';
     import { openSession } from './state/session';
-    import SessionButton from './components/SessionButton.vue';
-    import SessionForm from './components/SessionForm.vue';
+    import type { ViewName } from './state/uiManagerStore';
+
+    import NewArrow from './components/forms/NewArrow.vue';
+    import NewSession from './components/forms/NewSession.vue';
+    import CalibrateTarget from './components/forms/CalibrateTarget.vue';
     import ShotsTable from './components/ShotsTable.vue';
+    import { closeSession } from './composables/useSession';
 
-    const showForm = ref(false);
-    function handleFormSubmit() {
-        showForm.value = false;
+    // Map view names to components
+    const componentsMap: Record<ViewName, any> = {
+        ArrowForm: NewArrow,
+        SessionForm: NewSession,
+        TargetForm: CalibrateTarget,
+        ShotsTable: ShotsTable,
+    };
+
+    // Compute the active component to render
+    const currentComponent = computed(() => {
+        const view = uiManagerStore.currentView;
+        return view ? componentsMap[view] : null;
+    });
+
+    function handleSubmit() {
+        uiManagerStore.clearView();
     }
+    const buttonText = computed(() => {
+        return openSession.is_opened === true ? 'Close Session' : 'Open Session';
+    });
 
-    watch(
-        () => openSession.id,
-        (id) => {
-            if (id) {
-                showForm.value = false;
-            }
-        },
-    );
+    function handleClick() {
+        if (openSession.is_opened === true) {
+            closeSession();
+        } else {
+            uiManagerStore.setView('SessionForm');
+        }
+    }
 </script>
 
 <template>
-    <h1>Arch Stats App</h1>
-    <nav>
-        <SessionButton @requestOpenForm="showForm = true" />
-    </nav>
+    <header>
+        <button @click="handleClick()">{{ buttonText }}</button>
+        <button @click="uiManagerStore.setView('ArrowForm')">Register Arrow</button>
+        <button @click="uiManagerStore.setView('TargetForm')">Register Target</button>
+        <button @click="uiManagerStore.setView('ShotsTable')">View Shots</button>
+    </header>
+
     <main>
-        <SessionForm v-if="showForm" @submit="handleFormSubmit" />
-        <ShotsTable v-if="openSession.id" />
+        <component :is="currentComponent" v-if="currentComponent" @submit="handleSubmit" />
+        <p v-else>Open a session</p>
     </main>
 </template>

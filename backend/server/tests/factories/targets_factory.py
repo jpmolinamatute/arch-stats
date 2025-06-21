@@ -3,7 +3,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from server.schema import TargetsCreate, TargetsRead
+from server.schema import TargetFace, TargetsCreate, TargetsRead
 
 
 TARGETS_ENDPOINT = "/api/v0/target"
@@ -18,11 +18,30 @@ def create_fake_target(session_id: UUID, **overrides: Any) -> TargetsCreate:
     data = TargetsCreate(
         max_x_coordinate=122.0,
         max_y_coordinate=122.0,
-        radius=[3.0, 6.0, 9.0, 12.0, 15.0],
-        points=[10, 8, 6, 4, 2],
-        height=140.0,
         session_id=session_id,
-        human_identifier="T1",
+        faces=[
+            TargetFace(
+                center_x=123.0,
+                center_y=123.0,
+                radius=[50.0, 60.0, 80.0, 90.0, 100.0],
+                points=[10, 9, 8, 7, 5],
+                human_identifier="a1",
+            ),
+            TargetFace(
+                center_x=124.0,
+                center_y=124.0,
+                radius=[55.0, 65.0, 85.0, 95.0, 105.0],
+                points=[11, 10, 9, 8, 6],
+                human_identifier="a2",
+            ),
+            TargetFace(
+                center_x=125.0,
+                center_y=125.0,
+                radius=[60.0, 70.0, 90.0, 100.0, 110.0],
+                points=[12, 11, 10, 9, 7],
+                human_identifier="a3",
+            ),
+        ],
     )
     return data.model_copy(update=overrides)
 
@@ -33,18 +52,14 @@ async def create_many_targets(
     count: int = 5,
 ) -> list[TargetsRead]:
     targets = []
-    for i in range(count):
+    for _ in range(count):
         target = create_fake_target(
             session_id=session_id,
-            max_x_coordinate=120.0 + i,
-            max_y_coordinate=121.0 + i,
-            height=140.0 + i,
-            human_identifier=f"target_{i}",
         )
         insert_sql = """
             INSERT INTO targets (
-                max_x_coordinate, max_y_coordinate, radius, points, height, human_identifier, session_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                max_x_coordinate, max_y_coordinate, session_id, faces
+            ) VALUES ($1, $2, $3, $4)
             RETURNING id
         """
         async with db_pool.acquire() as conn:
@@ -52,11 +67,8 @@ async def create_many_targets(
                 insert_sql,
                 target.max_x_coordinate,
                 target.max_y_coordinate,
-                target.radius,
-                target.points,
-                target.height,
-                target.human_identifier,
                 target.session_id,
+                target.faces_as_json(),
             )
             assert row is not None
         payload_dict = target.model_dump(mode="json", by_alias=True)

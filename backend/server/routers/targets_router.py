@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from server.models import DBState, TargetsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
+from server.schema import TargetsCreate, TargetsFilters, TargetsRead
 
 
 TargetsRouter = APIRouter()
@@ -69,22 +69,3 @@ async def delete_target(
         HTTPResponse: Success or error message.
     """
     return await db_response(targets_db.delete_one, status.HTTP_204_NO_CONTENT, target_id)
-
-
-@TargetsRouter.patch("/target/{target_id}", response_model=HTTPResponse[None])
-async def patch_target(
-    target_id: UUID,
-    update: TargetsUpdate,
-    targets_db: TargetsDB = Depends(get_targets_db),
-) -> JSONResponse:
-    """
-    Partially update an existing target's configuration.
-
-    Args:
-        target_id (UUID): The unique identifier of the target to update.
-        update (TargetsUpdate): The fields to update in the target.
-
-    Returns:
-        HTTPResponse: Success or error message.
-    """
-    return await db_response(targets_db.update_one, status.HTTP_202_ACCEPTED, target_id, update)

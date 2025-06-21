@@ -1,52 +1,39 @@
+import json
+from typing import Annotated
 from uuid import UUID
 
+from annotated_types import Len
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class Face(BaseModel):
+    center_x: float = Field(..., description="X coordinate of face center")
+    center_y: float = Field(..., description="Y coordinate of face center")
+    radius: Annotated[list[float], Len(min_length=1)] = Field(
+        default_factory=list, description="List of radii for the face rings"
+    )
+    points: Annotated[list[int], Len(min_length=1)] = Field(
+        default_factory=list, description="Points assigned to the face rings"
+    )
+    human_identifier: str = Field(..., description="Human-readable identifier for the face")
 
 
 class TargetsCreate(BaseModel):
     max_x_coordinate: float = Field(..., description="Max X coordinate of the target")
     max_y_coordinate: float = Field(..., description="Max Y coordinate of the target")
-    radius: list[float] = Field(..., description="List of radii for target rings")
-    points: list[int] = Field(
-        ...,
-        description="List of points for each ring (must match radii length)",
-    )
-    height: float = Field(..., description="Height of the target")
-    human_identifier: str = Field(..., max_length=10, description="Human-friendly identifier")
     session_id: UUID = Field(..., description="ID of the session this target belongs to")
+    faces: list[Face] = Field(..., description="A list of target faces")
     model_config = ConfigDict(extra="forbid")
 
+    def faces_as_json(self) -> str:
+        return json.dumps([f.model_dump(mode="json") for f in self.faces])
 
-class TargetsUpdate(BaseModel):
-    max_x_coordinate: float | None = Field(
-        default=None, description="Max X coordinate of the target"
-    )
-    max_y_coordinate: float | None = Field(
-        default=None, description="Max Y coordinate of the target"
-    )
-    radius: list[float] | None = Field(default=None, description="List of radii for target rings")
-    points: list[int] | None = Field(default=None, description="List of points for each ring")
-    height: float | None = Field(default=None, description="Height of the target")
-    human_identifier: str | None = Field(
-        default=None, description="Optional human-friendly identifier"
-    )
-    session_id: UUID | None = Field(
-        default=None, description="ID of the session this target belongs to"
-    )
-    model_config = ConfigDict(extra="forbid")
+
+class TargetsUpdate(TargetsCreate):
+    pass
 
 
 class TargetsFilters(BaseModel):
-    max_x_coordinate: float | None = Field(
-        default=None, description="Max X coordinate of the target"
-    )
-    max_y_coordinate: float | None = Field(
-        default=None, description="Max Y coordinate of the target"
-    )
-    height: float | None = Field(default=None, description="Height of the target")
-    human_identifier: str | None = Field(
-        default=None, description="Optional human-friendly identifier"
-    )
     session_id: UUID | None = Field(
         default=None, description="ID of the session this target belongs to"
     )

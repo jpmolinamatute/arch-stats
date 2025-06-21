@@ -416,14 +416,10 @@ The following flow charts show how the 3 entities interact with each other.
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         max_x_coordinate REAL NOT NULL,
         max_y_coordinate REAL NOT NULL,
-        radius REAL [] NOT NULL,
-        points INT [] NOT NULL,
-        height REAL NOT NULL,
-        human_identifier VARCHAR(10),
+        faces JSONB NOT NULL,
         session_id UUID NOT NULL,
-        CHECK (array_length(radius, 1) = array_length(points, 1)),
-        UNIQUE (session_id, human_identifier),
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
+        CHECK (validate_faces_jsonb(faces))
     );
     ```
 

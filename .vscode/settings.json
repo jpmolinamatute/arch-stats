@@ -144,14 +144,14 @@
         "**/.venv/",
         "**/__pycache__/",
         "**/.mypy_cache/",
-        "**/.pytest_cache/",
+        "**/.pytest_cache/"
     ],
     "mypy-type-checker.ignorePatterns": [
         "**/ignore/",
         "**/.venv/",
         "**/__pycache__/",
         "**/.mypy_cache/",
-        "**/.pytest_cache/",
+        "**/.pytest_cache/"
     ],
     "markdown.preview.scrollEditorWithPreview": false,
     "markdown.preview.scrollPreviewWithEditor": false,
@@ -161,7 +161,7 @@
         "**/.venv/",
         "**/__pycache__/",
         "**/.mypy_cache/",
-        "**/.pytest_cache/",
+        "**/.pytest_cache/"
     ],
     "python.testing.pytestArgs": [
         "-v",
@@ -205,5 +205,8 @@
             "!**/node_modules/**",
             "**/node_modules/.vite-temp/**"
         ]
+    },
+    "[vue]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }
