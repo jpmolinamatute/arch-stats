@@ -38,7 +38,7 @@ body {
     place-items: center;
 }
 
-section#app{
+section#app {
     max-width: 100%;
     width: 100%;
     flex-grow: 1;

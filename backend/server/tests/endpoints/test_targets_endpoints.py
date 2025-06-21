@@ -62,6 +62,8 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
 @pytest.mark.parametrize(
     "missing_field",
     [
+        "max_x_coordinate",
+        "max_y_coordinate",
         "faces",
         "session_id",
     ],

@@ -124,7 +124,7 @@
 
 <template>
     <form
-        v-if="openSession.id"
+        v-if="openSession.is_opened"
         @submit.prevent="handleSubmit"
         class="max-w-md mx-auto p-4 bg-white rounded-lg shadow-md space-y-4"
     >

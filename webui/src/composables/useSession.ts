@@ -28,7 +28,7 @@ export async function createSession(payload: SessionsCreate): Promise<void> {
 }
 
 export async function closeSession(): Promise<void> {
-    if (!openSession.id) return;
+    if (!openSession.is_opened) return;
     try {
         const response = await fetch(`/api/v0/session/${openSession.id}`, {
             method: 'PATCH',
