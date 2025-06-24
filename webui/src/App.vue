@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import { computed } from 'vue';
     import { uiManagerStore } from './state/uiManagerStore';
-    import { openSession } from './state/session';
+    import { sessionOpened } from './state/session';
     import type { ViewName } from './state/uiManagerStore';
 
     import NewArrow from './components/forms/NewArrow.vue';
@@ -28,11 +28,11 @@
         uiManagerStore.clearView();
     }
     const buttonText = computed(() => {
-        return openSession.is_opened === true ? 'Close Session' : 'Open Session';
+        return sessionOpened.is_opened === true ? 'Close Session' : 'Open Session';
     });
 
     function handleClick() {
-        if (openSession.is_opened === true) {
+        if (sessionOpened.is_opened === true) {
             closeSession();
         } else {
             uiManagerStore.setView('SessionForm');

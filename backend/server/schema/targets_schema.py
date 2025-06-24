@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Face(BaseModel):
-    center_x: float = Field(..., description="X coordinate of face center")
-    center_y: float = Field(..., description="Y coordinate of face center")
+    x: float = Field(..., description="X coordinate of face center")
+    y: float = Field(..., description="Y coordinate of face center")
     radius: Annotated[list[float], Len(min_length=1)] = Field(
         default_factory=list, description="List of radii for the face rings"
     )
@@ -19,8 +19,8 @@ class Face(BaseModel):
 
 
 class TargetsCreate(BaseModel):
-    max_x_coordinate: float = Field(..., description="Max X coordinate of the target")
-    max_y_coordinate: float = Field(..., description="Max Y coordinate of the target")
+    max_x: float = Field(..., description="Max X coordinate of the target")
+    max_y: float = Field(..., description="Max Y coordinate of the target")
     session_id: UUID = Field(..., description="ID of the session this target belongs to")
     faces: list[Face] = Field(..., description="A list of target faces")
     model_config = ConfigDict(extra="forbid")

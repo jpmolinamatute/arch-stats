@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { onMounted, onUnmounted, ref } from 'vue';
-    import { openSession } from '../state/session';
+    import { sessionOpened } from '../state/session';
     import type { components } from '../types/types.generated';
 
     type ShotsRead = components['schemas']['ShotsRead'];
@@ -50,8 +50,8 @@
     }
 
     onMounted(() => {
-        if (openSession.id) {
-            fetchShots(openSession.id);
+        if (sessionOpened.id) {
+            fetchShots(sessionOpened.id);
             connectSocket();
         }
     });
@@ -62,7 +62,7 @@
 </script>
 
 <template>
-    <table v-if="openSession.is_opened === true" class="shot-table">
+    <table v-if="sessionOpened.is_opened === true" class="shot-table">
         <thead>
             <tr>
                 <th>ID</th>
@@ -81,8 +81,8 @@
                 <td>{{ shot.arrow_engage_time }}</td>
                 <td>{{ shot.arrow_disengage_time }}</td>
                 <td>{{ shot.arrow_landing_time }}</td>
-                <td>{{ shot.x_coordinate }}</td>
-                <td>{{ shot.y_coordinate }}</td>
+                <td>{{ shot.x }}</td>
+                <td>{{ shot.y }}</td>
             </tr>
         </tbody>
     </table>

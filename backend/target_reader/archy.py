@@ -164,12 +164,12 @@ class ArchyApp:
         # Randomly decide whether landing_time is None or now + 6 seconds
         if random.choice([True, False]):
             landing_time = None
-            x_coordinate = None
-            y_coordinate = None
+            x = None
+            y = None
         else:
             landing_time = now + timedelta(seconds=6)
-            x_coordinate = random.uniform(0.0, 100.0)
-            y_coordinate = random.uniform(0.0, 100.0)
+            x = random.uniform(0.0, 100.0)
+            y = random.uniform(0.0, 100.0)
         await conn.execute(
             """
             INSERT INTO shots (
@@ -178,8 +178,8 @@ class ArchyApp:
                 arrow_engage_time,
                 arrow_disengage_time,
                 arrow_landing_time,
-                x_coordinate,
-                y_coordinate
+                x,
+                y
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7);
             """,
@@ -188,8 +188,8 @@ class ArchyApp:
             now,
             disengage_time,
             landing_time,
-            x_coordinate,
-            y_coordinate,
+            x,
+            y,
         )
         self.logger.info("A shot was inserted in the DB")
 

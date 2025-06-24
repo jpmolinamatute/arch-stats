@@ -12,22 +12,22 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
         # face column looks like this:
         # [
         #     {
-        #         "center_x": 123.456,
-        #         "center_y": 111.456,
+        #         "x": 123.456,
+        #         "y": 111.456,
         #         "human_identifier": "a1",
         #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
         #     },
         #     {
-        #         "center_x": 123.456,
-        #         "center_y": 111.49,
+        #         "x": 123.456,
+        #         "y": 111.49,
         #         "human_identifier": "a1",
         #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
         #     },
         #     {
-        #         "center_x": 123.49,
-        #         "center_y": 111.456,
+        #         "x": 123.49,
+        #         "y": 111.456,
         #         "human_identifier": "a1",
         #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
@@ -35,8 +35,8 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
         # ]
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            max_x_coordinate REAL NOT NULL,
-            max_y_coordinate REAL NOT NULL,
+            max_x REAL NOT NULL,
+            max_y REAL NOT NULL,
             session_id UUID NOT NULL,
             faces JSONB NOT NULL,
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
@@ -64,11 +64,11 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
 
                 FOR face IN SELECT * FROM jsonb_array_elements(faces)
                 LOOP
-                    -- Check center_x and center_y
-                    IF (face->>'center_x') IS NULL OR (face->>'center_y') IS NULL THEN
+                    -- Check x and y
+                    IF (face->>'x') IS NULL OR (face->>'y') IS NULL THEN
                         RETURN FALSE;
                     END IF;
-                    IF (face->>'center_x')::REAL <= 0 OR (face->>'center_y')::REAL <= 0 THEN
+                    IF (face->>'x')::REAL <= 0 OR (face->>'y')::REAL <= 0 THEN
                         RETURN FALSE;
                     END IF;
 

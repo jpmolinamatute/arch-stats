@@ -15,21 +15,21 @@ class ShotsDB(DBBase[ShotsCreate, ShotsUpdate, ShotsRead]):
             arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
             arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
             arrow_landing_time TIMESTAMP WITH TIME ZONE,
-            x_coordinate REAL,
-            y_coordinate REAL,
+            x REAL,
+            y REAL,
             FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
             CHECK (
                 (
                     arrow_landing_time IS NOT NULL AND
-                    x_coordinate IS NOT NULL AND
-                    y_coordinate IS NOT NULL
+                    x IS NOT NULL AND
+                    y IS NOT NULL
                 )
                 OR
                 (
                     arrow_landing_time IS NULL AND
-                    x_coordinate IS NULL AND
-                    y_coordinate IS NULL
+                    x IS NULL AND
+                    y IS NULL
                 )
             )
         """

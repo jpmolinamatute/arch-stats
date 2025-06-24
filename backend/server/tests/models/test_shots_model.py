@@ -31,8 +31,8 @@ async def test_insert_and_get_one(db_pool_initialed: Pool, fake_shot_data: Shots
     shot = await shots_db.get_one_by_id(shot_id)
     assert shot.arrow_id == fake_shot_data.arrow_id
     assert shot.session_id == fake_shot_data.session_id
-    assert shot.x_coordinate == pytest.approx(fake_shot_data.x_coordinate, rel=1e-6)
-    assert shot.y_coordinate == pytest.approx(fake_shot_data.y_coordinate, rel=1e-6)
+    assert shot.x == pytest.approx(fake_shot_data.x, rel=1e-6)
+    assert shot.y == pytest.approx(fake_shot_data.y, rel=1e-6)
 
 
 @pytest.mark.asyncio
@@ -51,14 +51,14 @@ async def test_get_all(db_pool_initialed: Pool, fake_shot_data: ShotsCreate) -> 
     ids = []
     for i in range(3):
         new_data = fake_shot_data.model_copy()
-        new_data.x_coordinate = 1.1 + i
-        new_data.y_coordinate = 2.2 + i
+        new_data.x = 1.1 + i
+        new_data.y = 2.2 + i
         ids.append(await shots_db.insert_one(new_data))
 
     all_shots = await shots_db.get_all()
     assert len(all_shots) == 3
-    xs = [shot.x_coordinate for shot in all_shots if shot.x_coordinate]
-    ys = [shot.y_coordinate for shot in all_shots if shot.y_coordinate]
+    xs = [shot.x for shot in all_shots if shot.x]
+    ys = [shot.y for shot in all_shots if shot.y]
     assert sorted(xs) == pytest.approx([1.1, 2.1, 3.1], rel=1e-6)
     assert sorted(ys) == pytest.approx([2.2, 3.2, 4.2], rel=1e-6)
 

@@ -20,8 +20,8 @@ class SensorData(TypedDict, total=False):
     arrow_disengage_time: datetime
     arrow_landing_time: datetime | None
     draw_length: float
-    x_coordinate: float | None
-    y_coordinate: float | None
+    x: float | None
+    y: float | None
     distance: float
 
 
@@ -149,8 +149,8 @@ async def save_sensor_data(conn: Connection, target_track_id: UUID, logger: Logg
                 arrow_disengage_time,
                 arrow_landing_time,
                 draw_length,
-                x_coordinate,
-                y_coordinate,
+                x,
+                y,
                 distance
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);

@@ -12,8 +12,8 @@ class ShotsCreate(BaseModel):
     arrow_landing_time: datetime | None = Field(
         default=None, description="Filter by session start time"
     )
-    x_coordinate: float | None = Field(default=None, description="X coordinate of the target")
-    y_coordinate: float | None = Field(default=None, description="Y coordinate of the target")
+    x: float | None = Field(default=None, description="X coordinate of the target")
+    y: float | None = Field(default=None, description="Y coordinate of the target")
     model_config = ConfigDict(extra="forbid")
 
 
@@ -32,8 +32,8 @@ class ShotsFilters(BaseModel):
     arrow_landing_time: datetime | None = Field(
         default=None, description="Filter by session start time"
     )
-    x_coordinate: float | None = Field(default=None, description="X coordinate of the target")
-    y_coordinate: float | None = Field(default=None, description="Y coordinate of the target")
+    x: float | None = Field(default=None, description="X coordinate of the target")
+    y: float | None = Field(default=None, description="Y coordinate of the target")
     session_id: UUID | None = Field(
         default=None, description="ID of the session this shot belongs to"
     )

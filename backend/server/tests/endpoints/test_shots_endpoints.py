@@ -94,21 +94,21 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
     assert all(s["arrow_id"] == arrow_id for s in data)
     assert len(data) >= 1
 
-    # --- Filter by x_coordinate ---
-    x_val = shots[3].x_coordinate or 0.0
-    resp = await async_client.get(f"{SHOTS_ENDPOINT}?x_coordinate={x_val}")
+    # --- Filter by x ---
+    x_val = shots[3].x or 0.0
+    resp = await async_client.get(f"{SHOTS_ENDPOINT}?x={x_val}")
 
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(math.isclose(float(s["x_coordinate"]), x_val, rel_tol=1e-6) for s in data)
+    assert all(math.isclose(float(s["x"]), x_val, rel_tol=1e-6) for s in data)
     assert len(data) >= 1
 
-    # --- Filter by y_coordinate ---
-    y_val = shots[4].y_coordinate or 0.0
-    resp = await async_client.get(f"{SHOTS_ENDPOINT}?y_coordinate={y_val}")
+    # --- Filter by y ---
+    y_val = shots[4].y or 0.0
+    resp = await async_client.get(f"{SHOTS_ENDPOINT}?y={y_val}")
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(math.isclose(float(s["y_coordinate"]), y_val, rel_tol=1e-6) for s in data)
+    assert all(math.isclose(float(s["y"]), y_val, rel_tol=1e-6) for s in data)
     assert len(data) >= 1
 
     # --- Filter by arrow_engage_time ---
@@ -123,15 +123,12 @@ async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None
 
     # --- Filter by multiple fields ---
     multi_arrow_id = str(arrows[1].arrow_id)
-    multi_x = shots[1].x_coordinate or 0.0
-    resp = await async_client.get(
-        f"{SHOTS_ENDPOINT}?arrow_id={multi_arrow_id}&x_coordinate={multi_x}"
-    )
+    multi_x = shots[1].x or 0.0
+    resp = await async_client.get(f"{SHOTS_ENDPOINT}?arrow_id={multi_arrow_id}&x={multi_x}")
     assert resp.status_code == 200
     data = resp.json()["data"]
     assert all(
-        s["arrow_id"] == multi_arrow_id
-        and math.isclose(float(s["x_coordinate"]), multi_x, rel_tol=1e-6)
+        s["arrow_id"] == multi_arrow_id and math.isclose(float(s["x"]), multi_x, rel_tol=1e-6)
         for s in data
     )
 
