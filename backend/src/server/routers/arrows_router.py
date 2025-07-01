@@ -15,7 +15,6 @@ ArrowsRouter = APIRouter()
 
 
 async def get_arrows_db(request: Request) -> ArrowsDB:
-    # print(request.app.state._state.keys())
     logger: logging.Logger = request.app.state.logger
     logger.debug("Getting ArrowsDB")
     db_pool: Pool = request.app.state.db_pool

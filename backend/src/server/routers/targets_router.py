@@ -29,7 +29,6 @@ async def get_targets(
     Retrieve all targets.
     """
     filters_dict = filters.model_dump(exclude_none=True)
-    print(f"{filters_dict=}")
     return await db_response(targets_db.get_all, status.HTTP_200_OK, filters_dict)
 
 

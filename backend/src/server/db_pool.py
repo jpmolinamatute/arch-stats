@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, Self
 
 from asyncpg import Pool, create_pool

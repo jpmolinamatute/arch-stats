@@ -11,7 +11,7 @@ ARROWS_ENDPOINT = "/api/v0/arrow"
 
 
 def create_fake_arrow(**overrides: Any) -> ArrowsCreate:
-    ran_int = random.randint(1, 1000)
+    ran_int = random.randint(1, 100)
     data = ArrowsCreate(
         id=uuid4(),
         length=29.0,

@@ -123,8 +123,6 @@ async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> No
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x={str(max_x)}")
     assert resp.status_code == 200
     data = resp.json()["data"]
-    print(f"{type(data[0]['max_x'])}    {type(max_x)}")
-    print(f"{data[0]['max_x']=}    {max_x=}")
     assert all(math.isclose(float(t["max_x"]), max_x, rel_tol=1e-6) for t in data)
 
     # --- Filter by human_identifier ---
