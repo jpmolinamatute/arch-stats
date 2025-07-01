@@ -1,8 +1,8 @@
 import logging
 import sys
 from enum import IntEnum
+from logging import Formatter, Handler, StreamHandler
 from logging.handlers import TimedRotatingFileHandler
-from logging import StreamHandler, Formatter, Handler
 from pathlib import Path
 
 

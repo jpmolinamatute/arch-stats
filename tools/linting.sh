@@ -12,6 +12,7 @@ run_python_checks() {
         echo "ERROR: '${dir}' is not a valid directory" >&2
         exit 2
     fi
+    # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
     cd "${dir}"
     echo "running isort..."

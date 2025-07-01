@@ -1,3 +1,5 @@
+# https://docs.astral.sh/uv/reference/settings/
+
 [project]
 name = "arch-stats"
 version = "0.1.0"
@@ -5,25 +7,31 @@ description = "Analyzing Archery Performance Through Data"
 authors = [
     { name = "Juan Pablo Molina Matute", email = "jpmolinamatute@gmail.com" },
 ]
-requires-python = ">=3.12.7"
-dependencies = []
-
-[tool.uv.workspace]
-members = ["arrow_reader", "bow_reader", "server", "target_reader"]
-
-[dependency-groups]
+requires-python = "==3.13.*"
+dependencies = [
+    "fastapi>=0.115.12",
+    "asyncpg>=0.30.0",
+    "httpx>=0.28.1",
+    "uvicorn[standard]>=0.34.3",
+    "pydantic-settings>=2.9.1",
+]
+[project.optional-dependencies]
 dev = [
     "black>=25.1.0",
     "isort>=6.0.1",
     "mypy>=1.15.0",
     "pylint>=3.3.7",
     "pytest>=8.3.5",
-    "python-dotenv>=1.1.0",
+    "pytest-asyncio>=0.26.0",
 ]
+
+[tool.uv]
+python-preference = "system"
+required-version = ">=0.7.17"
 
 [tool.mypy]
 strict = true
-python_version = "3.12"
+python_version = "3.13"
 sqlite_cache = true
 show_column_numbers = true
 show_error_codes = true
@@ -41,13 +49,13 @@ exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
 
 [tool.black]
 line-length = 100
-target-version = ["py312"]
+target-version = ["py313"]
 exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
 
 [tool.isort]
 profile = "black"
 line_length = 100
-py_version = 312
+py_version = 313
 lines_after_imports = 2
 virtual_env = "./.venv"
 skip_glob = [
@@ -60,6 +68,8 @@ skip_glob = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra"
+testpaths = ["server", "arrow_reader", "bow_reader", "target_reader"]
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3
@@ -146,7 +156,7 @@ persistent = true
 
 # Minimum Python version to use for version dependent checks. Will default to the
 # version used to run pylint.
-py-version = "3.12"
+py-version = "3.13"
 
 # Discover python modules and packages in the file system subtree.
 # recursive =
