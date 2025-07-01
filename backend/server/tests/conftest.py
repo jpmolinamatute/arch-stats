@@ -1,48 +1,41 @@
+import logging
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from asyncpg import Pool
 from httpx import ASGITransport, AsyncClient
 
-from server.app import create_tables, run
-from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
-
-
-async def drop_tables() -> None:
-    pool = await DBState.get_db_pool()
-    arrows = ArrowsDB(pool)
-    shots = ShotsDB(pool)
-    sessions = SessionsDB(pool)
-    targets = TargetsDB(pool)
-    await targets.drop_table()
-    await shots.drop_table()
-    await arrows.drop_table()
-    await sessions.drop_table()
+from server.app import lifespan, manage_tables, run
+from server.db_pool import DBPool
 
 
 @pytest_asyncio.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    await DBState.init_db()
-    pool = await DBState.get_db_pool()
-    await create_tables(pool)
+    logging.basicConfig(level=logging.DEBUG)
     app = run()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield ac
-    await drop_tables()
-    await DBState.close_db()
+    async with lifespan(app):
+        await manage_tables(app.state.db_pool, "drop")
+        await manage_tables(app.state.db_pool, "create")
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+        ) as ac:
+            yield ac
 
 
 @pytest_asyncio.fixture
 async def db_pool() -> AsyncGenerator[Pool, None]:
-    pool = await DBState.get_db_pool()
+    pool = await DBPool.get_db_pool()
     yield pool
+    await DBPool.close_db_pool()
 
 
 @pytest_asyncio.fixture
 async def db_pool_initialed() -> AsyncGenerator[Pool, None]:
-    await DBState.init_db()
-    pool = await DBState.get_db_pool()
-    await create_tables(pool)
+    await DBPool.create_db_pool()
+    pool = await DBPool.get_db_pool()
+    await manage_tables(pool, "create")
     yield pool
-    await drop_tables()
-    await DBState.close_db()
+    await manage_tables(pool, "drop")
+    await DBPool.close_db_pool()

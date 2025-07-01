@@ -119,11 +119,13 @@ async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> No
     assert all(t["session_id"] == session_id for t in data)
 
     # --- Filter by max_x (float, use math.isclose) ---
-    mx_val: float = targets[4].max_x
-    resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x={mx_val}")
+    max_x: float = targets[4].max_x
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x={str(max_x)}")
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert all(math.isclose(float(t["max_x"]), mx_val, rel_tol=1e-6) for t in data)
+    print(f"{type(data[0]['max_x'])}    {type(max_x)}")
+    print(f"{data[0]['max_x']=}    {max_x=}")
+    assert all(math.isclose(float(t["max_x"]), max_x, rel_tol=1e-6) for t in data)
 
     # --- Filter by human_identifier ---
     hid: str = targets[3].faces[0].human_identifier

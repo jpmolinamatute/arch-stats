@@ -7,67 +7,86 @@ from pathlib import Path
 from asyncpg import Pool
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from typing_extensions import Literal
 
-from server.models import ArrowsDB, DBState, SessionsDB, ShotsDB, TargetsDB
+from server.db_pool import DBPool
+from server.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
 from server.settings import settings
 
 
-async def create_tables(pool: Pool) -> None:
+TablesAction = Literal["drop", "create"]
+
+
+async def manage_tables(pool: Pool, action: TablesAction) -> None:
     arrows = ArrowsDB(pool)
     shots = ShotsDB(pool)
     sessions = SessionsDB(pool)
     targets = TargetsDB(pool)
     channel = settings.arch_stats_ws_channel
-    await arrows.create_table()
-    await sessions.create_table()
-    await shots.create_table()
-    await shots.create_notification(channel)
-    await targets.create_validation_function()
-    await targets.create_table()
+    if action == "create":
+        await arrows.create_table()
+        await sessions.create_table()
+        await shots.create_table()
+        await shots.create_notification(channel)
+        await targets.create_validation_function()
+        await targets.create_table()
+    elif action == "drop":
+        await targets.drop_table()
+        await shots.drop_table()
+        await arrows.drop_table()
+        await sessions.drop_table()
+
+
+def log_start(logger: logging.Logger, dev_mode: bool) -> None:
+    server_name = settings.postgres_host
+    server_port = settings.arch_stats_server_port
+    if dev_mode:
+        logger.info("Starting the server on %s:%d", server_name, server_port)
+    else:
+        logger.info("Starting the server in production mode on %s:%d", server_name, server_port)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
-    logger: logging.Logger = getattr(app.state, "logger")
-    await DBState.init_db()  # Initialize database
-    pool = await DBState.get_db_pool()
-    await create_tables(pool)
+
     try:
+        await DBPool.create_db_pool()
+        app.state.logger = logging.getLogger("testing")
+        app.state.db_pool = await DBPool.get_db_pool()
+        log_start(app.state.logger, app.debug)
+        app.state.logger.debug("Initializing DB...")
+        await manage_tables(app.state.db_pool, "create")
+        app.state.logger.debug("DB initialized.")
         yield
     except CancelledError:
-        logger.info("Shutdown interrupted. Cleaning up...")
+        app.state.logger.info("Shutdown interrupted. Cleaning up...")
+        if app.debug:
+            await manage_tables(app.state.db_pool, "drop")
     finally:
-        await DBState.close_db()  # Close database safely
+        app.state.logger.debug("Closing DB...")
+        await DBPool.close_db_pool()
+        app.state.logger.debug("DB closed.")
 
 
 def run() -> FastAPI:
-    logger = logging.getLogger("arch-stats")
-    server_name = settings.postgres_host
-    server_port = settings.arch_stats_server_port
-    dev_mode = settings.arch_stats_dev_mode
     version = "0.1.0"
-    if dev_mode:
-        logger.info("Starting the server on %s:%d", server_name, server_port)
-    else:
-        logger.info("Starting the server in production mode on %s:%d", server_name, server_port)
+    current_file_path = Path(__file__).parent
+    mayor_version = f"v{version[0]}"
     app = FastAPI(
-        debug=dev_mode,
+        debug=settings.arch_stats_dev_mode,
         lifespan=lifespan,
         openapi_url="/api/openapi.json",
         title="Arch Stats API",
         version=version,
     )
-    mayor_version = f"v{version[0]}"
-    # Include blueprints
-    app.state.logger = logger
+
     app.include_router(SessionsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ArrowsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
-    current_file_path = Path(__file__).parent
     app.mount(
         "/app",
         StaticFiles(
@@ -84,5 +103,4 @@ def run() -> FastAPI:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
     run()

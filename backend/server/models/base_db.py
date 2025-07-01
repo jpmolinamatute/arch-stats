@@ -1,7 +1,7 @@
 import json
 from abc import ABC
 from datetime import datetime
-from typing import Generic, Protocol, TypeVar
+from typing import Generic, Protocol, Self, TypeVar
 from uuid import UUID
 
 from asyncpg import Pool, Record
@@ -37,7 +37,7 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
     """
 
     def __init__(
-        self,
+        self: Self,
         table_name: str,
         table_schema: str,
         db_pool: Pool,

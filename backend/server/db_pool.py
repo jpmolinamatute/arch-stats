@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any, Self
+
 from asyncpg import Pool, create_pool
 
 from server.settings import settings
@@ -7,11 +11,16 @@ class DBStateError(Exception):
     pass
 
 
-class DBState:
+class DBPool:
+    """Borg class to manage the PostgreSQL database connection pool."""
+
     db_pool: Pool | None = None
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+        raise TypeError("DBPool should not be instantiated. Use class methods only.")
+
     @classmethod
-    async def init_db(cls) -> None:
+    async def create_db_pool(cls) -> None:
         """Create and store the database connection pool."""
         if cls.db_pool is None:
             params = {
@@ -26,7 +35,7 @@ class DBState:
             cls.db_pool = await create_pool(**params)
 
     @classmethod
-    async def close_db(cls) -> None:
+    async def close_db_pool(cls) -> None:
         """Close the database connection pool on shutdown."""
         if cls.db_pool is not None:
             await cls.db_pool.close()

@@ -1,9 +1,11 @@
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from asyncpg import Pool
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, ShotsDB
+from server.models import ShotsDB
 from server.routers.utils import HTTPResponse, db_response
 from server.schema import ShotsFilters, ShotsRead
 
@@ -11,8 +13,10 @@ from server.schema import ShotsFilters, ShotsRead
 ShotsRouter = APIRouter()
 
 
-async def get_shots_db() -> ShotsDB:
-    db_pool = await DBState.get_db_pool()
+async def get_shots_db(request: Request) -> ShotsDB:
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting ShotsDB")
+    db_pool: Pool = request.app.state.db_pool
     return ShotsDB(db_pool)
 
 

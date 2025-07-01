@@ -25,22 +25,22 @@ class ArrowsCreate(BaseModel):
         description="Whether the arrow has been programmed with a UUID",
     )
     weight: float | None = Field(
-        None,
+        default=None,
         description="Arrow's weight in grams",
         examples=[20.5],
     )
     diameter: float | None = Field(
-        None,
+        default=None,
         description="Diameter of the arrow in mm",
         examples=[6.2],
     )
     spine: float | None = Field(
-        None,
+        default=None,
         description="Arrow spine (flexibility rating)",
         examples=[500],
     )
     label_position: float | None = Field(
-        None,
+        default=None,
         description="Position of label from nock in cm",
         examples=[10.0],
     )
@@ -88,37 +88,37 @@ class ArrowsUpdate(BaseModel):
 
 class ArrowsFilters(BaseModel):
     human_identifier: str | None = Field(
-        None,
+        default=None,
         max_length=10,
         description="Short unique identifier easy to remember",
         examples=["A1", "B", "3", "etc"],
     )
     is_programmed: bool | None = Field(
-        None,
+        default=None,
         description="Whether the arrow has been programmed with a UUID",
     )
     length: float | None = Field(
-        None,
+        default=None,
         description="Arrow's total length in cm",
         examples=[75.0],
     )
     weight: float | None = Field(
-        None,
+        default=None,
         description="Arrow's weight in grams",
         examples=[20.5],
     )
     diameter: float | None = Field(
-        None,
+        default=None,
         description="Diameter of the arrow in mm",
         examples=[6.2],
     )
     spine: float | None = Field(
-        None,
+        default=None,
         description="Arrow spine (flexibility rating)",
         examples=[500],
     )
     label_position: float | None = Field(
-        None,
+        default=None,
         description="Position of label from nock in cm",
         examples=[10.0],
     )

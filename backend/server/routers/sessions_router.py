@@ -1,9 +1,11 @@
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from asyncpg import Pool
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, SessionsDB
+from server.models import SessionsDB
 from server.routers.utils import HTTPResponse, db_response
 from server.schema import SessionsCreate, SessionsFilters, SessionsRead, SessionsUpdate
 
@@ -11,8 +13,10 @@ from server.schema import SessionsCreate, SessionsFilters, SessionsRead, Session
 SessionsRouter = APIRouter()
 
 
-async def get_sessions_db() -> SessionsDB:
-    db_pool = await DBState.get_db_pool()
+async def get_sessions_db(request: Request) -> SessionsDB:
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting SessionsDB")
+    db_pool: Pool = request.app.state.db_pool
     return SessionsDB(db_pool)
 
 

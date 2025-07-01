@@ -37,6 +37,9 @@ class TargetsFilters(BaseModel):
     session_id: UUID | None = Field(
         default=None, description="ID of the session this target belongs to"
     )
+    max_x: float | None = Field(default=None, description="Max X coordinate of the target")
+    max_y: float | None = Field(default=None, description="Max Y coordinate of the target")
+    faces: list[Face] | None = Field(default=None, description="A list of target faces")
     model_config = ConfigDict(extra="forbid")
 
 

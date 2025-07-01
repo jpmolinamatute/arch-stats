@@ -1,10 +1,12 @@
+import logging
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, status
+from asyncpg import Pool
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from server.models import ArrowsDB, DBState
+from server.models import ArrowsDB
 from server.routers.utils import HTTPResponse, db_response
 from server.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 
@@ -12,8 +14,11 @@ from server.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 ArrowsRouter = APIRouter()
 
 
-async def get_arrows_db() -> ArrowsDB:
-    db_pool = await DBState.get_db_pool()
+async def get_arrows_db(request: Request) -> ArrowsDB:
+    # print(request.app.state._state.keys())
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting ArrowsDB")
+    db_pool: Pool = request.app.state.db_pool
     return ArrowsDB(db_pool)
 
 

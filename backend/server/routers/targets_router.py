@@ -1,9 +1,11 @@
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from asyncpg import Pool
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import DBState, TargetsDB
+from server.models import TargetsDB
 from server.routers.utils import HTTPResponse, db_response
 from server.schema import TargetsCreate, TargetsFilters, TargetsRead
 
@@ -11,8 +13,10 @@ from server.schema import TargetsCreate, TargetsFilters, TargetsRead
 TargetsRouter = APIRouter()
 
 
-async def get_targets_db() -> TargetsDB:
-    db_pool = await DBState.get_db_pool()
+async def get_targets_db(request: Request) -> TargetsDB:
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting SessionsDB")
+    db_pool: Pool = request.app.state.db_pool
     return TargetsDB(db_pool)
 
 
@@ -25,6 +29,7 @@ async def get_targets(
     Retrieve all targets.
     """
     filters_dict = filters.model_dump(exclude_none=True)
+    print(f"{filters_dict=}")
     return await db_response(targets_db.get_all, status.HTTP_200_OK, filters_dict)
 
 
