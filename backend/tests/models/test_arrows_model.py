@@ -5,7 +5,7 @@ from asyncpg import Pool
 
 from server.models import ArrowsDB, DBNotFound
 from server.schema import ArrowsUpdate
-from server.tests.factories import create_fake_arrow
+from tests.factories import create_fake_arrow
 
 
 @pytest.mark.asyncio

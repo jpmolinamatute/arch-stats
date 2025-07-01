@@ -1,7 +1,10 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=str(object=Path(__file__).parent / ".env"))
     postgres_user: str = "juanpa"
     postgres_password: str = "changeme"
     postgres_db: str = "arch-stats"
@@ -12,8 +15,5 @@ class Settings(BaseSettings):
     arch_stats_server_port: int = 8000
     arch_stats_ws_channel: str = "archy"
 
-    class Config:
-        env_file = ".env"
 
-
-settings = Settings()  # singleton instance
+settings = Settings()

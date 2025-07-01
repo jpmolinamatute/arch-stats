@@ -1,4 +1,15 @@
 {
+    "black-formatter.cwd": "${workspaceFolder}/backend",
+    "black-formatter.args": [
+        "--config",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "black-formatter.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "black-formatter.path": [
+        "${workspaceFolder}/backend/.venv/bin/black"
+    ],
     "cSpell.words": [
         "abstractproperty",
         "actix",
@@ -75,9 +86,6 @@
         "VARCHAR",
         "webui"
     ],
-    "[markdown]": {
-        "editor.unicodeHighlight.nonBasicASCII": false
-    },
     "cSpell.ignoreWords": [
         "PGPASSWORD",
         "changeme",
@@ -91,6 +99,35 @@
         "wscat",
         "asyncpg"
     ],
+    "debug.javascript.terminalOptions": {
+        "resolveSourceMapLocations": [
+            "${workspaceFolder}/webui/**",
+            "!${workspaceFolder}/webui/node_modules/**",
+            "${workspaceFolder}/webui/node_modules/.vite-temp/**"
+        ]
+    },
+    "eslint.validate": [
+        "javascript",
+        "typescript"
+    ],
+    "eslint.enable": true,
+    "eslint.format.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.fixAll.eslint": "explicit"
+    },
+    "isort.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "isort.path": [
+        "${workspaceFolder}/backend/.venv/bin/isort"
+    ],
+    "isort.args": [
+        "--settings-file",
+        "${workspaceFolder}/backend/pyproject.toml"
+    ],
+    "markdown.preview.scrollEditorWithPreview": false,
+    "markdown.preview.scrollPreviewWithEditor": false,
     "mypy-type-checker.args": [
         "--config-file",
         "${workspaceFolder}/backend/pyproject.toml"
@@ -101,6 +138,13 @@
     "mypy-type-checker.cwd": "${workspaceFolder}/backend",
     "mypy-type-checker.path": [
         "${workspaceFolder}/backend/.venv/bin/mypy"
+    ],
+    "mypy-type-checker.ignorePatterns": [
+        "**/ignore/",
+        "**/.venv/",
+        "**/__pycache__/",
+        "**/.mypy_cache/",
+        "**/.pytest_cache/"
     ],
     "pylint.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
@@ -113,34 +157,6 @@
         "--rcfile",
         "${workspaceFolder}/backend/pyproject.toml"
     ],
-    "black-formatter.cwd": "${workspaceFolder}/backend",
-    "black-formatter.args": [
-        "--config",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "black-formatter.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "black-formatter.path": [
-        "${workspaceFolder}/backend/.venv/bin/black"
-    ],
-    "isort.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "isort.path": [
-        "${workspaceFolder}/backend/.venv/bin/isort"
-    ],
-    "isort.args": [
-        "--settings-file",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "shellcheck.customArgs": [
-        "--shell=bash",
-        "--color=never",
-        "--source-path=${workspaceFolder}/scripts",
-        "--external-sources"
-    ],
-    "terminal.integrated.cwd": "${workspaceFolder}/backend",
     "pylint.ignorePatterns": [
         "**/ignore/",
         "**/.venv/",
@@ -148,15 +164,6 @@
         "**/.mypy_cache/",
         "**/.pytest_cache/"
     ],
-    "mypy-type-checker.ignorePatterns": [
-        "**/ignore/",
-        "**/.venv/",
-        "**/__pycache__/",
-        "**/.mypy_cache/",
-        "**/.pytest_cache/"
-    ],
-    "markdown.preview.scrollEditorWithPreview": false,
-    "markdown.preview.scrollPreviewWithEditor": false,
     "python.analysis.exclude": [
         "**/ignore/",
         "**/.git/",
@@ -165,29 +172,30 @@
         "**/.mypy_cache/",
         "**/.pytest_cache/"
     ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend/src"
+    ],
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "-v",
-        "--rootdir=${workspaceFolder}/backend",
-        "server/tests"
+        "--config-file ${workspaceFolder}/backend/pyproject.toml"
     ],
     "python.testing.cwd": "${workspaceFolder}/backend",
+    "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
     "python.testing.unittestEnabled": false,
+    "shellcheck.customArgs": [
+        "--shell=bash",
+        "--color=never",
+        "--external-sources"
+    ],
+    "terminal.integrated.cwd": "${workspaceFolder}/backend",
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/backend"
+        "PYTHONPATH": "${workspaceFolder}/backend/src"
     },
     "typescript.tsdk": "./webui/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
-    "eslint.validate": [
-        "javascript",
-        "typescript"
-    ],
-    "eslint.enable": true,
-    "eslint.format.enable": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.fixAll.eslint": "explicit"
+    "[markdown]": {
+        "editor.unicodeHighlight.nonBasicASCII": false
     },
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -201,14 +209,9 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 4
     },
-    "debug.javascript.terminalOptions": {
-        "resolveSourceMapLocations": [
-            "${workspaceFolder}/**",
-            "!**/node_modules/**",
-            "**/node_modules/.vite-temp/**"
-        ]
-    },
     "[vue]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "python.analysis.typeEvaluation.deprecateTypingAliases": true,
+    "python.analysis.inlayHints.callArgumentNames": "partial"
 }

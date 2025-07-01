@@ -23,6 +23,7 @@ dev = [
     "pylint>=3.3.7",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
+    "faker>=37.4.0",
 ]
 
 [tool.uv]
@@ -68,8 +69,8 @@ skip_glob = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-ra"
-testpaths = ["server", "arrow_reader", "bow_reader", "target_reader"]
+addopts = "-vra"
+testpaths = ["tests"]
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3
@@ -131,7 +132,8 @@ ignore-patterns = ["^\\.#"]
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook = "import sys; sys.path.append('.')"
+
+# init-hook = 
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use, and will cap the count on Windows to

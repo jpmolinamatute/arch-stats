@@ -6,7 +6,7 @@ import pytest
 from asyncpg import Pool
 from httpx import AsyncClient
 
-from server.tests.factories import (
+from tests.factories import (
     create_many_arrows,
     create_many_sessions,
     create_many_shots,
