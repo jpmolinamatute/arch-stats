@@ -69,8 +69,9 @@ skip_glob = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-vra"
-testpaths = ["tests"]
+addopts = "-vra  --color=yes"
+testpaths = "./tests"
+pythonpath = "./src"
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3

@@ -2,22 +2,14 @@
 
 set -eu
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
-NEEDS_WEBUI=false
-NEEDS_BACKEND=false
+# shellcheck source=./lib/check_docker
+. "${ROOT_DIR}/tools/lib/check_docker"
 
 run_python_tests() {
-    local compose_files="${ROOT_DIR}/docker/docker-compose.yaml"
-    is_running=$(docker compose -f "${compose_files}" ps --all --quiet | wc -l)
-    if [[ ${is_running} -eq 0 ]]; then
-        echo "Starting docker compose"
-        docker compose -f "${compose_files}" up --detach --build
-        sleep 2
-    fi
-
+    check_docker
     echo "running python tests..."
     pytest --config-file "${ROOT_DIR}/backend/pyproject.toml"
-    echo "Stopping docker compose"
-    docker compose -f "${compose_files}" down -v
+    stop_docker
 }
 
 run_python_checks() {
@@ -46,18 +38,20 @@ run_webui_checks() {
 }
 
 main() {
+    local needs_webui=false
+    local needs_backend=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
         if [[ "$file" == webui/* ]]; then
-            NEEDS_WEBUI=true
+            needs_webui=true
         elif [[ "$file" == backend/* ]]; then
-            NEEDS_BACKEND=true
+            needs_backend=true
         fi
     done
-    if $NEEDS_WEBUI; then
+    if $needs_webui; then
         run_webui_checks
     fi
-    if $NEEDS_BACKEND; then
+    if $needs_backend; then
         run_python_checks
     fi
 }

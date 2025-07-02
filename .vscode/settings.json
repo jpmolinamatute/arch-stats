@@ -177,7 +177,7 @@
     ],
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "--config-file ${workspaceFolder}/backend/pyproject.toml"
+        "--config-file=${workspaceFolder}/backend/pyproject.toml"
     ],
     "python.testing.cwd": "${workspaceFolder}/backend",
     "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
