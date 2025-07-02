@@ -12,7 +12,6 @@ start_uvicorn() {
     cd "${ROOT_DIR}/backend/src"
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     exec uvicorn --loop uvloop --lifespan on --reload --ws websockets --http h11 --use-colors --log-level debug --timeout-graceful-shutdown 10 --factory server.app:run
-
 }
 
 main() {

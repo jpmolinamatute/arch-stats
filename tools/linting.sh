@@ -6,26 +6,28 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 . "${ROOT_DIR}/tools/lib/manage_docker"
 
 run_python_tests() {
+    local pyproject_path="${1}"
     start_docker
     echo "running python tests..."
-    pytest --config-file "${ROOT_DIR}/backend/pyproject.toml"
+    pytest --config-file "${pyproject_path}"
     stop_docker
 }
 
 run_python_checks() {
+    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
     cd "${ROOT_DIR}/backend"
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
     echo "running isort..."
-    isort --settings-file "${ROOT_DIR}/backend/pyproject.toml" .
+    isort --settings-file "${pyproject_path}" .
     echo "running black..."
-    black --config "${ROOT_DIR}/backend/pyproject.toml" .
+    black --config "${pyproject_path}" .
     echo "running mypy..."
-    mypy --config-file "${ROOT_DIR}/backend/pyproject.toml" .
+    mypy --config-file "${pyproject_path}" .
     echo "running pylint..."
-    pylint --rcfile "${ROOT_DIR}/backend/pyproject.toml" .
-    run_python_tests
+    pylint --rcfile "${pyproject_path}" .
+    run_python_tests "${pyproject_path}"
     cd -
 }
 

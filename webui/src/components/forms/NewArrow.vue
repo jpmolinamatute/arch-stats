@@ -187,7 +187,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.weight"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
             <p v-if="errors.weight" class="text-red-600 text-sm mt-1">{{ errors.weight }}</p>
         </div>
@@ -198,7 +198,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.diameter"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
             <p v-if="errors.diameter" class="text-red-600 text-sm mt-1">{{ errors.diameter }}</p>
         </div>
@@ -209,7 +209,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.spine"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
             <p v-if="errors.spine" class="text-red-600 text-sm mt-1">{{ errors.spine }}</p>
         </div>

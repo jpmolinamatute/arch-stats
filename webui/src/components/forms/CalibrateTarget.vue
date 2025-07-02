@@ -96,12 +96,20 @@
             Calibrate
         </button>
 
-        <label class="block mb-1">Max X</label>
-        <input v-model="maxX" type="number" class="w-full border rounded p-2 mb-1" />
+        <label class="block mb-1 font-medium text-gray-700">Max X</label>
+        <input
+            v-model="maxX"
+            type="number"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
         <p v-if="errors.maxX" class="text-red-600 text-sm">{{ errors.maxX }}</p>
 
-        <label class="block mb-1 mt-2">Max Y</label>
-        <input v-model="maxY" type="number" class="w-full border rounded p-2 mb-1" />
+        <label class="block mb-1 mt-2 font-medium text-gray-700">Max Y</label>
+        <input
+            v-model="maxY"
+            type="number"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
         <p v-if="errors.maxY" class="text-red-600 text-sm">{{ errors.maxY }}</p>
 
         <table class="w-full border-collapse border border-gray-300 mt-2">
@@ -139,7 +147,7 @@
                                 (e) => updatePoints(index, (e.target as HTMLInputElement).value)
                             "
                             type="text"
-                            class="w-full border rounded p-1"
+                            class="w-full border rounded p-1 text-gray-900 bg-white"
                         />
                     </td>
                 </tr>

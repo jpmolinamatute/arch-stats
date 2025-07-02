@@ -61,12 +61,20 @@
 
 <template>
     <div>
-        <label class="block mb-1">Location</label>
-        <input v-model="location" type="text" class="w-full border rounded p-2 mb-1" />
+        <label class="block mb-1 font-medium text-gray-700">Location</label>
+        <input
+            v-model="location"
+            type="text"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
         <p v-if="errors.location" class="text-red-600 text-sm">{{ errors.location }}</p>
 
-        <label class="block mb-1 mt-2">Start Time</label>
-        <input v-model="startTime" type="datetime-local" class="w-full border rounded p-2 mb-1" />
+        <label class="block mb-1 mt-2 font-medium text-gray-700">Start Time</label>
+        <input
+            v-model="startTime"
+            type="datetime-local"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
         <p v-if="errors.startTime" class="text-red-600 text-sm">{{ errors.startTime }}</p>
     </div>
 </template>

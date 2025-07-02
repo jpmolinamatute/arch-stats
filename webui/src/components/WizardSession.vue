@@ -1,31 +1,14 @@
 <script setup lang="ts">
-    import { ref } from 'vue';
+    import Wizard, { createStep, type Step } from './widgets/Wizard.vue';
     import NewSession from './forms/NewSession.vue';
     import CalibrateTarget from './forms/CalibrateTarget.vue';
-    import Wizard from './widgets/Wizard.vue';
 
-    const sessionIsValid = ref(false);
-    const sessionOnComplete = ref<() => Promise<{ success: boolean; error?: string }>>(
-        async () => ({ success: false }),
-    );
-    const targetIsValid = ref(false);
-    const targetOnComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => ({
-        success: false,
-    }));
-    const steps = [
-        {
-            name: 'Open Session',
-            component: NewSession,
-            isValid: sessionIsValid,
-            onComplete: sessionOnComplete,
-        },
-        {
-            name: 'Calibrate Target',
-            component: CalibrateTarget,
-            isValid: targetIsValid,
-            onComplete: targetOnComplete,
-        },
-    ];
+    // Instantiate each step via the shared factory
+    const { step: sessionStep } = createStep('Open Session', NewSession);
+    const { step: targetStep } = createStep('Calibrate Target', CalibrateTarget);
+
+    // Now just pass these steps into the wizard
+    const steps: Step[] = [sessionStep, targetStep];
 
     function wizardCompleted() {
         console.log('Wizard flow complete!');
