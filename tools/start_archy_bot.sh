@@ -2,8 +2,8 @@
 
 set -eu
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
-# shellcheck source=./lib/check_docker
-. "${ROOT_DIR}/tools/lib/check_docker"
+# shellcheck source=./lib/manage_docker
+. "${ROOT_DIR}/tools/lib/manage_docker"
 
 start_archy() {
     echo "Starting Archy server"
@@ -15,7 +15,7 @@ start_archy() {
 }
 
 main() {
-    check_docker
+    start_docker
     start_archy
 }
 

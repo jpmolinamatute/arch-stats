@@ -1,4 +1,4 @@
-check_docker() {
+start_docker() {
     local compose_files="${ROOT_DIR}/docker/docker-compose.yaml"
     is_running=$(docker compose -f "${compose_files}" ps --all --quiet | wc -l)
     if [[ ${is_running} -eq 0 ]]; then

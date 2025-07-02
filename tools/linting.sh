@@ -2,11 +2,11 @@
 
 set -eu
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
-# shellcheck source=./lib/check_docker
-. "${ROOT_DIR}/tools/lib/check_docker"
+# shellcheck source=./lib/manage_docker
+. "${ROOT_DIR}/tools/lib/manage_docker"
 
 run_python_tests() {
-    check_docker
+    start_docker
     echo "running python tests..."
     pytest --config-file "${ROOT_DIR}/backend/pyproject.toml"
     stop_docker
