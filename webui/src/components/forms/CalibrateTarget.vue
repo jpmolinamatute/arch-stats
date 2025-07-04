@@ -1,159 +1,190 @@
 <script setup lang="ts">
-    import { ref, watch } from 'vue';
-    import { type Ref } from 'vue';
+    import { ref, computed, watchEffect } from 'vue';
+    import type { StepRegistration } from '../widgets/Wizard.vue';
     import { createTarget } from '../../composables/useTarget';
+    import type { components } from '../../types/types.generated';
     import { sessionOpened } from '../../state/session';
 
-    const props = defineProps<{
-        register: (options: {
-            isValid: Ref<boolean>;
-            onComplete: () => Promise<{ success: boolean; error?: string }>;
-        }) => void;
-    }>();
+    const props = defineProps<{ register: (options: StepRegistration) => void }>();
+    interface FaceInput {
+        x: number;
+        y: number;
+        radii: number[];
+        humanIdentifier: string;
+        points: string;
+    }
 
-    const maxX = ref(0);
-    const maxY = ref(0);
-    const faces = ref<
-        {
-            x: number;
-            y: number;
-            radius: number[];
-            human_identifier: string;
-            points: number[];
-        }[]
-    >([]);
-    const isValid = ref(false);
-    const errors = ref<{ maxX?: string; maxY?: string; faces?: string }>({});
-
-    watch([maxX, maxY, faces], () => {
-        errors.value = {};
-        let valid = true;
-
-        if (maxX.value <= 0) {
-            errors.value.maxX = 'Max X must be greater than 0';
-            valid = false;
+    const success = ref(false);
+    const maxX = ref<number>(0);
+    const maxY = ref<number>(0);
+    const faces = ref<FaceInput[]>([]);
+    const errorMessage = ref<string>('');
+    const isValid = computed(() => success.value);
+    const onComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => {
+        if (!success.value) {
+            return { success: false, error: errorMessage.value || 'Calibration not completed' };
         }
-
-        if (maxY.value <= 0) {
-            errors.value.maxY = 'Max Y must be greater than 0';
-            valid = false;
+        if (!sessionOpened.id) {
+            return { success: false, error: 'No open session found.' };
         }
-
-        if (faces.value.length === 0) {
-            errors.value.faces = 'At least one face is required';
-            valid = false;
+        const payload: components['schemas']['TargetsCreate'] = {
+            max_x: maxX.value,
+            max_y: maxY.value,
+            session_id: sessionOpened.id,
+            faces: faces.value.map((f) => ({
+                x: f.x,
+                y: f.y,
+                radii: f.radii,
+                human_identifier: f.humanIdentifier,
+                points: f.points.split(',').map((p) => Number(p.trim())),
+            })),
+        };
+        const created = await createTarget(payload);
+        if (!created) {
+            return { success: false, error: 'Failed to save target configuration' };
         }
+        return { success: true };
+    });
 
-        isValid.value = valid;
+    watchEffect(() => {
+        props.register({ isValid, onComplete });
     });
 
     function calibrate() {
-        maxX.value = Math.floor(Math.random() * 1000);
-        maxY.value = Math.floor(Math.random() * 1000);
-        faces.value = [
-            {
-                x: Math.floor(Math.random() * maxX.value),
-                y: Math.floor(Math.random() * maxY.value),
-                radius: [50, 100, 150],
-                human_identifier: '',
-                points: [0, 0, 0],
-            },
-        ];
-    }
+        // The calibrate() function is a dummy function for now. Think of it as a placeholder for
+        // future work.
+        // The function will make a GET HTTP request, and the server will return:
 
-    async function onComplete() {
-        if (!isValid.value) {
-            return { success: false, error: 'Please correct form errors' };
-        }
-        if (!sessionOpened.id) {
-            return { success: false, error: 'No session ID available' };
-        }
-        try {
-            await createTarget({
-                session_id: sessionOpened.id,
-                max_x: maxX.value,
-                max_y: maxY.value,
-                faces: faces.value,
-            });
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: 'Failed to create target' };
-        }
-    }
+        // * max_x
+        // * max_y
+        // * faces
 
-    function updatePoints(index: number, value: string) {
-        faces.value[index].points = value
-            .split(',')
-            .map((p) => parseInt(p.trim()))
-            .filter((p) => !isNaN(p));
+        // faces will be optional; if the server returns one or more faces, then it will include:
+
+        // * x
+        // * y
+        // * radii[]
+
+        // And then the user must add a human_readable name per face and optionally add points.
+        // If the user provides points, the points array length must match the radii array length.
+        // The user can click as many times as they want the calibrate button until they are happy
+        // with the values that the server returns. This means that the number of faces (and
+        // number of rows as well) may change, so the validation must also be reactive.
+        success.value = false;
+        errorMessage.value = '';
+        faces.value = [];
+
+        if (Math.random() < 0.2) {
+            errorMessage.value = 'Calibration failed. Please try again.';
+            return;
+        }
+
+        maxX.value = Math.floor(Math.random() * 201) + 100;
+        maxY.value = Math.floor(Math.random() * 201) + 100;
+
+        const count = Math.floor(Math.random() * 6);
+        const newFaces: FaceInput[] = [];
+        for (let i = 0; i < count; i++) {
+            const x = Math.floor(Math.random() * maxX.value);
+            const y = Math.floor(Math.random() * maxY.value);
+            const radii = Array.from({ length: 3 }, () => Math.floor(Math.random() * 41) + 10);
+            newFaces.push({ x, y, radii, humanIdentifier: '', points: '' });
+        }
+        faces.value = newFaces;
+        success.value = true;
     }
-    props.register({ isValid, onComplete });
 </script>
 
 <template>
-    <div>
-        <button @click="calibrate" class="bg-blue-500 text-white px-2 py-1 rounded mb-2">
+    <div class="p-4">
+        <button
+            @click="calibrate"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
             Calibrate
         </button>
 
-        <label class="block mb-1 font-medium text-gray-700">Max X</label>
-        <input
-            v-model="maxX"
-            type="number"
-            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
-        />
-        <p v-if="errors.maxX" class="text-red-600 text-sm">{{ errors.maxX }}</p>
+        <div v-if="errorMessage" class="mt-2 text-red-500">
+            {{ errorMessage }}
+        </div>
 
-        <label class="block mb-1 mt-2 font-medium text-gray-700">Max Y</label>
-        <input
-            v-model="maxY"
-            type="number"
-            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
-        />
-        <p v-if="errors.maxY" class="text-red-600 text-sm">{{ errors.maxY }}</p>
+        <div v-else-if="success" class="mt-4">
+            <div class="flex space-x-4 mb-4">
+                <label class="flex flex-col font-semibold">
+                    Max X:
+                    <input
+                        type="number"
+                        :value="maxX"
+                        readonly
+                        class="bg-gray-100 border border-gray-300 p-2 rounded"
+                    />
+                </label>
+                <label class="flex flex-col font-semibold">
+                    Max Y:
+                    <input
+                        type="number"
+                        :value="maxY"
+                        readonly
+                        class="bg-gray-100 border border-gray-300 p-2 rounded"
+                    />
+                </label>
+            </div>
 
-        <table class="w-full border-collapse border border-gray-300 mt-2">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="border border-gray-300 p-2">#</th>
-                    <th class="border border-gray-300 p-2">X</th>
-                    <th class="border border-gray-300 p-2">Y</th>
-                    <th class="border border-gray-300 p-2">Radius</th>
-                    <th class="border border-gray-300 p-2">Human Identifier</th>
-                    <th class="border border-gray-300 p-2">Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(face, index) in faces" :key="index">
-                    <td class="border border-gray-300 p-2 text-center">{{ index + 1 }}</td>
-                    <td class="border border-gray-300 p-2 text-center">{{ face.x }}</td>
-                    <td class="border border-gray-300 p-2 text-center">{{ face.y }}</td>
-                    <td class="border border-gray-300 p-2 text-center">
-                        {{ face.radius.join(', ') }}
-                    </td>
-
-                    <td class="border border-gray-300 p-2">
-                        <input
-                            v-model="face.human_identifier"
-                            type="text"
-                            class="w-full border rounded p-1"
-                        />
-                    </td>
-
-                    <td class="border border-gray-300 p-2">
-                        <input
-                            :value="face.points.join(',')"
-                            @input="
-                                (e) => updatePoints(index, (e.target as HTMLInputElement).value)
-                            "
-                            type="text"
-                            class="w-full border rounded p-1 text-gray-900 bg-white"
-                        />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <p v-if="errors.faces" class="text-red-600 text-sm mt-1">{{ errors.faces }}</p>
+            <table class="min-w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">X</th>
+                        <th class="border border-gray-300 p-2 text-left">Y</th>
+                        <th class="border border-gray-300 p-2 text-left">Radii</th>
+                        <th class="border border-gray-300 p-2 text-left">Human Identifier</th>
+                        <th class="border border-gray-300 p-2 text-left">Points (CSV)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(face, index) in faces" :key="index">
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="number"
+                                :value="face.x"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="number"
+                                :value="face.y"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                :value="face.radii.join(',')"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                v-model="faces[index].humanIdentifier"
+                                placeholder="e.g. face1"
+                                class="border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                v-model="faces[index].points"
+                                placeholder="10,9,8"
+                                class="border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </template>

@@ -73,3 +73,8 @@ async def delete_target(
         HTTPResponse: Success or error message.
     """
     return await db_response(targets_db.delete_one, status.HTTP_204_NO_CONTENT, target_id)
+
+
+@TargetsRouter.get("/target/calibrate")
+async def calibrate_target(request: Request) -> JSONResponse:
+    raise NotImplementedError

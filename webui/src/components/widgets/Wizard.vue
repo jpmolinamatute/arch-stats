@@ -58,6 +58,7 @@
     async function handleNext() {
         errorMessage.value = null;
         const result = await currentStep.value.onComplete.value();
+        console.log('HOLA!');
         if (result.success) {
             if (activeStepIndex.value < props.steps.length - 1) {
                 activeStepIndex.value++;

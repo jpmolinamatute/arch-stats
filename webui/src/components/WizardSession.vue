@@ -3,16 +3,12 @@
     import NewSession from './forms/NewSession.vue';
     import CalibrateTarget from './forms/CalibrateTarget.vue';
 
-    // Instantiate each step via the shared factory
     const { step: sessionStep } = createStep('Open Session', NewSession);
     const { step: targetStep } = createStep('Calibrate Target', CalibrateTarget);
-
-    // Now just pass these steps into the wizard
     const steps: Step[] = [sessionStep, targetStep];
 
     function wizardCompleted() {
         console.log('Wizard flow complete!');
-        // You can reset state or navigate elsewhere if needed
     }
 </script>
 

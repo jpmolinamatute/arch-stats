@@ -15,21 +15,21 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
         #         "x": 123.456,
         #         "y": 111.456,
         #         "human_identifier": "a1",
-        #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
+        #         "radii": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
         #     },
         #     {
         #         "x": 123.456,
         #         "y": 111.49,
         #         "human_identifier": "a1",
-        #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
+        #         "radii": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
         #     },
         #     {
         #         "x": 123.49,
         #         "y": 111.456,
         #         "human_identifier": "a1",
-        #         "radius": [50.456, 60.456, 80.456, 90.456, 100.456],
+        #         "radii": [50.456, 60.456, 80.456, 90.456, 100.456],
         #         "points": [10, 9, 8, 7, 5]
         #     }
         # ]
@@ -54,7 +54,7 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
             RETURNS BOOLEAN AS $$
             DECLARE
                 face JSONB;
-                radius_len INT;
+                radii_len INT;
                 points_len INT;
                 identifiers TEXT[];
                 ident TEXT;
@@ -72,22 +72,22 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
                         RETURN FALSE;
                     END IF;
 
-                    -- Check radius and points length match and > 0
-                    radius_len := jsonb_array_length(face->'radius');
+                    -- Check radii and points length match and > 0
+                    radii_len := jsonb_array_length(face->'radii');
                     points_len := jsonb_array_length(face->'points');
-                    IF radius_len IS NULL OR
+                    IF radii_len IS NULL OR
                     points_len IS NULL OR
-                    radius_len = 0 OR
+                    radii_len = 0 OR
                     points_len = 0 THEN
                         RETURN FALSE;
                     END IF;
-                    IF radius_len != points_len THEN
+                    IF radii_len != points_len THEN
                         RETURN FALSE;
                     END IF;
 
-                    -- Check radius elements > 0
-                    FOR i IN 0..(radius_len - 1) LOOP
-                        IF (face->'radius'->>i)::REAL <= 0 THEN
+                    -- Check radii elements > 0
+                    FOR i IN 0..(radii_len - 1) LOOP
+                        IF (face->'radii'->>i)::REAL <= 0 THEN
                             RETURN FALSE;
                         END IF;
                     END LOOP;

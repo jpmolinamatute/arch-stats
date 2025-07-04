@@ -1,21 +1,18 @@
 <script setup lang="ts">
-    import { ref, watch } from 'vue';
-    import { type Ref } from 'vue';
+    import { ref, computed, watchEffect } from 'vue';
     import { createSession } from '../../composables/useSession';
-    const props = defineProps<{
-        register: (options: {
-            isValid: Ref<boolean>;
-            onComplete: () => Promise<{ success: boolean; error?: string }>;
-        }) => void;
-    }>();
+    import type { StepRegistration } from '../widgets/Wizard.vue';
 
-    const location = ref('club');
+    const props = defineProps<{ register: (opts: StepRegistration) => void }>();
+
+    const location = ref('');
     const startTime = ref(new Date().toISOString().slice(0, 16));
-    const isValid = ref(false);
-    const errors = ref<{ location?: string; startTime?: string }>({});
-    watch([location, startTime], () => {
-        errors.value = {};
+    const errors = ref({ location: '', startTime: '' });
+
+    const isValid = computed(() => {
         let valid = true;
+        errors.value.location = '';
+        errors.value.startTime = '';
 
         if (!location.value.trim()) {
             errors.value.location = 'Location is required';
@@ -31,36 +28,34 @@
             if (isNaN(inputDate.getTime())) {
                 errors.value.startTime = 'Start time is invalid';
                 valid = false;
-            } else if (inputDate > now) {
-                errors.value.startTime = 'Start time cannot be in the future';
+            } else if (inputDate < now) {
+                errors.value.startTime = 'Start time cannot be in the past';
                 valid = false;
             }
         }
 
-        isValid.value = valid;
+        return valid;
     });
 
-    async function onComplete() {
+    const onComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => {
         if (!isValid.value) {
-            return { success: false, error: 'Session form is invalid' };
+            return { success: false, error: 'Form is invalid' };
         }
-        try {
-            await createSession({
-                location: location.value.trim(),
-                start_time: new Date(startTime.value).toISOString(),
-                is_opened: true,
-            });
-            return { success: true };
-        } catch (err) {
-            return { success: false, error: 'Failed to create session' };
-        }
-    }
+        await createSession({
+            location: location.value,
+            start_time: new Date(startTime.value).toISOString(),
+            is_opened: true,
+        });
+        return { success: true };
+    });
 
-    props.register({ isValid, onComplete });
+    watchEffect(() => {
+        props.register({ isValid, onComplete });
+    });
 </script>
 
 <template>
-    <div>
+    <div class="p-4">
         <label class="block mb-1 font-medium text-gray-700">Location</label>
         <input
             v-model="location"
@@ -69,7 +64,7 @@
         />
         <p v-if="errors.location" class="text-red-600 text-sm">{{ errors.location }}</p>
 
-        <label class="block mb-1 mt-2 font-medium text-gray-700">Start Time</label>
+        <label class="block mb-1 mt-4 font-medium text-gray-700">Start Time</label>
         <input
             v-model="startTime"
             type="datetime-local"

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class Face(BaseModel):
     x: float = Field(..., description="X coordinate of face center")
     y: float = Field(..., description="Y coordinate of face center")
-    radius: Annotated[list[float], Len(min_length=1)] = Field(
+    radii: Annotated[list[float], Len(min_length=1)] = Field(
         default_factory=list, description="List of radii for the face rings"
     )
     points: Annotated[list[int], Len(min_length=1)] = Field(
