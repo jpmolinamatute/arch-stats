@@ -1,11 +1,11 @@
-import { openSession, clearOpenSession, fetchOpenSession } from '../state/session';
+import { sessionOpened, clearOpenSession, fetchOpenSession } from '../state/session';
 import type { components } from '../types/types.generated';
 
 type SessionsCreate = components['schemas']['SessionsCreate'];
 type SessionsUpdate = components['schemas']['SessionsUpdate'];
 
 export async function createSession(payload: SessionsCreate): Promise<void> {
-    if (openSession.is_opened === true) {
+    if (sessionOpened.is_opened === true) {
         console.warn('A session is already open. Cannot create a new session.');
         return;
     }
@@ -28,9 +28,9 @@ export async function createSession(payload: SessionsCreate): Promise<void> {
 }
 
 export async function closeSession(): Promise<void> {
-    if (!openSession.is_opened) return;
+    if (!sessionOpened.is_opened) return;
     try {
-        const response = await fetch(`/api/v0/session/${openSession.id}`, {
+        const response = await fetch(`/api/v0/session/${sessionOpened.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -1,5 +1,5 @@
 import { reactive, watch } from 'vue';
-import { openSession } from './session';
+import { sessionOpened } from './session';
 export type ViewName = 'ArrowForm' | 'SessionForm' | 'TargetForm' | 'ShotsTable';
 export const uiManagerStore = reactive({
     currentView: null as ViewName | null,
@@ -12,7 +12,7 @@ export const uiManagerStore = reactive({
 });
 
 watch(
-    () => openSession.is_opened,
+    () => sessionOpened.is_opened,
     (isOpened) => {
         if (isOpened && !uiManagerStore.currentView) {
             uiManagerStore.currentView = 'ShotsTable';

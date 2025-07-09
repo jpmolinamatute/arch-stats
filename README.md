@@ -191,7 +191,7 @@ The following flow charts show how the 3 entities interact with each other.
         SU5["user: fires arrow"]:::user
         HW2["sensor: bow sensor set<br />'arrow_disengage_time'"]:::sensor
         Q1{"did the target sensor<br />registered an arrow in less<br />than X seconds?"}
-        HW3["sensor: target sensor set<br />'arrow_landing_time'<br />'x_coordinate'<br />'y_coordinate'"]:::sensor
+        HW3["sensor: target sensor set<br />'arrow_landing_time'<br />'x'<br />'y'"]:::sensor
         SS3["app: collect data<br />and save it into shots table"]:::app
         MISS["Shot missed"]
 
@@ -257,7 +257,6 @@ The following flow charts show how the 3 entities interact with each other.
     * GET /target (get targets all targets)
     * POST /target (returns new target UUID)
     * DELETE /target/{target_id}
-    * PATCH /target/{target_id}
   * session
     * GET /session?open=True (gets the open session)
     * GET /session (gets all sessions)
@@ -390,21 +389,21 @@ The following flow charts show how the 3 entities interact with each other.
         arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
         arrow_landing_time TIMESTAMP WITH TIME ZONE,
-        x_coordinate REAL,
-        y_coordinate REAL,
+        x REAL,
+        y REAL,
         FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
         FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
         CHECK (
             (
                 arrow_landing_time IS NOT NULL AND
-                x_coordinate IS NOT NULL AND
-                y_coordinate IS NOT NULL
+                x IS NOT NULL AND
+                y IS NOT NULL
             )
             OR
             (
                 arrow_landing_time IS NULL AND
-                x_coordinate IS NULL AND
-                y_coordinate IS NULL
+                x IS NULL AND
+                y IS NULL
             )
         );
     ```
@@ -414,8 +413,8 @@ The following flow charts show how the 3 entities interact with each other.
     ```sql
     CREATE TABLE IF NOT EXISTS targets (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        max_x_coordinate REAL NOT NULL,
-        max_y_coordinate REAL NOT NULL,
+        max_x REAL NOT NULL,
+        max_y REAL NOT NULL,
         faces JSONB NOT NULL,
         session_id UUID NOT NULL,
         FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,

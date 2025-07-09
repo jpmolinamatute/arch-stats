@@ -1,233 +1,210 @@
 <script setup lang="ts">
-    import { reactive, computed } from 'vue';
-    import { openSession } from '../../state/session';
+    import { ref, computed, watchEffect } from 'vue';
+    import type { StepRegistration } from '../widgets/Wizard.vue';
+    import { createTarget } from '../../composables/useTarget';
+    import type { components } from '../../types/types.generated';
+    import { sessionOpened } from '../../state/session';
 
-    interface Face {
-        center_x: number;
-        center_y: number;
-        radius: number[];
-        human_identifier: string;
-        points: number[];
+    const props = defineProps<{ register: (options: StepRegistration) => void }>();
+    interface FaceInput {
+        x: number;
+        y: number;
+        radii: number[];
+        humanIdentifier: string;
+        points: string;
     }
 
-    const form = reactive({
-        session_id: computed(() => openSession.id),
-        max_x_coordinate: 0,
-        max_y_coordinate: 0,
-        faces: [] as Face[],
-    });
-
-    const errors = reactive({
-        faces: [] as { human_identifier: string; points: string }[],
-    });
-
-    // Load initial data (placeholder for WebSocket data)
-    function loadFromTargetReader() {
-        form.max_x_coordinate = 500;
-        form.max_y_coordinate = 400;
-        form.faces = [
-            {
-                center_x: 123,
-                center_y: 111,
-                radius: [50, 60, 80, 90, 100],
-                human_identifier: '',
-                points: [],
-            },
-            {
-                center_x: 200,
-                center_y: 180,
-                radius: [50, 60, 80, 90, 100],
-                human_identifier: '',
-                points: [],
-            },
-            {
-                center_x: 300,
-                center_y: 250,
-                radius: [50, 60, 80, 90, 100],
-                human_identifier: '',
-                points: [],
-            },
-        ];
-        errors.faces = form.faces.map(() => ({ human_identifier: '', points: '' }));
-    }
-
-    loadFromTargetReader();
-
-    const isFormValid = computed(() => {
-        let valid = true;
-        errors.faces = form.faces.map(() => ({ human_identifier: '', points: '' }));
-
-        form.faces.forEach((face, index) => {
-            if (!face.human_identifier.trim()) {
-                errors.faces[index].human_identifier = 'Identifier is required';
-                valid = false;
+    const success = ref(false);
+    const maxX = ref<number>(0);
+    const maxY = ref<number>(0);
+    const faces = ref<FaceInput[]>([]);
+    const errorMessage = ref<string>('');
+    const isValid = computed(() => {
+        if (!success.value) return false;
+        if (faces.value.length === 0) return true;
+        return faces.value.every((f) => {
+            if (!f.humanIdentifier.trim()) {
+                return false;
             }
 
-            if (face.points.length === 0) {
-                errors.faces[index].points = 'At least one point value is required';
-                valid = false;
-            } else if (face.points.some((p) => isNaN(p) || p < 0)) {
-                errors.faces[index].points = 'Points must be non-negative integers';
-                valid = false;
+            const pts = f.points.trim();
+            if (pts) {
+                const parts = pts.split(',').map((p) => p.trim());
+                if (parts.length !== f.radii.length) {
+                    return false;
+                }
+                return parts.every((p) => !isNaN(Number(p)));
             }
+
+            return true;
         });
-
-        return valid;
     });
-
-    async function handleSubmit() {
-        if (!form.session_id) {
-            alert('No open session. Please open a session before submitting.');
-            return;
+    const onComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => {
+        if (!success.value) {
+            return { success: false, error: errorMessage.value || 'Calibration not completed' };
+        }
+        if (!sessionOpened.id) {
+            return { success: false, error: 'No open session found.' };
         }
 
-        if (!isFormValid.value) {
-            console.log('Validation failed:', JSON.stringify(errors, null, 2));
-            return;
-        }
-
-        const payload = {
-            session_id: form.session_id,
-            max_x_coordinate: form.max_x_coordinate,
-            max_y_coordinate: form.max_y_coordinate,
-            faces: form.faces.map((face) => ({
-                center_x: face.center_x,
-                center_y: face.center_y,
-                radius: face.radius,
-                human_identifier: face.human_identifier.trim(),
-                points: face.points,
+        const payload: components['schemas']['TargetsCreate'] = {
+            max_x: maxX.value,
+            max_y: maxY.value,
+            session_id: sessionOpened.id,
+            faces: faces.value.map((f) => ({
+                x: f.x,
+                y: f.y,
+                radii: f.radii,
+                human_identifier: f.humanIdentifier,
+                points: f.points.split(',').map((p) => Number(p.trim())),
             })),
         };
-
-        try {
-            const response = await fetch('/api/v0/target', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                console.error('API error:', data);
-                alert(`Submission failed: ${data.errors || 'Unknown error'}`);
-                return;
-            }
-
-            alert('Target submitted successfully!');
-            console.log('Submitted payload:', JSON.stringify(payload, null, 2));
-        } catch (err) {
-            console.error('Submission failed:', err);
-            alert('Network or server error during submission.');
+        const created = await createTarget(payload);
+        if (!created) {
+            return { success: false, error: 'Failed to save target configuration' };
         }
+        return { success: true };
+    });
+
+    watchEffect(() => {
+        props.register({ isValid, onComplete });
+    });
+
+    function calibrate() {
+        // The calibrate() function is a dummy function for now. Think of it as a placeholder for
+        // future work.
+        // The function will make a GET HTTP request, and the server will return:
+
+        // * max_x
+        // * max_y
+        // * faces
+
+        // faces will be optional; if the server returns one or more faces, then it will include:
+
+        // * x
+        // * y
+        // * radii[]
+
+        // And then the user must add a human_readable name per face and optionally add points.
+        // If the user provides points, the points array length must match the radii array length.
+        // The user can click as many times as they want the calibrate button until they are happy
+        // with the values that the server returns. This means that the number of faces (and
+        // number of rows as well) may change, so the validation must also be reactive.
+        success.value = false;
+        errorMessage.value = '';
+        faces.value = [];
+
+        if (Math.random() < 0.2) {
+            errorMessage.value = 'Calibration failed. Please try again.';
+            return;
+        }
+
+        maxX.value = Math.floor(Math.random() * 201) + 100;
+        maxY.value = Math.floor(Math.random() * 201) + 100;
+
+        const count = Math.floor(Math.random() * 6);
+        const newFaces: FaceInput[] = [];
+        for (let i = 0; i < count; i++) {
+            const x = Math.floor(Math.random() * maxX.value);
+            const y = Math.floor(Math.random() * maxY.value);
+            const radii = Array.from({ length: 3 }, () => Math.floor(Math.random() * 41) + 10);
+            newFaces.push({ x, y, radii, humanIdentifier: '', points: '' });
+        }
+        faces.value = newFaces;
+        success.value = true;
     }
 </script>
 
 <template>
-    <form
-        v-if="openSession.is_opened"
-        @submit.prevent="handleSubmit"
-        class="max-w-md mx-auto p-4 bg-white rounded-lg shadow-md space-y-4"
-    >
-        <div>
-            <label class="block mb-1 font-medium text-gray-700">Session ID</label>
-            <input
-                type="text"
-                :value="form.session_id"
-                readonly
-                class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 text-gray-500"
-            />
-        </div>
-
-        <div>
-            <label class="block mb-1 font-medium text-gray-700">Max X Coordinate</label>
-            <input
-                type="number"
-                :value="form.max_x_coordinate"
-                readonly
-                class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-            />
-        </div>
-
-        <div>
-            <label class="block mb-1 font-medium text-gray-700">Max Y Coordinate</label>
-            <input
-                type="number"
-                :value="form.max_y_coordinate"
-                readonly
-                class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-            />
-        </div>
-
-        <div v-for="(face, index) in form.faces" :key="index" class="border p-3 rounded space-y-2">
-            <h3 class="font-semibold text-gray-800">Face {{ index + 1 }}</h3>
-
-            <div>
-                <label class="block mb-1 text-gray-700">Center X</label>
-                <input
-                    type="number"
-                    :value="face.center_x"
-                    readonly
-                    class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-                />
-            </div>
-
-            <div>
-                <label class="block mb-1 text-gray-700">Center Y</label>
-                <input
-                    type="number"
-                    :value="face.center_y"
-                    readonly
-                    class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-                />
-            </div>
-
-            <div>
-                <label class="block mb-1 text-gray-700">Radius</label>
-                <input
-                    type="text"
-                    :value="face.radius.join(', ')"
-                    readonly
-                    class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-                />
-            </div>
-
-            <div>
-                <label class="block mb-1 text-gray-700">Human Identifier</label>
-                <input
-                    type="text"
-                    v-model="face.human_identifier"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p v-if="errors.faces[index]?.human_identifier" class="text-red-600 text-sm mt-1">
-                    {{ errors.faces[index].human_identifier }}
-                </p>
-            </div>
-
-            <div>
-                <label class="block mb-1 text-gray-700">Points (comma-separated)</label>
-                <input
-                    type="text"
-                    :value="face.points.join(', ')"
-                    @input="
-                        (e) =>
-                            (face.points = (e.target as HTMLInputElement).value
-                                .split(',')
-                                .map((s) => parseInt(s.trim()))
-                                .filter((n) => !isNaN(n)))
-                    "
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p v-if="errors.faces[index]?.points" class="text-red-600 text-sm mt-1">
-                    {{ errors.faces[index].points }}
-                </p>
-            </div>
-        </div>
-
+    <div class="p-4">
         <button
-            type="submit"
-            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
+            @click="calibrate"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-            Submit
+            Calibrate
         </button>
-    </form>
+
+        <div v-if="errorMessage" class="mt-2 text-red-500">
+            {{ errorMessage }}
+        </div>
+
+        <div v-else-if="success" class="mt-4">
+            <div class="flex space-x-4 mb-4">
+                <label class="flex flex-col font-semibold">
+                    Max X:
+                    <input
+                        type="number"
+                        :value="maxX"
+                        readonly
+                        class="bg-gray-100 border border-gray-300 p-2 rounded"
+                    />
+                </label>
+                <label class="flex flex-col font-semibold">
+                    Max Y:
+                    <input
+                        type="number"
+                        :value="maxY"
+                        readonly
+                        class="bg-gray-100 border border-gray-300 p-2 rounded"
+                    />
+                </label>
+            </div>
+
+            <table class="min-w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">X</th>
+                        <th class="border border-gray-300 p-2 text-left">Y</th>
+                        <th class="border border-gray-300 p-2 text-left">Radii</th>
+                        <th class="border border-gray-300 p-2 text-left">Human Identifier</th>
+                        <th class="border border-gray-300 p-2 text-left">Points (CSV)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(face, index) in faces" :key="index">
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="number"
+                                :value="face.x"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="number"
+                                :value="face.y"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                :value="face.radii.join(',')"
+                                readonly
+                                class="bg-gray-100 border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                v-model="faces[index].humanIdentifier"
+                                placeholder="e.g. face1"
+                                class="border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                        <td class="border border-gray-300 p-2">
+                            <input
+                                type="text"
+                                v-model="faces[index].points"
+                                placeholder="10,9,8"
+                                class="border border-gray-300 p-2 rounded w-full"
+                            />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </template>

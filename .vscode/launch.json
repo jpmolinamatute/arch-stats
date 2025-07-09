@@ -27,14 +27,14 @@
                 "debug",
                 "--timeout-graceful-shutdown",
                 "10",
-                "app:run"
+                "server.app:run"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend/server",
+            "cwd": "${workspaceFolder}/backend/src",
             "justMyCode": true,
             "env": {
                 "ARCH_STATS_DEV_MODE": "true",
-                "PYTHONPATH": "${workspaceFolder}/backend"
+                "PYTHONPATH": "${workspaceFolder}/backend/src"
             }
         },
         {

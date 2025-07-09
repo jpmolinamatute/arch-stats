@@ -1,18 +1,15 @@
 <script setup lang="ts">
-    import { ref, computed } from 'vue';
+    import { ref, computed, watchEffect } from 'vue';
     import { createSession } from '../../composables/useSession';
+    import type { StepRegistration } from '../widgets/Wizard.vue';
 
-    const emit = defineEmits<{ submit: [] }>();
+    const props = defineProps<{ register: (opts: StepRegistration) => void }>();
 
-    const location = ref('club');
+    const location = ref('Club');
     const startTime = ref(new Date().toISOString().slice(0, 16));
+    const errors = ref({ location: '', startTime: '' });
 
-    const errors = ref({
-        location: '',
-        startTime: '',
-    });
-
-    const isFormValid = computed(() => {
+    const isValid = computed(() => {
         let valid = true;
         errors.value.location = '';
         errors.value.startTime = '';
@@ -40,54 +37,39 @@
         return valid;
     });
 
-    async function handleSubmit() {
-        if (!isFormValid.value) {
-            console.log('Validation failed:', errors.value);
-            return;
+    const onComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => {
+        if (!isValid.value) {
+            return { success: false, error: 'Form is invalid' };
         }
-
         await createSession({
             location: location.value,
             start_time: new Date(startTime.value).toISOString(),
             is_opened: true,
         });
+        return { success: true };
+    });
 
-        emit('submit');
-    }
+    watchEffect(() => {
+        props.register({ isValid, onComplete });
+    });
 </script>
 
 <template>
-    <form
-        @submit.prevent="handleSubmit"
-        class="max-w-md mx-auto p-4 bg-white rounded-lg shadow-md space-y-4"
-    >
-        <div>
-            <label class="block mb-1 font-medium text-gray-700"> Location: </label>
-            <input
-                type="text"
-                v-model="location"
-                required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p v-if="errors.location" class="text-red-600 text-sm mt-1">{{ errors.location }}</p>
-        </div>
+    <div class="p-4">
+        <label class="block mb-1 font-medium text-gray-700">Location</label>
+        <input
+            v-model="location"
+            type="text"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
+        <p v-if="errors.location" class="text-red-600 text-sm">{{ errors.location }}</p>
 
-        <div>
-            <label class="block mb-1 font-medium text-gray-700"> Start Time: </label>
-            <input
-                type="datetime-local"
-                v-model="startTime"
-                required
-                class="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p v-if="errors.startTime" class="text-red-600 text-sm mt-1">{{ errors.startTime }}</p>
-        </div>
-
-        <button
-            type="submit"
-            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
-        >
-            Start Session
-        </button>
-    </form>
+        <label class="block mb-1 mt-4 font-medium text-gray-700">Start Time</label>
+        <input
+            v-model="startTime"
+            type="datetime-local"
+            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+        />
+        <p v-if="errors.startTime" class="text-red-600 text-sm">{{ errors.startTime }}</p>
+    </div>
 </template>

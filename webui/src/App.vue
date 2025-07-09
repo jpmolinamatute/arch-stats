@@ -1,11 +1,11 @@
 <script setup lang="ts">
     import { computed } from 'vue';
     import { uiManagerStore } from './state/uiManagerStore';
-    import { openSession } from './state/session';
+    import { sessionOpened } from './state/session';
     import type { ViewName } from './state/uiManagerStore';
 
     import NewArrow from './components/forms/NewArrow.vue';
-    import NewSession from './components/forms/NewSession.vue';
+    import WizardSession from './components/WizardSession.vue';
     import CalibrateTarget from './components/forms/CalibrateTarget.vue';
     import ShotsTable from './components/ShotsTable.vue';
     import { closeSession } from './composables/useSession';
@@ -13,7 +13,7 @@
     // Map view names to components
     const componentsMap: Record<ViewName, any> = {
         ArrowForm: NewArrow,
-        SessionForm: NewSession,
+        SessionForm: WizardSession,
         TargetForm: CalibrateTarget,
         ShotsTable: ShotsTable,
     };
@@ -28,11 +28,11 @@
         uiManagerStore.clearView();
     }
     const buttonText = computed(() => {
-        return openSession.is_opened === true ? 'Close Session' : 'Open Session';
+        return sessionOpened.is_opened === true ? 'Close Session' : 'Open Session';
     });
 
     function handleClick() {
-        if (openSession.is_opened === true) {
+        if (sessionOpened.is_opened === true) {
             closeSession();
         } else {
             uiManagerStore.setView('SessionForm');

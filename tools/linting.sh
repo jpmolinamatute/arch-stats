@@ -2,26 +2,32 @@
 
 set -eu
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
-NEEDS_WEBUI=false
-NEEDS_BACKEND_SERVER=false
-NEEDS_BACKEND_TARGET_READER=false
+# shellcheck source=./lib/manage_docker
+. "${ROOT_DIR}/tools/lib/manage_docker"
+
+run_python_tests() {
+    local pyproject_path="${1}"
+    start_docker
+    echo "running python tests..."
+    pytest --config-file "${pyproject_path}"
+    stop_docker
+}
 
 run_python_checks() {
-    local dir="${1}"
-    if [[ ! -d $dir ]]; then
-        echo "ERROR: '${dir}' is not a valid directory" >&2
-        exit 2
-    fi
+    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
+    cd "${ROOT_DIR}/backend"
+    export PYTHONPATH="${ROOT_DIR}/backend/src"
+    # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
-    cd "${dir}"
     echo "running isort..."
-    isort --settings-file "${ROOT_DIR}/backend/pyproject.toml" "${dir}"
+    isort --settings-file "${pyproject_path}" .
     echo "running black..."
-    black --config "${ROOT_DIR}/backend/pyproject.toml" "${dir}"
+    black --config "${pyproject_path}" .
     echo "running mypy..."
-    mypy --config-file "${ROOT_DIR}/backend/pyproject.toml" "${dir}"
+    mypy --config-file "${pyproject_path}" .
     echo "running pylint..."
-    pylint --rcfile "${ROOT_DIR}/backend/pyproject.toml" "${dir}"
+    pylint --rcfile "${pyproject_path}" .
+    run_python_tests "${pyproject_path}"
     cd -
 }
 
@@ -34,24 +40,21 @@ run_webui_checks() {
 }
 
 main() {
+    local needs_webui=false
+    local needs_backend=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
         if [[ "$file" == webui/* ]]; then
-            NEEDS_WEBUI=true
-        elif [[ "$file" == backend/server/* ]]; then
-            NEEDS_BACKEND_SERVER=true
-        elif [[ "$file" == backend/target_reader/* ]]; then
-            NEEDS_BACKEND_TARGET_READER=true
+            needs_webui=true
+        elif [[ "$file" == backend/* ]]; then
+            needs_backend=true
         fi
     done
-    if $NEEDS_WEBUI; then
+    if $needs_webui; then
         run_webui_checks
     fi
-    if $NEEDS_BACKEND_SERVER; then
-        run_python_checks "${ROOT_DIR}/backend/server"
-    fi
-    if $NEEDS_BACKEND_TARGET_READER; then
-        run_python_checks "${ROOT_DIR}/backend/target_reader"
+    if $needs_backend; then
+        run_python_checks
     fi
 }
 

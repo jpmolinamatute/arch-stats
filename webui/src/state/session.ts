@@ -9,7 +9,7 @@ type Mutable<T> = {
 
 type MutableSessionsRead = Partial<Mutable<SessionsRead>>;
 
-export const openSession = reactive<MutableSessionsRead>({
+export const sessionOpened = reactive<MutableSessionsRead>({
     id: undefined,
     is_opened: undefined,
     location: undefined,
@@ -18,18 +18,18 @@ export const openSession = reactive<MutableSessionsRead>({
 });
 
 export function clearOpenSession() {
-    openSession.id = undefined;
-    openSession.is_opened = undefined;
-    openSession.location = undefined;
-    openSession.start_time = undefined;
-    openSession.end_time = undefined;
+    sessionOpened.id = undefined;
+    sessionOpened.is_opened = undefined;
+    sessionOpened.location = undefined;
+    sessionOpened.start_time = undefined;
+    sessionOpened.end_time = undefined;
 }
 export async function fetchOpenSession(): Promise<void> {
     try {
         const response = await fetch('/api/v0/session/open');
         const json = await response.json();
         if (response.ok && json.data) {
-            Object.assign(openSession, json.data as SessionsRead);
+            Object.assign(sessionOpened, json.data as SessionsRead);
         } else {
             clearOpenSession();
         }
