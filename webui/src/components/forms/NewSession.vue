@@ -5,7 +5,7 @@
 
     const props = defineProps<{ register: (opts: StepRegistration) => void }>();
 
-    const location = ref('');
+    const location = ref('Club');
     const startTime = ref(new Date().toISOString().slice(0, 16));
     const errors = ref({ location: '', startTime: '' });
 

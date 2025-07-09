@@ -11,7 +11,7 @@ export async function createTarget(payload: components['schemas']['TargetsCreate
         });
         const json = await response.json();
         if (response.ok && json.data) {
-            return json.data; // e.g. the created target
+            return json.data;
         } else {
             console.error('Failed to create target:', json.errors);
             return null;

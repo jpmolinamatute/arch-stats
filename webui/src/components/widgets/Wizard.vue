@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
     import { ref, computed } from 'vue';
-    import { uiManagerStore } from '../../state/uiManagerStore';
     const props = defineProps<{ steps: Step[] }>();
     const emit = defineEmits<{ (e: 'done'): void }>();
 
@@ -55,24 +54,22 @@
         currentStep.value.register(options);
     }
 
+    function handleClose() {
+        emit('done');
+    }
+
     async function handleNext() {
         errorMessage.value = null;
         const result = await currentStep.value.onComplete.value();
-        console.log('HOLA!');
         if (result.success) {
             if (activeStepIndex.value < props.steps.length - 1) {
                 activeStepIndex.value++;
             } else {
-                emit('done');
+                handleClose();
             }
         } else {
             errorMessage.value = result.error ?? 'An error occurred';
         }
-    }
-
-    function handleClose() {
-        emit('done');
-        uiManagerStore.clearView();
     }
 </script>
 

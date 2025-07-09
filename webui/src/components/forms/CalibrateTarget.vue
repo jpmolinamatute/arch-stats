@@ -19,7 +19,26 @@
     const maxY = ref<number>(0);
     const faces = ref<FaceInput[]>([]);
     const errorMessage = ref<string>('');
-    const isValid = computed(() => success.value);
+    const isValid = computed(() => {
+        if (!success.value) return false;
+        if (faces.value.length === 0) return true;
+        return faces.value.every((f) => {
+            if (!f.humanIdentifier.trim()) {
+                return false;
+            }
+
+            const pts = f.points.trim();
+            if (pts) {
+                const parts = pts.split(',').map((p) => p.trim());
+                if (parts.length !== f.radii.length) {
+                    return false;
+                }
+                return parts.every((p) => !isNaN(Number(p)));
+            }
+
+            return true;
+        });
+    });
     const onComplete = ref<() => Promise<{ success: boolean; error?: string }>>(async () => {
         if (!success.value) {
             return { success: false, error: errorMessage.value || 'Calibration not completed' };
@@ -27,6 +46,7 @@
         if (!sessionOpened.id) {
             return { success: false, error: 'No open session found.' };
         }
+
         const payload: components['schemas']['TargetsCreate'] = {
             max_x: maxX.value,
             max_y: maxY.value,

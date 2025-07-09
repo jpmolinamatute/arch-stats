@@ -55,7 +55,6 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
             DECLARE
                 face JSONB;
                 radii_len INT;
-                points_len INT;
                 identifiers TEXT[];
                 ident TEXT;
                 i INT;
@@ -64,7 +63,6 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
 
                 FOR face IN SELECT * FROM jsonb_array_elements(faces)
                 LOOP
-                    -- Check x and y
                     IF (face->>'x') IS NULL OR (face->>'y') IS NULL THEN
                         RETURN FALSE;
                     END IF;
@@ -72,34 +70,18 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
                         RETURN FALSE;
                     END IF;
 
-                    -- Check radii and points length match and > 0
                     radii_len := jsonb_array_length(face->'radii');
-                    points_len := jsonb_array_length(face->'points');
                     IF radii_len IS NULL OR
-                    points_len IS NULL OR
-                    radii_len = 0 OR
-                    points_len = 0 THEN
-                        RETURN FALSE;
-                    END IF;
-                    IF radii_len != points_len THEN
+                    radii_len = 0 THEN
                         RETURN FALSE;
                     END IF;
 
-                    -- Check radii elements > 0
                     FOR i IN 0..(radii_len - 1) LOOP
                         IF (face->'radii'->>i)::REAL <= 0 THEN
                             RETURN FALSE;
                         END IF;
                     END LOOP;
 
-                    -- Check points elements > 0
-                    FOR i IN 0..(points_len - 1) LOOP
-                        IF (face->'points'->>i)::INT <= 0 THEN
-                            RETURN FALSE;
-                        END IF;
-                    END LOOP;
-
-                    -- Check human_identifier non-empty and unique
                     ident := face->>'human_identifier';
                     IF ident IS NULL OR ident = '' THEN
                         RETURN FALSE;
