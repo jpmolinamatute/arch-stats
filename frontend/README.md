@@ -8,9 +8,9 @@ This guide will walk you through setup, structure, tooling, and development tips
 
 The WebUI is a [Vue 3](https://vuejs.org/guide/introduction) + [TypeScript](https://www.typescriptlang.org/docs/) single-page app built with [Vite](https://vite.dev/guide/) and styled using [Tailwind CSS](https://tailwindcss.com/docs/installation/using-vite). It lets users:
 
-* Register equipment (arrows, targets)
-* Start and manage shooting sessions
-* View real-time shot data
+- Register equipment (arrows, targets)
+- Start and manage shooting sessions
+- View real-time shot data
 
 It communicates with the API server via REST and WebSocket.
 
@@ -18,9 +18,9 @@ It communicates with the API server via REST and WebSocket.
 
 Before you start, make sure you have:
 
-* **npm** version +11.4.2
-* **Linux Environment** – Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
-* **VS Code (optional)** – Project includes helpful workspace settings and tasks.
+- **npm** version +11.4.2
+- **Linux Environment** – Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
+- **VS Code (optional)** – Project includes helpful workspace settings and tasks.
 
 ## 🛠️ Setup: Step-by-Step
 
@@ -50,8 +50,8 @@ This pulls the OpenAPI schema from the API server and creates strongly typed int
 
 Option 1: Using VS Code Tasks:
 
-* Shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then type and select `Tasks: Run Task`
-* Choose **Start Vite Frontend**
+- Shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then type and select `Tasks: Run Task`
+- Choose **Start Vite Frontend**
 
 Option 2: From the terminal:
 
@@ -93,9 +93,9 @@ frontend/
 
 [Vite](https://vite.dev/guide/) is configured using [vite.config.ts](./vite.config.ts) file and it's responsible for:
 
-* Fast reloads and development server.
-* Proxy all `/api/v0/...` API calls to <http://localhost:8000>
-* Build static assets into [backend/src/server/frontend/](../backend/src/server/frontend/). These assets will be served by the FastAPI backend in production.
+- Fast reloads and development server.
+- Proxy all `/api/v0/...` API calls to <http://localhost:8000>
+- Build static assets into [backend/src/server/frontend/](../backend/src/server/frontend/). These assets will be served by the FastAPI backend in production.
 
 ```bash
 cd frontend
@@ -104,10 +104,10 @@ npm run build
 
 ## 🧹 Linting & Formatting
 
-| Tool                                        | Command          |
-| --------------------------------------------| ---------------- |
-| [ESLint](https://eslint.org/docs/latest/)   | `npm run lint`   |
-| [Prettier](https://prettier.io/docs/)       | `npm run format` |
+| Tool                                      | Command          |
+| ----------------------------------------- | ---------------- |
+| [ESLint](https://eslint.org/docs/latest/) | `npm run lint`   |
+| [Prettier](https://prettier.io/docs/)     | `npm run format` |
 
 > Linting and Auto-formatting are enabled if you use VS Code with [.vscode/settings.json](../.vscode/settings.json)
 
@@ -115,6 +115,6 @@ npm run build
 
 You’ve got the frontend running. You can now:
 
-* Use the interface to register equipment and sessions
-* View real-time archery data
-* Add features or improve UX/UI
+- Use the interface to register equipment and sessions
+- View real-time archery data
+- Add features or improve UX/UI
