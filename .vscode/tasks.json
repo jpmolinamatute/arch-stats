@@ -81,7 +81,7 @@
                 "type": "npm",
                 "script": "dev",
                 "options": {
-                    "cwd": "${workspaceFolder}/webui"
+                    "cwd": "${workspaceFolder}/frontend"
                 },
                 "presentation": {
                     "echo": true,

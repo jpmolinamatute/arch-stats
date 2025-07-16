@@ -1,7 +1,7 @@
 # https://docs.astral.sh/uv/reference/settings/
 
 [project]
-name = "arch-stats"
+name = "arch-stats_backend"
 version = "0.1.0"
 description = "Analyzing Archery Performance Through Data"
 authors = [

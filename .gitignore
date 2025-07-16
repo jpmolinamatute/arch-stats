@@ -6,8 +6,8 @@ __pycache__/
 .venv/
 
 node_modules/
-webui/src/types/**
-!webui/src/types/.gitkeep
+frontend/src/types/**
+!frontend/src/types/.gitkeep
 ignore/*
 backend/src/shared/logs/*
 !backend/src/shared/logs/.gitkeep

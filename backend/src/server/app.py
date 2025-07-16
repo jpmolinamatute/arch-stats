@@ -78,6 +78,7 @@ def run() -> FastAPI:
         debug=settings.arch_stats_dev_mode,
         lifespan=lifespan,
         openapi_url="/api/openapi.json",
+        docs_url="/api/swagger",
         title="Arch Stats API",
         version=version,
     )

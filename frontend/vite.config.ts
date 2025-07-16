@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
     plugins: [vue(), tailwindcss()],
     build: {
-        outDir: '../backend/server/frontend',
+        outDir: '../backend/src/server/frontend',
     },
     server: {
         proxy: {
