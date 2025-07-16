@@ -1,5 +1,5 @@
 {
-    "name": "webui",
+    "name": "arch-stats_frontend",
     "private": true,
     "version": "0.0.0",
     "type": "module",

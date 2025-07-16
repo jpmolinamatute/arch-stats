@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
+import vueParser from 'vue-eslint-parser';
 import prettierConfig from 'eslint-config-prettier';
 import eslint from '@eslint/js';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -16,7 +17,7 @@ export default tseslint.config(
     prettierConfig,
     {
         files: ['./**/*.{js,jsx,ts,tsx}'],
-        ignores: ['./vite.config.ts', './eslint.config.js'],
+        ignores: ['./vite.config.ts'],
         rules: {
             semi: 'error',
             'prefer-const': 'error',
@@ -28,8 +29,10 @@ export default tseslint.config(
             prettier: prettierPlugin,
         },
         languageOptions: {
-            parser: tsParser,
+            parser: vueParser,
             parserOptions: {
+                parser: tsParser,
+                extraFileExtensions: ['.vue'],
                 ecmaVersion: 2022,
                 sourceType: 'module',
                 project: './tsconfig.app.json',

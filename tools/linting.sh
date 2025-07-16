@@ -31,8 +31,8 @@ run_python_checks() {
     cd -
 }
 
-run_webui_checks() {
-    cd "${ROOT_DIR}/webui"
+run_frontend_checks() {
+    cd "${ROOT_DIR}/frontend"
     npm run lint
     npm run format
     cd -
@@ -40,18 +40,18 @@ run_webui_checks() {
 }
 
 main() {
-    local needs_webui=false
+    local needs_frontend=false
     local needs_backend=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
-        if [[ "$file" == webui/* ]]; then
-            needs_webui=true
+        if [[ "$file" == frontend/* ]]; then
+            needs_frontend=true
         elif [[ "$file" == backend/* ]]; then
             needs_backend=true
         fi
     done
-    if $needs_webui; then
-        run_webui_checks
+    if $needs_frontend; then
+        run_frontend_checks
     fi
     if $needs_backend; then
         run_python_checks

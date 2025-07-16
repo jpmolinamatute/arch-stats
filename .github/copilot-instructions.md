@@ -12,7 +12,7 @@ Arch-Stats is a monorepo designed for collecting, storing, and analyzing archery
   - `.venv/` — Python virtual environment (Python 3.12 and managed by uv)
   - `server/` — FastAPI application with asyncpg, Pydantic v2.x, pytest, Black, isort, mypy, etc.
   - `target_reader/` — Sensor handling modules in Python
-- `webui/`
+- `frontend/`
   - Node/npm project (npm 11.4.1), Vite, TypeScript, Prettier, ESLint
 - `docker/`
   - Docker Compose configuration and related scripts
@@ -96,5 +96,5 @@ Arch-Stats is a monorepo designed for collecting, storing, and analyzing archery
 ## Special Notes
 
 - API and database models follow Pydantic v2.x standards.
-- TypeScript is always configured for project-wide consistency (via workspace version in `webui`).
-- Environment variables are stored in `./.env` at the project root. There are two symlinks in `./webui/.env` and `./backend/.env` both point to `./.env`.
+- TypeScript is always configured for project-wide consistency (via workspace version in `frontend`).
+- Environment variables are stored in `./.env` at the project root. There are two symlinks in `./frontend/.env` and `./backend/.env` both point to `./.env`.

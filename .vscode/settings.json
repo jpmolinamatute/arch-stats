@@ -28,6 +28,7 @@
         "bpython",
         "chrono",
         "classmethod",
+        "conftest",
         "consts",
         "contextlib",
         "contextmanager",
@@ -36,6 +37,7 @@
         "cythonize",
         "Datagram",
         "dbname",
+        "Dockerized",
         "docstrings",
         "Docstrings",
         "executemany",
@@ -84,7 +86,8 @@
         "Uvicorn",
         "uvloop",
         "VARCHAR",
-        "webui"
+        "virtualenv",
+        "frontend"
     ],
     "cSpell.ignoreWords": [
         "PGPASSWORD",
@@ -101,9 +104,9 @@
     ],
     "debug.javascript.terminalOptions": {
         "resolveSourceMapLocations": [
-            "${workspaceFolder}/webui/**",
-            "!${workspaceFolder}/webui/node_modules/**",
-            "${workspaceFolder}/webui/node_modules/.vite-temp/**"
+            "${workspaceFolder}/frontend/**",
+            "!${workspaceFolder}/frontend/node_modules/**",
+            "${workspaceFolder}/frontend/node_modules/.vite-temp/**"
         ]
     },
     "eslint.validate": [
@@ -191,7 +194,7 @@
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/backend/src"
     },
-    "typescript.tsdk": "./webui/node_modules/typescript/lib",
+    "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "[markdown]": {
