@@ -1,0 +1,108 @@
+name: Backend Lint, Format and Type Check
+
+on:
+  push:
+    paths:
+      - "backend/**/*.py"
+      - "backend/pyproject.toml"
+      - ".github/workflows/backend_linting.yaml"
+  pull_request:
+    paths:
+      - "backend/**/*.py"
+      - "backend/pyproject.toml"
+      - ".github/workflows/backend_linting.yaml"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute cache key
+        id: cache-key
+        run: echo "key=uv-${{ hashFiles('pyproject.toml', 'backend/**.py') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache .venv
+        id: venv-cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Install uv and sync deps
+        if: steps.venv-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv venv
+          source .venv/bin/activate
+          uv sync --group dev
+
+  black:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached .venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run black
+        run: |
+          source .venv/bin/activate
+          black --check --config ./backend/pyproject.toml ./backend/src
+
+  isort:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached .venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run isort
+        run: |
+          source .venv/bin/activate
+          isort --check-only --settings-file ./backend/pyproject.toml ./backend/src
+
+  mypy:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached .venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run mypy
+        run: |
+          source .venv/bin/activate
+          mypy --config-file ./backend/pyproject.toml ./backend/src
+
+  pylint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached .venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Run pylint
+        run: |
+          source .venv/bin/activate
+          pylint --rcfile ./backend/pyproject.toml ./backend/src
