@@ -27,7 +27,6 @@ jobs:
   isort:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run isort
@@ -38,7 +37,6 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run mypy
@@ -49,7 +47,6 @@ jobs:
   pylint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run pylint
