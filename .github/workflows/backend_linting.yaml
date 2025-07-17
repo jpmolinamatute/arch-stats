@@ -1,4 +1,4 @@
-name: Lint and Type Check
+name: Backend Type Check, Linting & Formatting
 
 on:
   pull_request:
