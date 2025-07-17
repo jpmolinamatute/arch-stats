@@ -19,16 +19,16 @@ jobs:
         id: venv-cache
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: ./backend/.venv
           key: uv-venv-v1
 
       - name: Install uv and sync dev dependencies
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv venv
+          cd backend
+          uv sync --only-dev
           source .venv/bin/activate
-          uv sync --group dev
 
   black:
     needs: setup
@@ -39,12 +39,12 @@ jobs:
       - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: ./backend/.venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run black
         run: |
-          source .venv/bin/activate
+          source ./backend/.venv/bin/activate
           black --check --config ./backend/pyproject.toml ./backend/src
 
   isort:
@@ -56,12 +56,12 @@ jobs:
       - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: ./backend/.venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run isort
         run: |
-          source .venv/bin/activate
+          source ./backend/.venv/bin/activate
           isort --check-only --settings-file ./backend/pyproject.toml ./backend/src
 
   mypy:
@@ -73,12 +73,12 @@ jobs:
       - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: ./backend/.venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run mypy
         run: |
-          source .venv/bin/activate
+          source ./backend/.venv/bin/activate
           mypy --config-file ./backend/pyproject.toml ./backend/src
 
   pylint:
@@ -90,10 +90,10 @@ jobs:
       - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: ./backend/.venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run pylint
         run: |
-          source .venv/bin/activate
+          source ./backend/.venv/bin/activate
           pylint --rcfile ./backend/pyproject.toml ./backend/src
