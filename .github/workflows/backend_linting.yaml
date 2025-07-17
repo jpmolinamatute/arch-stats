@@ -23,7 +23,7 @@ jobs:
           key: uv-venv-v1
 
       - name: Install uv and sync dev dependencies
-        if: steps.venv-cache.outputs.cache-hit != 'true'
+        # if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           cd backend
