@@ -1,98 +1,31 @@
-# Arch Stats: Analyzing Archery Performance Through Data
+# Arch Stats: Track and Understand Your Archery Performance Over Time
 
-## 1. Introduction
+**Archery can feel inconsistent.** Some days every shot hits the mark; other days, you struggle to replicate your past performance. With so many factors affecting each shot (form, equipment, fatigue, environment), it’s hard to know if you’re truly improving or what you need to work on. **Arch Stats** is a tool that takes the guesswork out of tracking progress. It **collects data from your shooting sessions and presents clear insights** so you can objectively measure your performance and consistency over time. By recording each arrow and each shot, Arch Stats helps identify areas for improvement and keeps you motivated as you see your progress in real numbers.
 
-### 1.1 Background
+## Key Features
 
-Practicing archery can feel inconsistent: some days, I see improvement; other days, it feels like I’ve hit a plateau—or even regressed. Tracking performance is challenging due to the numerous variables influencing each shot.
+* **Progress Tracking:** Every practice session and shot is logged, allowing you to **track your improvement over days, months, and years**. You can see objective trends in your accuracy and consistency, rather than relying on gut feeling. This helps you understand if you’re plateauing or making steady gains.
+* **Visual Charts & Graphs:** Arch Stats provides instant visual feedback on your shooting. **Scatter plot charts** show where your arrows land on the target, helping you analyze grouping and precision. **Line graphs** illustrate trends (like your accuracy or shot timing) across multiple sessions. All charts update in real-time as you shoot, so you get immediate insights after each arrow.
+* **Performance Analysis Tools:** The app includes built-in tools to help you analyze your performance. You can filter and query your shot data to spot patterns and trends. For example, compare performance between different practice sessions, see how your accuracy varies at different distances, or even evaluate if a particular arrow consistently flies differently from the rest. These **pre-set analyses** make it easy to uncover trends without needing any technical skills.
+* **Data Export:** Your data is yours. Arch Stats lets you **export all your raw data in CSV format**, so you can open it in Excel or other programs. This is great if you want to do custom analysis or keep a personal log. You can back up your entire shooting history or share it with a coach in a universally readable format.
 
-### 1.2 The Problem
+> **Note:** *Currently, Arch Stats is designed for **a single archer** using one bow. Each session assumes one archer, one bow setup, and consistent conditions (the same target distance and lane). Support for multiple archers and more complex scenarios is in the works, but the current focus is on personal tracking for an individual archer.*
 
-I need a method to objectively measure and track my archery performance over time.
+## How It Works
 
-### 1.3 The Solution
+Arch Stats combines a friendly web application with electronic sensors on your equipment to seamlessly record data with minimal effort from you. The system runs on a small computer (such as a Raspberry Pi) connected to three types of sensors:
 
-The Arch Stats app will provide a comprehensive platform to:
+* An **Arrow Reader** to assign a unique ID to each arrow (so the system knows exactly which arrow you just shot).
+* A **Bow sensor** to detect when you draw and release an arrow.
+* A **Target sensor** to detect when and where the arrow hits the target.
 
-* Identifying measurable variables that impact performance.
-* Consistently collect data on these variables using specialized hardware.
-* Record the data in a structured database.
-* resent the information in an intuitive, actionable format through a WebUI.
+Using these components, Arch Stats tracks the entire lifecycle of a shot. There are two main parts to using Arch Stats: first **registering your arrows**, and then **recording a shooting session**.
 
-### 1.4 Goals
+### Arrow Registration
 
-* Provide objective insights into archery performance.
-* Identify areas for improvement.
-* Track progress over time.
+Before you start logging practice sessions, you’ll register all your arrows in the system. This process gives each arrow its own unique identifier and stores its characteristics (weight, length, spine, etc.). Arch Stats will guide you through entering these details via the web interface. Each arrow is then **programmed with a small tag or code** (using the Arrow Reader sensor) so that the system can recognize that arrow every time you shoot it. This way, you can later see if certain arrows perform differently from others.
 
-### 1.5 Constraint
-
-* The app will track only one archer.
-* The archer will have only one bow with a fixed bow weight.
-* The archer will have a fixed draw length.
-* The archer will be shooting in the same lane within a session.
-* The archer will be shooting at the same distance within a session.
-* There will be only one session open at the time.
-
-## 2. Requirements
-
-### 2.1 Functional Requirements
-
-* **Data Acquisition:**
-  * Capture arrow variables (weight, length, identifier, spine, diameter).
-  * Capture shooting variables (arrow engage time, arrow disengage time, arrow landing time, X coordinate, Y coordinate).
-  * Capture session variables (distance, max X coordinate, max Y coordinate, location, start/end time).
-* **Data Management:**
-  * Store all data in a PostgreSQL database.
-  * Provide CRUD (Create, Read, Update, Delete) operations for arrows, sessions, and shots.
-* **User Interface:**
-  * Allow the user to register arrows.
-  * Allow the user to open and close sessions.
-  * Visualize shot data in real-time and over time.
-  * Display key performance indicators (KPIs).
-* **Hardware Integration:**
-  * The arch stat app will run in a Raspberry Pi 5.
-  * There will be a sensor (Bow Reader) attached to the archer's bow. The type of sensor is TBD.
-  * There will be a sensor (Arrow Reader) attached to the Raspberry Pi. The type of sensor is TBD.
-  * There will be a sensor (Target Reader) attached to the Raspberry Pi. The type of sensor is TBD.
-  * Communicate with the Arrow Reader to assign IDs to arrows.
-  * Receive shot data from the Bow Reader and Target Reader.
-
-### 2.2 Non-Functional Requirements
-
-We'll come up with some metrics later on to measure the following points:
-
-* **Performance:** The system should provide near real-time feedback on shots.
-* **Reliability:** The system should be reliable and minimize data loss.
-* **Usability:** The user interface should be intuitive and easy to use.
-* **Maintainability:** The codebase should be well-organized and easy to maintain.
-
-## 3. System Architecture
-
-Since I'm developing this app by myself, I have decided to use python workspace, multi module in a monorepo in order to simply the development process.
-
-### 3.1 Modules
-
-The system will consist of the following modules:
-
-* **WebUI:** Provides the user interface for data visualization and interaction.
-* **Web Server:** Acts as the central coordinator, handling data flow and communication between modules.
-* **Database:** Stores all application data.
-* **Arrow Reader:** Reads and assigns unique identifiers to arrows.
-* **Bow Reader:** Captures arrow engage and disengage times.
-* **Target Reader:** Captures arrow landing time and coordinates on the target.
-
-### 3.2 Data Flow Diagram
-
-Data will be collected through 3 entities:
-
-* App (Software)
-* Sensors (Hardware)
-* User input
-
-The following flow charts show how the 3 entities interact with each other.
-
-#### 3.2.1 Arrow Registration
+The flowchart below shows how the arrow registration process works in Arch Stats:
 
 ```mermaid
     flowchart TB
@@ -145,7 +78,21 @@ The following flow charts show how the 3 entities interact with each other.
     S4 --> END1
 ```
 
-#### 3.2.2 Sessions &amp; Shots flow
+### Sessions & Shots
+
+Once your arrows are registered, you’re ready to record a shooting session. A **session** represents a practice session or round of shooting. Using the Arch Stats web app, you **open a new session** when you start shooting. You’ll be prompted to enter the session details like the shooting location and distance to target (this provides context for your data). If it’s the first time using a particular target or setup, you may also calibrate the target sensor so the system knows the target’s dimensions (e.g. where the center and scoring rings are).
+
+After that, you simply shoot as you normally would. **Every time you shoot an arrow:**
+
+* The bow sensor detects the moment you draw and release the arrow (recording events like “arrow engaged” and “arrow released”).
+* The target sensor detects the arrow hitting the target, recording the exact time of impact and the location (coordinates) of the hit on the target face.
+* The system automatically links this information with the specific arrow you shot (thanks to the arrow’s ID) and creates a new entry in the database for that shot.
+
+If an arrow misses the target, the system notes it as a miss (no impact recorded within a short time window). Throughout the session, you can glance at the web interface to see your shots plotting in real-time on a virtual target and key stats updating live. This immediate feedback can help you adjust during practice.
+
+When you finish shooting, you **close the session** in the app. The system will mark the session as completed and log the end time. All the data — each shot’s time, its hit position, which arrow was used, etc. — is now saved for you to review later.
+
+The flowchart below illustrates the lifecycle of a session and how shots are recorded in Arch Stats:
 
 ```mermaid
     flowchart TB
@@ -216,227 +163,47 @@ The following flow charts show how the 3 entities interact with each other.
     S4 --> ENDS
 ```
 
-### 3.3 Module Details
+## Reviewing Your Performance
 
-#### 3.3.1 WebUI
+After your sessions are recorded, Arch Stats really shines in helping you make sense of the data. The **dashboard** in the web app gives you a clear overview of your performance. You can see summary statistics for a session (like number of shots, hits vs. misses, etc.), and key performance indicators such as your average shot spacing or consistency. The data visualization tools let you dive deeper:
 
-* **Technology:** Vanilla TypeScript, HTML, CSS.
-* **Hardware:** Raspberry Pi 5
-* **Responsibilities:**
-  * User interface for arrow registration, session management, and data visualization.
-  * Real-time display of shot data via WebSockets.
-  * Historical data filtering and analysis through charts.
-* **UI Elements:**
-  * Arrow registration form.
-  * Session start/end controls.
-  * Data visualizations (scatter plots, time series, etc.).
-  * Dashboard with KPIs.
-* **Future Considerations:**
-  * Allow multiple users to use the app at the same time.
-  * Support tournaments
-  * User authentication/authorization.
-  * More advanced data analysis tools.
+* **Target Maps:** For each session, you can view a scatter plot of your arrow impacts on a target diagram. This shows your grouping and spread, so you can identify patterns (for example, are your shots clustering low and left?).
+* **Timeline Graphs:** Arch Stats can plot metrics over time – for instance, tracking your average score or group size across all sessions, so you can see long-term trends. Did your form change lead to improvement over several weeks? The charts will show you.
+* **Session Comparison:** You can compare one session to another. By filtering your data (e.g. by date range or by the specific bow or arrow used), you might discover insights such as *“I shoot more consistently at 18m than at 30m”* or *“My second practice session of the day tends to have tighter groupings than the first.”* The app’s built-in queries make it easy to get these answers without manual calculations.
+* **Arrow-specific Insights:** Because Arch Stats knows each arrow by its ID, you can evaluate the performance of individual arrows. For example, you might find that **Arrow #7** consistently lands a bit high – indicating it might be slightly different or damaged compared to your others. This level of detail helps you fine-tune your equipment and ensure consistency.
 
-#### 3.3.2 Web Server
+And remember, if you want to perform any analysis not directly supported in the app, you can always export your data and analyze it however you like. **By having all your shots logged and accessible, you can base your training decisions on real evidence rather than hunches.** The end result is a clearer understanding of your strengths and weaknesses as an archer, and a record of progress you can look back on.
 
-* **Technology:** Python with FastAPI, Pydantic, SQLAlchemy
-* **Hardware:** Raspberry Pi 5
-* **Responsibilities:**
-  * API endpoints for data access (arrows, sessions, shots).
-  * WebSocket communication with the WebUI for real-time updates.
-  * Coordination of the Arrow Reader.
-  * Data validation and error handling.
-  * Database interaction.
-* **API Endpoints:**
-  * shot
-    * GET /shot?start_date=SOME_DATE&end_date=SOME_DATE_OR_NOW (get shots by sessions start/end date)
-    * GET /shot (gets all shots)
-    * DELETE /shot/{shoot_id}
-  * target
-    * GET /target?session=SESSION_ID (get targets by session_id)
-    * GET /target (get targets all targets)
-    * POST /target (returns new target UUID)
-    * DELETE /target/{target_id}
-  * session
-    * GET /session?open=True (gets the open session)
-    * GET /session (gets all sessions)
-    * POST /session (returns new session UUID)
-    * DELETE /session/{session_id}
-    * PATCH /session/{session_id}
-  * arrow
-    * GET /arrow?arrow_id=ARROW_ID
-    * GET /arrow (gets all arrows)
-    * POST /arrow (returns new arrow UUID)
-    * DELETE /arrow/{arrow_id}
-    * PATCH /arrow/{arrow_id}
-* **WebSockets:**
-  * `arrow_id`: Sends the assigned arrow ID from the Arrow Reader to the WebUI.
-  * `shot_information`: Sends shot data from the Web Server to the WebUI.
-* **Error Handling:**
-  * Logging of errors.
-  * Appropriate HTTP status codes.
-  * Potential for alerts (future).
-* **Data Validation:**
-  * Validate data types and ranges.
-  * Handle missing or invalid data.
+## Future Plans
 
-#### 3.3.3 Arrow Reader
+Arch Stats is an active project, and there are exciting enhancements on the horizon. Planned improvements include:
 
-* **Technology:** Python
-* **Hardware:** TBD
-* **Responsibilities:**
-  * Listens for a signal from the hardware when an arrow is presented.
-  * Generates a unique UUID for the arrow.
-  * Writes the UUID to the arrow's TBD.
-  * Sends the UUID to the Web Server via a WebSocket.
-* **Process:**
-  1. Infinite loop waiting for arrow presentation.
-  2. Generate UUID.
-  3. Write UUID to arrow sticker.
-  4. Send UUID to Web Server.
-* **Error Handling:**
-  * Handle hardware read/write errors.
-  * Log errors.
+* **Multi-Archer Support:** In the future, Arch Stats will allow multiple archers to use the system (for example, a coach tracking data for several students, or multiple team members using one setup). This will likely include user profiles or accounts so each archer’s data stays separate.
+* **Tournament/Scoring Features:** Beyond practice sessions, the system aims to support scoring formats for competitions or scoring rounds. This means you could use Arch Stats in a tournament setting to log arrow scores and analyze performance under pressure.
+* **Advanced Analytics:** More sophisticated analysis tools are in development, such as automatic grouping size calculations, trend predictions, and integration with scoring zones to calculate scores (if you use standard target faces). The goal is to continue providing archers with **actionable insights** that go beyond simple record-keeping.
 
-#### 3.3.4 Bow Reader
+**Arch Stats is built by an archer, for archers.** It is a passion project designed to bring modern data tracking to the ancient sport of archery. By leveraging technology (in a user-friendly way), Arch Stats empowers you to make informed adjustments to your practice and equipment. Whether you’re a competitive shooter aiming for the podium or a hobbyist trying to beat your personal best, Arch Stats gives you the feedback you need to **focus your training and see real improvement over time**. Happy shooting!
 
-* **Technology:** Python
-* **Hardware:** TBD
-* **Responsibilities:**
-  * Detects arrow engage time.
-  * Detects arrow disengage time.
-  * Sends the timestamps to the Web Server.
-* **Data Acquisition:**
-  * [Describe the specific process of how the sensors capture the data and how it's processed.]
-* **Calibration:**
-  * [Describe the calibration process for the sensors.]
-* **Synchronization:**
-  * [Explain how the Bow Reader's timestamps are synchronized with the Target Reader (e.g., using a shared timestamp or a synchronization signal).]
-* **Error Handling:**
-  * Sensor failures.
-  * Communication errors.
+## For Software Developers
 
-#### 3.3.5 Target Reader
+If you're a developer interested in contributing to Arch Stats — whether to help expand features, integrate new sensor types, improve performance, or refine the user experience — you're very welcome! While this README focuses on the end-user experience for archers, the system is built as a modular, modern monorepo and is fully open-source.
 
-* **Technology:** Python
-* **Hardware:** TBD
-* **Responsibilities:**
-  * Detects arrow landing time.
-  * Determines the X and Y coordinates of the arrow impact.
-  * Sends the data to the Web Server.
-* **Image/Data Processing:**
-  * [Describe the image or data processing techniques used to identify the arrow impact.]
-  * [Explain how the X and Y coordinates are calculated and calibrated.]
-* **Missed Shot Detection:**
-  * If no arrow landing time is detected within a specified time frame, the shot is marked as missed, and X/Y coordinates are set to null.
-* **Calibration:**
-  * [Describe the calibration process for the target (e.g., camera calibration, coordinate system calibration).]
-* **Synchronization:**
-  * [Explain how the Target Reader's data is synchronized with the Bow Reader (e.g., using a shared timestamp or a synchronization signal).]
-* **Error Handling:**
-  * Image processing errors.
-  * Communication errors.
+Arch Stats is divided into two main developer domains:
 
-#### 3.3.6 Database
+### 🧠 Backend
 
-* **Technology:** PostgreSQL
-* **Responsibilities:**
-  * Stores all application data (arrows, sessions, shots).
-  * Ensures data integrity and consistency.
-  * Provides efficient data retrieval.
-* **Schema:**
-  * **arrows**
+The backend is a Python 3.13 FastAPI application that coordinates data across sessions, arrows, shots, and sensors. It uses asyncpg for PostgreSQL access, Pydantic v2 for schema validation, and WebSockets for real-time communication with the frontend.
 
-    ```sql
-    CREATE TABLE IF NOT EXISTS arrows (
-        id UUID PRIMARY KEY,
-        weight REAL DEFAULT 0.0,
-        diameter REAL DEFAULT 0.0,
-        spine REAL DEFAULT 0.0,
-        length REAL NOT NULL,
-        human_identifier VARCHAR(10),
-        label_position REAL NOT NULL,
-        is_programmed BOOLEAN NOT NULL DEFAULT FALSE,
-        UNIQUE (human_identifier)
-    );
-    ```
+For a complete breakdown of the backend modules (including architecture, development workflow, VS Code tasks, testing setup, and API routes), for more information read the [backend/README.md](./backend/README.md)
 
-  * **sessions**
+### 🎯 Frontend
 
-    ```sql
-    CREATE TABLE IF NOT EXISTS sessions (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        is_opened BOOLEAN NOT NULL,
-        start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-        end_time TIMESTAMP WITH TIME ZONE,
-        location VARCHAR(255) NOT NULL,
-        CONSTRAINT open_session_no_end_time CHECK (
-            (is_opened = TRUE AND end_time IS NULL) OR (is_opened = FALSE)
-        ),
-        CONSTRAINT closed_session_with_end_time CHECK (
-            (is_opened = FALSE AND end_time IS NOT NULL) OR (is_opened = TRUE)
-        )
-    );
-    ```
+The frontend is a TypeScript + Vue 3 + Vite application, designed for clarity and performance. It provides real-time visualizations of shot data, arrow/session forms, and performance dashboards. Prettier and ESLint are used for formatting and quality.
 
-  * **shots**
+To learn how the WebUI is structured, how to develop with hot reload, and how it communicates with the backend, for more information read the [frontend/README.md](./frontend/README.md)
 
-    ```sql
-    CREATE TABLE IF NOT EXISTS shots (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        arrow_id UUID NOT NULL,
-        session_id UUID NOT NULL,
-        arrow_engage_time TIMESTAMP WITH TIME ZONE NOT NULL,
-        arrow_disengage_time TIMESTAMP WITH TIME ZONE NOT NULL,
-        arrow_landing_time TIMESTAMP WITH TIME ZONE,
-        x REAL,
-        y REAL,
-        FOREIGN KEY (arrow_id) REFERENCES arrows (id) ON DELETE CASCADE,
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
-        CHECK (
-            (
-                arrow_landing_time IS NOT NULL AND
-                x IS NOT NULL AND
-                y IS NOT NULL
-            )
-            OR
-            (
-                arrow_landing_time IS NULL AND
-                x IS NULL AND
-                y IS NULL
-            )
-        );
-    ```
+### Development Philosophy
 
-  * **targets**
+This project is designed for **fast iteration**, **strict type checking**, and **hardware-software integration**. All core services are containerized and the monorepo includes tasks for bringing up everything with a single command. Contributions are welcome — whether you’re improving code, sensors, docs, or analytics!
 
-    ```sql
-    CREATE TABLE IF NOT EXISTS targets (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        max_x REAL NOT NULL,
-        max_y REAL NOT NULL,
-        faces JSONB NOT NULL,
-        session_id UUID NOT NULL,
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
-        CHECK (validate_faces_jsonb(faces))
-    );
-    ```
-
-* **Database Scripts:**
-  * Scripts for creating and updating the database schema.
-  * Scripts for initial data setup (if any).
-* **Connection Details:**
-  * [Specify how the Web Server and other modules will connect to the database (e.g., connection string, credentials).]
-
-#### 3.3.7 Testing
-
-* Python unit tests using pytest for:
-  * Arrow Reader module.
-  * Bow Reader module.
-  * Target Reader module.
-  * Web Server module.
-* TypeScript unit tests using Jest for the WebUI module.
-
-## 4. Development Plan
-
-The core application logic, API, and WebUI will be built using **dummy data** to simulate input from the hardware sensors. Once the software is stable, the focus will shift to define and integrate the actual hardware to be used as sensors.
+If you're new, reading both the frontend and backend READMEs will give you a clear roadmap to getting started quickly.
