@@ -42,7 +42,7 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           cd backend
-          uv sync --only-dev
+          uv sync
           source .venv/bin/activate
           mypy --config-file ./pyproject.toml ./src
 
@@ -54,6 +54,6 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           cd backend
-          uv sync --only-dev
+          uv sync
           source .venv/bin/activate
           pylint --rcfile ./pyproject.toml ./src
