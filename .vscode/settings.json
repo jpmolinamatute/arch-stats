@@ -45,6 +45,7 @@
         "FETCHTYPE",
         "fetchval",
         "FIXIT",
+        "frontend",
         "httpx",
         "inlinevar",
         "ixin",
@@ -87,7 +88,7 @@
         "uvloop",
         "VARCHAR",
         "virtualenv",
-        "frontend"
+        "Vite"
     ],
     "cSpell.ignoreWords": [
         "PGPASSWORD",
