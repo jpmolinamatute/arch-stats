@@ -7,6 +7,11 @@ on:
       - backend/pyproject.toml
       - .github/workflows/backend_linting.yaml
 
+defaults:
+  run:
+    shell: bash
+    working-directory: ./backend
+
 jobs:
   black:
     runs-on: ubuntu-latest
