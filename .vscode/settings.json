@@ -217,5 +217,6 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "python.analysis.typeEvaluation.deprecateTypingAliases": true,
-    "python.analysis.inlayHints.callArgumentNames": "partial"
+    "python.analysis.inlayHints.callArgumentNames": "partial",
+    "gitlens.currentLine.enabled": false
 }

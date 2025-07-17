@@ -15,11 +15,11 @@ jobs:
   format:
     name: Check Formatting (Prettier)
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup Node & Install Dependencies
         uses: ./.github/actions/npm-setup
-
       - name: Run Prettier
         run: npm run format -- --check
 
@@ -28,8 +28,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup Node & Install Dependencies
         uses: ./.github/actions/npm-setup
-
       - name: Run ESLint
         run: npm run lint

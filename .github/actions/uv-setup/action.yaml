@@ -4,8 +4,6 @@ description: Sets up uv, syncs backend dependencies, and activates venv
 runs:
   using: composite
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
     - name: Install uv
       shell: bash
       run: curl -LsSf https://astral.sh/uv/install.sh | sh

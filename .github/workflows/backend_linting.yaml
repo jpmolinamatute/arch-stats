@@ -16,6 +16,8 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run black
@@ -26,6 +28,8 @@ jobs:
   isort:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run isort
@@ -36,6 +40,8 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run mypy
@@ -46,6 +52,8 @@ jobs:
   pylint:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run pylint
