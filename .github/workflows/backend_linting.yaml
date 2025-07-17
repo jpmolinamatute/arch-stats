@@ -3,12 +3,9 @@ name: Lint and Type Check
 on:
   push:
     paths:
-      - "backend/**.py"
-      - "pyproject.toml"
-      - ".github/workflows/lint.yaml"
-  pull_request:
-    paths:
-      - "backend/**.py"
+      - "backend/**/*.py"
+      - "backend/pyproject.toml"
+      - ".github/workflows/backend_linting.yaml"
 
 jobs:
   setup:
