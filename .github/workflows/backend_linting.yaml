@@ -57,7 +57,7 @@ jobs:
       - name: Restore cached .venv
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: backend/.venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run isort
