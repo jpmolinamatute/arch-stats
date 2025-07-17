@@ -11,25 +11,18 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      cache-key: ${{ steps.cache-key.outputs.key }}
+      cache-key: uv-venv-v1
     steps:
       - uses: actions/checkout@v4
-
-      - name: Compute cache key
-        id: cache-key
-        run: |
-          echo "uv-${{ hashFiles('pyproject.toml', 'backend/**.py') }}" > cache-key.txt
-          cat cache-key.txt
-          echo "key=$(cat cache-key.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Cache .venv
         id: venv-cache
         uses: actions/cache@v4
         with:
           path: .venv
-          key: ${{ steps.cache-key.outputs.key }}
+          key: uv-venv-v1
 
-      - name: Install uv and sync deps
+      - name: Install uv and sync dev dependencies
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
