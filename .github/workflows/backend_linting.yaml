@@ -1,7 +1,7 @@
 name: Lint and Type Check
 
 on:
-  push:
+  pull_request:
     paths:
       - backend/**/*.py
       - backend/pyproject.toml
@@ -55,4 +55,6 @@ jobs:
       - name: Run pylint
         run: |
           source .venv/bin/activate
+          which python
+          python --version
           pylint --rcfile ./pyproject.toml ./src
