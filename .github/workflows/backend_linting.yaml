@@ -35,9 +35,9 @@ jobs:
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv venv
-          source .venv/bin/activate
+          cd backend
           uv sync --group dev
+          source .venv/bin/activate
 
   black:
     needs: setup
@@ -53,8 +53,9 @@ jobs:
 
       - name: Run black
         run: |
+          cd backend
           source .venv/bin/activate
-          black --check --config ./backend/pyproject.toml ./backend/src
+          black --check --config ./pyproject.toml ./src
 
   isort:
     needs: setup
@@ -70,8 +71,9 @@ jobs:
 
       - name: Run isort
         run: |
+          cd backend
           source .venv/bin/activate
-          isort --check-only --settings-file ./backend/pyproject.toml ./backend/src
+          isort --check-only --settings-file ./pyproject.toml ./src
 
   mypy:
     needs: setup
@@ -87,8 +89,9 @@ jobs:
 
       - name: Run mypy
         run: |
+          cd backend
           source .venv/bin/activate
-          mypy --config-file ./backend/pyproject.toml ./backend/src
+          mypy --config-file ./pyproject.toml ./src
 
   pylint:
     needs: setup
@@ -104,5 +107,6 @@ jobs:
 
       - name: Run pylint
         run: |
+          cd backend
           source .venv/bin/activate
-          pylint --rcfile ./backend/pyproject.toml ./backend/src
+          pylint --rcfile ./pyproject.toml ./src
