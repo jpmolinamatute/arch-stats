@@ -1,0 +1,13 @@
+name: NPM Setup
+description: Sets up Node and installs npm dependencies
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Install dependencies
+      shell: bash
+      working-directory: ./frontend
+      run: npm ci
