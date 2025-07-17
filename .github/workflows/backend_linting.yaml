@@ -3,57 +3,43 @@ name: Lint and Type Check
 on:
   push:
     paths:
-      - "backend/**/*.py"
-      - "backend/pyproject.toml"
-      - ".github/workflows/backend_linting.yaml"
+      - backend/**/*.py
+      - backend/pyproject.toml
+      - .github/workflows/backend_linting.yaml
 
 jobs:
   black:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up environment
+        uses: ./.github/actions/uv-setup.yaml
       - name: Run black
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          cd backend
-          uv sync --only-dev
-          source .venv/bin/activate
-          black --check --config ./pyproject.toml ./src
+        run: black --check --config ./pyproject.toml ./src
 
   isort:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - name: Set up environment
+        uses: ./.github/actions/uv-setup.yaml
       - name: Run isort
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          cd backend
-          uv sync --only-dev
-          source .venv/bin/activate
-          isort --check-only --settings-file ./pyproject.toml ./src
+        run: isort --check-only --settings-file ./pyproject.toml ./src
 
   mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - name: Set up environment
+        uses: ./.github/actions/uv-setup.yaml
       - name: Run mypy
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          cd backend
-          uv sync
-          source .venv/bin/activate
-          mypy --config-file ./pyproject.toml ./src
+        run: mypy --config-file ./pyproject.toml ./src
 
   pylint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up environment
+        uses: ./.github/actions/uv-setup.yaml
       - name: Run pylint
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          cd backend
-          uv sync
-          source .venv/bin/activate
-          pylint --rcfile ./pyproject.toml ./src
+        run: pylint --rcfile ./pyproject.toml ./src
