@@ -6,11 +6,6 @@ on:
       - "backend/**/*.py"
       - "backend/pyproject.toml"
       - ".github/workflows/backend_linting.yaml"
-  pull_request:
-    paths:
-      - "backend/**/*.py"
-      - "backend/pyproject.toml"
-      - ".github/workflows/backend_linting.yaml"
 
 jobs:
   setup:
@@ -22,7 +17,10 @@ jobs:
 
       - name: Compute cache key
         id: cache-key
-        run: echo "key=uv-${{ hashFiles('pyproject.toml', 'backend/**.py') }}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "uv-${{ hashFiles('pyproject.toml', 'backend/**.py') }}" > cache-key.txt
+          cat cache-key.txt
+          echo "key=$(cat cache-key.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Cache .venv
         id: venv-cache
