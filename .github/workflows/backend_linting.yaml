@@ -1,11 +1,14 @@
-name: Backend Lint, Format and Type Check
+name: Lint and Type Check
 
 on:
   push:
     paths:
-      - "backend/**/*.py"
-      - "backend/pyproject.toml"
-      - ".github/workflows/backend_linting.yaml"
+      - "backend/**.py"
+      - "pyproject.toml"
+      - ".github/workflows/lint.yaml"
+  pull_request:
+    paths:
+      - "backend/**.py"
 
 jobs:
   setup:
@@ -26,9 +29,9 @@ jobs:
         if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          cd backend
-          uv sync --only-dev
+          uv venv
           source .venv/bin/activate
+          uv sync --group dev
 
   black:
     needs: setup
@@ -36,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached .venv
+      - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
           path: .venv
@@ -44,9 +47,8 @@ jobs:
 
       - name: Run black
         run: |
-          cd backend
           source .venv/bin/activate
-          black --check --config ./pyproject.toml ./src
+          black --check --config ./backend/pyproject.toml ./backend/src
 
   isort:
     needs: setup
@@ -54,17 +56,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached .venv
+      - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
-          path: backend/.venv
+          path: .venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Run isort
         run: |
-          cd backend
           source .venv/bin/activate
-          isort --check-only --settings-file ./pyproject.toml ./src
+          isort --check-only --settings-file ./backend/pyproject.toml ./backend/src
 
   mypy:
     needs: setup
@@ -72,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached .venv
+      - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
           path: .venv
@@ -80,9 +81,8 @@ jobs:
 
       - name: Run mypy
         run: |
-          cd backend
           source .venv/bin/activate
-          mypy --config-file ./pyproject.toml ./src
+          mypy --config-file ./backend/pyproject.toml ./backend/src
 
   pylint:
     needs: setup
@@ -90,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached .venv
+      - name: Restore .venv from cache
         uses: actions/cache@v4
         with:
           path: .venv
@@ -98,6 +98,5 @@ jobs:
 
       - name: Run pylint
         run: |
-          cd backend
           source .venv/bin/activate
-          pylint --rcfile ./pyproject.toml ./src
+          pylint --rcfile ./backend/pyproject.toml ./backend/src
