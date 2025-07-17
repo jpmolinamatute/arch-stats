@@ -11,13 +11,9 @@ runs:
     - name: Sync Python deps
       shell: bash
       working-directory: backend
-      run: |
-        pwd
-        ls ./pyproject.toml
-        cat .python-version
-        uv sync --python $(cat .python-version)
+      run: uv sync --python $(cat .python-version)
 
-    - name: Activate virtualenv
-      shell: bash
-      working-directory: backend
-      run: source .venv/bin/activate
+    # - name: Activate virtualenv
+    #   shell: bash
+    #   working-directory: backend
+    #   run: source .venv/bin/activate

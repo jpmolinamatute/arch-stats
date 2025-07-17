@@ -20,7 +20,9 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run black
-        run: black --check --config ./pyproject.toml ./src
+        run: |
+          source .venv/bin/activate
+          black --check --config ./pyproject.toml ./src
 
   isort:
     runs-on: ubuntu-latest
@@ -29,7 +31,9 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run isort
-        run: isort --check-only --settings-file ./pyproject.toml ./src
+        run: |
+          source .venv/bin/activate
+          isort --check-only --settings-file ./pyproject.toml ./src
 
   mypy:
     runs-on: ubuntu-latest
@@ -38,7 +42,9 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run mypy
-        run: mypy --config-file ./pyproject.toml ./src
+        run: |
+          source .venv/bin/activate
+          mypy --config-file ./pyproject.toml ./src
 
   pylint:
     runs-on: ubuntu-latest
@@ -47,4 +53,6 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/uv-setup
       - name: Run pylint
-        run: pylint --rcfile ./pyproject.toml ./src
+        run: |
+          source .venv/bin/activate
+          pylint --rcfile ./pyproject.toml ./src
