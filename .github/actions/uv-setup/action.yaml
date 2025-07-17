@@ -1,0 +1,19 @@
+name: Setup Backend Env
+description: Sets up uv, syncs backend dependencies, and activates venv
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      shell: bash
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Sync Python deps
+      shell: bash
+      working-directory: backend
+      run: uv sync
+
+    - name: Activate virtualenv
+      shell: bash
+      working-directory: backend
+      run: source .venv/bin/activate

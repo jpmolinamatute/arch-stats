@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up environment
-        uses: ./.github/actions/uv-setup.yaml
+        uses: ./.github/actions/uv-setup
       - name: Run black
         run: black --check --config ./pyproject.toml ./src
 
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up environment
-        uses: ./.github/actions/uv-setup.yaml
+        uses: ./.github/actions/uv-setup
       - name: Run isort
         run: isort --check-only --settings-file ./pyproject.toml ./src
 
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up environment
-        uses: ./.github/actions/uv-setup.yaml
+        uses: ./.github/actions/uv-setup
       - name: Run mypy
         run: mypy --config-file ./pyproject.toml ./src
 
@@ -40,6 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up environment
-        uses: ./.github/actions/uv-setup.yaml
+        uses: ./.github/actions/uv-setup
       - name: Run pylint
         run: pylint --rcfile ./pyproject.toml ./src
