@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-set -eu
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 # shellcheck source=./lib/manage_docker
 . "${ROOT_DIR}/tools/lib/manage_docker"
+
 
 run_python_tests() {
     local pyproject_path="${1}"
