@@ -35,6 +35,7 @@ create_pr() {
     fi
 
     echo "📦 Creating pull request for branch '${branch}'..."
+    echo "DELETE this line"
     if [[ -n "${labels_to_add[*]}" ]]; then
         gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill "${labels_to_add[*]}"
     else
