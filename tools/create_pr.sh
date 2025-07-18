@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-
 set -euo pipefail
-
-echo "[hook] pre-push started" >&2
 
 skip_main() {
     local branch="${1}"
@@ -38,7 +35,11 @@ create_pr() {
     fi
 
     echo "📦 Creating pull request for branch '${branch}'..."
-    gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" "${labels_to_add[*]}" --fill
+    if [[ -n "${labels_to_add[*]}" ]]; then
+        gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill "${labels_to_add[*]}"
+    else
+        gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill
+    fi
     
 }
 
