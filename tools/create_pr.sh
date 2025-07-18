@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+echo "[hook] pre-push started" >&2
+
 skip_main() {
     local branch="${1}"
     if [[ ${branch} =~ ^main$ ]]; then
