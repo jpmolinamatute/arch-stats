@@ -21,7 +21,7 @@ jobs:
       - name: Generate OpenAPI Spec
         working-directory: ./backend/src
         run: |
-          source "${GITHUB_WORKSPACE}/backend/src/.venv/bin/activate"
+          source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
           uv run "${GITHUB_WORKSPACE}/tools/generate_openapi.py"
       - name: Generate TypeScript types
         working-directory: ./frontend
