@@ -189,7 +189,7 @@
                         <td class="border border-gray-300 p-2">
                             <input
                                 type="text"
-                                v-model="faces[index].humanIdentifier"
+                                v-model="face.humanIdentifier"
                                 placeholder="e.g. face1"
                                 class="border border-gray-300 p-2 rounded w-full"
                             />
@@ -197,7 +197,7 @@
                         <td class="border border-gray-300 p-2">
                             <input
                                 type="text"
-                                v-model="faces[index].points"
+                                v-model="face.points"
                                 placeholder="10,9,8"
                                 class="border border-gray-300 p-2 rounded w-full"
                             />

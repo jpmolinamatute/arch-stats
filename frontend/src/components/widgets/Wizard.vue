@@ -48,7 +48,7 @@
 
     const activeStepIndex = ref(0);
     const errorMessage = ref<string | null>(null);
-    const currentStep = computed(() => props.steps[activeStepIndex.value]);
+    const currentStep = computed(() => props.steps[activeStepIndex.value]!);
 
     function registerStep(options: { isValid: Step['isValid']; onComplete: Step['onComplete'] }) {
         currentStep.value.register(options);

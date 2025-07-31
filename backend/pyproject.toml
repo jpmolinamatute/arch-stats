@@ -9,7 +9,7 @@ authors = [
 ]
 requires-python = "==3.13.*"
 dependencies = [
-    "fastapi>=0.115.12",
+    "fastapi[standard]>=0.115.12",
     "asyncpg>=0.30.0",
     "httpx>=0.28.1",
     "uvicorn[standard]>=0.34.3",
@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.uv]
-python-preference = "system"
+python-preference = "only-managed"
 required-version = ">=0.7.17"
 
 [tool.mypy]

@@ -11,5 +11,6 @@ frontend/src/types/**
 ignore/*
 backend/src/shared/logs/*
 !backend/src/shared/logs/.gitkeep
-backend/server/frontend/*
-!backend/server/frontend/index.html
+backend/src/server/frontend/*
+!backend/src/server/frontend/.gitkeep
+/openapi.json
