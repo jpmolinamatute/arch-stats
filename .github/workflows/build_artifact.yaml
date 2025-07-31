@@ -20,6 +20,8 @@ jobs:
         uses: ./.github/actions/npm-setup
       - name: Generate OpenAPI Spec
         working-directory: ./backend/src
+        env:
+          PYTHONPATH: ${{ github.workspace}}/backend/src
         run: |
           source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
           uv run "${GITHUB_WORKSPACE}/tools/generate_openapi.py"
