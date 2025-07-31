@@ -1,0 +1,48 @@
+name: Build Artifact
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set uv & Install Dependencies
+        uses: ./.github/actions/uv-setup
+      - name: Setup Node & Install Dependencies
+        uses: ./.github/actions/npm-setup
+      - name: Generate OpenAPI Spec
+        working-directory: ./backend/src
+        env:
+          PYTHONPATH: ${{ github.workspace}}/backend/src
+        run: |
+          source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
+          uv run "${GITHUB_WORKSPACE}/tools/generate_openapi.py"
+      - name: Generate TypeScript types
+        working-directory: ./frontend
+        run: npx openapi-typescript "${GITHUB_WORKSPACE}/openapi.json" --export-type --immutable --output "${GITHUB_WORKSPACE}/frontend/src/types/types.generated.ts"
+      - name: Build FE bundle
+        working-directory: ./frontend
+        run: npm run build
+      - name: Build tar file
+        env:
+          XZ_OPT: -9
+        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend/tests' --exclude='backend/.venv' --exclude='backend/.mypy_cache' --exclude='*/__pycache__' "${GITHUB_WORKSPACE}/backend/"
+      - name: Upload to release (overwrite)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          files: ${{ github.workspace}}/arch-stats.tar.xz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

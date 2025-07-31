@@ -5,10 +5,11 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vue-tsc -b && vite build",
+        "build": "vue-tsc -b && vite build --emptyOutDir",
         "preview": "vite preview",
         "lint": "eslint --config ./eslint.config.js --fix .",
         "format": "prettier --config ./.prettierrc --write .",
+        "clear:vite_cache": "rm -rf ./node_modules/.vite",
         "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts"
     },
     "dependencies": {

@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up environment
+      - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
       - name: Run black
         run: |
@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up environment
+      - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
       - name: Run isort
         run: |
@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up environment
+      - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
       - name: Run mypy
         run: |
@@ -54,7 +54,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up environment
+      - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
       - name: Run pylint
         run: |
