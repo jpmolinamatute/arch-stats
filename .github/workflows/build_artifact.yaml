@@ -37,7 +37,7 @@ jobs:
       - name: Build tar file
         env:
           XZ_OPT: -9
-        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend/tests' --exclude='backend/.venv' --exclude='backend/.mypy_cache' --exclude='*/__pycache__' "${GITHUB_WORKSPACE}/backend/"
+        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend/tests' --exclude='backend/.venv' --exclude='backend/.mypy_cache' --exclude='*/__pycache__' ./backend
       - name: Upload to release (overwrite)
         uses: softprops/action-gh-release@v2
         with:
