@@ -6,25 +6,21 @@ SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 TAR_FILE="arch-stats.tar.xz"
 SYSTEM_USER="archy"
 
-
-
-delete_user(){
+delete_user() {
     echo "Deleting user ${SYSTEM_USER}..."
     sudo userdel -r "${SYSTEM_USER}" || true
 }
 
-
-cleaning_files(){
+cleaning_files() {
     echo "Deleting files..."
     rm -f "${SCRIPT_DIR}/${TAR_FILE}"
 }
 
-stop_services(){
+stop_services() {
     echo "TODO"
 }
 
-
-main(){
+main() {
     echo "Uninstalling arch-stats..."
     stop_services
     delete_user

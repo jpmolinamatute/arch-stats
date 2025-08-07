@@ -17,12 +17,12 @@ check_remote() {
     fi
 }
 
-upload_scripts(){
+upload_scripts() {
     local cred="${1}"
-    shift 
+    shift
     local files=("$@")
     local missing=0
-    
+
     for file in "${files[@]}"; do
         if [[ ! -f "$file" ]]; then
             echo "ERROR: File '$file' not found." >&2
@@ -37,7 +37,7 @@ upload_scripts(){
     scp -o BatchMode=yes -o ConnectTimeout=5 "${files[@]}" "${cred}":/tmp/
 }
 
-execute_remote_script(){
+execute_remote_script() {
     local cred="${1}"
     local script_to_execute="${2}"
     echo "Executing remote installer on '${cred}'"

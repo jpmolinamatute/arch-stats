@@ -6,7 +6,6 @@ ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 # shellcheck source=./lib/manage_docker
 . "${ROOT_DIR}/tools/lib/manage_docker"
 
-
 run_python_tests() {
     local pyproject_path="${1}"
     start_docker
@@ -43,7 +42,7 @@ run_frontend_checks() {
 
 }
 
-run_bash_checks(){
+run_bash_checks() {
     cd "${ROOT_DIR}/tools"
     echo "Running bash linter"
     shellcheck --shell=bash --color=always -x ./*\.bash
@@ -51,7 +50,6 @@ run_bash_checks(){
     shfmt --language-dialect bash --write -i 4 ./*\.bash
     cd -
 }
-
 
 main() {
     local needs_frontend=false
@@ -78,8 +76,7 @@ main() {
     if $needs_tools; then
         run_bash_checks
     fi
+    exit 0
 }
 
 main
-
-exit 0

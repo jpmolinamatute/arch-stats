@@ -40,7 +40,7 @@ create_pr() {
     else
         gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill --label enhancement
     fi
-    
+
 }
 
 main() {
@@ -51,10 +51,6 @@ main() {
     check_pr "${branch}"
     create_pr "${branch}"
 }
-
-
-
-
 
 main
 
