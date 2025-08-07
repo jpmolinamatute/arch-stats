@@ -1,0 +1,31 @@
+name: Bash Linting & Formatting
+
+on:
+  pull_request:
+    paths:
+      - tools/*.bash
+      - .github/workflows/bash_linting.yaml
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./tools
+
+jobs:
+  format:
+    name: Check Formatting (shfmt)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Formatting
+        run: shfmt --language-dialect bash -i 4 ./tools/*\.bash
+  lint:
+    name: Run Linter (shellcheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Linting
+        run: shellcheck --shell=bash -x ./tools/*\.bash

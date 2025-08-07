@@ -24,7 +24,7 @@ jobs:
         run: npm run format -- --check
 
   lint:
-    name: Run ESLint
+    name: Run Linter (ESLint)
     runs-on: ubuntu-latest
 
     steps:

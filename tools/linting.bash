@@ -21,13 +21,13 @@ run_python_checks() {
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
-    echo "running isort..."
+    echo "Running isort..."
     isort --settings-file "${pyproject_path}" .
-    echo "running black..."
+    echo "Running black..."
     black --config "${pyproject_path}" .
-    echo "running mypy..."
+    echo "Running mypy..."
     mypy --config-file "${pyproject_path}" .
-    echo "running pylint..."
+    echo "Running pylint..."
     pylint --rcfile "${pyproject_path}" .
     run_python_tests "${pyproject_path}"
     cd -
@@ -35,28 +35,48 @@ run_python_checks() {
 
 run_frontend_checks() {
     cd "${ROOT_DIR}/frontend"
+    echo "Running JS/TS linter"
     npm run lint
+    echo "Running JS/TS formatter"
     npm run format
     cd -
 
 }
 
+run_bash_checks(){
+    cd "${ROOT_DIR}/tools"
+    echo "Running bash linter"
+    shellcheck --shell=bash --color=always -x ./*\.bash
+    echo "Running bash formatter"
+    shfmt --language-dialect bash --write -i 4 ./*\.bash
+    cd -
+}
+
+
 main() {
     local needs_frontend=false
     local needs_backend=false
+    local needs_tools=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
         if [[ "$file" == frontend/* ]]; then
             needs_frontend=true
         elif [[ "$file" == backend/* ]]; then
             needs_backend=true
+        elif [[ "$file" == tools/* ]]; then
+            needs_tools=true
         fi
     done
     if $needs_frontend; then
         run_frontend_checks
     fi
+
     if $needs_backend; then
         run_python_checks
+    fi
+
+    if $needs_tools; then
+        run_bash_checks
     fi
 }
 
