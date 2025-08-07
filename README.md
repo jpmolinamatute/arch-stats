@@ -1,4 +1,4 @@
-# Arch Stats: Track and Understand Your Archery Performance Over Time
+# Arch Stats: track and understand your archery performance over time
 
 **Archery can feel inconsistent.** Some days every shot hits the mark; other days, you struggle to replicate your past performance. With so many factors affecting each shot (form, equipment, fatigue, environment), it’s hard to know if you’re truly improving or what you need to work on. **Arch Stats** is a tool that takes the guesswork out of tracking progress. It **collects data from your shooting sessions and presents clear insights** so you can objectively measure your performance and consistency over time. By recording each arrow and each shot, Arch Stats helps identify areas for improvement and keeps you motivated as you see your progress in real numbers.
 
