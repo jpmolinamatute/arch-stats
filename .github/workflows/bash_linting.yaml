@@ -3,13 +3,13 @@ name: Bash Linting & Formatting
 on:
   pull_request:
     paths:
-      - tools/*.bash
+      - scripts/*.bash
       - .github/workflows/bash_linting.yaml
 
 defaults:
   run:
     shell: bash
-    working-directory: ./tools
+    working-directory: ./scripts
 
 jobs:
   format:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Formatting
-        run: shfmt --language-dialect bash -i 4 ./tools/*\.bash
+        run: shfmt --language-dialect bash -i 4 ./scripts/*\.bash
   lint:
     name: Run Linter (shellcheck)
     runs-on: ubuntu-latest
@@ -28,4 +28,4 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Linting
-        run: shellcheck --shell=bash -x ./tools/*\.bash
+        run: shellcheck --shell=bash -x ./scripts/*\.bash

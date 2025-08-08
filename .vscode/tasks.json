@@ -65,7 +65,7 @@
             {
                 "label": "Start Uvicorn Dev Server",
                 "type": "shell",
-                "command": "${workspaceFolder}/tools/start_uvicorn.bash",
+                "command": "${workspaceFolder}/scripts/start_uvicorn.bash",
                 "problemMatcher": [],
                 "presentation": {
                     "echo": true,
@@ -96,7 +96,7 @@
             {
                 "label": "Start Archy bot",
                 "type": "shell",
-                "command": "${workspaceFolder}/tools/start_archy_bot.bash",
+                "command": "${workspaceFolder}/scripts/start_archy_bot.bash",
                 "presentation": {
                     "echo": true,
                     "reveal": "always",

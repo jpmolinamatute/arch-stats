@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 # shellcheck source=./lib/manage_docker
-. "${ROOT_DIR}/tools/lib/manage_docker"
+. "${ROOT_DIR}/scripts/lib/manage_docker"
 
 run_python_tests() {
     local pyproject_path="${1}"
@@ -43,7 +43,7 @@ run_frontend_checks() {
 }
 
 run_bash_checks() {
-    cd "${ROOT_DIR}/tools"
+    cd "${ROOT_DIR}/scripts"
     echo "Running bash linter"
     shellcheck --shell=bash --color=always -x ./*\.bash
     echo "Running bash formatter"
@@ -54,15 +54,15 @@ run_bash_checks() {
 main() {
     local needs_frontend=false
     local needs_backend=false
-    local needs_tools=false
+    local needs_scripts=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
         if [[ "$file" == frontend/* ]]; then
             needs_frontend=true
         elif [[ "$file" == backend/* ]]; then
             needs_backend=true
-        elif [[ "$file" == tools/* ]]; then
-            needs_tools=true
+        elif [[ "$file" == scripts/* ]]; then
+            needs_scripts=true
         fi
     done
     if $needs_frontend; then
@@ -73,7 +73,7 @@ main() {
         run_python_checks
     fi
 
-    if $needs_tools; then
+    if $needs_scripts; then
         run_bash_checks
     fi
     exit 0
