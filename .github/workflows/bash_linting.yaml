@@ -1,0 +1,38 @@
+name: Bash Linting & Formatting
+
+on:
+  pull_request:
+    paths:
+      - scripts/*.bash
+      - .github/workflows/bash_linting.yaml
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  format:
+    name: Check Formatting (shfmt)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Bash linting tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shfmt
+      - name: Formatting
+        run: shfmt --language-dialect bash -i 4 -l=0 ./scripts/*\.bash
+  lint:
+    name: Run Linter (shellcheck)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Bash linting tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: Linting
+        run: shellcheck --shell=bash -x --exclude=SC1091 ./scripts/*\.bash

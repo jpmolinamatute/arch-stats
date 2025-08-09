@@ -2,35 +2,35 @@
 
 Welcome to the Arch-Stats backend! This guide will help you get up and running quickly, especially if you're new to the project or backend development.
 
-## 🚀 What This Backend Does
+## What This Backend Does
 
 Arch-Stats collects and manages archery performance data using Python 3.13. It's made up of:
 
 * A **[FastAPI](https://fastapi.tiangolo.com/) [server](./src/server/)** that handles API requests and coordinates data.
 * Three **sensor modules**:
-  * **[Arrow Reader](./src/arrow_reader/)** – assigns unique IDs to arrows.
-  * **[Bow Reader](./src/bow_reader/)** – logs when arrows are drawn/released.
-  * **[Target Reader](./src/target_reader/)** – logs arrow impact location/time.
+  * **[Arrow Reader](./src/arrow_reader/)** - assigns unique IDs to arrows.
+  * **[Bow Reader](./src/bow_reader/)** - logs when arrows are drawn/released.
+  * **[Target Reader](./src/target_reader/)** - logs arrow impact location/time.
 
 These 4 modules don't talk to each other directly. Instead, they all write to a **[PostgreSQL](https://www.postgresql.org/docs/) database** and use **[NOTIFY](https://www.postgresql.org/docs/current/sql-notify.html)/[LISTEN](https://www.postgresql.org/docs/current/sql-listen.html)** events to communicate. This decoupled setup makes everything modular and easy to test separately.
 
-## 🧰 What You'll Need
+## What You'll Need
 
 Before you start, make sure you have:
 
-* **uv** – Required. Used for managing both the virtual environment and dependencies. Install it from [uv docs](https://docs.astral.sh/uv).
-* **Python 3.13+** – You must have Python 3.13 installed. We recommend installing it via `uv`.
-* **Docker and Docker Compose** – Required to run PostgreSQL.
-* **Linux Environment** – Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
-* **VS Code (optional)** – Project includes helpful workspace settings and tasks.
+* **uv** - Required. Used for managing both the virtual environment and dependencies. Install it from [uv docs](https://docs.astral.sh/uv).
+* **Python 3.13+** - You must have Python 3.13 installed. We recommend installing it via `uv`.
+* **Docker and Docker Compose** - Required to run PostgreSQL.
+* **Linux Environment** - Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
+* **VS Code (optional)** - Project includes helpful workspace settings and tasks.
 
-## 🛠️ Setup: Step-by-Step
+## Setup: Step-by-Step
 
 ### 1.  Install Dependencies
 
 ```bash
 cd arch-stats/backend
-uv sync --group dev --python $(cat ./.python-version)
+uv sync --dev --python $(cat ./.python-version)
 ```
 
 This creates a `.venv` and installs everything listed in [pyproject.toml](./pyproject.toml).
@@ -104,7 +104,7 @@ Once running:
 * API available at <http://localhost:8000>
 * WebSocket stream updates in real-time from Archy
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 backend/
@@ -118,7 +118,7 @@ backend/
 └── tests/             # all tests
 ```
 
-## 🧹 Linting, Formatting & Testing
+## Linting, Formatting & Testing
 
 Use these tools to keep the codebase clean and reliable:
 
@@ -133,12 +133,12 @@ Use these tools to keep the codebase clean and reliable:
 To run everything at once:
 
 ```bash
-./tools/linting.sh
+./scripts/linting.sh
 ```
 
 > Linting and Auto-formatting are enabled if you use VS Code with [.vscode/settings.json](../.vscode/settings.json)
 
-## 🧪 How Testing Works
+## How Testing Works
 
 * Tests live in [backend/tests/](./tests/)
 * We use [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/) to test `async def` code.
@@ -148,7 +148,7 @@ To run everything at once:
 
 > **Pro Tip:** Make sure Docker (and the DB) is running before launching tests.
 
-## ✅ You're Ready
+## You're Ready
 
 Once you've completed the setup and verified the backend is running:
 

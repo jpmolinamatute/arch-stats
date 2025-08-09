@@ -3,7 +3,7 @@
 set -eu
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 # shellcheck source=./lib/manage_docker
-. "${ROOT_DIR}/tools/lib/manage_docker"
+. "${ROOT_DIR}/scripts/lib/manage_docker"
 
 start_uvicorn() {
     echo "Starting Uvicorn server"

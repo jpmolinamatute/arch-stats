@@ -1,10 +1,10 @@
 # Arch-Stats WebUI
 
-Welcome to the Arch-Stats WebUI — the frontend interface for tracking and visualizing archery performance.
+Welcome to the Arch-Stats WebUI - the frontend interface for tracking and visualizing archery performance.
 
 This guide will walk you through setup, structure, tooling, and development tips for working on the frontend.
 
-## 🚀 What This App Does
+## What This App Does
 
 The WebUI is a [Vue 3](https://vuejs.org/guide/introduction) + [TypeScript](https://www.typescriptlang.org/docs/) single-page app built with [Vite](https://vite.dev/guide/) and styled using [Tailwind CSS](https://tailwindcss.com/docs/installation/using-vite). It lets users:
 
@@ -14,15 +14,15 @@ The WebUI is a [Vue 3](https://vuejs.org/guide/introduction) + [TypeScript](http
 
 It communicates with the API server via REST and WebSocket.
 
-## 🧰 What You'll Need
+## What You'll Need
 
 Before you start, make sure you have:
 
 - **npm** version +11.4.2
-- **Linux Environment** – Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
-- **VS Code (optional)** – Project includes helpful workspace settings and tasks.
+- **Linux Environment** - Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
+- **VS Code (optional)** - Project includes helpful workspace settings and tasks.
 
-## 🛠️ Setup: Step-by-Step
+## Setup: Step-by-Step
 
 ### 1. Install Dependencies
 
@@ -62,7 +62,7 @@ npm run dev
 
 The app will launch at <http://localhost:5173>. Edits will reload automatically.
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 frontend/
@@ -89,7 +89,7 @@ frontend/
     ├── types/types.generated.ts
 ```
 
-## ⚙️ Tooling & Conventions
+## Tooling & Conventions
 
 [Vite](https://vite.dev/guide/) is configured using [vite.config.ts](./vite.config.ts) file and it's responsible for:
 
@@ -102,7 +102,7 @@ cd frontend
 npm run build
 ```
 
-## 🧹 Linting & Formatting
+## Linting & Formatting
 
 | Tool                                      | Command          |
 | ----------------------------------------- | ---------------- |
@@ -111,9 +111,9 @@ npm run build
 
 > Linting and Auto-formatting are enabled if you use VS Code with [.vscode/settings.json](../.vscode/settings.json)
 
-## ✅ You're Ready
+## You're Ready
 
-You’ve got the frontend running. You can now:
+You've got the frontend running. You can now:
 
 - Use the interface to register equipment and sessions
 - View real-time archery data

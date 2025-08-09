@@ -27,7 +27,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace}}/backend/src
         run: |
           source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
-          uv run "${GITHUB_WORKSPACE}/tools/generate_openapi.py"
+          uv run "${GITHUB_WORKSPACE}/scripts/generate_openapi.py"
       - name: Generate TypeScript types
         working-directory: ./frontend
         run: npx openapi-typescript "${GITHUB_WORKSPACE}/openapi.json" --export-type --immutable --output "${GITHUB_WORKSPACE}/frontend/src/types/types.generated.ts"

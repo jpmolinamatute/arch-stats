@@ -2,7 +2,7 @@
 npm-debug.log
 yarn-error.log
 __pycache__/
-.env
+/.env
 .venv/
 
 node_modules/
