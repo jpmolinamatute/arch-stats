@@ -65,13 +65,12 @@ create_env_file() {
     local env_file="${HOME}/backend/.env"
     local venv_bin="${HOME}/backend/.venv/bin"
 
-    if [[  -f "${env_file}" ]]; then
+    if [[ -f "${env_file}" ]]; then
         rm -f "${env_file}"
     fi
 
-    
     echo "Creating ${env_file}..."
-    cat > "${env_file}" <<EOF
+    cat >"${env_file}" <<EOF
 # Runtime environment for Arch-Stats backend (read by systemd EnvironmentFile)
 PATH=${venv_bin}:${HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 POSTGRES_USER=${db_user}

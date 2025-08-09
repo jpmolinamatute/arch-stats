@@ -29,7 +29,7 @@ create_systemd_service_file() {
     local svc="/etc/systemd/system/arch-stats.service"
 
     echo "Writing ${svc}..."
-    cat > "${svc}" <<EOF
+    cat >"${svc}" <<EOF
 [Unit]
 Description=Arch-Stats FastAPI Server
 After=network.target

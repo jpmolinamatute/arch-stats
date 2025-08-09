@@ -27,16 +27,27 @@ create_pr() {
     if echo "${changed_files}" | grep -q '^frontend/'; then
         labels_to_add+=("--label" "frontend")
     fi
-    if echo "${changed_files}" | grep -q '^backend/'; then
-        labels_to_add+=("--label" "backend")
+    if echo "${changed_files}" | grep -q '^backend/src/server/'; then
+        labels_to_add+=("--label" "server")
     fi
+    if echo "${changed_files}" | grep -q '^backend/src/target_reader/'; then
+        labels_to_add+=("--label" "target_reader")
+    fi
+    if echo "${changed_files}" | grep -q '^backend/src/arrow_reader/'; then
+        labels_to_add+=("--label" "arrow_reader")
+    fi
+    if echo "${changed_files}" | grep -q '^backend/src/bow_reader/'; then
+        labels_to_add+=("--label" "bow_reader")
+    fi
+
     if echo "${changed_files}" | grep -q '\.md$'; then
-        labels_to_add+=("--label" "docs")
+        labels_to_add+=("--label" "documentation")
     fi
 
     echo "📦 Creating pull request for branch '${branch}'..."
     if [[ -n "${labels_to_add[*]}" ]]; then
-        gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill "${labels_to_add[*]}"
+        # shellcheck disable=SC2048,SC2086
+        gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill ${labels_to_add[*]}
     else
         gh pr create --project "Arch Stats" --assignee "@me" --base main --milestone "MVP with Dummy Data" --head "${branch}" --fill --label enhancement
     fi
