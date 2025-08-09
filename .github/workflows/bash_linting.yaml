@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set up Bash linting tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shfmt
       - name: Formatting
         run: shfmt --language-dialect bash -i 4 ./scripts/*\.bash
   lint:
@@ -27,5 +31,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set up Bash linting tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
       - name: Linting
         run: shellcheck --shell=bash -x ./scripts/*\.bash
