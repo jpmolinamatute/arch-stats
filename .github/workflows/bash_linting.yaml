@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shfmt
       - name: Formatting
-        run: shfmt --language-dialect bash -i 4 ./scripts/*\.bash
+        run: shfmt --language-dialect bash -i 4 -l=0 ./scripts/*\.bash
   lint:
     name: Run Linter (shellcheck)
     runs-on: ubuntu-latest
