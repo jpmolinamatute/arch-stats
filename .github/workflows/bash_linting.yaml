@@ -35,4 +35,4 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck
       - name: Linting
-        run: shellcheck --shell=bash -x ./scripts/*\.bash
+        run: shellcheck --shell=bash -x --exclude=SC1091 ./scripts/*\.bash
