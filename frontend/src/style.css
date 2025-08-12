@@ -1,93 +1,56 @@
-@import 'tailwindcss';
-
-html {
-    height: 100%;
-    width: 100%;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
-
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    --toolbar-h: 52px;
+}
+* {
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        Segoe UI,
+        Roboto,
+        Arial,
+        'Apple Color Emoji',
+        'Segoe UI Emoji';
 }
 
-a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
+.btn {
+    @apply rounded px-3 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed;
 }
-a:hover {
-    color: #535bf2;
+.btn-primary {
+    @apply bg-wa-reflex text-white hover:opacity-90;
 }
-
-body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    place-items: center;
+.btn-secondary {
+    @apply bg-wa-pink text-white hover:opacity-90;
 }
 
-section#app {
-    max-width: 100%;
-    width: 100%;
-    flex-grow: 1;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
+.input {
+    @apply bg-black/40 rounded border border-white/10 px-3 py-2 outline-none w-full;
+}
+.label {
+    @apply block text-xs mb-1 text-white/80;
 }
 
-main {
-    width: 100%;
+.table {
+    @apply w-full text-sm;
+}
+.table thead th {
+    @apply text-left font-semibold border-b border-white/10 pb-2;
+}
+.table tbody tr:nth-child(odd) {
+    @apply bg-white/5;
+}
+.table tbody tr:nth-child(even) {
+    @apply bg-transparent;
+}
+.table tbody td {
+    @apply border-b border-white/10 py-2;
 }
 
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
-}
-
-button {
-    border-radii: 8px;
-    border: 1px solid transparent;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #1a1a1a;
-    cursor: pointer;
-    transition: border-color 0.25s;
-}
-button:hover {
-    border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
-}
-
-.card {
-    padding: 2em;
-}
-
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #ffffff;
-    }
-    a:hover {
-        color: #747bff;
-    }
-    button {
-        background-color: #f9f9f9;
-    }
+.boolean-dot {
+    @apply inline-block w-3 h-3 rounded-full align-middle;
 }

@@ -15,12 +15,12 @@ Manage the creation, viewing, and closing of shooting sessions. Show details of 
 ## Acceptance Criteria
 
 1. If no session is open:
-   - Display a Session Creation Form with fields: `location`, `distance` (float, meters), `indoor` (bool).
+   - Display a Session Creation Form with fields: `location`, `distance` (float, meters), `is_indoor` (bool), and `targets` (just a placeholder).
    - Include a button to launch the Session Wizard.
 2. If a session is open:
-   - Display a Session Summary with: `start_time`, `location`, `distance`, `indoor`, and `targets` (just a placeholder).
+   - Display a Session Summary with: `start_time`, `location`, `distance`, `is_indoor`, and `targets` (just a placeholder).
    - Include a "Close session" button.
-3. Display a Past Sessions Table with: `start_time`, `location`, `end_time`, `distance`, `indoor`, and `targets` (just a placeholder).
+3. Display a Past Sessions Table with: `start_time`, `location`, `end_time`, `distance`, `is_indoor`, and `targets` (just a placeholder).
 4. Exclude the open session from the Past Sessions Table.
 
 ## UI Requirements
@@ -37,11 +37,11 @@ Any deviation from these standards must be documented and approved before implem
 
 - Must use: **Vue 3**, **TypeScript**, **Tailwind CSS**
 - Integrate with these files:
-  - [frontend/index.html](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/index.html)
-  - [frontend/src/App.vue](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/App.vue)
-  - [frontend/src/main.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/main.ts)
-  - [frontend/src/state/session.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/state/session.ts)
-  - [frontend/src/state/uiManagerStore.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/state/uiManagerStore.ts)
+  - [frontend/index.html](../../../frontend/index.html)
+  - [frontend/src/App.vue](../../../frontend/src/App.vue)
+  - [frontend/src/main.ts](../../../frontend/src/main.ts)
+  - [frontend/src/state/session.ts](../../../frontend/src/state/session.ts)
+  - [frontend/src/state/uiManagerStore.ts](../../../frontend/src/state/uiManagerStore.ts)
   - frontend/src/types/types.generated.ts (this file will be provided separately)
 
 ## API references
@@ -55,7 +55,7 @@ Any deviation from these standards must be documented and approved before implem
 
 ## Backend files
 
-- [backend/src/server/routers/sessions_router.py](https://github.com/jpmolinamatute/arch-stats/blob/main/backend/src/server/routers/sessions_router.py)
+- [backend/src/server/routers/sessions_router.py](../../../backend/src/server/routers/sessions_router.py)
 
 ## Out of scope
 

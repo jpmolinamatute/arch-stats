@@ -11,6 +11,12 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "eslint.config.js"],
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
+        "eslint.config.js",
+        "tailwind.config.ts"
+    ],
     "exclude": ["vite.config.ts"]
 }

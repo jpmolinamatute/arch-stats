@@ -1,24 +1,20 @@
-# Reusable Wizard Module
+# Landing Page
 
 ## Feature Name
 
-Reusable Multi-Step Wizard
+TODO
 
 ## Description
 
-Provide a generic wizard engine for multi-step flows, including opening sessions and registering/programming arrows.
+TODO
 
 ## User Story
 
-> As a developer, I want a reusable wizard framework so that I can easily implement guided multi-step processes without duplicating code.
+> As an archer, I want to create, view, and close practice sessions so that I can track my training progress over time.
 
 ## Acceptance Criteria
 
-1. WizardHost component renders steps based on a `WizardConfig` array.
-2. Each step has a unique `name`, a `component`, and optional guards/validation.
-3. Support "Next", "Back", and "Cancel" navigation.
-4. Session flow: SessionDetailsStep -> (optional) TargetCalibrationStep.
-5. Arrow flow: ArrowDetailsStep -> (optional) ProgramArrowStep.
+TODO
 
 ## UI Requirements
 
@@ -37,6 +33,7 @@ Any deviation from these standards must be documented and approved before implem
   - [frontend/index.html](../../../frontend/index.html)
   - [frontend/src/App.vue](../../../frontend/src/App.vue)
   - [frontend/src/main.ts](../../../frontend/src/main.ts)
+  - [frontend/src/state/session.ts](../../../frontend/src/state/session.ts)
 
 ## API references
 

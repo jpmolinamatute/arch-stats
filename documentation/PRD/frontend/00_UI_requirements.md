@@ -105,3 +105,8 @@ module.exports = {
 * **Desktop-first** approach.
 * Mobile responsiveness is not a priority in the initial phase.
 * Layout and component sizing should still degrade gracefully if viewed on smaller screens.
+
+## 7. Tool bar
+
+* one for the session page
+* one for the arrow page

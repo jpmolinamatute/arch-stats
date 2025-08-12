@@ -33,11 +33,11 @@ Any deviation from these standards must be documented and approved before implem
 
 - Must use: **Vue 3**, **TypeScript**, **Tailwind CSS**
 - Integrate with these files:
-  - [frontend/index.html](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/index.html)
-  - [frontend/src/App.vue](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/App.vue)
-  - [frontend/src/main.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/main.ts)
-  - [frontend/src/state/session.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/state/session.ts)
-  - [frontend/src/state/uiManagerStore.ts](https://github.com/jpmolinamatute/arch-stats/blob/main/frontend/src/state/uiManagerStore.ts)
+  - [frontend/index.html](../../../frontend/index.html)
+  - [frontend/src/App.vue](../../../frontend/src/App.vue)
+  - [frontend/src/main.ts](../../../frontend/src/main.ts)
+  - [frontend/src/state/session.ts](../../../frontend/src/state/session.ts)
+  - [frontend/src/state/uiManagerStore.ts](../../../frontend/src/state/uiManagerStore.ts)
   - frontend/src/types/types.generated.ts (this file will be provided separately)
 
 ## API references
@@ -51,4 +51,4 @@ Any deviation from these standards must be documented and approved before implem
 
 ## Backend files
 
-- [backend/src/server/routers/arrows_router.py](https://github.com/jpmolinamatute/arch-stats/blob/main/backend/src/server/routers/arrows_router.py)
+- [backend/src/server/routers/arrows_router.py](../../../backend/src/server/routers/arrows_router.py)
