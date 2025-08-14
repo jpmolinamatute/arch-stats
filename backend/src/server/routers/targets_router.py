@@ -10,6 +10,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 from shared.factories import create_fake_target
 
+
 TargetsRouter = APIRouter(prefix="/target")
 
 
