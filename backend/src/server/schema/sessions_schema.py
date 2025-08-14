@@ -8,14 +8,18 @@ class SessionsCreate(BaseModel):
     is_opened: bool = Field(..., description="Update open/closed state")
     start_time: datetime = Field(..., description="Session start time (set by the app)")
     location: str = Field(..., max_length=255, description="Location of the session")
+    is_indoor: bool = Field(False, description="Is the session indoor or outdoor")
+    distance: int = Field(..., description="Distance to the target in meters")
     model_config = ConfigDict(extra="forbid")
 
 
 class SessionsUpdate(BaseModel):
     is_opened: bool | None = Field(default=None, description="Update open/closed state")
+    is_indoor: bool | None = Field(default=None, description="Is the session indoor or outdoor")
     location: str | None = Field(
         default=None, max_length=255, description="Location of the session"
     )
+    distance: int | None = Field(default=None, description="Distance to the target in meters")
     start_time: datetime | None = Field(default=None, description="Session start time")
     end_time: datetime | None = Field(default=None, description="Session end time")
     model_config = ConfigDict(extra="forbid", populate_by_name=True)

@@ -10,7 +10,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import SessionsCreate, SessionsFilters, SessionsRead, SessionsUpdate
 
 
-SessionsRouter = APIRouter()
+SessionsRouter = APIRouter(prefix="/session")
 
 
 async def get_sessions_db(request: Request) -> SessionsDB:
@@ -20,26 +20,21 @@ async def get_sessions_db(request: Request) -> SessionsDB:
     return SessionsDB(db_pool)
 
 
-@SessionsRouter.get("/session", response_model=HTTPResponse[list[SessionsRead]])
-async def get_sessions(
-    filters: SessionsFilters = Depends(),
-    sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> JSONResponse:
-    """
-    Retrieve all sessions.
-    """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters_dict)
-
-
-@SessionsRouter.get("/session/open", response_model=HTTPResponse[SessionsRead])
+@SessionsRouter.get("/open", response_model=HTTPResponse[SessionsRead])
 async def get_open_session(
     sessions_db: SessionsDB = Depends(get_sessions_db),
 ) -> JSONResponse:
     return await db_response(sessions_db.get_open_session, status.HTTP_200_OK)
 
 
-@SessionsRouter.get("/session/{session_id}", response_model=HTTPResponse[SessionsRead])
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /session/{session_id}
+# **************************************************************************************************
+# **************************************************************************************************
+
+
+@SessionsRouter.get("/{session_id}", response_model=HTTPResponse[SessionsRead])
 async def get_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -56,24 +51,7 @@ async def get_session(
     return await db_response(sessions_db.get_one_by_id, status.HTTP_200_OK, session_id)
 
 
-@SessionsRouter.post("/session", response_model=HTTPResponse[None])
-async def add_session(
-    session_data: SessionsCreate,
-    sessions_db: SessionsDB = Depends(get_sessions_db),
-) -> JSONResponse:
-    """
-    Create and register a new session.
-
-    Args:
-        session_data (SessionsCreate): The data required to start a new session.
-
-    Returns:
-        HTTPResponse: Success or error message. Does not return the created session.
-    """
-    return await db_response(sessions_db.insert_one, status.HTTP_201_CREATED, session_data)
-
-
-@SessionsRouter.delete("/session/{session_id}", response_model=HTTPResponse[None])
+@SessionsRouter.delete("/{session_id}", response_model=HTTPResponse[None])
 async def delete_session(
     session_id: UUID,
     sessions_db: SessionsDB = Depends(get_sessions_db),
@@ -90,7 +68,7 @@ async def delete_session(
     return await db_response(sessions_db.delete_one, status.HTTP_204_NO_CONTENT, session_id)
 
 
-@SessionsRouter.patch("/session/{session_id}", response_model=HTTPResponse[None])
+@SessionsRouter.patch("/{session_id}", response_model=HTTPResponse[None])
 async def patch_session(
     session_id: UUID,
     update: SessionsUpdate,
@@ -107,3 +85,39 @@ async def patch_session(
         HTTPResponse: Success or error message.
     """
     return await db_response(sessions_db.update_one, status.HTTP_202_ACCEPTED, session_id, update)
+
+
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /session
+# **************************************************************************************************
+# **************************************************************************************************
+
+
+@SessionsRouter.get("", response_model=HTTPResponse[list[SessionsRead]])
+async def get_all_sessions(
+    filters: SessionsFilters = Depends(),
+    sessions_db: SessionsDB = Depends(get_sessions_db),
+) -> JSONResponse:
+    """
+    Retrieve all sessions.
+    """
+    filters_dict = filters.model_dump(exclude_none=True)
+    return await db_response(sessions_db.get_all, status.HTTP_200_OK, filters_dict)
+
+
+@SessionsRouter.post("", response_model=HTTPResponse[None])
+async def create_session(
+    session_data: SessionsCreate,
+    sessions_db: SessionsDB = Depends(get_sessions_db),
+) -> JSONResponse:
+    """
+    Create and register a new session.
+
+    Args:
+        session_data (SessionsCreate): The data required to start a new session.
+
+    Returns:
+        HTTPResponse: Success or error message. Does not return the created session.
+    """
+    return await db_response(sessions_db.insert_one, status.HTTP_201_CREATED, session_data)

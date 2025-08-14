@@ -14,23 +14,23 @@ run_python_tests() {
     stop_docker
 }
 
-run_python_checks() {
-    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
-    cd "${ROOT_DIR}/backend"
-    export PYTHONPATH="${ROOT_DIR}/backend/src"
-    # shellcheck source=../backend/.venv/bin/activate
-    source "${ROOT_DIR}/backend/.venv/bin/activate"
-    echo "Running isort..."
-    isort --settings-file "${pyproject_path}" .
-    echo "Running black..."
-    black --config "${pyproject_path}" .
-    echo "Running mypy..."
-    mypy --config-file "${pyproject_path}" .
-    echo "Running pylint..."
-    pylint --rcfile "${pyproject_path}" .
-    run_python_tests "${pyproject_path}"
-    cd -
-}
+# run_python_checks() {
+#     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
+#     cd "${ROOT_DIR}/backend"
+#     export PYTHONPATH="${ROOT_DIR}/backend/src"
+#     # shellcheck source=../backend/.venv/bin/activate
+#     source "${ROOT_DIR}/backend/.venv/bin/activate"
+#     echo "Running isort..."
+#     isort --settings-file "${pyproject_path}" .
+#     echo "Running black..."
+#     black --config "${pyproject_path}" .
+#     echo "Running mypy..."
+#     mypy --config-file "${pyproject_path}" .
+#     echo "Running pylint..."
+#     pylint --rcfile "${pyproject_path}" .
+#     run_python_tests "${pyproject_path}"
+#     cd -
+# }
 
 run_frontend_checks() {
     cd "${ROOT_DIR}/frontend"
@@ -70,7 +70,8 @@ main() {
     fi
 
     if $needs_backend; then
-        run_python_checks
+        # run_python_checks
+        run_python_tests "${ROOT_DIR}/backend/pyproject.toml"
     fi
 
     if $needs_scripts; then

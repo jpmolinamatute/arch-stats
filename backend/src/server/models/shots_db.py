@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
@@ -62,3 +64,6 @@ class ShotsDB(DBBase[ShotsCreate, ShotsUpdate, ShotsRead]):
         async with self.db_pool.acquire() as conn:
             await conn.execute(function_sql)
             await conn.execute(trigger_sql)
+
+    async def get_by_session_id(self, session_id: UUID) -> list[ShotsRead]:
+        return await self.get_all({"session_id": session_id})

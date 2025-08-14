@@ -189,7 +189,6 @@
     "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
     "python.testing.unittestEnabled": false,
     "python.analysis.typeEvaluation.deprecateTypingAliases": true,
-    "python.analysis.inlayHints.callArgumentNames": "partial",
     "shellcheck.customArgs": [
         "--shell=bash",
         "--color=never",

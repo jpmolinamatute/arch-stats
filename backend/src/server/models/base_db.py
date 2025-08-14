@@ -275,3 +275,6 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
             )
 
         return [self._convert_row(row) for row in rows]
+
+    async def get_by_session_id(self, session_id: UUID) -> list[READTYPE]:
+        raise NotImplementedError("Error: get_by_session_id method not implemented in child class")

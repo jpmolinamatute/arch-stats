@@ -13,6 +13,8 @@ class SessionsDB(DBBase[SessionsCreate, SessionsUpdate, SessionsRead]):
             start_time TIMESTAMP WITH TIME ZONE NOT NULL,
             location VARCHAR(255) NOT NULL,
             end_time TIMESTAMP WITH TIME ZONE,
+            distance INTEGER DEFAULT 0,
+            is_indoor BOOLEAN DEFAULT FALSE,
             CONSTRAINT open_session_no_end_time CHECK (
                 (is_opened = TRUE AND end_time IS NULL) OR (is_opened = FALSE)
             ),
