@@ -1,5 +1,4 @@
 import logging
-import random
 from uuid import UUID, uuid4
 
 from asyncpg import Pool
@@ -8,8 +7,8 @@ from fastapi.responses import JSONResponse
 
 from server.models import TargetsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import TargetFace, TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
-
+from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
+from shared.factories import create_fake_target
 
 TargetsRouter = APIRouter(prefix="/target")
 
@@ -21,37 +20,13 @@ async def get_targets_db(request: Request) -> TargetsDB:
     return TargetsDB(db_pool)
 
 
-async def create_fake_target(session_id: UUID) -> TargetsCreate:
-    """
-    Generate a valid payload for TargetsCreate.
-    Adjust the fields to match your schema exactly!
-    """
-    max_x = random.uniform(0, 100)
-    max_y = random.uniform(0, 100)
-    n_faces = random.randint(0, 5)
-    list_faces: list[TargetFace] = []
-    for i in range(n_faces):
-        list_faces.append(
-            TargetFace(
-                x=random.uniform(0, max_x),
-                y=random.uniform(0, max_y),
-                radii=[random.uniform(50, 100) for _ in range(5)],
-                points=[random.randint(5, 15) for _ in range(5)],
-                human_identifier=f"a{i+1}",
-            )
-        )
-    data = TargetsCreate(
-        max_x=max_x,
-        max_y=max_y,
-        session_id=session_id,
-        faces=list_faces,
-    )
-    return data
+async def async_wrapper(session_id: UUID) -> TargetsCreate:
+    return create_fake_target(session_id)
 
 
 @TargetsRouter.get("/calibrate")
 async def calibrate_target() -> JSONResponse:
-    return await db_response(create_fake_target, status.HTTP_200_OK, uuid4())
+    return await db_response(async_wrapper, status.HTTP_200_OK, uuid4())
 
 
 # **************************************************************************************************

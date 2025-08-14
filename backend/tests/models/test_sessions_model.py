@@ -6,7 +6,7 @@ from asyncpg import Pool
 
 from server.models import DBNotFound, SessionsDB
 from server.schema import SessionsUpdate
-from tests.factories import create_fake_session
+from shared.factories import create_fake_session
 
 
 @pytest.mark.asyncio
