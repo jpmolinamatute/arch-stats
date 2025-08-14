@@ -11,7 +11,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 
 
-ArrowsRouter = APIRouter()
+ArrowsRouter = APIRouter(prefix="/arrow")
 
 
 async def get_arrows_db(request: Request) -> ArrowsDB:
@@ -21,7 +21,7 @@ async def get_arrows_db(request: Request) -> ArrowsDB:
     return ArrowsDB(db_pool)
 
 
-@ArrowsRouter.get("/arrow/new_arrow_uuid", response_model=HTTPResponse[str])
+@ArrowsRouter.get("/new_arrow_uuid", response_model=HTTPResponse[str])
 async def get_arrow_uuid() -> JSONResponse:
     """
     Generate and return a new unique UUID for use with arrow registration.
@@ -36,19 +36,14 @@ async def get_arrow_uuid() -> JSONResponse:
     )
 
 
-@ArrowsRouter.get("/arrow", response_model=HTTPResponse[list[ArrowsRead]])
-async def get_all_arrows(
-    filters: ArrowsFilters = Depends(),
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> JSONResponse:
-    """
-    Retrieve all arrows.
-    """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters_dict)
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /arrow/{arrow_id}
+# **************************************************************************************************
+# **************************************************************************************************
 
 
-@ArrowsRouter.get("/arrow/{arrow_id}", response_model=HTTPResponse[ArrowsRead])
+@ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[ArrowsRead])
 async def get_arrow(
     arrow_id: UUID,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
@@ -65,24 +60,7 @@ async def get_arrow(
     return await db_response(arrows_db.get_one_by_id, status.HTTP_200_OK, arrow_id)
 
 
-@ArrowsRouter.post("/arrow", response_model=HTTPResponse[UUID])
-async def add_arrow(
-    arrow_data: ArrowsCreate,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
-) -> JSONResponse:
-    """
-    Create and register a new arrow.
-
-    Args:
-        arrow_data (ArrowsCreate): The data for the arrow to be created.
-
-    Returns:
-        HTTPResponse: Success/failure message.
-    """
-    return await db_response(arrows_db.insert_one, status.HTTP_201_CREATED, arrow_data)
-
-
-@ArrowsRouter.delete("/arrow/{arrow_id}", response_model=HTTPResponse[None])
+@ArrowsRouter.delete("/{arrow_id}", response_model=HTTPResponse[None])
 async def delete_arrow(
     arrow_id: UUID,
     arrows_db: ArrowsDB = Depends(get_arrows_db),
@@ -99,7 +77,7 @@ async def delete_arrow(
     return await db_response(arrows_db.delete_one, status.HTTP_204_NO_CONTENT, arrow_id)
 
 
-@ArrowsRouter.patch("/arrow/{arrow_id}", response_model=HTTPResponse[None])
+@ArrowsRouter.patch("/{arrow_id}", response_model=HTTPResponse[None])
 async def patch_arrow(
     arrow_id: UUID,
     update: ArrowsUpdate,
@@ -116,3 +94,39 @@ async def patch_arrow(
         HTTPResponse: Success/failure message.
     """
     return await db_response(arrows_db.update_one, status.HTTP_202_ACCEPTED, arrow_id, update)
+
+
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /arrow
+# **************************************************************************************************
+# **************************************************************************************************
+
+
+@ArrowsRouter.get("", response_model=HTTPResponse[list[ArrowsRead]])
+async def get_all_arrows(
+    filters: ArrowsFilters = Depends(),
+    arrows_db: ArrowsDB = Depends(get_arrows_db),
+) -> JSONResponse:
+    """
+    Retrieve all arrows.
+    """
+    filters_dict = filters.model_dump(exclude_none=True)
+    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters_dict)
+
+
+@ArrowsRouter.post("", response_model=HTTPResponse[UUID])
+async def add_arrow(
+    arrow_data: ArrowsCreate,
+    arrows_db: ArrowsDB = Depends(get_arrows_db),
+) -> JSONResponse:
+    """
+    Create and register a new arrow.
+
+    Args:
+        arrow_data (ArrowsCreate): The data for the arrow to be created.
+
+    Returns:
+        HTTPResponse: Success/failure message.
+    """
+    return await db_response(arrows_db.insert_one, status.HTTP_201_CREATED, arrow_data)

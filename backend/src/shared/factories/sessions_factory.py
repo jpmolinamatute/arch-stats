@@ -17,6 +17,8 @@ def create_fake_session(**overrides: Any) -> SessionsCreate:
         is_opened=True,
         start_time=datetime.now(timezone.utc),
         location="Test Range",
+        is_indoor=False,
+        distance=18,
     )
     return data.model_copy(update=overrides)
 

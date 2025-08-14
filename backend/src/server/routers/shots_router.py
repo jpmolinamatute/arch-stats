@@ -10,7 +10,7 @@ from server.routers.utils import HTTPResponse, db_response
 from server.schema import ShotsFilters, ShotsRead
 
 
-ShotsRouter = APIRouter()
+ShotsRouter = APIRouter(prefix="/shot")
 
 
 async def get_shots_db(request: Request) -> ShotsDB:
@@ -20,19 +20,23 @@ async def get_shots_db(request: Request) -> ShotsDB:
     return ShotsDB(db_pool)
 
 
-@ShotsRouter.get("/shot", response_model=HTTPResponse[list[ShotsRead]])
-async def get_all_shots(
-    filters: ShotsFilters = Depends(),
+@ShotsRouter.get("/session-id/{session_id}")
+async def get_all_shots_sessionid(
+    session_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
 ) -> JSONResponse:
-    """
-    Retrieve all shots.
-    """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(shots_db.get_all, status.HTTP_200_OK, filters_dict)
+
+    return await db_response(shots_db.get_by_session_id, status.HTTP_200_OK, session_id)
 
 
-@ShotsRouter.get("/shot/{shot_id}", response_model=HTTPResponse[ShotsRead])
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /shot/{shot_id}
+# **************************************************************************************************
+# **************************************************************************************************
+
+
+@ShotsRouter.get("/{shot_id}", response_model=HTTPResponse[ShotsRead])
 async def get_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -40,7 +44,7 @@ async def get_shot(
     return await db_response(shots_db.get_one_by_id, status.HTTP_200_OK, shot_id)
 
 
-@ShotsRouter.delete("/shot/{shot_id}", response_model=HTTPResponse[None])
+@ShotsRouter.delete("/{shot_id}", response_model=HTTPResponse[None])
 async def delete_shot(
     shot_id: UUID,
     shots_db: ShotsDB = Depends(get_shots_db),
@@ -55,3 +59,22 @@ async def delete_shot(
         HTTPResponse: Success or error message.
     """
     return await db_response(shots_db.delete_one, status.HTTP_204_NO_CONTENT, shot_id)
+
+
+# **************************************************************************************************
+# **************************************************************************************************
+# Path: /shot
+# **************************************************************************************************
+# **************************************************************************************************
+
+
+@ShotsRouter.get("", response_model=HTTPResponse[list[ShotsRead]])
+async def get_all_shots(
+    filters: ShotsFilters = Depends(),
+    shots_db: ShotsDB = Depends(get_shots_db),
+) -> JSONResponse:
+    """
+    Retrieve all shots.
+    """
+    filters_dict = filters.model_dump(exclude_none=True)
+    return await db_response(shots_db.get_all, status.HTTP_200_OK, filters_dict)

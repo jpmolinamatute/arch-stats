@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from asyncpg import Pool
 
 from server.models.base_db import DBBase
@@ -98,3 +100,6 @@ class TargetsDB(DBBase[TargetsCreate, TargetsUpdate, TargetsRead]):
 
         """
         )
+
+    async def get_by_session_id(self, session_id: UUID) -> list[TargetsRead]:
+        return await self.get_all({"session_id": session_id})

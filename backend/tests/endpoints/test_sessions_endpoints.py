@@ -6,7 +6,7 @@ import pytest
 from asyncpg import Pool
 from httpx import AsyncClient
 
-from tests.factories import create_fake_session, create_many_sessions
+from shared.factories import create_fake_session, create_many_sessions
 
 
 SESSIONS_ENDPOINT = "/api/v0/session"
@@ -157,3 +157,12 @@ async def test_sessions_filter_no_match(async_client: AsyncClient) -> None:
     resp = await async_client.get(f"{SESSIONS_ENDPOINT}?location=DoesNotExist")
     assert resp.status_code == 200
     assert resp.json()["data"] == []
+
+
+@pytest.mark.asyncio
+async def test_get_sessions_empty(async_client: AsyncClient) -> None:
+    resp = await async_client.get("/api/v0/session")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert isinstance(data, list)
+    assert data == []

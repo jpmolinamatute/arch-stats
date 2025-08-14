@@ -4,7 +4,7 @@ import pytest
 from asyncpg import Pool
 
 from server.models import DBNotFound, TargetsDB
-from tests.factories import create_fake_target, create_many_sessions
+from shared.factories import create_fake_target, create_many_sessions
 
 
 @pytest.mark.asyncio
