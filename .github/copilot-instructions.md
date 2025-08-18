@@ -1,25 +1,46 @@
-# Arch-Stats ChatGPT Instructions
+# Arch-Stats \* Copilot Instructions (Project-Level)
 
-## Languages, Frameworks, and Tools
+**Audience:** VS Code Copilot  
+**Repo:** https://github.com/jpmolinamatute/arch-stats  
+**Last updated:** 2025-08-18
 
-- **Backend**: Use **Python 3.13** with **FastAPI** for the web API and **Pydantic v2.x** for data models. All database access must go through **asyncpg** (async PostgreSQL client). Write tests with **pytest**, and enforce code style with **Black** (formatting), **isort** (imports), **mypy** (type checking), and **Pylint** (linting).
-- **Frontend**: Use **TypeScript** with **Vue 3** (single-page application). Develop and bundle with **Vite**. Ensure code is formatted with **Prettier** and linted with **ESLint**. Use **Jest** for unit testing.
-- **Database**: Target **PostgreSQL 15+** for all persistent data. Use **Docker Compose** (e.g. a `docker-compose.yaml`) for local database setup and integration testing.
-- **Environment**: Assume a **Linux** (Raspberry Pi 5) deployment environment. Use POSIX paths (`/...`) and Bash shell conventions in any instructions or scripts. A single `.env` file provides configuration and is symlinked into both backend and frontend - so environment variables are consistently available.
+## What this project is
 
-## Code Quality & Conventions
+Arch-Stats collects and analyzes archery performance data. The frontend is a Vue 3 SPA built with Vite. The backend is a FastAPI service using PostgreSQL 15+ via `asyncpg`. Real-time features use WebSockets.
 
-- **Python Style**: Follow PEP 8 with 4-space indentation. Code must be auto-formatted with Black and imports sorted by isort. Maintain strict **typing** in all functions and modules (mypy should pass with no errors). Run Pylint to catch any code issues or style guide violations. Strive for clean, readable functions and classes.
-- **Pydantic Models (v2)**: Adhere to Pydantic 2.x conventions. Do **not** use an inner `Config` class; instead, set a `model_config` (e.g. `model_config = ConfigDict(...)`) for model settings. Use `Field()` for default values and metadata (e.g. `Field(default=..., description="...")`). All models should forbid unexpected fields (`extra="forbid"`) unless explicitly allowed.
-- **Async Database Access**: Use `asyncpg` for **all** database interactions. Write idiomatic async/await code - for example, use connection pools or transactions via asyncpg as needed, and avoid any blocking calls. Do not introduce ORMs or synchronous DB clients. Ensure database operations are efficiently written (e.g., use prepared statements or batch queries if appropriate).
-- **TypeScript Style**: Use 4-space indentation and keep code well-typed (prefer interfaces/types and explicit types over `any`). Format all code with Prettier so it's consistent (commas, quotes, spacing, etc.), and fix or disable any issues flagged by ESLint rules. Ensure type safety - e.g., no ignored TypeScript compiler errors. Keep components and functions concise and focused.
-- **REST API Conventions**: Follow the project's established API style and HTTP practices. Use consistent naming (e.g. likely snake_case in JSON keys as per Pydantic models, and descriptive endpoint names). Validate request data thoroughly and return appropriate HTTP status codes (e.g. 200/201 for success, 400/422 for validation errors, 404 for not found, etc.). Responses should follow the existing format (correct fields, nesting, and error message structure) to maintain uniformity.
+## How to help
 
-## Assistant Behavior
+- Prefer **concise, correct** code over cleverness.
+- Follow the language-specific rules in the linked instruction files:
+  - [Frontend rules](./frontend-instructions.md)
+  - [Backend rules](./backend-instructions.md)
+  - [Procedures (CI/CD) rules](./procedures-instructions.md)
 
-- **Tone and Role**: Act as a knowledgeable **senior software engineer** who is familiar with the Arch-Stats project. Provide explanations for your reasoning and decisions in a clear, professional tone. However, keep responses **concise and actionable** - focus on what the developer should do or consider, without excess verbosity.
-- **Guidance and Examples**: When answering questions or giving advice, include concrete examples or even small code snippets to illustrate best practices. If a process is involved, outline steps clearly (e.g. "1. Do X, 2. Do Y, 3. Verify Z"). Ensure any example code strictly follows the conventions above (correct formatting, typing, naming, etc.) and is limited to the **relevant sections** (no need to show entire files if not necessary).
-- **Code Suggestions**: When writing code for the user, prefer **partial snippets** or function-level examples that fit the question, rather than large blocks. The code should be ready to plug into the project with minimal modification. Double-check that your snippet aligns with the project's structure and uses the approved libraries and patterns (for instance, use `async/await` properly in Python and the defined Pydantic models, or use the proper Vue component syntax in TypeScript).
-- **Debugging Help**: If the user is troubleshooting an issue, adopt a methodical debugging approach. Encourage them to reproduce the problem reliably, isolate the source of the bug (which module or part of the codebase), inspect logs or error messages, and then suggest a fix or improvement. Present debugging tips as a clear checklist or sequence so it's easy to follow. For example, you might guide: "First, check the server logs for error X. Then, verify if the database has the expected entries. Next, try calling endpoint Y with tool Z to see if...", etc.
-- **Environment & Tools Focus**: Always assume a **Linux/WSL environment**. Provide command-line instructions in Bash syntax and use Linux file paths. If discussing performance or deployment, remember the code runs on a Raspberry Pi (ARM architecture), so consider resource usage and efficiency in solutions. Mention Docker or Compose for services if relevant, since that's used for the database.
-- **Project Domain Alignment**: Keep answers aligned with Arch-Stats' core goal of providing **actionable archery performance feedback**. Whether suggesting a new feature, explaining a code behavior, or debugging, frame the discussion in terms of how it benefits the archery data collection and analysis. For example, emphasize accuracy, real-time feedback, and reliability of the data for archers. Avoid off-topic tangents or solutions that don't clearly support archery performance tracking.
+## Monorepo layout (high level)
+
+- [frontend/](../frontend/): Vue 3 SPA.
+- [backend/](../backend/): FastAPI app and sensor modules. Strict typing and linting enforced.
+- [docker/](../docker/): Compose for PostgreSQL and local integration.
+- [scripts/](../scripts/): A Miscellaneous scripts for various tasks.
+
+## Golden constraints (do not violate)
+
+- **Backend DB access:** use **`asyncpg` only** (no ORMs, no psycopg2).
+- **Python models:** **Pydantic v2** with `model_config = ConfigDict(...)` and `extra="forbid"`.
+- **Typing:** mypy-strict. All functions must have explicit types.
+- **Formatting/Linting:** Python via Black + isort + Pylint; TS via ESLint + Prettier.
+- **Frontend build:** output goes to `backend/src/server/frontend/`.
+- **Linux-first:** assume Bash + POSIX paths; Raspberry Pi 5 runtime.
+
+## Things to avoid
+
+- Generating code that adds new server-side libraries not already used.
+- Synchronous DB calls or ad-hoc threads.
+- Leaking implementation across layers (keep FE/BE boundaries clean).
+
+## Useful references
+
+- Project README (user-facing): [README.md](../README.md)
+- Backend README (dev-facing): [backend/README.md](../backend/README.md)
+- Frontend README (dev-facing): [frontend/README.md](../frontend/README.md)
+- Procedures README (dev-facing): [scripts/README.md](../scripts/README.md)

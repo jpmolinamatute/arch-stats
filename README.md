@@ -13,7 +13,7 @@
 
 ## How It Works
 
-Arch Stats combines a friendly web application with electronic sensors on your equipment to seamlessly record data with minimal effort from you. The system runs on a small computer (such as a Raspberry Pi) connected to three types of sensors:
+Arch Stats combines a friendly web application with electronic sensors on your equipment to seamlessly record data with minimal effort from you. The system runs on a small computer (such as a Raspberry Pi 5) connected to three types of sensors:
 
 * An **Arrow Reader** to assign a unique ID to each arrow (so the system knows exactly which arrow you just shot).
 * A **Bow sensor** to detect when you draw and release an arrow.
