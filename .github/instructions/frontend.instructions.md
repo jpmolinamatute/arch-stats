@@ -1,4 +1,4 @@
-# Copilot Instructions \* Frontend (Vue 3 + TypeScript)
+# Frontend instructions
 
 **Audience:** JavaScript/TypeScript developers working in [frontend/](../../frontend/)
 
@@ -53,13 +53,6 @@ applyTo: "**/*.ts,**/*.vue"
 - Add heavy libraries without strong justification.
 - Embed backend assumptions in UI components.
 
-## Commands
-
-- Dev: `npm run dev`
-- Lint: `npm run lint`
-- Format: `npm run format`
-- Build: `npm run build` (emits to [backend/src/server/frontend/](../../backend/src/server/frontend/))
-
-## Pointers
+## References
 
 - See [frontend/README.md](../../frontend/README.md) for structure and VS Code tasks.

@@ -1,10 +1,10 @@
-# Copilot Instructions \* Backend (FastAPI + Python 3.13)
+# Backend instructions
 
 **Audience:** Python developers working in [backend/](../../backend/)
 
 ---
-
-## applyTo: "\*_/_.py"
+applyTo: "**/*.py"
+---
 
 ## Tech stack
 
@@ -41,9 +41,9 @@
 - For HTTP, use `httpx.AsyncClient` against the FastAPI app factory.
 - Seed/factories for test data accepted; ensure determinism.
 
-## Feature Integration Checklist
+## Server feature Integration Checklist
 
-When adding or updating backend features, ensure changes are consistent across routers, schemas, models, and tests.
+When adding or updating a server features, ensure changes are consistent across routers, schemas, models, and tests.
 
 ### Routers (`backend/src/server/routers/`)
 
