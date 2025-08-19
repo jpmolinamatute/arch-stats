@@ -35,7 +35,7 @@ This installs Vue, Vite, Tailwind, and other dependencies.
 
 ### 2. API Types
 
-In order to generate API types from FastAPI’s OpenAPI spec, the backend must be running:
+In order to generate API types from FastAPI's OpenAPI spec, the backend must be running:
 
 ```bash
 cd frontend

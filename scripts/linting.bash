@@ -21,13 +21,13 @@ run_python_checks() {
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
     echo "Running isort..."
-    isort --settings-file "${pyproject_path}" .
+    isort --settings-file "${pyproject_path}" ./src ./tests
     echo "Running black..."
-    black --config "${pyproject_path}" .
+    black --config "${pyproject_path}" ./src ./tests
     echo "Running mypy..."
-    mypy --config-file "${pyproject_path}" .
+    mypy --config-file "${pyproject_path}" ./src ./tests
     echo "Running pylint..."
-    pylint --rcfile "${pyproject_path}" .
+    pylint --rcfile "${pyproject_path}" ./src ./tests
     run_python_tests "${pyproject_path}"
     cd -
 }

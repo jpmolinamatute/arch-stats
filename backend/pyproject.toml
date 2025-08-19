@@ -74,9 +74,9 @@ testpaths = "./tests"
 pythonpath = "./src"
 
 [tool.pylint.main]
-# Analyse import fallback blocks. This can be used to support both Python 2 and 3
+# Analyze import fallback blocks. This can be used to support both Python 2 and 3
 # compatible code, which means that the block might have code that exists only in
-# one or another interpreter, leading to false positives when analysed.
+# one or another interpreter, leading to false positives when analyses.
 # analyse-fallback-blocks =
 
 # Clear in-memory caches upon conclusion of linting. Useful if running pylint in
