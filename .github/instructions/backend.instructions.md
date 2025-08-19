@@ -3,8 +3,8 @@
 **Audience:** Python developers working in [backend/](../../backend/)
 
 ---
-applyTo: "**/*.py"
----
+
+## applyTo: "\*_/_.py"
 
 ## Tech stack
 
@@ -19,7 +19,7 @@ applyTo: "**/*.py"
 
 ## Coding standards
 
-- [Follow Google's Python Guide Line](./google_standars.md)
+- [Follow Google's Python Guide Line](./google_standards.md)
 - Every function and module must be **fully typed**; `mypy` should pass with no ignores.
 - prefer Pydantic models for I/O boundaries over dataclasses.
 - Pydantic v2 config via `model_config = ConfigDict(...)`; no inner `Config` class.
