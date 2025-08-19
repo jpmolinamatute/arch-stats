@@ -41,12 +41,47 @@ applyTo: "**/*.py"
 - For HTTP, use `httpx.AsyncClient` against the FastAPI app factory.
 - Seed/factories for test data accepted; ensure determinism.
 
-## Commands (examples)
+## Feature Integration Checklist
 
-- Format: `black --config ./pyproject.toml ./src && isort --settings-file ./pyproject.toml ./src`
-- Type-check: `mypy --config-file ./pyproject.toml ./src`
-- Lint: `pylint --rcfile ./pyproject.toml ./src`
-- Tests: `pytest -v`
+When adding or updating backend features, ensure changes are consistent across routers, schemas, models, and tests.
+
+### Routers (`backend/src/server/routers/`)
+
+- Keep **endpoint code minimal**: no business logic in routes, only orchestration.
+- Use dependency-injected services and async DB helpers.
+- Follow REST naming and status code patterns used elsewhere.
+- Document inputs/outputs with Pydantic models.
+
+### Schemas (`backend/src/server/schema/`)
+
+- All request/response bodies must use **Pydantic v2 models**.
+- `extra="forbid"` and strict typing for all fields.
+- Use `Field(...)` for defaults, constraints, and descriptions.
+- Version schemas when changing existing contracts.
+
+### Models (`backend/src/server/models/`)
+
+- Add or modify DB table fields with clear migrations.
+- Use only `asyncpg` queries; parameterized, never interpolated SQL.
+- Update helper functions or query builders when schema changes.
+- Keep models dumb: only describe fields and queries, not business rules.
+
+### Tests (`backend/tests/{endpoints,models}/`)
+
+- For each new/updated route: add tests under `tests/endpoints/`.
+- For each new/updated model: add tests under `tests/models/`.
+- Cover both success and failure paths (e.g. invalid payloads, DB errors).
+- Use factories or seed data to keep tests deterministic.
+- Use `httpx.AsyncClient` for HTTP tests, transaction rollbacks for DB tests.
+
+**Rule of thumb:** any new endpoint must have:
+
+1. Minimal router code
+2. Schema(s) for validation
+3. Matching model/queries
+4. Unit and integration tests
+
+Failing to check one of these boxes = incomplete feature.
 
 ## References
 
