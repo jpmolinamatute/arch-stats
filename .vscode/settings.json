@@ -22,6 +22,7 @@
         "ASGI",
         "asyncio",
         "autouse",
+        "backpressure",
         "booleaness",
         "bpython",
         "chrono",
@@ -74,6 +75,7 @@
         "sessionspage",
         "setuptools",
         "shotspage",
+        "standars",
         "targetspage",
         "testarrow",
         "testdb",
@@ -169,6 +171,7 @@
         "source.fixAll": "explicit",
         "source.fixAll.eslint": "explicit"
     },
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "isort.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -274,5 +277,6 @@
     "[yaml]": {
         "editor.defaultFormatter": "redhat.vscode-yaml",
         "editor.tabSize": 2
-    }
+    },
+    "github.copilot.chat.scopeSelection": true
 }

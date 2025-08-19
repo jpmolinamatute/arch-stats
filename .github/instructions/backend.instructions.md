@@ -1,6 +1,10 @@
-# Copilot Instructions * Backend (FastAPI + Python 3.13)
+# Copilot Instructions \* Backend (FastAPI + Python 3.13)
 
-**Audience:** Python developers working in [backend/](../backend/)
+**Audience:** Python developers working in [backend/](../../backend/)
+
+---
+applyTo: "**/*.py"
+---
 
 ## Tech stack
 
@@ -46,4 +50,4 @@
 
 ## References
 
-- See [backend/README.md](../backend/README.md) for setup, structure, and VS Code tasks.
+- See [backend/README.md](../../backend/README.md) for setup, structure, and VS Code tasks.

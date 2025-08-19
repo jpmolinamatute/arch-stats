@@ -1,6 +1,10 @@
-# Copilot Instructions * Frontend (Vue 3 + TypeScript)
+# Copilot Instructions \* Frontend (Vue 3 + TypeScript)
 
-**Audience:** JavaScript/TypeScript developers working in `frontend/`
+**Audience:** JavaScript/TypeScript developers working in [frontend/](../../frontend/)
+
+---
+applyTo: "**/*.ts,**/*.vue"
+---
 
 ## Tech stack
 
@@ -9,7 +13,7 @@
 - **Build/Dev:** Vite
 - **Styling:** Tailwind CSS (dark mode only for now)
 - **Quality:** ESLint + Prettier
-- **Types from API:** generated via `npm run generate:types` -> `src/types/types.generated.ts`
+- **Types from API:** generated via `npm run generate:types` -> [frontend/src/types/types.generated.ts](../../frontend/src/types/types.generated.ts)
 - **Runtime:** SPA at `http://localhost:5173`, proxied to backend at `http://localhost:8000/api/v0`
 
 ## Coding standards
@@ -18,16 +22,16 @@
 - Keep components focused; prefer smaller components over large ones.
 - **No implicit `any`**; define interfaces/types for props, emits, and API payloads.
 - Re-use **generated API types** instead of redefining shapes.
-- Centralize state in `src/state/` or small composables in `src/composables/`.
+- Centralize state in [frontend/src/state/](../../frontend/src/state/) or small composables in [frontend/src/composables/](../../frontend/src/composables/).
 - Prefer **fetch wrappers/clients** that return typed results rather than sprinkling raw `fetch` calls.
 - Tailwind utility classes over ad-hoc CSS; avoid inline styles when possible.
 
 ## File/Folder conventions
 
-- Components: `PascalCase.vue` in `src/components/` (nest form components under `components/forms/`).
-- Composables: `useThing.ts` in `src/composables/`.
-- State: Pinia-like stores or simple modules in `src/state/`.
-- Types: **import from** `src/types/types.generated.ts` for API schemas.
+- Components: `PascalCase.vue` in frontend/src/components/ (nest form components under [frontend/src/components/forms/](../../frontend/src/components/forms/)).
+- Composables: `useThing.ts` in frontend/src/composables/.
+- State: Pinia-like stores or simple modules in [frontend/src/state/](../../frontend/src/state/).
+- Types: **import from** [frontend/src/types/types.generated.ts](../../frontend/src/types/types.generated.ts) for API schemas.
 
 ## Performance & DX
 
@@ -45,7 +49,7 @@
 
 ### Don't
 
-- Commit `src/types/types.generated.ts` (it's generated; ensure `.gitignore`).
+- Commit [frontend/src/types/types.generated.ts](../../frontend/src/types/types.generated.ts) (it's generated; ensure `.gitignore`).
 - Add heavy libraries without strong justification.
 - Embed backend assumptions in UI components.
 
@@ -54,8 +58,8 @@
 - Dev: `npm run dev`
 - Lint: `npm run lint`
 - Format: `npm run format`
-- Build: `npm run build` (emits to `../backend/src/server/frontend/`)
+- Build: `npm run build` (emits to [backend/src/server/frontend/](../../backend/src/server/frontend/))
 
 ## Pointers
 
-- See `frontend/README.md` for structure and VS Code tasks.
+- See [frontend/README.md](../../frontend/README.md) for structure and VS Code tasks.
