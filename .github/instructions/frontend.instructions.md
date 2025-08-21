@@ -26,6 +26,14 @@ applyTo: "**/*.ts,**/*.vue"
 - Prefer **fetch wrappers/clients** that return typed results rather than sprinkling raw `fetch` calls.
 - Tailwind utility classes over ad-hoc CSS; avoid inline styles when possible.
 
+### API Type Regeneration Workflow
+
+Any backend schema or endpoint change (new field, rename, path) requires regenerating types:
+1. Ensure backend dev server is running.
+2. Run `npm run generate:types`.
+3. Rebuild / restart Vite if types changed.
+4. NEVER commit `types.generated.ts` (ignored). Document in PR: "API types regenerated locally".
+
 ## File/Folder conventions
 
 - Components: `PascalCase.vue` in frontend/src/components/ (nest form components under [frontend/src/components/forms/](../../frontend/src/components/forms/)).
@@ -38,6 +46,23 @@ applyTo: "**/*.ts,**/*.vue"
 - Keep render trees shallow; memoize derived state using Vue's computed properties.
 - Avoid reactivity leaks (do not spread reactive objects into plain objects).
 - For WebSockets, encapsulate connection logic in a composable (e.g., `useSession.ts`) and expose a small typed API.
+- Debounce user input that triggers network calls (≥150ms) to reduce chatter.
+- Prefer `AbortController` to cancel in-flight fetches when switching views.
+- Avoid large reactive objects in global state; store primitives/flat structures.
+
+### WebSocket Envelope (Future)
+
+When adding WS support, standardize frames as JSON with minimal envelope:
+
+```json
+{
+	"type": "shot.created", // event name
+	"ts": "2025-08-20T12:34:56.789Z",
+	"data": { /* domain payload */ }
+}
+```
+
+Client silently ignores unknown `type` values; heartbeat frames (`type=heartbeat`) update connection freshness only.
 
 ## Do / Don't
 
@@ -52,7 +77,10 @@ applyTo: "**/*.ts,**/*.vue"
 - Commit [frontend/src/types/types.generated.ts](../../frontend/src/types/types.generated.ts) (it's generated; ensure `.gitignore`).
 - Add heavy libraries without strong justification.
 - Embed backend assumptions in UI components.
+- Directly manipulate DOM outside Vue unless using a properly isolated directive.
 
 ## References
 
 - See [frontend/README.md](../../frontend/README.md) for structure and VS Code tasks.
+ - Architecture & cross-cutting rules: `.github/copilot-instructions.md`.
+ - For consistent endpoint usage patterns see existing composables (`useSession.ts`, `useTarget.ts`).

@@ -1,157 +1,216 @@
 # Arch-Stats Backend
 
-Welcome to the Arch-Stats backend! This guide will help you get up and running quickly, especially if you're new to the project or backend development.
+> This directory contains all Python runtime modules that power Arch-Stats: the API surface and the sensor simulation processes. This README gives a unified, high level onboarding view. For project vision see [../README.md](../README.md); for coding rules see [.github/instructions/backend.instructions.md](../.github/instructions/backend.instructions.md).
 
-## What This Backend Does
+## Table of Contents
 
-Arch-Stats collects and manages archery performance data using Python 3.13. It's made up of:
+- [Arch-Stats Backend](#arch-stats-backend)
+  - [Table of Contents](#table-of-contents)
+  - [TL;DR Quick Start](#tldr-quick-start)
+  - [Architecture](#architecture)
+  - [What You'll Need](#what-youll-need)
+  - [Setup: Step-by-Step](#setup-step-by-step)
+    - [1. Install Dependencies](#1-install-dependencies)
+    - [2. Activate Venv](#2-activate-venv)
+    - [3. Start PostgreSQL](#3-start-postgresql)
+    - [4. Seed / Simulate (optional)](#4-seed--simulate-optional)
+  - [Running Processes](#running-processes)
+  - [Project Structure](#project-structure)
+  - [Managing dependencies](#managing-dependencies)
+    - [Add new dependency](#add-new-dependency)
+    - [Update all dependencies](#update-all-dependencies)
+    - [Update a dependency](#update-a-dependency)
+    - [Remove a dependency](#remove-a-dependency)
+  - [Quality: Lint, Type, Test](#quality-lint-type-test)
+  - [Testing Details](#testing-details)
+  - [Troubleshooting](#troubleshooting)
+  - [Contribution \& Change Checklist](#contribution--change-checklist)
 
-* A **[FastAPI](https://fastapi.tiangolo.com/) [server](./src/server/)** that handles API requests and coordinates data.
-* Three **sensor modules**:
-  * **[Arrow Reader](./src/arrow_reader/)** - assigns unique IDs to arrows.
-  * **[Bow Reader](./src/bow_reader/)** - logs when arrows are drawn/released.
-  * **[Target Reader](./src/target_reader/)** - logs arrow impact location/time.
+## TL;DR Quick Start
 
-These 4 modules don't talk to each other directly. Instead, they all write to a **[PostgreSQL](https://www.postgresql.org/docs/) database** and use **[NOTIFY](https://www.postgresql.org/docs/current/sql-notify.html)/[LISTEN](https://www.postgresql.org/docs/current/sql-listen.html)** events to communicate. This decoupled setup makes everything modular and easy to test separately.
+```bash
+cd backend
+uv sync --dev --python $(cat ./.python-version)
+source .venv/bin/activate
+docker compose -f docker/docker-compose.yaml up -d
+./scripts/start_uvicorn.bash          # or VS Code task
+./scripts/start_archy_bot.bash        # optional simulated shots
+pytest -q
+```
+
+## Architecture
+
+All Python runtime modules communicate *only* through PostgreSQL (tables + `LISTEN/NOTIFY`). There are **no direct cross imports** between runtime modules; this preserves loose coupling and makes individual processes restartable and testable in isolation.
+
+Canonical data flow:
+
+```text
+producer module (e.g. sensor simulator) -> parameterized INSERT/UPDATE -> PostgreSQL NOTIFY -> (optional real-time consumer) -> frontend
+```
+
+Design constraints (enforced in review):
+
+- Database access: `asyncpg` only (no ORM, no psycopg2, no synchronous DB calls).
+- Pydantic v2 models with `extra="forbid"` at I/O boundaries.
+- Strict typing + mypy clean (avoid unnecessary `Any`).
+- SQL is explicit & parameterized (no string interpolation of values).
+- No global mutable state shared across modules; configuration via environment.
 
 ## What You'll Need
 
-Before you start, make sure you have:
-
-* **uv** - Required. Used for managing both the virtual environment and dependencies. Install it from [uv docs](https://docs.astral.sh/uv).
-* **Python 3.13+** - You must have Python 3.13 installed. We recommend installing it via `uv`.
-* **Docker and Docker Compose** - Required to run PostgreSQL.
-* **Linux Environment** - Native Linux or WSL recommended. (macOS/Windows may need extra setup.)
-* **VS Code (optional)** - Project includes helpful workspace settings and tasks.
+- **uv** (environment + dependency manager)
+- **Python 3.13** (see [.python-version](./.python-version))
+- **Docker / Docker Compose**
+- **Linux** (native or WSL)
+- Optional: VS Code tasks (see [.vscode/](../.vscode/))
 
 ## Setup: Step-by-Step
 
-### 1.  Install Dependencies
+### 1. Install Dependencies
 
 ```bash
-cd arch-stats/backend
+cd backend
 uv sync --dev --python $(cat ./.python-version)
 ```
 
-This creates a `.venv` and installs everything listed in [pyproject.toml](./pyproject.toml).
-
-### 2. Activate Your Environment
+### 2. Activate Venv
 
 ```bash
 source .venv/bin/activate
+python --version  # expect 3.13.x
 ```
 
-Check Python version:
+### 3. Start PostgreSQL
 
 ```bash
-python --version  # should be +3.13
+docker compose -f docker/docker-compose.yaml up -d
+# Stop: docker compose -f docker/docker-compose.yaml down
 ```
 
-### 3. Start PostgreSQL (via Docker Compose)
+### 4. Seed / Simulate (optional)
 
-Option 1: Using VS Code Tasks:
+Run sensor bots after DB is up (see [scripts/](../scripts/)).
 
-* Shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then type and select `Tasks: Run Task`
-* Choose **Start Docker Compose** to launch the database
-* Choose **Stop Docker Compose** to shut it down when you're done
+## Running Processes
 
-Option 2: From the terminal:
-
-```bash
-docker compose -f ./docker/docker-compose.yaml up
-```
-
-To stop:
-
-```bash
-docker compose -f ./docker/docker-compose.yaml down
-```
-
-### 4. Run the Dev Server & Bots
-
-#### Run FastAPI Server
-
-Option 1: Manually
-
-```bash
-cd backend/src
-source ../.venv/bin/activate
-uvicorn --loop uvloop --lifespan on --reload --ws websockets --http h11 --use-colors --log-level debug --timeout-graceful-shutdown 10 --factory --limit-concurrency 10 server.app:run
-```
-
-Option 2: Using VS Code Task
-
-* Shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then select `Tasks: Run Task`
-* Choose **Start Uvicorn Dev Server**
-
-#### Run Archy Bot (simulated target reader)
-
-Option 1: Manually
-
-```bash
-cd backend/src
-source ../.venv/bin/activate
-./target_reader/archy.py
-```
-
-Option 2: Using VS Code Task
-
-* Shortcut: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then select `Tasks: Run Task`
-* Choose **Start Archy bot**
-
-Once running:
-
-* API available at <http://localhost:8000>
-* WebSocket stream updates in real-time from Archy
+Runtime programs are started via helper scripts in `scripts/` (see file headers for usage) or via editor tasks. All processes share the same virtual environment and database. Start PostgreSQL before launching any process.
 
 ## Project Structure
 
 ```text
 backend/
-├── pyproject.toml     # central config
+├── pyproject.toml
+├── scripts/                 # automation (linting, start, etc.)
+├── docker/                  # docker-compose + configs
 ├── src/
-│   ├── server/        # FastAPI server
-│   ├── arrow_reader/  # arrow module
-│   ├── bow_reader/    # bow module
-│   ├── target_reader/ # target module
-│   └── shared/        # utilities shared across modules
-└── tests/             # all tests
+│   ├── server/              # FastAPI app + routers + db pool
+│   ├── arrow_reader/        # arrow simulator
+│   ├── bow_reader/          # bow simulator
+│   ├── target_reader/       # target simulator
+│   └── shared/              # shared utilities (lightweight)
+└── tests/                   # pytest suites (models + endpoints)
 ```
 
-## Linting, Formatting & Testing
+## Managing dependencies
 
-Use these tools to keep the codebase clean and reliable:
+The backend uses [UV](https://docs.astral.sh/uv/), [pyproject.toml](./pyproject.toml) and [uv.lock](./uv.lock) to manage dependencies
 
-| Tool                                                      | Purpose                | Run It With                                    |
-| --------------------------------------------------------- | ---------------------- | ---------------------------------------------- |
-| [black](https://black.readthedocs.io/en/stable/)          | Code formatter         | `black --config ./pyproject.toml ./src`        |
-| [isort](https://pycqa.github.io/isort/)                   | Sorts imports          | `isort --settings-file ./pyproject.toml ./src` |
-| [mypy](https://mypy.readthedocs.io/en/stable/)            | Type checking (strict) | `mypy --config-file ./pyproject.toml ./src`    |
-| [pylint](https://pylint.readthedocs.io/en/stable/)        | Linting for bugs/style | `pylint --rcfile ./pyproject.toml ./src`       |
-| [pytest](https://docs.pytest.org/en/stable/contents.html) | Runs all tests         | `pytest -v`                                    |
-
-To run everything at once:
+### Add new dependency
 
 ```bash
-./scripts/linting.sh
+uv add <package>
+uv sync
 ```
 
-> Linting and Auto-formatting are enabled if you use VS Code with [.vscode/settings.json](../.vscode/settings.json)
+### Update all dependencies
 
-## How Testing Works
+Update every dependency in the project (within existing version constraints) to the newest compatible versions and refresh the virtual environment:
 
-* Tests live in [backend/tests/](./tests/)
-* We use [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/) to test `async def` code.
-* Tests connect to the same PostgreSQL DB (launched by Docker Compose).
-* FastAPI is tested using in-memory HTTP requests via `httpx.AsyncClient`
-* You can use `faker` to generate dummy data if needed.
+```bash
+# Re-resolve all versions to latest allowed & update lock file
+uv lock --upgrade
 
-> **Pro Tip:** Make sure Docker (and the DB) is running before launching tests.
+# Apply the new lock to the virtual environment
+uv sync
+```
 
-## You're Ready
+### Update a dependency
 
-Once you've completed the setup and verified the backend is running:
+Upgrade a single package (and its transitive dependencies) without touching the rest:
 
-* Visit <http://localhost:8000/api/swagger> to view the live API docs.
-* Open the WebUI to see real-time shot data.
-* Hack away!
+```bash
+uv add --upgrade <package>
+# or explicitly target a version / specifier
+uv add <package>@<version>
+```
+
+After upgrading:
+
+```bash
+./scripts/linting.bash   # ensure formatting, lint, type, tests still pass
+```
+
+If an upgrade introduces breaking changes, revert selectively by editing the version spec in `pyproject.toml` (or pinning with `==`) and re-running `uv lock && uv sync`.
+
+### Remove a dependency
+
+Remove a package and update the environment:
+
+```bash
+uv remove <package>
+uv sync
+```
+
+Clean up or refactor affected modules, then run the full quality suite:
+
+```bash
+./scripts/linting.bash
+```
+
+If the package provided type stubs or runtime side-effects (e.g. registering Pydantic validators), make sure an alternative exists before removal. For multi-module usage (server + readers), confirm none of the other three modules still require it.
+
+## Quality: Lint, Type, Test
+
+| Tool | Command |
+| ---- | ------- |
+| Black | `black --config pyproject.toml ./src` |
+| isort | `isort --settings-file pyproject.toml ./src` |
+| mypy | `mypy --config-file pyproject.toml ./src` |
+| Pylint | `pylint --rcfile pyproject.toml ./src` |
+| Pytest | `pytest -v` |
+| All (script) | `./scripts/linting.bash` |
+
+CI mirrors these (see workflows in [.github/workflows/backend_linting.yaml](../.github/workflows/backend_linting.yaml)).
+
+## Testing Details
+
+- Tests run locally against the active PostgreSQL container.
+- HTTP-facing behavior uses in-process clients (no external network calls).
+- Shared fixtures live in `tests/conftest.py`.
+- Prefer deterministic factories and parametrization over ad-hoc loops.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| ------- | --- |
+| Connection errors | Confirm container: `docker ps`; check env vars; ensure pool init in startup |
+| Failing mypy on Pydantic models | Ensure `model_config = ConfigDict(extra="forbid")` and correct field types |
+| Hanging test suite | Look for un-awaited coroutines or unclosed DB connections |
+| Real-time / async issues | Verify event loop configuration and graceful shutdown settings |
+
+Quick DB sanity:
+
+```bash
+docker exec -it arch-stats-postgres psql -U postgres -c '\dt'
+```
+
+## Contribution & Change Checklist
+
+1. Open issue / confirm scope.
+2. Implement minimal change (no drive-by refactors).
+3. Maintain module isolation (no cross sensor imports).
+4. Add/extend tests (success + failure cases).
+5. Run lint/type/test script clean.
+6. Update docs / README if behavior or setup changes.
+7. Regenerate frontend API types if OpenAPI changed.
+8. Submit PR referencing issue; include concise rationale.

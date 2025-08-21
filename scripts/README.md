@@ -2,6 +2,15 @@
 
 *Who this is for:* DevOps engineers maintaining Arch-Stats CI/CD, deployments, and releases.
 
+- [Arch-Stats DevOps Scripts](#arch-stats-devops-scripts)
+  - [Overview](#overview)
+  - [Scripts Overview](#scripts-overview)
+  - [CI/CD Workflows (.github/workflows)](#cicd-workflows-githubworkflows)
+  - [VS Code Integration](#vs-code-integration)
+  - [Platform Assumptions](#platform-assumptions)
+
+## Overview
+
 This directory contains Bash scripts and related tools to automate setup, installation, and workflow tasks for Arch-Stats. All scripts assume a **Linux environment** (they are tested on Linux and in CI containers; Windows users should use WSL or a Linux VM). They also rely on Docker for certain tasks (like running a Postgres database for development and testing).
 
 ## Scripts Overview
@@ -16,7 +25,7 @@ This directory contains Bash scripts and related tools to automate setup, instal
 - [`local_installer.bash`](./local_installer.bash): **Local orchestrator for remote install/uninstall.** This is a convenience script to run an install or uninstall on a remote host via SSH. **Usage:** `local_installer.bash <remote-host> <action>` where `<action>` is `install` or `uninstall`. It will:
   - Check SSH connectivity to `<remote-host>` (which should be configured, e.g. an entry in `~/.ssh/config` or a reachable hostname).
   - Upload the required script(s) to the remote (for install: `remote_installer.bash` and `install.bash`; for uninstall: `remote_uninstaller.bash`).
-  - Execute the remote script on the target via SSH.  
+  - Execute the remote script on the target via SSH.
 This wraps the entire remote deployment process into a single command for developer convenience.
 - [`create_pr.bash`](./create_pr.bash): **Pull Request automation**. Developers can run this script after pushing a feature branch to quickly open a GitHub PR with proper labels and links. It uses the GitHub CLI (`gh`) to create a PR from the current branch. The script automatically determines which parts of the code were changed and adds corresponding labels (e.g., changes under `frontend/` get a "frontend" label, changes in `backend/src/server/` get a "server" label, etc.). It also assigns the PR to the "Arch Stats" project and a preset milestone, and if no specific labels apply, it labels it as an enhancement by default. **Usage:** simply run `./scripts/create_pr.bash` from a feature branch. The script will safely exit without doing anything if run on the `main` branch or if a PR for that branch already exists.
 - [`linting.bash`](./linting.bash): **All-in-one pre-commit linter/test runner**. This script can be used to run all linting and formatting checks (and backend tests) before committing or in CI. It will:

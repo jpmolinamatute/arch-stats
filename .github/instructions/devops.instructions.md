@@ -205,6 +205,41 @@ upload_scripts() {
 * Always set **timeouts** on network calls (`curl -m 10 --retry 2 --retry-all-errors`).
 * Validate success and fail loudly to stderr.
 
+## Environment Variables & Configuration Injection
+
+Deployment / CI jobs must surface required runtime variables explicitly (mirror backend instructions):
+
+| Variable | Purpose | Required | Default (dev) |
+|----------|---------|----------|---------------|
+| `PGHOST` | Postgres host | yes | `localhost` |
+| `PGPORT` | Postgres port | no | `5432` |
+| `PGUSER` | Postgres user | yes | `postgres` |
+| `PGPASSWORD` | Postgres password | yes | *(secret)* |
+| `PGDATABASE` | DB name | yes | `arch_stats` |
+| `PG_POOL_MIN` | Min pool connections | no | `1` |
+| `PG_POOL_MAX` | Max pool connections | no | `10` |
+| `API_MAX_CONCURRENT_REQUESTS` | Future semaphore limit | no | `100` |
+
+Guidelines:
+* Provide `.env.example` (non-secret placeholders) when adding new variables.
+* CI workflows should mask secrets (`***`) and never echo raw secret values.
+* Validate required variables early in startup scripts with a helper:
+
+```bash
+require_var() { local n="$1"; [[ -n "${!n:-}" ]] || { echo "ERROR: required env var $n not set" >&2; exit 2; }; }
+for v in PGHOST PGUSER PGPASSWORD PGDATABASE; do require_var "$v"; done
+```
+
+## Migrations Alignment
+
+DevOps workflows running migrations must:
+1. Execute pending SQL files (lexicographic order) before app startup.
+2. Fail fast if a migration partially applies (wrap each file in a transaction where safe).
+3. Surface clear logs: `APPLY migration <file> ... OK` / `SKIP already applied`.
+4. Record applied filenames in a bookkeeping table `schema_migrations (filename text primary key, applied_at timestamptz not null default now())` if/when automation is added.
+
+Until an automated runner exists, document manual application steps in release notes.
+
 ## What Copilot Should **Always** Do
 
 * Insert the **shebang**, **strict mode**, and **main** pattern.

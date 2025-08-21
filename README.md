@@ -1,29 +1,58 @@
 # Arch Stats: track and understand your archery performance over time
 
-**Archery can feel inconsistent.** Some days every shot hits the mark; other days, you struggle to replicate your past performance. With so many factors affecting each shot (form, equipment, fatigue, environment), it's hard to know if you're truly improving or what you need to work on. **Arch Stats** is a tool that takes the guesswork out of tracking progress. It **collects data from your shooting sessions and presents clear insights** so you can objectively measure your performance and consistency over time. By recording each arrow and each shot, Arch Stats helps identify areas for improvement and keeps you motivated as you see your progress in real numbers.
+- [Arch Stats: track and understand your archery performance over time](#arch-stats-track-and-understand-your-archery-performance-over-time)
+  - [Key Features](#key-features)
+  - [How It Works](#how-it-works)
+    - [Arrow Registration](#arrow-registration)
+    - [Sessions and Shots](#sessions-and-shots)
+  - [Reviewing Your Performance](#reviewing-your-performance)
+  - [Future Plans](#future-plans)
+  - [For Software Developers](#for-software-developers)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+    - [Development Philosophy](#development-philosophy)
+
+Archery can feel inconsistent. Some days every shot hits the mark; other days, the archer may struggle to replicate past performance. With so many variables affecting each shot/form, equipment, fatigue, environment it's hard to know whether real progress is being made or what needs adjustment. Arch Stats is a tool designed to remove that guesswork. It collects data from each shooting session and presents clear insights so the archer can objectively measure and analyze performance and consistency over time. By recording every arrow and every shot, Arch Stats highlights areas for improvement and keeps the archer motivated with real, measurable progress.
 
 ## Key Features
 
-* **Progress Tracking:** Every practice session and shot is logged, allowing you to **track your improvement over days, months, and years**. You can see objective trends in your accuracy and consistency, rather than relying on gut feeling. This helps you understand if you're plateauing or making steady gains.
-* **Visual Charts & Graphs:** Arch Stats provides instant visual feedback on your shooting. **Scatter plot charts** show where your arrows land on the target, helping you analyze grouping and precision. **Line graphs** illustrate trends (like your accuracy or shot timing) across multiple sessions. All charts update in real-time as you shoot, so you get immediate insights after each arrow.
-* **Performance Analysis Tools:** The app includes built-in tools to help you analyze your performance. You can filter and query your shot data to spot patterns and trends. For example, compare performance between different practice sessions, see how your accuracy varies at different distances, or even evaluate if a particular arrow consistently flies differently from the rest. These **pre-set analyses** make it easy to uncover trends without needing any technical skills.
-* **Data Export:** Your data is yours. Arch Stats lets you **export all your raw data in CSV format**, so you can open it in Excel or other programs. This is great if you want to do custom analysis or keep a personal log. You can back up your entire shooting history or share it with a coach in a universally readable format.
+- **Progress Tracking:** Every practice session and shot is logged, allowing the archer to track improvement over days, months, and years. Archers can see objective trends in accuracy and consistency, rather than relying on gut feeling. This helps determine whether they're plateauing or making steady gains.
+- **Visual Charts & Graphs:** Arch Stats provides instant visual feedback on the archer's shooting. **Scatter plot charts** show where the archer's arrows land on the target, helping the archer analyze grouping and precision. **Line graphs** illustrate trends (like the archer's accuracy or shot timing) across multiple sessions. All charts update in real-time as the archer shoot, so the archer get immediate insights after each arrow.
+- **Performance Analysis Tools:** The app includes built-in tools to help the archer analyze the archer's performance. The archer can filter and query the archer's shot data to spot patterns and trends. For example, compare performance between different practice sessions, see how the archer's accuracy varies at different distances, or even evaluate if a particular arrow consistently flies differently from the rest. These **pre-set analyses** make it easy to uncover trends without needing any technical skills.
+- **Data Export:** Your data is the archer's. Arch Stats lets the archer **export all the archer's raw data in CSV format**, so the archer can open it in Excel or other programs. This is great if the archer want to do custom analysis or keep a personal log. The archer can back up the archer's entire shooting history or share it with a coach in a universally readable format.
 
-> **Note:** *Currently, Arch Stats is designed for **a single archer** using one bow. Each session assumes one archer, one bow setup, and consistent conditions (the same target distance and lane). Support for multiple archers and more complex scenarios is in the works, but the current focus is on personal tracking for an individual archer.*
+> **Note**: Arch Stats is currently a work in progress, an early proof of concept or pre-alpha build. The current implementation is geared toward a single archer with one bow setup, under consistent conditions. But this README represents the broader vision: a more powerful, flexible system that will eventually support multiple archers, varied setups, and more complex scenarios. What the archer see here is just the beginning.
+
+Clarifying Archery Terms in Arch Stats
+
+Because Arch Stats tracks shots with multiple hardware components, it's important to use the right term at the right time. Four terms are closely related but different:
+
+- Target: The physical structure designed to receive arrows (often called a butt). This is where the archer places both the target face and the target sensor.
+- Target Face: The circular paper face with printed rings and scoring zones. This is what the archer visually aims at. An arrow can strike the target structure but miss the face entirely.
+- Target Sensor: The electronic device mounted at the top of the target. It detects arrow impacts and reports their position. It is shielded to avoid damage and environmental noise.
+- Target View: The field of detection of the target sensor. Think of it as the "scope" through which the sensor sees the target face. If an arrow lands outside this area, the system registers a miss.
+
+Examples:
+
+If an arrow hits the target but misses the target face, the sensor still records an impact and Arch Stats logs a shot. It is counted as a miss on the face, but a valid shot record exists.
+
+If an arrow misses the entire target (no sensor impact detected), Arch Stats creates a shot record with only partial information (arrow was released, but no landing detected).
+
+This distinction ensures the system can track performance accurately, even when arrows miss the scoring area.
 
 ## How It Works
 
-Arch Stats combines a friendly web application with electronic sensors on your equipment to seamlessly record data with minimal effort from you. The system runs on a small computer (such as a Raspberry Pi 5) connected to three types of sensors:
+Arch Stats combines a friendly web application with electronic sensors on the archer's equipment and on the target to seamlessly record data with minimal effort from the archer. The system runs on a small computer (such as a Raspberry Pi 5) connected to three types of sensors:
 
-* An **Arrow Reader** to assign a unique ID to each arrow (so the system knows exactly which arrow you just shot).
-* A **Bow sensor** to detect when you draw and release an arrow.
-* A **Target sensor** to detect when and where the arrow hits the target.
+- **Arrow Reader:** Connected directly to the Raspberry Pi 5, this sensor assigns a unique ID to each arrow so the system knows exactly which one was shot.
+- **Bow sensor:** Mounted on the archer's bow, it detects when an arrow is set and when it's released.
+- **Target sensor:** Also connected to the Raspberry Pi 5 and mounted on the target structure, it detects when and where the arrow hits the target within the target view.
 
-Using these components, Arch Stats tracks the entire lifecycle of a shot. There are two main parts to using Arch Stats: first **registering your arrows**, and then **recording a shooting session**.
+Using these components, Arch Stats tracks the entire lifecycle of a shot. There are two main parts to using Arch Stats: first **registering the archer's arrows**, and then **recording a shooting session**.
 
 ### Arrow Registration
 
-Before you start logging practice sessions, you'll register all your arrows in the system. This process gives each arrow its own unique identifier and stores its characteristics (weight, length, spine, etc.). Arch Stats will guide you through entering these details via the web interface. Each arrow is then **programmed with a small tag or code** (using the Arrow Reader sensor) so that the system can recognize that arrow every time you shoot it. This way, you can later see if certain arrows perform differently from others.
+Before the archer start logging practice sessions, the archer'll register all their arrows in the system. This process gives each arrow its own unique identifier and stores its characteristics (weight, length, spine, etc.). Arch Stats will guide the archer through entering these details via the web interface. Each arrow is then **programmed with a small tag or code** (using the Arrow Reader sensor) so that the system can recognize that arrow every time the archer shoot it. This way, the archer can later see if certain arrows perform differently from others.
 
 The flowchart below shows how the arrow registration process works in Arch Stats:
 
@@ -47,7 +76,7 @@ The flowchart below shows how the arrow registration process works in Arch Stats
     S3["app: update arrow's<br />'is_programmed' to true<br />in payload"]:::app
     S4["app: save payload into<br />arrows table"]:::app
     END1(["End."])
-    subgraph PROGRAM["Program arrow with a UUID"]
+    subgraph PROGRAM["Program arrow with a unique identifier"]
         class PROGRAM subgraphStyle;
         SCAN["sensor: scan arrow"]:::sensor
         VERIFY{"app: Success?"}:::app
@@ -78,19 +107,21 @@ The flowchart below shows how the arrow registration process works in Arch Stats
     S4 --> END1
 ```
 
-### Sessions & Shots
+### Sessions and Shots
 
-Once your arrows are registered, you're ready to record a shooting session. A **session** represents a practice session or round of shooting. Using the Arch Stats web app, you **open a new session** when you start shooting. You'll be prompted to enter the session details like the shooting location and distance to target (this provides context for your data). If it's the first time using a particular target or setup, you may also calibrate the target sensor so the system knows the target's dimensions (e.g. where the center and scoring rings are).
+Once the archer's arrows are registered, they are ready to record a shooting session. A session represents a round of shooting. Using the Arch Stats web app, the archer opens a new session at the start of shooting. The app prompts the archer to enter session details such as the shooting location and distance to the target, indoors/outdoors, providing essential context for the recorded data. The archer may want to also calibrate the target(s) used in the session.
 
-After that, you simply shoot as you normally would. **Every time you shoot an arrow:**
+After that, the archer simply shoot as they normally would. Every time the archer shoot an arrow:
 
-* The bow sensor detects the moment you draw and release the arrow (recording events like "arrow engaged" and "arrow released").
-* The target sensor detects the arrow hitting the target, recording the exact time of impact and the location (coordinates) of the hit on the target face.
-* The system automatically links this information with the specific arrow you shot (thanks to the arrow's ID) and creates a new entry in the database for that shot.
+- The bow sensor detects the moment an arrow enter in contact with the bow and the moment the arrow leave the bow (recording events like "arrow engaged" and "arrow released").
+- The target sensor detects the arrow hitting the target, recording the exact time and the location of impact (coordinates) within "target view".
+  - If an arrow lands outside the target face but still strikes the target, Arch Stats records a shot with coordinates but scores it as a miss.
+  - If the arrow misses the whole target, Arch Stats records a shot with partial information (arrow release only, no landing).
+- The system automatically links this information with the specific arrow that the archer shot (thanks to the arrow's ID) and creates a new entry in the database for that shot.
 
-If an arrow misses the target, the system notes it as a miss (no impact recorded within a short time window). Throughout the session, you can glance at the web interface to see your shots plotting in real-time on a virtual target and key stats updating live. This immediate feedback can help you adjust during practice.
+If an arrow misses the target view, the system notes it as a miss (no impact recorded within a short time window). Throughout the session, the archer can glance at the web interface to see the archer's shots plotting in real-time on a virtual target and key stats updating live. This immediate feedback can help the archer adjust during practice.
 
-When you finish shooting, you **close the session** in the app. The system will mark the session as completed and log the end time. All the data - each shot's time, its hit position, which arrow was used, etc. - is now saved for you to review later.
+When the archer finish shooting, the archer **close the session** in the app. The system will mark the session as completed and log the end time. All the data, each shot's time, its hit position, which arrow was used, etc. - is now saved for the archer to review later.
 
 The flowchart below illustrates the lifecycle of a session and how shots are recorded in Arch Stats:
 
@@ -165,34 +196,46 @@ The flowchart below illustrates the lifecycle of a session and how shots are rec
 
 ## Reviewing Your Performance
 
-After your sessions are recorded, Arch Stats really shines in helping you make sense of the data. The **dashboard** in the web app gives you a clear overview of your performance. You can see summary statistics for a session (like number of shots, hits vs. misses, etc.), and key performance indicators such as your average shot spacing or consistency. The data visualization tools let you dive deeper:
+After the archer's sessions are recorded, Arch Stats really shines in helping the archer make sense of the data. The **dashboard** in the web app gives the archer a clear overview of the archer's performance. The archer can see summary statistics for a session (like number of shots, hits vs. misses, etc.), and key performance indicators such as the archer's average shot spacing or consistency. The data visualization tools let the archer dive deeper:
 
-* **Target Maps:** For each session, you can view a scatter plot of your arrow impacts on a target diagram. This shows your grouping and spread, so you can identify patterns (for example, are your shots clustering low and left?).
-* **Timeline Graphs:** Arch Stats can plot metrics over time - for instance, tracking your average score or group size across all sessions, so you can see long-term trends. Did your form change lead to improvement over several weeks? The charts will show you.
-* **Session Comparison:** You can compare one session to another. By filtering your data (e.g. by date range or by the specific bow or arrow used), you might discover insights such as *"I shoot more consistently at 18m than at 30m"* or *"My second practice session of the day tends to have tighter groupings than the first."* The app's built-in queries make it easy to get these answers without manual calculations.
-* **Arrow-specific Insights:** Because Arch Stats knows each arrow by its ID, you can evaluate the performance of individual arrows. For example, you might find that **Arrow #7** consistently lands a bit high - indicating it might be slightly different or damaged compared to your others. This level of detail helps you fine-tune your equipment and ensure consistency.
+- **Target Maps:** For each session, the archer can view a scatter plot of the archer's arrow impacts on a target diagram. This shows the archer's grouping and spread, so the archer can identify patterns (for example, are the archer's shots clustering low and left?).
+- **Timeline Graphs:** Arch Stats can plot metrics over time - for instance, tracking the archer's average score or group size across all sessions, so the archer can see long-term trends. Did the archer's form change lead to improvement over several weeks? The charts will show the archer.
+- **Session Comparison:** The archer can compare one session to another. By filtering the archer's data (e.g. by date range or by the specific bow or arrow used), the archer might discover insights such as *"I shoot more consistently at 18m than at 30m"* or *"My second practice session of the day tends to have tighter groupings than the first."* The app's built-in queries make it easy to get these answers without manual calculations.
+- **Arrow-specific Insights:** Because Arch Stats knows each arrow by its ID, the archer can evaluate the performance of individual arrows. For example, the archer might find that **Arrow #7** consistently lands a bit high - indicating it might be slightly different or damaged compared to the archer's others. This level of detail helps the archer fine-tune the archer's equipment and ensure consistency.
 
-And remember, if you want to perform any analysis not directly supported in the app, you can always export your data and analyze it however you like. **By having all your shots logged and accessible, you can base your training decisions on real evidence rather than hunches.** The end result is a clearer understanding of your strengths and weaknesses as an archer, and a record of progress you can look back on.
+And remember, if the archer want to perform any analysis not directly supported in the app, the archer can always export their data and analyze it however they like. **By having all the archer's shots logged and accessible, the archer can base the archer's training decisions on real evidence rather than hunches.** The end result is a clearer understanding of the archer's strengths and weaknesses as an archer, and a record of progress the archer can look back on.
 
 ## Future Plans
 
 Arch Stats is an active project, and there are exciting enhancements on the horizon. Planned improvements include:
 
-* **Multi-Archer Support:** In the future, Arch Stats will allow multiple archers to use the system (for example, a coach tracking data for several students, or multiple team members using one setup). This will likely include user profiles or accounts so each archer's data stays separate.
-* **Tournament/Scoring Features:** Beyond practice sessions, the system aims to support scoring formats for competitions or scoring rounds. This means you could use Arch Stats in a tournament setting to log arrow scores and analyze performance under pressure.
-* **Advanced Analytics:** More sophisticated analysis tools are in development, such as automatic grouping size calculations, trend predictions, and integration with scoring zones to calculate scores (if you use standard target faces). The goal is to continue providing archers with **actionable insights** that go beyond simple record-keeping.
+- **Multi-Archer Support:** In the future, Arch Stats will allow multiple archers to use the system (for example, a coach tracking data for several students, or multiple team members using one setup). This will likely include user profiles or accounts so each archer's data stays separate.
+- **Tournament/Scoring Features:** Beyond practice sessions, the system aims to support scoring formats for competitions or scoring rounds. This means the archer could use Arch Stats in a tournament setting to log arrow scores and analyze performance under pressure.
+- **Advanced Analytics:** More sophisticated analysis tools are in development, such as automatic grouping size calculations, trend predictions, and integration with scoring zones to calculate scores (if the archer use standard target faces). The goal is to continue providing archers with **actionable insights** that go beyond simple record-keeping.
 
-**Arch Stats is built by an archer, for archers.** It is a passion project designed to bring modern data tracking to the ancient sport of archery. By leveraging technology (in a user-friendly way), Arch Stats empowers you to make informed adjustments to your practice and equipment. Whether you're a competitive shooter aiming for the podium or a hobbyist trying to beat your personal best, Arch Stats gives you the feedback you need to **focus your training and see real improvement over time**. Happy shooting!
+**Arch Stats is built by an archer, for archers.** It is a passion project designed to bring modern data tracking to the ancient sport of archery. By leveraging technology in a user-friendly way, Arch Stats empowers archers to make informed adjustments to their practice and equipment. Whether a competitive shooter aiming for the podium or a hobbyist trying to beat a personal best, the archer gains the feedback needed to focus training and see real improvement over time.If the you're new, reading both the frontend and backend READMEs will give you a clear roadmap to getting started quickly.- [Arch Stats: track and understand your archery performance over time](#arch-stats-track-and-understand-your-archery-performance-over-time)
+
+- [Arch Stats: track and understand your archery performance over time](#arch-stats-track-and-understand-your-archery-performance-over-time)
+  - [Key Features](#key-features)
+  - [How It Works](#how-it-works)
+    - [Arrow Registration](#arrow-registration)
+    - [Sessions and Shots](#sessions-and-shots)
+  - [Reviewing Your Performance](#reviewing-your-performance)
+  - [Future Plans](#future-plans)
+  - [For Software Developers](#for-software-developers)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+    - [Development Philosophy](#development-philosophy)
 
 ## For Software Developers
 
-If you're a developer interested in contributing to Arch Stats - whether to help expand features, integrate new sensor types, improve performance, or refine the user experience - you're very welcome! While this README focuses on the end-user experience for archers, the system is built as a modular, modern monorepo and is fully open-source.
+If the you're a developer interested in contributing to Arch Stats - whether to help expand features, integrate new sensor types, improve performance, or refine the user experience - you're very welcome! While this README focuses on the end-user experience for archers, the system is built as a modular, modern monorepo and is fully open-source.
 
 Arch Stats is divided into two main developer domains:
 
 ### Backend
 
-The backend is a Python 3.13 FastAPI application that coordinates data across sessions, arrows, shots, and sensors. It uses asyncpg for PostgreSQL access, Pydantic v2 for schema validation, and WebSockets for real-time communication with the frontend.
+The backend is a Python +3.13 FastAPI application that coordinates data across sessions, arrows, shots, and sensors. It uses asyncpg for PostgreSQL access, Pydantic v2 for schema validation, and WebSockets for real-time communication with the frontend.
 
 For a complete breakdown of the backend modules (including architecture, development workflow, VS Code tasks, testing setup, and API routes), for more information read the [backend/README.md](./backend/README.md)
 
@@ -204,6 +247,4 @@ To learn how the WebUI is structured, how to develop with hot reload, and how it
 
 ### Development Philosophy
 
-This project is designed for **fast iteration**, **strict type checking**, and **hardware-software integration**. All core services are containerized and the monorepo includes tasks for bringing up everything with a single command. Contributions are welcome - whether you're improving code, sensors, docs, or analytics!
-
-If you're new, reading both the frontend and backend READMEs will give you a clear roadmap to getting started quickly.
+This project is designed for **fast iteration**, **strict type checking**, and **hardware-software integration**. All core services are containerized and the monorepo includes tasks for bringing up everything with a single command. Contributions are welcome, whether the you're improving code, sensors, docs, or analytics!

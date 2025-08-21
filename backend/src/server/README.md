@@ -1,180 +1,242 @@
 # Arch-Stats Backend Server
 
-*Who this is for:* Python developers working on the Arch-Stats FastAPI backend (API server and database layer).
+## Table of Contents
+
+- [Arch-Stats Backend Server](#arch-stats-backend-server)
+  - [Table of Contents](#table-of-contents)
+  - [Audience \& Scope](#audience--scope)
+  - [Overview](#overview)
+  - [Non-Negotiable Constraints](#non-negotiable-constraints)
+  - [Quick Start](#quick-start)
+  - [Environment \& Configuration](#environment--configuration)
+  - [Request Lifecycle](#request-lifecycle)
+  - [Architecture Principles](#architecture-principles)
+  - [File Structure](#file-structure)
+    - [Entry Point](#entry-point)
+    - [Database Layer](#database-layer)
+    - [Data Validation (Schemas)](#data-validation-schemas)
+    - [Routers (API Endpoints)](#routers-api-endpoints)
+    - [WebSocket Endpoint](#websocket-endpoint)
+  - [Error Handling \& Responses](#error-handling--responses)
+  - [Mini End-to-End Example](#mini-end-to-end-example)
+  - [Testing Guidance](#testing-guidance)
+  - [Performance \& Safety Notes](#performance--safety-notes)
+  - [Extending: Checklist](#extending-checklist)
+  - [Dev Command Cheat Sheet](#dev-command-cheat-sheet)
+  - [Further References](#further-references)
+
+## Audience & Scope
+
+This document is for Python developers working specifically inside `backend/src/server/`. For broader repository vision or sensor simulators, see the top-level [README](../../../README.md) and backend root [README](../../README.md).
+
+## Overview
+
+The server is an async **FastAPI** application exposing REST (and a WebSocket) backed by **PostgreSQL** via **`asyncpg`** (no ORM). All request/response I/O is validated with **Pydantic v2** strict models.
 
-This document describes the structure and conventions of the backend server code (in `backend/src/server/`), including how requests are handled via FastAPI routers, how data schemas are defined with Pydantic v2, how database operations use asyncpg, and how to run and extend tests.
+## Non-Negotiable Constraints
 
-## Request -> Validation -> DB -> Response: Overview
+- DB access: `asyncpg` only (no psycopg2, no ORM).
+- Strict Pydantic v2 models (`model_config = ConfigDict(extra="forbid")`).
+- Fully typed Python; `mypy` (strict) must pass.
+- Parameterized SQL only (no f-string interpolation of user input).
+- No runtime cross-import coupling with sensor modules—communication only through the database and (future) LISTEN/NOTIFY.
+- Keep router functions thin: orchestration only; no business logic.
+
+## Quick Start
 
-The Arch-Stats backend is an **async** web API built with **FastAPI**. It exposes REST endpoints under `/api/v0/` and uses **PostgreSQL** (via the asyncpg driver) for data storage. The flow for handling a request is:
+```bash
+# From repo root
+cd backend
+uv sync --dev --python $(cat .python-version)
+source .venv/bin/activate
+docker compose -f docker/docker-compose.yaml up -d
+./scripts/start_uvicorn.bash            # start API
+pytest -q                                # run tests
+```
 
-1. **Routing:** FastAPI routes are defined in modular router files (e.g., `sessions_router.py`, `arrows_router.py` in the [`routers/`](./routers) package). Each router corresponds to a resource (Sessions, Arrows, Shots, Targets, etc.). For example, the [`sessions_router.py`](./routers/sessions_router.py) defines endpoints for creating, updating, and retrieving shooting sessions.
-2. **Validation with Pydantic:** Request payloads and query parameters are defined using **Pydantic v2** models. For instance, a POST to create a session expects a `SessionsCreate` model (defined in [`schema/sessions_schema.py`](./schema/sessions_schema.py)), and returns data in a `SessionsRead` model. FastAPI automatically deserializes and validates the incoming JSON against these models. If validation fails, a 422 response is returned before hitting our logic.
-3. **Database Operation:** Inside the route function, a database handler object (e.g., `SessionsDB`) is used to perform the needed data operation. These handlers are defined in the [`models/`](./models) package and use an async **connection pool** (via asyncpg) to query the PostgreSQL database. We do **not** use an ORM; instead, simple SQL statements are constructed and executed with asyncpg, and results are mapped back into Pydantic models.
-4. **Response Construction:** The route returns either the Pydantic result or an error. We wrap responses in a unified structure using an `HTTPResponse` model (see [`routers/utils.py`](./routers/utils.py)). This `HTTPResponse` is a generic Pydantic model that contains a status code, either a `data` field (with the result data) or an `errors` list. A helper function `db_response()` runs the DB operation, catches any exceptions (like `DBNotFound` or `DBException` from our DB layer), and returns an appropriate JSONResponse. This ensures the API always returns a consistent JSON shape, e.g.:
+Visit: <http://localhost:8000/api/swagger>
 
-   ```json
-   { "code": 200, "data": { ... }, "errors": [] }
-   // or an error:
-   { "code": 404, "data": null, "errors": ["sessions: No record found with ..."] }
-   ```
+## Environment & Configuration
 
-Example: Creating a new Session
-When a client POST /api/v0/session with JSON body, FastAPI uses the SessionsCreate model to validate the input. Our router function might look like:
+Runtime settings are loaded in [settings.py](./settings.py) (Pydantic settings model). Typical environment variables:
 
-   ```python
-   @SessionsRouter.post("", response_model=HTTPResponse[None])
-   async def create_session(
-       session_data: SessionsCreate,
-       sessions_db: SessionsDB = Depends(get_sessions_db),
-   ) -> JSONResponse:
-       return await db_response(sessions_db.insert_one, status.HTTP_201_CREATED, session_data)
-   ```
+- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `ARCH_STATS_DEV_MODE` (optional)
+Add new settings fields only if required at runtime; prefer deriving defaults in code.
 
-Here's what happens:
+## Request Lifecycle
 
-session_data: SessionsCreate - FastAPI gives us a SessionsCreate instance (already validated).
+```mermaid
+flowchart LR
+    CLIENT --> REQ[HTTP Request]
+    REQ --> VAL_IN[Request Pydantic Model]
+    VAL_IN --> DB[(PostgreSQL)]
+    DB --> VAL_OUT[Response Pydantic Model]
+    VAL_OUT --> WRAP[Response Wrapper]
+    WRAP --> CLIENT
+```
+
+## Architecture Principles
+
+- Explicit async I/O; no hidden abstractions.
+- Clear boundary: Routers call a focused DB helper (one purpose).
+- Fail fast: reject invalid input before any DB work.
+- Deterministic tests (no timing races / sleeps).
+- Small, composable functions (prefer clarity over cleverness).
+
+## File Structure
+
+```text
+server/
+├── app.py            # App factory (startup, shutdown, router include)
+├── settings.py       # Environment-driven configuration
+├── db_pool.py        # asyncpg connection pool creation/access
+├── models/           # CRUD/query helpers per resource + DBBase
+├── routers/          # FastAPI APIRouter groupings + websocket
+├── schema/           # Pydantic request/response/filter models
+├── frontend/         # Built frontend assets (served as static)
+└── README.md
+```
+
+### Entry Point
+
+- [app.py](./app.py): Creates FastAPI instance, registers routers, mounts static frontend, wires startup/shutdown events (e.g., pool creation/close).
+- Startup acquires an asyncpg pool (see [db_pool.py](./db_pool.py)); dependency functions fetch that pool per request (no globals leaked).
 
-sessions_db = Depends(get_sessions_db) - FastAPI provides a SessionsDB instance (the dependency opens a db connection from the pool).
+### Database Layer
 
-We call db_response(sessions_db.insert_one, 201, session_data). The insert_one method (defined in our DBBase class) will insert a new row into the sessions table using asyncpg and return a SessionsRead Pydantic model of the new session.
+Located in [models/](./models/):
 
-db_response catches any database exceptions:
+- `DBBase` ([models/base_db.py](./models/base_db.py)) supplies shared helpers (fetch, fetchrow, execute) and translates low-level failures into domain exceptions.
+- Resource modules (e.g., `sessions_db.py`, `shots_db.py`) define parameterized SQL + thin, typed wrapper functions.
+- Always return either primitives/record dicts or validated Pydantic models, never raw driver rows past the boundary.
 
-If insertion fails (e.g., constraint violation), a DBException is raised and db_response returns an HTTP 400 with error.
+### Data Validation (Schemas)
 
-On success, insert_one returns a SessionsRead. db_response wraps it in HTTPResponse with code 201 and the FastAPI endpoint sends that JSON to the client.
+Located in [schema/](./schema/):
 
-FastAPI also automatically generates an OpenAPI spec (available at /api/openapi.json and interactive docs at /api/swagger) from these models and route definitions.
+- Naming pattern: `XyzCreate`, `XyzRead`, `XyzUpdate`, `XyzFilters`.
+- All models: `extra="forbid"`.
+- Use explicit optional fields (e.g., `value: int | None = None`) for PATCH semantics.
+- Filter models drive query parameter parsing in routers.
 
-## Pydantic v2 Models (Schemas)
+### Routers (API Endpoints)
 
-All request and response schemas are defined with Pydantic v2 (which uses BaseModel). They live in the schema/ package, organized by resource. For example:
+Located in [routers/](./routers/):
 
-sessions_schema.py defines:
+- One router file per resource (sessions, shots, arrows, targets).
+- Wrap return values with helper functions in [routers/utils.py](./routers/utils.py) to produce a consistent `{"code": int, "data": ..., "errors": []}` envelope which the frontend type generator consumes.
 
-SessionsCreate - required fields to create a session (e.g., location: str, start_time: datetime, etc.). Extra fields are forbidden (model_config = ConfigDict(extra="forbid") to catch unexpected input).
+### WebSocket Endpoint
 
-SessionsUpdate - optional fields for patching a session (all fields are Optional[...]). This uses extra="forbid" and populate_by_name=True (so we can accept either field names or aliases if defined).
+- [websocket.py](./routers/websocket.py): Handles (future) real-time shot updates via Postgres NOTIFY or buffered in-memory fan-out. Keep it non-blocking and resilient to disconnects.
 
-SessionsRead - fields for reading a session back from the API. It extends SessionsCreate and adds the session_id: UUID (with alias "id") and possibly computed fields like end_time. It also can include helper methods (e.g., get_id() method to retrieve the UUID).
+## Error Handling & Responses
 
-SessionsFilters - for query params, often just an alias of SessionsUpdate (to reuse the optional fields for filtering).
+Mapped exceptions (see raising in DB layer):
 
-Similarly, shots_schema.py defines ShotsCreate, ShotsRead, etc. and so on for arrows and targets.
+| Exception | HTTP | Meaning |
+|-----------|------|---------|
+| `DBNotFound` | 404 | Resource does not exist |
+| `DBException` | 422 | Invalid input / integrity / constraint |
+| Unhandled | 500 | Internal error |
 
-Strict typing & validation: We enable strict validation where appropriate (for example, extra="forbid" means if a client sends any unknown field, it will be rejected). Type hints in Pydantic models are used extensively (e.g., distance: int ensures we only accept integers for the distance field). Pydantic v2's new features like model_dump and model_copy are used in the code for serialization and cloning models (for instance in tests or when converting to JSON for the database).
+Responses use envelope helpers in [`routers/utils.py`](./routers/utils.py) for consistency.
 
-All Pydantic models are type-hinted and we run mypy in CI to enforce correctness. The use of Pydantic ensures that by the time data reaches our database layer, it's already validated and correctly typed (e.g., dates are Python datetime objects, UUIDs are UUID instances, etc.).
+## Mini End-to-End Example
 
-## Database Layer: asyncpg and DBBase
+Below is a minimal (illustrative) pattern for adding a new resource "widgets" (not in repo, example only):
 
-Database operations are implemented in the models/ module. Key points:
+```python
+# schema/widgets.py
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional
+class WidgetCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(..., min_length=1)
+    size: int
 
-We maintain a connection pool using asyncpg. DBPool (in server/db_pool.py) encapsulates asyncpg.create_pool and provides get_db_pool() to retrieve the singleton pool. The pool is initialized when the FastAPI app starts (see the lifespan function in app.py), and closed on shutdown.
+class WidgetRead(WidgetCreate):
+    id: str
 
-There's a generic base class DBBase which implements common CRUD logic using type parameters. It's defined as DBBase[CreateModel, UpdateModel, ReadModel] and provides methods like insert_one(data: CreateModel) -> UUID, get_one_by_id(id) -> ReadModel, get_all(filter_dict) -> list[ReadModel], update_one(id, data: UpdateModel) -> None, and delete_one(id) -> None. Internally, it constructs SQL strings and uses asyncpg's prepared statements (with $1, $2 placeholders) to execute queries.
+class WidgetUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: Optional[str] = None
+    size: Optional[int] = None
+```
 
-DBBase._convert_row converts an asyncpg Record to a Pydantic ReadModel (our ReadModel classes implement a .get_id() and Pydantic handles field population including alias like id).
+```python
+# models/widgets_db.py
+from .base_db import DBBase
+from typing import Sequence
+class WidgetsDB(DBBase):
+    async def insert(self, name: str, size: int) -> str:
+        row = await self.pool.fetchrow(
+            "INSERT INTO widgets (name,size) VALUES ($1,$2) RETURNING id",
+            name, size,
+        )
+        return str(row["id"])
+```
 
-It also handles JSON fields by serializing Python dicts/lists to JSON strings when inserting (see _serialize_db_value).
+```python
+# routers/widgets_router.py
+from fastapi import APIRouter, Depends
+from ..schema.widgets import WidgetCreate, WidgetRead
+from ..models.widgets_db import WidgetsDB
+from .utils import ok_response
+from ..db_pool import get_pool
 
-If a query finds no results for a given ID or filter, DBBase raises a custom DBNotFound exception; other database errors raise DBException. These exceptions propagate up to the router where db_response turns them into HTTP 404 or 400 responses respectively.
+router = APIRouter(prefix="/api/v0/widget", tags=["widgets"])
 
-Specific model classes (e.g., SessionsDB, ShotsDB, etc.) extend DBBase. In their constructor, they define the SQL schema for their table and call super().**init** with the table name and schema. For example, ShotsDB.**init** provides the table name "shots" and a multiline string for the table schema (columns, types, constraints) then calls the base initializer. This allows us to programmatically create or drop tables (useful in testing and initial startup).
+def get_db(pool=Depends(get_pool)) -> WidgetsDB:
+    return WidgetsDB(pool)
 
-Model classes can also define resource-specific methods. For instance, ShotsDB adds a method create_notification(channel: str) that sets up a Postgres trigger to notify on new shots (used for real-time updates). It also overrides some base behaviors when needed (like a helper get_by_session_id to get all shots for a session).
+@router.post("", response_model=dict)
+async def create_widget(payload: WidgetCreate, db: WidgetsDB = Depends(get_db)):
+    wid = await db.insert(payload.name, payload.size)
+    return ok_response(data=wid)
+```
 
-asyncpg usage: All DB operations use async/await with the asyncpg Pool. We use pool.acquire() context managers to get a connection for a short operation, and we never hold locks for long. This means multiple requests can run concurrently on different connections from the pool. SQL statements are kept simple (CRUD with basic filtering). More complex logic (like ensuring only one open session at a time) is enforced either at the application level or via database constraints/triggers.
+## Testing Guidance
 
-Because we don't use an ORM, the code is straightforward to follow: each method in DBBase builds an SQL string and executes it. This maximizes performance (asyncpg is very fast for bulk operations and uses prepared statements internally) and keeps typing strict (no magic attributes - everything is explicit).
+- Endpoint tests: [../../tests/endpoints/](../../tests/endpoints/) using `httpx.AsyncClient`.
+- Model / DB logic tests: [../../tests/models/](../../tests/models/).
+- Use existing fixtures (`conftest.py`) for pool / app startup.
+- Cover both success and failure (404, 422 paths).
+- Avoid sleeps, prefer deterministic fixtures and explicit inserts.
 
-## FastAPI App Configuration
+## Performance & Safety Notes
 
-The FastAPI application is created in app.py. Key aspects:
+- Use prepared/parameterized statements (asyncpg handles this when reusing identical SQL).
+- Avoid N+1 loops; batch where possible (e.g., single `IN` queries).
+- Keep transactions small; only open when atomic multi-step operations required.
+- Never hold a connection across `await` boundaries doing unrelated work, fetch row(s), then release.
 
-We use FastAPI(debug=settings.arch_stats_dev_mode, lifespan=lifespan, title="Arch Stats API", version="0.1.0", openapi_url="/api/openapi.json", docs_url="/api/swagger"). The lifespan function is defined to handle startup/shutdown events asynchronously.
+## Extending: Checklist
 
-Startup (lifespan): On startup, we call DBPool.create_db_pool() to initialize the asyncpg pool (using env vars from .env for DB credentials). We then automatically call manage_tables("create") if running in debug mode - this creates all database tables (if they don't exist) and in the case of Shots, sets up the notification trigger. This is mainly for development convenience. (In production, debug=False, we might skip auto-creation or use migrations instead.)
+1. Define / adjust Pydantic schema(s) (`Create`, `Read`, `Update`, `Filters`).
+2. Add DB helper methods (parameterized SQL only).
+3. Add / extend router endpoints; wrap responses (`ok_response`, `error_response`).
+4. Write tests (model + endpoint).
+5. Run `./scripts/linting.bash`.
+6. Start server, verify new OpenAPI; regenerate frontend types (`npm run generate:types`).
+7. Keep diffs minimal; no drive-by refactors.
 
-Shutdown: The lifespan context ensures that on shutdown, if we were in debug mode and a CancelledError triggers (e.g., Ctrl+C during dev), it will drop tables for a clean slate. Finally it closes the DB pool.
+## Dev Command Cheat Sheet
 
-We mount the frontend at runtime: app.mount("/app", StaticFiles(directory=.../frontend, html=True), name="frontend"). This serves the built frontend files under the URL prefix /app. In production after running npm run build, the static index.html and assets live in backend/src/server/frontend/. So a user accessing the root of the server (e.g. /app/) will get the UI.
+| Task | Command |
+|------|---------|
+| Start DB (Docker) | `docker compose -f docker/docker-compose.yaml up -d` |
+| Run API | `./scripts/start_uvicorn.bash` |
+| Run simulated shots | `./scripts/start_archy_bot.bash` |
+| All lint/type/test | `./scripts/linting.bash` |
+| Tests only | `pytest -q` |
+| Regenerate frontend API types | `(cd ../frontend && npm run generate:types)` |
 
-Routers: We include all API routers with the prefix /api/v0. The prefix includes a version (v0) which is derived from the app version. The included routers are SessionsRouter, ArrowsRouter, ShotsRouter, TargetsRouter, and WSRouter (websocket routes). Each corresponds to a module in routers/. The WebSocket router (WSRouter in websocket.py) sets up endpoints for clients to subscribe to real-time events (specifically, it likely listens for Postgres NOTIFY messages on the channel defined by ARCH_STATS_WS_CHANNEL and pushes new shot data to frontend).
+## Further References
 
-## Strict Typing and Conventions
-
-This project is configured for strict type checking:
-
-We use Python type hints pervasively. For example, database methods are generically typed to return the correct Pydantic model type. The custom Protocol HasId ensures our Read models have a get_id() method for the generic constraint.
-
-Mypy is run in CI with a configuration in pyproject.toml to ensure no type regressions.
-
-Pylint and Black/Isort enforce code style and import order. The project follows PEP8/PEP257 standards by using these tools (check pyproject.toml for their settings). All CI linting must pass before merging.
-
-We prefer explicitness: for example, all SQL statements are written out (with proper parameterization to avoid SQL injection). There is a conscious trade-off of writing a bit more code for clarity and type-safety.
-
-If you introduce new dependencies or modules, add type hints and update the pyproject config for mypy if needed. The goal is that running pytest and pylint/mypy locally should produce zero errors or warnings.
-
-## Testing (pytest + asyncio)
-
-Tests for the backend reside in the backend/tests/ directory, separated by domain (tests/endpoints/ and tests/models/). We use pytest with pytest-asyncio for async test support:
-
-In tests/conftest.py, we define fixtures for setting up the FastAPI app and database for tests. Notably, the async_client fixture uses FastAPI's ASGI lifespans to startup and teardown the app within the test, and uses httpx.AsyncClient with ASGITransport to simulate HTTP calls in-memory (no actual network calls). This means we run the server internally and can call endpoints as if the server were live.
-
-We also have a db_pool_initialed fixture that creates the DB pool and ensures tables are created before a test (and drops them after). This is used in model tests where tests directly call methods like SessionsDB.insert_one without going through the API.
-
-Database isolation: Tests currently run against the same database schema, but each test that uses db_pool_initialed will drop tables at the start (and end) to avoid leftover data. When running pytest, the manage_tables("create") and "drop" calls ensure a clean state. The database is the same Postgres instance used for dev, so be cautious - running tests will wipe any data in those tables. It's recommended to use a dedicated test database name or a disposable Docker container. (By default, if you use the provided Docker setup via manage_docker, it's pointing to a transient container.)
-
-Running tests: Activate the virtual environment (source backend/.venv/bin/activate after an uv sync) and simply run pytest in the backend/ directory. The test suite will start a Postgres via Docker (if not already up) and execute all tests. All tests are marked @pytest.mark.asyncio since they are async. The CI does not currently run tests automatically (only linters), so it's important to run tests locally or incorporate them into CI if needed.
-
-Example test flow: In tests/endpoints/test_sessions_endpoints.py, there are tests like test_create_session which uses the async_client fixture to POST to the /api/v0/session endpoint with some JSON. The response is then asserted to have code == 201. The test fixture ensures that before the request, the database tables are created and after the test they are dropped, so each test is isolated.
-
-## File Structure Reference
-
-For easy navigation, here are important backend files and their roles:
-
-Entry & Config:
-
-app.py - Creates the FastAPI app, sets up routers and static files, and manages startup/shutdown (DB pool and table setup).
-
-settings.py - Uses pydantic settings management to load environment variables (like DB credentials, server port, debug mode). This feeds into the app and DB config.
-
-## Database Layer
-
-db_pool.py - Singleton pattern for asyncpg pool (connects using settings from .env or defaults).
-
-models/base_db.py - Generic database access layer (CRUD operations and utilities).
-
-models/ (e.g., sessions_db.py, arrows_db.py, etc.) - Concrete DB classes for each table. They also define the SQL schema (used by create_table on startup or in tests).
-
-models/queries.sql - (If present) Might contain raw SQL queries or migration scripts (not heavily used if we rely on the schema in code).
-
-Schema (Data Models):
-
-schema/ - Pydantic models for input/output. E.g., SessionsCreate, SessionsRead, etc. and any additional complex types (Targets schema might include a submodel for target face configuration).
-
-## Routers (API Endpoints)
-
-routers/ - Each file is an APIRouter instance:
-
-sessions_router.py, arrows_router.py, shots_router.py, targets_router.py - define REST endpoints for those resources.
-
-websocket.py - sets up a WebSocket route (likely at /api/v0/ws or similar) to stream real-time updates (the server may listen to Postgres NOTIFY and push to clients).
-
-utils.py - defines the HTTPResponse model and db_response helper for consistent API responses.
-
-Shared & Utilities:
-
-shared/ - This may contain code shared across server and other parts (e.g., factories for test data in shared/factories/ used by tests to generate dummy arrows, sessions, etc.).
-
-[../arrow_reader/, ../target_reader/, etc.] - (If present adjacent to server/) might contain separate services (for hardware integration, etc.). The server communicates with those via API or internal calls, but those are outside the scope of the server's direct request/response cycle.
-
-## Extending and Maintaining
-
-- Adding a new endpoint:Create a new route in an existing router or a new router module, and include it in app.py.
-- Validate data in and out: Define a Pydantic schema for request/response in the schema module.  Use the existing patterns: dependency-inject a DB class instance, call its method, and wrap with db_response.
-- Adding a new model/table: Create a new XyzDB class in models, extending DBBase with appropriate type parameters and table schema. Register any custom methods or triggers needed. Add an instance of it in app.lifespan.manage_tables("create") if you want auto-creation in dev. Write a Pydantic schema for it (XyzCreate/Read/Update) and expose via a router.
-
-By following the established patterns (strict Pydantic models, clearly defined DB methods, and consistent response wrapping), you can implement new features confidently. Always run tests (pytest) after changes and ensure type checks pass (mypy). The combination of type safety and tests will catch most issues early in development. Happy coding!
+- Project-wide backend rules: [.github/instructions/backend.instructions.md](../../../.github/instructions/backend.instructions.md)
+- Root backend overview: [../../README.md](../../README.md)
+- Response envelope pattern: [routers/utils.py](./routers/utils.py)
+- DB base class: [models/base_db.py](./models/base_db.py)
