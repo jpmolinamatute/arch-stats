@@ -3,7 +3,7 @@
 **Audience:** JavaScript/TypeScript developers working in [frontend/](../../frontend/)
 
 ---
-applyTo: "**/*.ts,**/*.vue"
+applyTo: "**/*.ts,**/*.vue,**/*.js"
 ---
 
 ## Tech stack
