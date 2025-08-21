@@ -9,11 +9,9 @@ html {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
-
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-
+    color-scheme: dark; /* force dark only */
+    color: rgba(255, 255, 255, 0.92);
+    background-color: #0f172a; /* slate-900 like */
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -36,6 +34,8 @@ body {
     display: flex;
     flex-direction: column;
     place-items: center;
+    background: #0f172a;
+    color: #f1f5f9; /* slate-100 */
 }
 
 section#app {
@@ -57,37 +57,36 @@ h1 {
 }
 
 button {
-    border-radii: 8px;
-    border: 1px solid transparent;
+    border-radius: 6px;
+    border: 1px solid #1e293b; /* slate-800 */
     padding: 0.6em 1.2em;
-    font-size: 1em;
+    font-size: 0.95em;
     font-weight: 500;
     font-family: inherit;
-    background-color: #1a1a1a;
+    background-image: linear-gradient(135deg, #1e3a8a, #1e40af); /* blue gradients */
+    color: #f1f5f9;
     cursor: pointer;
-    transition: border-color 0.25s;
+    transition:
+        background-color 0.25s,
+        border-color 0.25s;
 }
 button:hover {
-    border-color: #646cff;
+    border-color: #3b82f6;
+    background-image: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 button:focus,
 button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
 }
 
 .card {
     padding: 2em;
 }
 
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #ffffff;
-    }
-    a:hover {
-        color: #747bff;
-    }
-    button {
-        background-color: #f9f9f9;
-    }
+/* Removed light mode overrides to keep dark-only UI */
+
+/* Utility overrides for semantic colors (using Tailwind compiled layers) */
+.text-danger {
+    color: #f42a41;
 }
