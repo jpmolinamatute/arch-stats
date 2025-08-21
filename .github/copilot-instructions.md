@@ -1,25 +1,159 @@
-# Arch-Stats ChatGPT Instructions
+# Arch-Stats - AI Assistant Project Instructions
 
-## Languages, Frameworks, and Tools
+**Audience:** AI coding agents (Copilot, etc.)  
+**Repo:** https://github.com/jpmolinamatute/arch-stats  
+**Last updated:** 2025-08-18
 
-- **Backend**: Use **Python 3.13** with **FastAPI** for the web API and **Pydantic v2.x** for data models. All database access must go through **asyncpg** (async PostgreSQL client). Write tests with **pytest**, and enforce code style with **Black** (formatting), **isort** (imports), **mypy** (type checking), and **Pylint** (linting).
-- **Frontend**: Use **TypeScript** with **Vue 3** (single-page application). Develop and bundle with **Vite**. Ensure code is formatted with **Prettier** and linted with **ESLint**. Use **Jest** for unit testing.
-- **Database**: Target **PostgreSQL 15+** for all persistent data. Use **Docker Compose** (e.g. a `docker-compose.yaml`) for local database setup and integration testing.
-- **Environment**: Assume a **Linux** (Raspberry Pi 5) deployment environment. Use POSIX paths (`/...`) and Bash shell conventions in any instructions or scripts. A single `.env` file provides configuration and is symlinked into both backend and frontend - so environment variables are consistently available.
+## 1. Purpose & Architecture (Big Picture)
 
-## Code Quality & Conventions
+Arch-Stats tracks archery performance. Two main runtime surfaces:
 
-- **Python Style**: Follow PEP 8 with 4-space indentation. Code must be auto-formatted with Black and imports sorted by isort. Maintain strict **typing** in all functions and modules (mypy should pass with no errors). Run Pylint to catch any code issues or style guide violations. Strive for clean, readable functions and classes.
-- **Pydantic Models (v2)**: Adhere to Pydantic 2.x conventions. Do **not** use an inner `Config` class; instead, set a `model_config` (e.g. `model_config = ConfigDict(...)`) for model settings. Use `Field()` for default values and metadata (e.g. `Field(default=..., description="...")`). All models should forbid unexpected fields (`extra="forbid"`) unless explicitly allowed.
-- **Async Database Access**: Use `asyncpg` for **all** database interactions. Write idiomatic async/await code - for example, use connection pools or transactions via asyncpg as needed, and avoid any blocking calls. Do not introduce ORMs or synchronous DB clients. Ensure database operations are efficiently written (e.g., use prepared statements or batch queries if appropriate).
-- **TypeScript Style**: Use 4-space indentation and keep code well-typed (prefer interfaces/types and explicit types over `any`). Format all code with Prettier so it's consistent (commas, quotes, spacing, etc.), and fix or disable any issues flagged by ESLint rules. Ensure type safety - e.g., no ignored TypeScript compiler errors. Keep components and functions concise and focused.
-- **REST API Conventions**: Follow the project's established API style and HTTP practices. Use consistent naming (e.g. likely snake_case in JSON keys as per Pydantic models, and descriptive endpoint names). Validate request data thoroughly and return appropriate HTTP status codes (e.g. 200/201 for success, 400/422 for validation errors, 404 for not found, etc.). Responses should follow the existing format (correct fields, nesting, and error message structure) to maintain uniformity.
+1. **Backend (`backend/`)** FastAPI (Python 3.13) + PostgreSQL 15 via `asyncpg` ONLY. Sensor simulators (arrow/bow/target readers) write events to DB; server exposes REST `/api/v0/...` + WebSockets for real-time updates. Modules communicate indirectly through the database and Postgres `LISTEN/NOTIFY` (decoupling - do NOT add direct cross-module imports for runtime coupling).
+2. **Frontend (`frontend/`)** Vue 3 + Vite SPA consuming REST + (future) WebSocket stream. Build artifacts emitted into `backend/src/server/frontend/` and then served by FastAPI.
 
-## Assistant Behavior
+Data flow example (shot lifecycle): sensor script -> insert row(s) -> Postgres NOTIFY -> server/websocket (future) -> frontend updates table/visuals. Maintain this unidirectional flow; avoid tight coupling.
 
-- **Tone and Role**: Act as a knowledgeable **senior software engineer** who is familiar with the Arch-Stats project. Provide explanations for your reasoning and decisions in a clear, professional tone. However, keep responses **concise and actionable** - focus on what the developer should do or consider, without excess verbosity.
-- **Guidance and Examples**: When answering questions or giving advice, include concrete examples or even small code snippets to illustrate best practices. If a process is involved, outline steps clearly (e.g. "1. Do X, 2. Do Y, 3. Verify Z"). Ensure any example code strictly follows the conventions above (correct formatting, typing, naming, etc.) and is limited to the **relevant sections** (no need to show entire files if not necessary).
-- **Code Suggestions**: When writing code for the user, prefer **partial snippets** or function-level examples that fit the question, rather than large blocks. The code should be ready to plug into the project with minimal modification. Double-check that your snippet aligns with the project's structure and uses the approved libraries and patterns (for instance, use `async/await` properly in Python and the defined Pydantic models, or use the proper Vue component syntax in TypeScript).
-- **Debugging Help**: If the user is troubleshooting an issue, adopt a methodical debugging approach. Encourage them to reproduce the problem reliably, isolate the source of the bug (which module or part of the codebase), inspect logs or error messages, and then suggest a fix or improvement. Present debugging tips as a clear checklist or sequence so it's easy to follow. For example, you might guide: "First, check the server logs for error X. Then, verify if the database has the expected entries. Next, try calling endpoint Y with tool Z to see if...", etc.
-- **Environment & Tools Focus**: Always assume a **Linux/WSL environment**. Provide command-line instructions in Bash syntax and use Linux file paths. If discussing performance or deployment, remember the code runs on a Raspberry Pi (ARM architecture), so consider resource usage and efficiency in solutions. Mention Docker or Compose for services if relevant, since that's used for the database.
-- **Project Domain Alignment**: Keep answers aligned with Arch-Stats' core goal of providing **actionable archery performance feedback**. Whether suggesting a new feature, explaining a code behavior, or debugging, frame the discussion in terms of how it benefits the archery data collection and analysis. For example, emphasize accuracy, real-time feedback, and reliability of the data for archers. Avoid off-topic tangents or solutions that don't clearly support archery performance tracking.
+## 2. Golden Constraints (Never Violate)
+
+- DB access: `asyncpg` only (no ORM, no psycopg2, no sync calls).
+- Models: Pydantic v2 with `model_config = ConfigDict(extra="forbid")` (no legacy `Config` class).
+- Strict typing: every Python function annotated; pass mypy (strict) without `# type: ignore` unless justified.
+- Formatting: Python (Black + isort + Pylint), JS/TS (ESLint + Prettier). Keep diffs minimal.
+- Frontend build output path: `backend/src/server/frontend/` (never change path assumptions in server code).
+- Keep FE/BE separation: no importing backend internals into frontend types; generate API types (`npm run generate:types`).
+
+## 3. Repository Layout (Key Directories)
+
+| Path                    | Purpose                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `backend/src/server/`   | FastAPI app factory, routers, db pool, static serving.                        |
+| `backend/src/*_reader/` | Sensor simulators (arrow/bow/target). Each isolated; communicate only via DB. |
+| `backend/src/shared/`   | Shared utilities (logging, factories). Keep generic & dependency-light.       |
+| `backend/tests/`        | Pytest suites (models + endpoints). Use these as examples for new tests.      |
+| `frontend/src/`         | Vue SPA code (components, composables, state).                                |
+| `scripts/`              | Automation (linting, start scripts, installation). Bash must be POSIX-safe.   |
+| `docker/`               | Postgres compose + config.                                                    |
+
+## 4. Core Workflows (Do These Exactly)
+
+Backend setup:
+
+```bash
+cd backend
+uv sync --dev --python $(cat ./.python-version)
+source ./.venv/bin/activate
+docker compose -f docker/docker-compose.yaml up -d
+```
+
+Run API locally:
+
+```bash
+./scripts/start_uvicorn.bash   # or VS Code task "Start Uvicorn Dev Server"
+```
+
+Run sensor bot (simulated shots):
+
+```bash
+./scripts/start_archy_bot.bash # adds shot data for manual testing
+```
+
+Frontend dev:
+
+```bash
+cd frontend
+npm install
+npm run dev                    # or VS Code task "Start Vite Frontend"
+```
+
+Generate API types (run whenever backend OpenAPI changes):
+
+```bash
+npm run generate:types
+```
+
+Full multi-language lint/test (pre-commit style): staged detection handled by `scripts/linting.bash` - invoke manually to check everything:
+
+```bash
+./scripts/linting.bash
+```
+
+## 5. Patterns & Conventions
+
+Backend:
+
+- Small async DB helper functions; wrap queries with prepared statements where beneficial; return simple dict/record or Pydantic model.
+- Routers: accept/return Pydantic models; enforce validation at boundary; snake_case JSON.
+- WebSocket (future/real-time): centralize connection management; handle disconnects gracefully; never block event loop.
+- Avoid global mutable state; acquire DB pool via startup dependency injection.
+
+Frontend:
+
+- Composition API `<script setup>` only. Keep state modules in `state/` (Pinia-like simple objects) or composables in `composables/` (`useSession.ts`, `useTarget.ts` as patterns).
+- Map view names to components (see `App.vue` `componentsMap`). When adding a new view, extend the discriminated union in `uiManagerStore` and update mapping.
+- Always import generated API types instead of redefining (e.g., use `SessionsRead` from `types.generated.ts`).
+- Keep reactive sources narrow; compute derivatives with `computed()`. Avoid spreading reactive objects before network serialization.
+
+Scripts:
+
+- Bash scripts must use `set -euo pipefail`; prefer functions + explicit exits (see `scripts/linting.bash` for canonical style).
+
+Testing:
+
+- For new endpoint: add pytest in `backend/tests/endpoints/` mirroring existing naming (`test_<resource>_endpoints.py`). Use existing fixtures (see `conftest.py`).
+- For model logic: add to `backend/tests/models/` following current style.
+
+## 6. Adding Features - Checklist
+
+1. Define/adjust Pydantic schema (backend) - keep strict, forbid extra.
+2. Implement async DB accessor (single responsibility).
+3. Expose via FastAPI router; update OpenAPI-driven types by regenerating frontend types.
+4. Add/extend frontend composable for API call; return typed `Promise<...>`.
+5. Update state and UI components; ensure minimal coupling (use mapping patterns like in `App.vue`).
+6. Write/extend tests (unit + endpoint). Run `./scripts/linting.bash`.
+7. Keep diffs focused; no drive-by refactors without justification.
+
+## 7. Things to Avoid
+
+- Introducing new heavy dependencies (both Python & JS) without clear performance/maintainability gain.
+- Synchronous I/O in backend request path.
+- Committing `frontend/src/types/types.generated.ts` (it is ignored).
+- Cross-imports between sensor modules; they must stay DB-decoupled.
+- Synchronous DB calls or ad-hoc threads.
+- Mixing build outputs into source directories (only emit to `backend/src/server/frontend/`).
+
+## 8. Quick Examples
+
+Minimal async DB pattern (conceptual):
+
+```python
+async def fetch_session(pool: Pool, session_id: UUID) -> SessionsRead | None:
+    row = await pool.fetchrow("SELECT * FROM sessions WHERE id = $1", session_id)
+    return SessionsRead.model_validate(row) if row else None
+```
+
+Frontend composable pattern:
+
+```ts
+import type { components } from "@/types/types.generated";
+type Session = components["schemas"]["SessionsRead"];
+export async function getOpenSession(): Promise<Session | null> {
+  const res = await fetch("/api/v0/session/open");
+  const body = await res.json();
+  return body.data ?? null;
+}
+```
+
+## 9. Reference Documents
+
+- Frontend rules: [./instructions/frontend.instructions.md](./instructions/frontend.instructions.md)
+- Backend rules: [./instructions/backend.instructions.md](./instructions/backend.instructions.md)
+- Google Python style (linked inside backend rules).
+- High-level user overview: [../README.md](../README.md)
+
+## 10. When Unsure
+
+Prefer smallest change; mirror existing patterns; ask for clarification via PR description instead of speculating. Maintain strict typing & validation guarantees.
+
+---
+
+Provide feedback if any area above is unclear or missing (e.g., test fixtures, WebSocket specifics, or deployment details) and this guide will be updated.
