@@ -1,6 +1,6 @@
 # Backend instructions
 
-**Audience:** Python developers working in [backend/](../../backend/)
+**Audience:** Python developers working in `backend/` directory.
 
 ---
 applyTo: "**/*.py"

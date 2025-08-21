@@ -57,11 +57,11 @@ main() {
     local needs_scripts=false
     staged_files=$(git diff --cached --name-only)
     for file in $staged_files; do
-        if [[ "$file" == frontend/* ]]; then
+        if [[ $file =~ ^frontend/ ]]; then
             needs_frontend=true
-        elif [[ "$file" == backend/* ]]; then
+        elif [[ $file =~ ^backend/ ]]; then
             needs_backend=true
-        elif [[ "$file" == scripts/* ]]; then
+        elif [[ $file =~ ^scripts/ ]]; then
             needs_scripts=true
         fi
     done

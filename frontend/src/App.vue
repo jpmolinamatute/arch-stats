@@ -41,15 +41,19 @@
 </script>
 
 <template>
-    <header>
-        <button @click="handleClick()">{{ buttonText }}</button>
-        <button @click="uiManagerStore.setView('ArrowForm')">Register Arrow</button>
-        <button @click="uiManagerStore.setView('TargetForm')">Register Target</button>
-        <button @click="uiManagerStore.setView('ShotsTable')">View Shots</button>
-    </header>
+    <div class="min-h-screen w-full bg-slate-900 text-slate-100 flex flex-col">
+        <header
+            class="w-full border-b border-slate-700 px-4 py-3 flex gap-2 flex-wrap bg-slate-800/60 backdrop-blur"
+        >
+            <button @click="handleClick()" class="">{{ buttonText }}</button>
+            <button @click="uiManagerStore.setView('ArrowForm')">Register Arrow</button>
+            <button @click="uiManagerStore.setView('TargetForm')">Register Target</button>
+            <button @click="uiManagerStore.setView('ShotsTable')">View Shots</button>
+        </header>
 
-    <main>
-        <component :is="currentComponent" v-if="currentComponent" @submit="handleSubmit" />
-        <p v-else>Open a session</p>
-    </main>
+        <main class="flex-1 p-4">
+            <component :is="currentComponent" v-if="currentComponent" @submit="handleSubmit" />
+            <p v-else class="text-slate-400">Open a session</p>
+        </main>
+    </div>
 </template>

@@ -1,16 +1,16 @@
 # Arch-Stats Frontend (aka WebUI)
 
 - [Arch-Stats Frontend (aka WebUI)](#arch-stats-frontend-aka-webui)
-  - [Overview](#overview)
-  - [What This App Does](#what-this-app-does)
-  - [What You'll Need](#what-youll-need)
-  - [Setup: Step-by-Step](#setup-step-by-step)
-    - [1. Install Dependencies](#1-install-dependencies)
-    - [2. API Types](#2-api-types)
-    - [3. Run the Dev Server](#3-run-the-dev-server)
-  - [Project Structure](#project-structure)
-  - [Tooling and Conventions](#tooling-and-conventions)
-  - [Linting and Formatting](#linting-and-formatting)
+    - [Overview](#overview)
+    - [What This App Does](#what-this-app-does)
+    - [What You'll Need](#what-youll-need)
+    - [Setup: Step-by-Step](#setup-step-by-step)
+        - [1. Install Dependencies](#1-install-dependencies)
+        - [2. API Types](#2-api-types)
+        - [3. Run the Dev Server](#3-run-the-dev-server)
+    - [Project Structure](#project-structure)
+    - [Tooling and Conventions](#tooling-and-conventions)
+    - [Linting and Formatting](#linting-and-formatting)
 
 ## Overview
 

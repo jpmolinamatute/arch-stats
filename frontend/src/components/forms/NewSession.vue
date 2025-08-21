@@ -71,20 +71,20 @@
 </script>
 
 <template>
-    <div class="p-4">
+    <div class="p-4 bg-slate-800/60 rounded border border-slate-700">
         <!-- Location -->
-        <label class="block mb-1 font-medium">Location</label>
+        <label class="block mb-1 font-medium text-slate-200">Location</label>
         <input
             v-model.trim="form.location"
             type="text"
-            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="Club, Backyard, Range..."
         />
-        <p v-if="errors.location" class="text-red-600 text-sm">{{ errors.location }}</p>
+        <p v-if="errors.location" class="text-danger text-sm">{{ errors.location }}</p>
 
         <!-- Environment -->
         <div class="mt-4">
-            <span class="block mb-1 font-medium">Environment</span>
+            <span class="block mb-1 font-medium text-slate-200">Environment</span>
             <div class="flex gap-4 items-center">
                 <label class="inline-flex items-center gap-2">
                     <input
@@ -108,29 +108,29 @@
         </div>
 
         <!-- Distance -->
-        <label class="block mb-1 mt-4 font-medium">Distance (m)</label>
+        <label class="block mb-1 mt-4 font-medium text-slate-200">Distance (m)</label>
         <input
             v-model.number="form.distance"
             type="number"
             inputmode="decimal"
             min="1"
             step="0.5"
-            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="e.g. 18"
         />
-        <p v-if="errors.distance" class="text-red-600 text-sm">{{ errors.distance }}</p>
+        <p v-if="errors.distance" class="text-danger text-sm">{{ errors.distance }}</p>
 
         <!-- Start Time -->
-        <label class="block mb-1 mt-4 font-medium">Start Time</label>
+        <label class="block mb-1 mt-4 font-medium text-slate-200">Start Time</label>
         <input
             v-model="startLocal"
             type="datetime-local"
-            class="w-full border rounded p-2 mb-1 text-gray-900 bg-white"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
-        <p v-if="errors.start" class="text-red-600 text-sm">{{ errors.start }}</p>
+        <p v-if="errors.start" class="text-danger text-sm">{{ errors.start }}</p>
 
         <!-- Is Opened (read-only for new sessions, but shown for clarity) -->
-        <div class="mt-4 text-sm text-gray-300">
+        <div class="mt-4 text-sm text-slate-400">
             <span class="font-medium">Session State:</span>
             <span class="ml-1">{{ form.is_opened ? 'Open' : 'Closed' }}</span>
         </div>

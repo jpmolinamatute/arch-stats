@@ -64,41 +64,39 @@
 </script>
 
 <template>
-    <table v-if="sessionOpened.is_opened === true" class="shot-table">
-        <thead>
+    <table
+        v-if="sessionOpened.is_opened === true"
+        class="w-full border-collapse text-sm shadow-sm rounded overflow-hidden"
+    >
+        <thead class="bg-slate-800 text-slate-200">
             <tr>
-                <th>ID</th>
-                <th>Arrow ID</th>
-                <th>Engage Time</th>
-                <th>Disengage Time</th>
-                <th>Landing Time</th>
-                <th>X</th>
-                <th>Y</th>
+                <th class="px-2 py-1 border border-slate-700">ID</th>
+                <th class="px-2 py-1 border border-slate-700">Arrow ID</th>
+                <th class="px-2 py-1 border border-slate-700">Engage Time</th>
+                <th class="px-2 py-1 border border-slate-700">Disengage Time</th>
+                <th class="px-2 py-1 border border-slate-700">Landing Time</th>
+                <th class="px-2 py-1 border border-slate-700">X</th>
+                <th class="px-2 py-1 border border-slate-700">Y</th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="shot in shots" :key="shot.id">
-                <td>{{ shot.id }}</td>
-                <td>{{ shot.arrow_id }}</td>
-                <td>{{ shot.arrow_engage_time }}</td>
-                <td>{{ shot.arrow_disengage_time }}</td>
-                <td>{{ shot.arrow_landing_time }}</td>
-                <td>{{ shot.x }}</td>
-                <td>{{ shot.y }}</td>
+            <tr
+                v-for="shot in shots"
+                :key="shot.id"
+                class="even:bg-slate-800/40 hover:bg-slate-700/40 transition-colors"
+            >
+                <td class="px-2 py-1 border border-slate-800">{{ shot.id }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.arrow_id }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.arrow_engage_time }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.arrow_disengage_time }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.arrow_landing_time }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.x }}</td>
+                <td class="px-2 py-1 border border-slate-800">{{ shot.y }}</td>
             </tr>
         </tbody>
     </table>
 </template>
 
 <style scoped>
-    .shot-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .shot-table th,
-    .shot-table td {
-        border: 1px solid #ccc;
-        padding: 0.5rem;
-        text-align: center;
-    }
+    /* Additional scoped adjustments (if any) can go here */
 </style>

@@ -121,113 +121,113 @@
 <template>
     <div
         v-if="loadError"
-        class="max-w-md mx-auto p-4 bg-red-100 border border-red-400 text-red-700 rounded"
+        class="max-w-md mx-auto p-4 bg-danger/20 border border-danger text-danger rounded"
     >
         <p>Error: {{ loadError }}</p>
     </div>
     <form
         @submit.prevent="handleSubmit"
-        class="max-w-md mx-auto p-4 bg-white rounded-lg shadow-md space-y-4"
+        class="max-w-md mx-auto p-4 bg-slate-800/70 backdrop-blur rounded-lg shadow-md space-y-4 border border-slate-700 text-slate-100"
     >
         <div>
-            <label class="block mb-1 font-medium text-gray-700"
+            <label class="block mb-1 font-medium text-slate-200"
                 >Arrow ID:
                 <input
                     type="text"
                     :value="form.id"
                     required
                     readonly
-                    class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 text-gray-500"
+                    class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-700 text-slate-300"
                 />
             </label>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700"
+            <label class="block mb-1 font-medium text-slate-200"
                 >Name:
                 <input
                     type="text"
                     v-model="form.human_identifier"
                     required
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
-                <p v-if="errors.human_identifier" class="text-red-600 text-sm mt-1">
+                <p v-if="errors.human_identifier" class="text-danger text-sm mt-1">
                     {{ errors.human_identifier }}
                 </p>
             </label>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Length:</label>
+            <label class="block mb-1 font-medium text-slate-200">Length:</label>
             <input
                 type="number"
                 step="any"
                 v-model.number="form.length"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p v-if="errors.length" class="text-red-600 text-sm mt-1">{{ errors.length }}</p>
+            <p v-if="errors.length" class="text-danger text-sm mt-1">{{ errors.length }}</p>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Label Position:</label>
+            <label class="block mb-1 font-medium text-slate-200">Label Position:</label>
             <input
                 type="number"
                 step="any"
                 v-model.number="form.label_position"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p v-if="errors.label_position" class="text-red-600 text-sm mt-1">
+            <p v-if="errors.label_position" class="text-danger text-sm mt-1">
                 {{ errors.label_position }}
             </p>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Weight:</label>
+            <label class="block mb-1 font-medium text-slate-200">Weight:</label>
             <input
                 type="number"
                 step="any"
                 v-model.number="form.weight"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p v-if="errors.weight" class="text-red-600 text-sm mt-1">{{ errors.weight }}</p>
+            <p v-if="errors.weight" class="text-danger text-sm mt-1">{{ errors.weight }}</p>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Diameter:</label>
+            <label class="block mb-1 font-medium text-slate-200">Diameter:</label>
             <input
                 type="number"
                 step="any"
                 v-model.number="form.diameter"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p v-if="errors.diameter" class="text-red-600 text-sm mt-1">{{ errors.diameter }}</p>
+            <p v-if="errors.diameter" class="text-danger text-sm mt-1">{{ errors.diameter }}</p>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Spine:</label>
+            <label class="block mb-1 font-medium text-slate-200">Spine:</label>
             <input
                 type="number"
                 step="any"
                 v-model.number="form.spine"
-                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
-            <p v-if="errors.spine" class="text-red-600 text-sm mt-1">{{ errors.spine }}</p>
+            <p v-if="errors.spine" class="text-danger text-sm mt-1">{{ errors.spine }}</p>
         </div>
 
         <div>
-            <label class="block mb-1 font-medium text-gray-700">Is Programmed:</label>
+            <label class="block mb-1 font-medium text-slate-200">Is Programmed:</label>
             <input
                 type="text"
                 :value="form.is_programmed ? 'Yes' : 'No'"
                 required
                 readonly
-                class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 text-gray-500"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-700 text-slate-300"
             />
         </div>
 
         <button
             type="submit"
-            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
+            class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded transition-colors"
         >
             Register Arrow
         </button>
