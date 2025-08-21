@@ -195,7 +195,7 @@
                                 type="text"
                                 v-model="face.humanIdentifier"
                                 placeholder="e.g. face1"
-                                class="border border-slate-600 bg-slate-900 p-2 rounded w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                class="border border-slate-600 bg-slate-900 p-2 rounded w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
                         </td>
                         <td class="border border-slate-700 p-2">
@@ -203,7 +203,7 @@
                                 type="text"
                                 v-model="face.points"
                                 placeholder="10,9,8"
-                                class="border border-slate-600 bg-slate-900 p-2 rounded w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                class="border border-slate-600 bg-slate-900 p-2 rounded w-full text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
                         </td>
                     </tr>

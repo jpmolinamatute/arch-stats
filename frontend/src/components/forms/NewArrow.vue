@@ -149,7 +149,7 @@
                     type="text"
                     v-model="form.human_identifier"
                     required
-                    class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <p v-if="errors.human_identifier" class="text-danger text-sm mt-1">
                     {{ errors.human_identifier }}
@@ -163,7 +163,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.length"
-                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p v-if="errors.length" class="text-danger text-sm mt-1">{{ errors.length }}</p>
         </div>
@@ -174,7 +174,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.label_position"
-                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p v-if="errors.label_position" class="text-danger text-sm mt-1">
                 {{ errors.label_position }}
@@ -187,7 +187,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.weight"
-                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p v-if="errors.weight" class="text-danger text-sm mt-1">{{ errors.weight }}</p>
         </div>
@@ -198,7 +198,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.diameter"
-                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p v-if="errors.diameter" class="text-danger text-sm mt-1">{{ errors.diameter }}</p>
         </div>
@@ -209,7 +209,7 @@
                 type="number"
                 step="any"
                 v-model.number="form.spine"
-                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full border border-slate-600 rounded px-3 py-2 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p v-if="errors.spine" class="text-danger text-sm mt-1">{{ errors.spine }}</p>
         </div>

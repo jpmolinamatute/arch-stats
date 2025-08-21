@@ -77,7 +77,7 @@
         <input
             v-model.trim="form.location"
             type="text"
-            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Club, Backyard, Range..."
         />
         <p v-if="errors.location" class="text-danger text-sm">{{ errors.location }}</p>
@@ -115,7 +115,7 @@
             inputmode="decimal"
             min="1"
             step="0.5"
-            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. 18"
         />
         <p v-if="errors.distance" class="text-danger text-sm">{{ errors.distance }}</p>
@@ -125,7 +125,7 @@
         <input
             v-model="startLocal"
             type="datetime-local"
-            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <p v-if="errors.start" class="text-danger text-sm">{{ errors.start }}</p>
 
