@@ -59,6 +59,21 @@ jobs:
       - name: Run pylint
         run: |
           source .venv/bin/activate
-          which python
-          python --version
           pylint --rcfile ./pyproject.toml ./src
+
+  tests:
+    runs-on: ubuntu-latest
+    needs:
+      - black
+      - isort
+      - mypy
+      - pylint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set uv & Install Dependencies
+        uses: ./.github/actions/uv-setup
+      - name: Run Tests
+        run: |
+          source .venv/bin/activate
+          pytest --maxfail=1 --disable-warnings -q

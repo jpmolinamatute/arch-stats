@@ -10,27 +10,34 @@
         "lint": "eslint --config ./eslint.config.js --fix .",
         "format": "prettier --config ./.prettierrc --write .",
         "clear:vite_cache": "rm -rf ./node_modules/.vite",
-        "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts"
+        "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
         "vue": "^3.5.13"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.1.10",
-        "@vitejs/plugin-vue": "^5.2.3",
+        "@vitejs/plugin-vue": "^6.0.1",
+        "@vitest/coverage-v8": "^2.1.5",
         "@vue/eslint-config-typescript": "^14.5.0",
+        "@vue/test-utils": "^2.4.6",
         "@vue/tsconfig": "^0.7.0",
         "autoprefixer": "^10.4.21",
         "eslint": "^9.28.0",
         "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-prettier": "^5.4.1",
         "eslint-plugin-vue": "^10.2.0",
+        "jsdom": "^26.0.0",
         "openapi-typescript": "^7.8.0",
         "postcss": "^8.5.5",
         "prettier": "^3.5.3",
         "tailwindcss": "^4.1.10",
         "typescript": "~5.8.3",
-        "vite": "^6.3.5",
+        "vite": "^7.1.3",
+        "vitest": "^3.2.4",
         "vue-tsc": "^2.2.8"
     }
 }

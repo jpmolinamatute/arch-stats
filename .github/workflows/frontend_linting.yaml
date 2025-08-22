@@ -34,3 +34,16 @@ jobs:
         uses: ./.github/actions/npm-setup
       - name: Run ESLint
         run: npm run lint
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs:
+      - format
+      - lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node & Install Dependencies
+        uses: ./.github/actions/npm-setup
+      - name: Run Tests
+        run: npm run test -- --watchAll=false

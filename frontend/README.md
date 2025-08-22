@@ -11,6 +11,7 @@
   - [Project Structure](#project-structure)
   - [Tooling and Conventions](#tooling-and-conventions)
   - [Linting and Formatting](#linting-and-formatting)
+  - [Testing](#testing)
 
 ## Overview
 
@@ -128,3 +129,21 @@ npm run build
 | [Prettier](https://prettier.io/docs/)     | `npm run format` |
 
 > Linting and Auto-formatting are enabled if you use VS Code with [.vscode/settings.json](../.vscode/settings.json)
+
+## Testing
+
+This project uses Vitest + Vue Test Utils for unit tests.
+
+Common commands:
+
+- Run once: `npm run test`
+- Watch mode: `npm run test:watch`
+- Coverage report: `npm run test:coverage` (outputs `coverage/` and prints summary)
+
+Conventions:
+
+- Place test files next to source as `*.test.ts` or `*.spec.ts`.
+- Global test setup lives in `vitest.setup.ts`.
+- Tests run in a JSDOM environment with Vitest globals enabled (describe/it/expect).
+
+Example test added: `src/App.test.ts`.

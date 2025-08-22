@@ -17,7 +17,14 @@ export default tseslint.config(
     prettierConfig,
     {
         files: ['./**/*.{js,jsx,ts,tsx}'],
-        ignores: ['./vite.config.ts', './tailwind.config.js'],
+        ignores: [
+            './vite.config.ts',
+            './tailwind.config.js',
+            './vitest.setup.ts',
+            './vitest.config.ts',
+            './tests/**/*.test.ts',
+            './tests/**/*.spec.ts',
+        ],
         rules: {
             semi: 'error',
             'prefer-const': 'error',
