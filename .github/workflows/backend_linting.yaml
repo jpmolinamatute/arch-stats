@@ -7,6 +7,9 @@ on:
       - backend/pyproject.toml
       - .github/workflows/backend_linting.yaml
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash

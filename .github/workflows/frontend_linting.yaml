@@ -6,6 +6,9 @@ on:
       - frontend/**
       - .github/workflows/frontend_linting.yaml
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
