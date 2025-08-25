@@ -86,11 +86,11 @@ describe('closeSession', () => {
 
     it('uses raw id on non-ok (no encode in implementation)', async () => {
         sessionState.sessionOpened.is_opened = true;
-        sessionState.sessionOpened.id = 'with space';
+        sessionState.sessionOpened.id = 'with%20space';
         fetchMock.mockResolvedValue(notOkEnvelope(500, ['kaboom']));
         await closeSession();
         const calledUrl: string = fetchMock.mock.calls[0][0] as string;
-        expect(calledUrl).toBe('/api/v0/session/with space');
+        expect(calledUrl).toBe('/api/v0/session/with%20space');
     });
 
     it('handles fetch throw without throwing', async () => {

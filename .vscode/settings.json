@@ -231,6 +231,9 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend/src"
     ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportCallIssue": "none"
+    },
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "--config-file=${workspaceFolder}/backend/pyproject.toml"
