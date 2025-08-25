@@ -32,7 +32,6 @@ run_python_checks() {
     cd -
 }
 
-
 run_frontend_tests() {
     echo "Running JS/TS tests"
     npm run test

@@ -9,12 +9,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import Literal
 
-
-from shared.logger import get_logger, LogLevel
 from server.db_pool import DBPool
 from server.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
 from server.settings import settings
+from shared.logger import LogLevel, get_logger
 
 
 TablesAction = Literal["drop", "create"]
