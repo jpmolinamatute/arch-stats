@@ -7,10 +7,13 @@ on:
       - backend/pyproject.toml
       - .github/workflows/backend_linting.yaml
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
-    working-directory: ./backend
+    working-directory: backend
 
 jobs:
   black:
@@ -22,7 +25,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run black
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           black --check --config ./pyproject.toml ./src
 
   isort:
@@ -34,7 +37,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run isort
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           isort --check-only --settings-file ./pyproject.toml ./src
 
   mypy:
@@ -46,7 +49,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run mypy
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           mypy --config-file ./pyproject.toml ./src
 
   pylint:
@@ -58,7 +61,73 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run pylint
         run: |
-          source .venv/bin/activate
-          which python
-          python --version
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           pylint --rcfile ./pyproject.toml ./src
+
+  tests:
+    runs-on: ubuntu-latest
+    needs:
+      - black
+      - isort
+      - mypy
+      - pylint
+    services:
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+          POSTGRES_DB: "arch-stats"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set uv & Install Dependencies
+        uses: ./.github/actions/uv-setup
+      - name: Wait for Postgres to be ready
+        run: |
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "Postgres is accepting TCP connections"
+              break
+            fi
+            echo "Waiting for Postgres (attempt $i)..."
+            sleep 2
+          done
+          # Small extra pause to allow DB initialization
+          sleep 2
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Ensure required DB extensions exist
+        env:
+          PGPASSWORD: "NOT_A_REAL_PASSWORD"
+        run: |
+          psql \
+            -h 127.0.0.1 \
+            -p 5432 \
+            -U admin \
+            -d arch-stats \
+            -v ON_ERROR_STOP=1 \
+            -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+      - name: Run Tests
+        env:
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+          POSTGRES_DB: "arch-stats"
+          POSTGRES_HOST: "127.0.0.1"
+          POSTGRES_PORT: "5432"
+          ARCH_STATS_DEV_MODE: "true"
+          ARCH_STATS_SERVER_PORT: "8000"
+          ARCH_STATS_WS_CHANNEL: "archy"
+          PYTHONPATH: "${{ github.workspace }}/backend/src"
+        run: |
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
+          pytest --maxfail=1 --disable-warnings -q

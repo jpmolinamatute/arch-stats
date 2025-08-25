@@ -13,6 +13,7 @@ from server.db_pool import DBPool
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     logging.basicConfig(level=logging.DEBUG)
     app = run()
+    app.state.logger = logging.getLogger("tests")
     async with lifespan(app):
         await manage_tables(app.state.db_pool, "drop")
         await manage_tables(app.state.db_pool, "create")

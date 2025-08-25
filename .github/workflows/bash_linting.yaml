@@ -6,6 +6,9 @@ on:
       - scripts/*.bash
       - .github/workflows/bash_linting.yaml
 
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash

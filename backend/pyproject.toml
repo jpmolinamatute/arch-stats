@@ -33,6 +33,7 @@ required-version = ">=0.7.17"
 [tool.mypy]
 strict = true
 python_version = "3.13"
+plugins = ["pydantic.mypy"]
 sqlite_cache = true
 show_column_numbers = true
 show_error_codes = true
@@ -47,6 +48,10 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
 
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_untyped_fields = true
 
 [tool.black]
 line-length = 100

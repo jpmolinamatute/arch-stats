@@ -32,12 +32,18 @@ run_python_checks() {
     cd -
 }
 
+run_frontend_tests() {
+    echo "Running JS/TS tests"
+    npm run test
+}
+
 run_frontend_checks() {
     cd "${ROOT_DIR}/frontend"
     echo "Running JS/TS linter"
     npm run lint
     echo "Running JS/TS formatter"
     npm run format
+    run_frontend_tests
     cd -
 
 }
