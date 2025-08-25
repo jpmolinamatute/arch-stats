@@ -3,6 +3,20 @@ import type { components } from '../types/types.generated';
 type Target = components['schemas']['TargetsRead'];
 type TargetsCreate = components['schemas']['TargetsCreate'];
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+    return typeof v === 'object' && v !== null;
+}
+
+function isTarget(v: unknown): v is Target {
+    if (!isRecord(v)) return false;
+    // Minimal invariant check; extend as schema evolves.
+    return typeof v.id === 'string';
+}
+
+function isTargetArray(v: unknown): v is Target[] {
+    return Array.isArray(v) && v.every(isTarget);
+}
+
 export async function createTarget(payload: TargetsCreate): Promise<Target | null> {
     try {
         const response = await fetch('/api/v0/target', {
@@ -12,11 +26,13 @@ export async function createTarget(payload: TargetsCreate): Promise<Target | nul
             },
             body: JSON.stringify(payload),
         });
-        const json = await response.json();
-        if (response.ok && json.data) {
-            return json.data as Target;
+        const json: unknown = await response.json();
+        const data = isRecord(json) ? json['data'] : undefined;
+        if (response.ok && isTarget(data)) {
+            return data;
         }
-        console.error('Failed to create target:', json.errors ?? 'Unknown error');
+        const errors = isRecord(json) && Array.isArray(json.errors) ? json.errors : 'Unknown error';
+        console.error('Failed to create target:', errors);
         return null;
     } catch (err) {
         console.error('Error creating target:', err);
@@ -39,11 +55,14 @@ export async function listTargets(
     }
     const url = `/api/v0/target${qs.toString() ? `?${qs.toString()}` : ''}`;
     const res = await fetch(url);
-    const body = await res.json();
+    const body: unknown = await res.json();
     if (!res.ok) {
-        throw new Error(body?.errors?.join(', ') ?? 'Failed to list targets');
+        const errs = isRecord(body) ? (body['errors'] as unknown) : undefined;
+        const msg = Array.isArray(errs) ? errs.join(', ') : 'Failed to list targets';
+        throw new Error(msg);
     }
-    return (body?.data as Target[] | null) ?? [];
+    const data = isRecord(body) ? (body['data'] as unknown) : null;
+    return isTargetArray(data) ? data : [];
 }
 
 /** Convenience filter for targets by session id. */
@@ -59,11 +78,14 @@ export async function getTargetById(targetId: string): Promise<Target | null> {
     if (res.status === 404) {
         return null;
     }
-    const body = await res.json().catch(() => ({}));
+    const body: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
-        throw new Error(body?.errors?.join(', ') ?? 'Failed to fetch target');
+        const errs = isRecord(body) ? (body['errors'] as unknown) : undefined;
+        const msg = Array.isArray(errs) ? errs.join(', ') : 'Failed to fetch target';
+        throw new Error(msg);
     }
-    return (body?.data as Target | null) ?? null;
+    const data = isRecord(body) ? (body['data'] as unknown) : null;
+    return isTarget(data) ? data : null;
 }
 
 /**
@@ -75,9 +97,11 @@ export async function deleteTarget(targetId: string): Promise<void> {
     });
     if (res.status === 204) return;
     // Some handlers still return a JSON envelope; try to surface errors.
-    const body = await res.json().catch(() => ({}));
+    const body: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
-        throw new Error(body?.errors?.join(', ') ?? 'Failed to delete target');
+        const errs = isRecord(body) ? (body['errors'] as unknown) : undefined;
+        const msg = Array.isArray(errs) ? errs.join(', ') : 'Failed to delete target';
+        throw new Error(msg);
     }
 }
 
@@ -86,9 +110,12 @@ export async function deleteTarget(targetId: string): Promise<void> {
  */
 export async function calibrateTarget(): Promise<Target | null> {
     const res = await fetch('/api/v0/target/calibrate');
-    const body = await res.json().catch(() => ({}));
+    const body: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
-        throw new Error(body?.errors?.join(', ') ?? 'Failed to calibrate target');
+        const errs = isRecord(body) ? (body['errors'] as unknown) : undefined;
+        const msg = Array.isArray(errs) ? errs.join(', ') : 'Failed to calibrate target';
+        throw new Error(msg);
     }
-    return (body?.data as Target | null) ?? null;
+    const data = isRecord(body) ? (body['data'] as unknown) : null;
+    return isTarget(data) ? data : null;
 }

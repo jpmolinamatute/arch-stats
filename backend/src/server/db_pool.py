@@ -27,7 +27,10 @@ class DBPool:
         elif settings.postgres_host:
             base_value = settings.postgres_host
         else:
-            raise DBStateError("No valid socket or host found.")
+            raise DBStateError(
+                "Database connection requires either a valid socket directory (postgres_socket_dir)"
+                " or host (postgres_host) to be configured."
+            )
         return base_value
 
     @staticmethod

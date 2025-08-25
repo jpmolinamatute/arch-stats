@@ -172,6 +172,7 @@
         "source.fixAll.eslint": "explicit"
     },
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "github.copilot.chat.scopeSelection": false,
     "isort.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -234,6 +235,7 @@
     "python.analysis.diagnosticSeverityOverrides": {
         "reportCallIssue": "none"
     },
+    "python.analysis.typeCheckingMode": "standard",
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "--config-file=${workspaceFolder}/backend/pyproject.toml"
@@ -280,6 +282,5 @@
     "[yaml]": {
         "editor.defaultFormatter": "redhat.vscode-yaml",
         "editor.tabSize": 2
-    },
-    "github.copilot.chat.scopeSelection": true
+    }
 }
