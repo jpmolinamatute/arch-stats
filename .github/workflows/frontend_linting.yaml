@@ -49,4 +49,4 @@ jobs:
       - name: Setup Node & Install Dependencies
         uses: ./.github/actions/npm-setup
       - name: Run Tests
-        run: npm run test -- --watchAll=false
+        run: npm run test
