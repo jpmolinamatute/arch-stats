@@ -13,7 +13,7 @@ permissions:
 defaults:
   run:
     shell: bash
-    working-directory: ./backend
+    working-directory: backend
 
 jobs:
   black:
@@ -25,7 +25,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run black
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           black --check --config ./pyproject.toml ./src
 
   isort:
@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run isort
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           isort --check-only --settings-file ./pyproject.toml ./src
 
   mypy:
@@ -49,7 +49,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run mypy
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           mypy --config-file ./pyproject.toml ./src
 
   pylint:
@@ -61,7 +61,7 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Run pylint
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           pylint --rcfile ./pyproject.toml ./src
 
   tests:
@@ -94,6 +94,7 @@ jobs:
           ARCH_STATS_DEV_MODE: "true"
           ARCH_STATS_SERVER_PORT: "8000"
           ARCH_STATS_WS_CHANNEL: "archy"
+          PYTHONPATH: "${{ github.workspace }}/backend/src"
         run: |
-          source .venv/bin/activate
+          source "${{ github.workspace }}/backend/.venv/bin/activate"
           pytest --maxfail=1 --disable-warnings -q
