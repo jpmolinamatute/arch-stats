@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { components } from '../src/types/types.generated';
+import type { components } from '../../src/types/types.generated';
 import {
     listArrows,
     getArrowById,
@@ -7,7 +7,7 @@ import {
     patchArrow,
     deleteArrow,
     getNewArrowUuid,
-} from '../src/composables/useArrow';
+} from '../../src/composables/useArrow';
 
 // Fetch mock helpers
 let fetchMock: ReturnType<typeof vi.fn>;

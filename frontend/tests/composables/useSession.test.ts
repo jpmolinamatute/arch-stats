@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { components } from '../src/types/types.generated';
-import * as sessionState from '../src/state/session';
+import type { components } from '../../src/types/types.generated';
+import * as sessionState from '../../src/state/session';
 import {
     createSession,
     closeSession,
     listSessions,
     getSessionById,
     deleteSession,
-} from '../src/composables/useSession';
+} from '../../src/composables/useSession';
 
 // Fetch envelope helpers
 const okEnvelope = (data: unknown) => ({ ok: true, status: 200, json: async () => ({ data }) });

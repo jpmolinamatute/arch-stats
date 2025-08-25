@@ -9,6 +9,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import Literal
 
+
+from shared.logger import get_logger, LogLevel
 from server.db_pool import DBPool
 from server.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
@@ -39,12 +41,10 @@ async def manage_tables(pool: Pool, action: TablesAction) -> None:
 
 
 def log_start(logger: logging.Logger, dev_mode: bool) -> None:
-    server_name = settings.postgres_host
-    server_port = settings.arch_stats_server_port
     if dev_mode:
-        logger.info("Starting the server on %s:%d", server_name, server_port)
+        logger.info("Starting the server in development mode")
     else:
-        logger.info("Starting the server in production mode on %s:%d", server_name, server_port)
+        logger.info("Starting the server")
 
 
 @asynccontextmanager
@@ -53,7 +53,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         await DBPool.create_db_pool()
-        app.state.logger = logging.getLogger("testing")
+        log_level = LogLevel.DEBUG if settings.arch_stats_dev_mode else LogLevel.INFO
+        app.state.logger = get_logger("server", log_level)
         app.state.db_pool = await DBPool.get_db_pool()
         log_start(app.state.logger, app.debug)
         app.state.logger.debug("Initializing DB...")

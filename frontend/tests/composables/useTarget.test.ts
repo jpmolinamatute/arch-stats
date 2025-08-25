@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { components } from '../src/types/types.generated';
+import type { components } from '../../src/types/types.generated';
 import {
     createTarget,
     listTargets,
@@ -7,7 +7,7 @@ import {
     getTargetById,
     deleteTarget,
     calibrateTarget,
-} from '../src/composables/useTarget';
+} from '../../src/composables/useTarget';
 
 // Use any to avoid TS lib dom coupling in Node test env
 let fetchMock: ReturnType<typeof vi.fn>;

@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { components } from '../src/types/types.generated';
+import type { components } from '../../src/types/types.generated';
 import {
     listShots,
     getShotsBySessionId,
     getShotsByArrowId,
     getShotById,
     deleteShot,
-} from '../src/composables/useShot';
+} from '../../src/composables/useShot';
 
 type Shot = components['schemas']['ShotsRead'];
 
