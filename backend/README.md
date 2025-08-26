@@ -33,7 +33,7 @@ cd backend
 uv sync --dev --python $(cat ./.python-version)
 source .venv/bin/activate
 # Create .env file in the root directory
-
+# WARNING: Replace the placeholder values below with your own secure credentials before running the application!
 echo "POSTGRES_USER='CHANGE_ME'" > ./.env
 echo "POSTGRES_PASSWORD='CHANGE_ME'" >> ./.env
 echo "POSTGRES_DB='arch-stats'" >> ./.env
