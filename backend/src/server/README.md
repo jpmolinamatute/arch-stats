@@ -4,6 +4,7 @@
 
 - [Arch-Stats Backend Server](#arch-stats-backend-server)
   - [Table of Contents](#table-of-contents)
+  - [TL;DR Quick Start](#tldr-quick-start)
   - [Audience \& Scope](#audience--scope)
   - [Overview](#overview)
   - [Non-Negotiable Constraints](#non-negotiable-constraints)
@@ -24,6 +25,13 @@
   - [Extending: Checklist](#extending-checklist)
   - [Dev Command Cheat Sheet](#dev-command-cheat-sheet)
   - [Further References](#further-references)
+
+## TL;DR Quick Start
+
+```bash
+./scripts/start_uvicorn.bash          # or VS Code task
+./scripts/start_archy_bot.bash        # optional simulated shots
+```
 
 ## Audience & Scope
 
