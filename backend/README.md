@@ -32,10 +32,18 @@
 cd backend
 uv sync --dev --python $(cat ./.python-version)
 source .venv/bin/activate
-docker compose -f docker/docker-compose.yaml up -d
-./scripts/start_uvicorn.bash          # or VS Code task
-./scripts/start_archy_bot.bash        # optional simulated shots
-pytest -q
+# Create .env file in the root directory
+
+echo "POSTGRES_USER="CHANGE_ME"" > ./.env
+echo "POSTGRES_PASSWORD="CHANGE_ME"" >> ./.env
+echo "POSTGRES_DB="arch-stats"" >> ./.env
+echo "POSTGRES_HOST="localhost"" >> ./.env
+echo "POSTGRES_PORT="5432"" >> ./.env
+echo "POSTGRES_SOCKET_DIR="/var/run/postgresql"" >> ./.env
+echo "ARCH_STATS_DEV_MODE="true"" >> ./.env
+echo "ARCH_STATS_SERVER_PORT="8000"" >> ./.env
+echo "ARCH_STATS_WS_CHANNEL="archy"" >> ./.env
+
 ```
 
 ## Architecture
