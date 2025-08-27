@@ -4,14 +4,12 @@ import logging
 import random
 import sys
 from datetime import datetime, timedelta
-from os import getenv
 from uuid import UUID, uuid4
 
-import asyncpg
-from asyncpg.connection import Connection
-from asyncpg.pool import Pool
+from asyncpg import Connection
 
-from shared import LogLevel, get_logger
+from shared.db_pool import DBPool
+from shared.logger import LogLevel, get_logger
 
 
 class ArchyException(Exception):
@@ -21,46 +19,12 @@ class ArchyException(Exception):
 class ArchyApp:
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
-        self.db_pool: Pool | None = None
 
     async def start(self) -> None:
-        self.check_environment_variables()
-        self.db_pool = await self.get_pg_pool()
         try:
             await self.shooting()
         finally:
-            await self.close_db_pool()
-
-    async def get_pg_pool(self, min_size: int = 1, max_size: int = 10) -> Pool:
-        try:
-            db_pool = await asyncpg.create_pool(
-                user=getenv("POSTGRES_USER"),
-                database=getenv("POSTGRES_DB"),
-                host=getenv("POSTGRES_SOCKET_DIR"),
-                password=getenv("POSTGRES_PASSWORD"),
-                min_size=min_size,
-                max_size=max_size,
-            )
-            self.logger.info("Database pool created")
-            return db_pool
-        except Exception as exc:
-            raise ArchyException(exc) from exc
-
-    def check_environment_variables(self) -> None:
-        required_env = [
-            "POSTGRES_USER",
-            "POSTGRES_DB",
-            "POSTGRES_PASSWORD",
-            "POSTGRES_SOCKET_DIR",
-        ]
-        missing_env = []
-        for env in required_env:
-            value = getenv(env, None)
-            if value is None:
-                missing_env.append(env)
-        if missing_env:
-            msg = f"ERROR: the following environment variables are missing {missing_env}"
-            raise ArchyException(msg)
+            await self.close()
 
     async def check_table_exists(self, conn: Connection, table_name: str) -> bool:
         exist = False
@@ -205,8 +169,8 @@ class ArchyApp:
         run_check = True
         arrows_ids: list[UUID] = []
         session_id: UUID | None = None
-        assert self.db_pool is not None
-        async with self.db_pool.acquire() as conn:
+        pool = await DBPool.open_db_pool()
+        async with pool.acquire() as conn:
             while True:
                 if run_check:
                     if await self.pre_start_check(conn):
@@ -226,10 +190,9 @@ class ArchyApp:
                 self.logger.info("Reloading bow")
                 await asyncio.sleep(time_between_shoots)
 
-    async def close_db_pool(self) -> None:
-        if self.db_pool:
-            await self.db_pool.close()
-            self.logger.info("Database pool closed.")
+    async def close(self) -> None:
+        await DBPool.close_db_pool()
+        self.logger.info("Database pool closed.")
 
 
 async def run() -> None:
@@ -243,8 +206,6 @@ async def run() -> None:
         logger.exception(e)
     except Exception as e:
         logger.exception("Unexpected error: %s", e)
-    finally:
-        await app.close_db_pool()
 
 
 if __name__ == "__main__":

@@ -5,15 +5,15 @@ from asyncpg import Pool
 from asyncpg.connection import Connection
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
-from server.db_pool import DBPool
-from server.settings import settings
+from shared.db_pool import DBPool
+from shared.settings import settings
 
 
 WSRouter = APIRouter()
 
 
 async def get_db_pool() -> Pool:
-    return await DBPool.get_db_pool()
+    return await DBPool.open_db_pool()
 
 
 @WSRouter.websocket("/ws/shot")

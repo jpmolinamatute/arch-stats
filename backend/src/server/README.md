@@ -66,7 +66,7 @@ Visit: <http://localhost:8000/api/swagger>
 
 ## Environment & Configuration
 
-Runtime settings are loaded in [settings.py](./settings.py) (Pydantic settings model). Typical environment variables:
+Runtime settings are loaded in [shared/settings.py](../shared/settings.py) (Pydantic settings model). Typical environment variables:
 
 - `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`
@@ -98,8 +98,8 @@ flowchart LR
 ```text
 server/
 ├── app.py            # App factory (startup, shutdown, router include)
-├── settings.py       # Environment-driven configuration
-├── db_pool.py        # asyncpg connection pool creation/access
+├── (settings moved to shared/)  
+├── (db pool lives in shared/)  
 ├── models/           # CRUD/query helpers per resource + DBBase
 ├── routers/          # FastAPI APIRouter groupings + websocket
 ├── schema/           # Pydantic request/response/filter models

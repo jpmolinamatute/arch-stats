@@ -5,10 +5,10 @@ from asyncpg import Pool
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import TargetsDB
 from server.routers.utils import HTTPResponse, db_response
 from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 from shared.factories import create_fake_target
+from shared.models import TargetsDB
 
 
 TargetsRouter = APIRouter(prefix="/target")

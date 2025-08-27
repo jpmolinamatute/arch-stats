@@ -9,11 +9,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import Literal
 
-from server.db_pool import DBPool
-from server.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
-from server.settings import settings
+from shared.db_pool import DBPool
 from shared.logger import LogLevel, get_logger
+from shared.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
+from shared.settings import settings
 
 
 TablesAction = Literal["drop", "create"]
@@ -51,10 +51,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown logic for the app."""
 
     try:
-        await DBPool.create_db_pool()
         log_level = LogLevel.DEBUG if settings.arch_stats_dev_mode else LogLevel.INFO
         app.state.logger = get_logger("server", log_level)
-        app.state.db_pool = await DBPool.get_db_pool()
+        app.state.db_pool = await DBPool.open_db_pool()
         log_start(app.state.logger, app.debug)
         app.state.logger.debug("Initializing DB...")
         await manage_tables(app.state.db_pool, "create")

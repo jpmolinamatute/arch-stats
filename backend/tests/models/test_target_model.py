@@ -3,8 +3,8 @@ from uuid import uuid4
 import pytest
 from asyncpg import Pool
 
-from server.models import DBNotFound, TargetsDB
 from shared.factories import create_fake_target, create_many_sessions
+from shared.models import DBNotFound, TargetsDB
 
 
 @pytest.mark.asyncio

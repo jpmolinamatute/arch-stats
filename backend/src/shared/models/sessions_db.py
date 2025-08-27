@@ -1,7 +1,7 @@
 from asyncpg import Pool
 
-from server.models.base_db import DBBase, DBNotFound
 from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
+from shared.models.base_db import DBBase, DBNotFound
 
 
 # pylint: disable=too-few-public-methods
