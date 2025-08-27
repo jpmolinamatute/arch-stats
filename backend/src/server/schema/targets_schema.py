@@ -22,7 +22,7 @@ class TargetsCreate(BaseModel):
     max_x: float = Field(..., description="Max X coordinate of the target")
     max_y: float = Field(..., description="Max Y coordinate of the target")
     session_id: UUID = Field(..., description="ID of the session this target belongs to")
-    faces: list[Face] = Field(..., description="A list of target faces")
+    faces: list[Face] = Field(default_factory=list, description="A list of target faces")
     model_config = ConfigDict(extra="forbid")
 
     def faces_as_json(self) -> str:

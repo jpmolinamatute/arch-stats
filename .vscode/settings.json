@@ -1,5 +1,4 @@
 {
-    "editor.formatOnSave": true,
     "black-formatter.cwd": "${workspaceFolder}/backend",
     "black-formatter.args": [
         "--config",
@@ -161,6 +160,8 @@
             "${workspaceFolder}/frontend/node_modules/.vite-temp/**"
         ]
     },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
     "eslint.validate": [
         "javascript",
         "typescript"
@@ -258,20 +259,18 @@
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
+    "vitest.rootConfig": "${workspaceFolder}/frontend/vitest.config.ts",
     "[markdown]": {
         "editor.unicodeHighlight.nonBasicASCII": true
     },
     "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.tabSize": 4
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.tabSize": 4
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[json]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.tabSize": 4
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[vue]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -280,7 +279,9 @@
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
     "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[github-actions-workflow]": {
         "editor.tabSize": 2
     }
 }

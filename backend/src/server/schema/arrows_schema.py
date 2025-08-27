@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -20,9 +21,21 @@ class ArrowsCreate(BaseModel):
         description="Arrow's total length in cm",
         examples=[75.0],
     )
+    registration_date: datetime = Field(
+        ...,
+        description="Date/time when the arrow was registered and ready to use",
+    )
     is_programmed: bool = Field(
         ...,
         description="Whether the arrow has been programmed with a UUID",
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Whether the arrow is currently active and in use",
+    )
+    voided_date: datetime | None = Field(
+        default=None,
+        description="Date/time when the arrow was voided (no longer in use)",
     )
     weight: float | None = Field(
         default=None,
@@ -48,9 +61,21 @@ class ArrowsCreate(BaseModel):
 
 
 class ArrowsUpdate(BaseModel):
+    registration_date: datetime | None = Field(
+        default=None,
+        description="Date/time when the arrow was registered and ready to use",
+    )
     is_programmed: bool | None = Field(
         default=None,
         description="Whether the arrow has been programmed with a UUID",
+    )
+    is_active: bool | None = Field(
+        default=None,
+        description="Whether the arrow is currently active and in use",
+    )
+    voided_date: datetime | None = Field(
+        default=None,
+        description="Date/time when the arrow was voided (no longer in use)",
     )
     human_identifier: str | None = Field(
         default=None,
@@ -87,15 +112,27 @@ class ArrowsUpdate(BaseModel):
 
 
 class ArrowsFilters(BaseModel):
+    registration_date: datetime | None = Field(
+        default=None,
+        description="Date/time when the arrow was registered and ready to use",
+    )
+    is_programmed: bool | None = Field(
+        default=None,
+        description="Whether the arrow has been programmed with a UUID",
+    )
+    is_active: bool | None = Field(
+        default=None,
+        description="Whether the arrow is currently active and in use",
+    )
+    voided_date: datetime | None = Field(
+        default=None,
+        description="Date/time when the arrow was voided (no longer in use)",
+    )
     human_identifier: str | None = Field(
         default=None,
         max_length=10,
         description="Short unique identifier easy to remember",
         examples=["A1", "B", "3", "etc"],
-    )
-    is_programmed: bool | None = Field(
-        default=None,
-        description="Whether the arrow has been programmed with a UUID",
     )
     length: float | None = Field(
         default=None,

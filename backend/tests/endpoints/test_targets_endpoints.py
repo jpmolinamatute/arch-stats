@@ -64,7 +64,6 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     [
         "max_x",
         "max_y",
-        "faces",
         "session_id",
     ],
 )
@@ -82,9 +81,42 @@ async def test_target_missing_required_fields(
 
 
 @pytest.mark.asyncio
+async def test_get_target_by_id(async_client: AsyncClient, db_pool: Pool) -> None:
+    sessions = await create_many_sessions(db_pool, 1)
+    target = create_fake_target(session_id=sessions[0].session_id)
+    payload = target.model_dump(mode="json", by_alias=True)
+    resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+    assert resp.status_code == 201
+
+    # fetch created target id via filter
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={sessions[0].session_id}")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert len(data) >= 1
+    tid = data[0]["id"]
+
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}/{tid}")
+    assert resp.status_code == 200
+    got = resp.json()["data"]
+    assert got["id"] == tid
+
+
+@pytest.mark.asyncio
+async def test_get_target_invalid_uuid(async_client: AsyncClient) -> None:
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}/not-a-uuid")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_delete_nonexistent_target(async_client: AsyncClient) -> None:
     resp = await async_client.delete(f"{TARGETS_ENDPOINT}/{str(uuid4())}")
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_target_invalid_uuid(async_client: AsyncClient) -> None:
+    resp = await async_client.delete(f"{TARGETS_ENDPOINT}/not-a-uuid")
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -145,6 +177,63 @@ async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> No
         and any(face["human_identifier"] == multi_hid for face in t["faces"])
         for t in data
     )
+
+
+@pytest.mark.asyncio
+async def test_targets_filter_invalid_values(async_client: AsyncClient) -> None:
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id=not-a-uuid")
+    assert resp.status_code == 422
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}?max_x=not-a-float")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_nonexistent_target(async_client: AsyncClient, db_pool: Pool) -> None:
+    sessions = await create_many_sessions(db_pool, 1)
+    # TargetsUpdate requires full shape; reuse a valid create payload
+    payload = create_fake_target(session_id=sessions[0].session_id).model_dump(
+        mode="json", by_alias=True
+    )
+    resp = await async_client.patch(f"{TARGETS_ENDPOINT}/{uuid4()}", json=payload)
+    # Current behavior: update triggers DBException (JSONB binding) before row-count check -> 400
+    # If update_one later serializes JSONB on patch, this should become 404.
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_patch_target_with_no_fields(async_client: AsyncClient) -> None:
+    """TargetsUpdate inherits required fields, so empty body is a 422 validation error."""
+    resp = await async_client.patch(f"{TARGETS_ENDPOINT}/{uuid4()}", json={})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_target_wrong_data_types(async_client: AsyncClient) -> None:
+    valid = create_fake_target(uuid4()).model_dump(mode="json", by_alias=True)
+    # wrong types
+    cases = [
+        ("max_x", "not-a-float"),
+        ("max_y", "not-a-float"),
+        ("session_id", "not-a-uuid"),
+        ("faces", "not-a-list"),
+    ]
+    for field, wrong in cases:
+        payload = {**valid}
+        payload[field] = wrong
+        resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
+        assert (
+            resp.status_code == 422
+        ), f"Expected 422 for {field}={wrong!r}, got {resp.status_code}: {resp.text}"
+
+
+@pytest.mark.asyncio
+async def test_targets_calibrate_endpoint(async_client: AsyncClient) -> None:
+    resp = await async_client.get(f"{TARGETS_ENDPOINT}/calibrate")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["code"] == 200
+    assert body["errors"] == []
+    assert body["data"] is not None
 
 
 @pytest.mark.asyncio

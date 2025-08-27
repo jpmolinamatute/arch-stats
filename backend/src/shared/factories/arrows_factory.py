@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -16,7 +17,10 @@ def create_fake_arrow(**overrides: Any) -> ArrowsCreate:
         id=uuid4(),
         length=29.0,
         human_identifier=f"arrow-{ran_int}",
+        registration_date=datetime.now(timezone.utc),
         is_programmed=False,
+        is_active=True,
+        voided_date=None,
         label_position=1.0,
         weight=350.0,
         diameter=5.7,

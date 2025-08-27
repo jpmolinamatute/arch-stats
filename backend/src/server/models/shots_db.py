@@ -1,13 +1,14 @@
 from uuid import UUID
 
 from asyncpg import Pool
+from pydantic import BaseModel
 
 from server.models.base_db import DBBase
-from server.schema import ShotsCreate, ShotsRead, ShotsUpdate
+from server.schema import ShotsCreate, ShotsRead
 
 
 # pylint: disable=too-few-public-methods
-class ShotsDB(DBBase[ShotsCreate, ShotsUpdate, ShotsRead]):
+class ShotsDB(DBBase[ShotsCreate, BaseModel, ShotsRead]):
 
     def __init__(self, db_pool: Pool) -> None:
         schema = """
@@ -67,3 +68,9 @@ class ShotsDB(DBBase[ShotsCreate, ShotsUpdate, ShotsRead]):
 
     async def get_by_session_id(self, session_id: UUID) -> list[ShotsRead]:
         return await self.get_all({"session_id": session_id})
+
+    async def insert_one(self, data: ShotsCreate) -> UUID:
+        raise NotImplementedError
+
+    async def update_one(self, _id: UUID, data: BaseModel) -> None:
+        raise NotImplementedError
