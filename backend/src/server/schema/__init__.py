@@ -14,7 +14,6 @@ from server.schema.shots_schema import (
     ShotsCreate,
     ShotsFilters,
     ShotsRead,
-    ShotsUpdate,
 )
 from server.schema.targets_schema import Face as TargetFace
 from server.schema.targets_schema import (
@@ -37,7 +36,6 @@ __all__ = [
     "ShotsCreate",
     "ShotsFilters",
     "ShotsRead",
-    "ShotsUpdate",
     "TargetsCreate",
     "TargetsFilters",
     "TargetsRead",

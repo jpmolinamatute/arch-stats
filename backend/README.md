@@ -24,7 +24,6 @@
   - [Quality: Lint, Type, Test](#quality-lint-type-test)
   - [Testing Details](#testing-details)
   - [Troubleshooting](#troubleshooting)
-  - [Contribution \& Change Checklist](#contribution--change-checklist)
 
 ## TL;DR Quick Start
 
@@ -43,7 +42,6 @@ echo "POSTGRES_SOCKET_DIR='/var/run/postgresql'" >> ./.env
 echo "ARCH_STATS_DEV_MODE='true'" >> ./.env
 echo "ARCH_STATS_SERVER_PORT='8000'" >> ./.env
 echo "ARCH_STATS_WS_CHANNEL='archy'" >> ./.env
-
 ```
 
 ## Architecture
@@ -211,14 +209,3 @@ Quick DB sanity:
 ```bash
 docker exec -it arch-stats-postgres psql -U postgres -c '\dt'
 ```
-
-## Contribution & Change Checklist
-
-1. Open issue / confirm scope.
-2. Implement minimal change (no drive-by refactors).
-3. Maintain module isolation (no cross sensor imports).
-4. Add/extend tests (success + failure cases).
-5. Run lint/type/test script clean.
-6. Update docs / README if behavior or setup changes.
-7. Regenerate frontend API types if OpenAPI changed.
-8. Submit PR referencing issue; include concise rationale.

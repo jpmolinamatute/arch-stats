@@ -155,13 +155,15 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         values = [self._serialize_db_value(v) for v in data_dict.values()]
         columns = ", ".join(keys)
         placeholders = ", ".join(f"${i+1}" for i in range(len(keys)))
-        sql_statement = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders});"
+        sql_statement = (
+            f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders}) RETURNING id;"
+        )
         try:
-            await self.execute(sql_statement, values)
-            row = await self.get_one(data_dict)
-            _id = row.get_id()
-            if not isinstance(_id, UUID):
+            async with self.db_pool.acquire() as conn:
+                row = await conn.fetchrow(sql_statement, *values)
+            if not row or "id" not in row or not isinstance(row["id"], UUID):
                 raise DBException("Insert failed to return id")
+            _id = row["id"]
         except Exception as e:
             raise DBException(e) from e
         return _id
