@@ -14,6 +14,20 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+          POSTGRES_DB: "arch-stats"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U admin"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,10 +35,43 @@ jobs:
         uses: ./.github/actions/uv-setup
       - name: Setup Node & Install Dependencies
         uses: ./.github/actions/npm-setup
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Wait for Postgres to be ready
+        run: |
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+              echo "Postgres is accepting TCP connections"
+              break
+            fi
+            echo "Waiting for Postgres (attempt $i)..."
+            sleep 2
+          done
+      - name: Ensure required DB extensions exist
+        env:
+          PGPASSWORD: "NOT_A_REAL_PASSWORD"
+        run: |
+          psql \
+            -h 127.0.0.1 \
+            -p 5432 \
+            -U admin \
+            -d arch-stats \
+            -v ON_ERROR_STOP=1 \
+            -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
       - name: Generate OpenAPI Spec
         working-directory: ./backend/src
         env:
-          PYTHONPATH: ${{ github.workspace}}/backend/src
+          POSTGRES_USER: "admin"
+          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+          POSTGRES_DB: "arch-stats"
+          POSTGRES_HOST: "127.0.0.1"
+          POSTGRES_PORT: "5432"
+          ARCH_STATS_DEV_MODE: "true"
+          ARCH_STATS_SERVER_PORT: "8000"
+          ARCH_STATS_WS_CHANNEL: "archy"
+          PYTHONPATH: "${{ github.workspace }}/backend/src"
         run: |
           source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
           uv run "${GITHUB_WORKSPACE}/scripts/generate_openapi.py"

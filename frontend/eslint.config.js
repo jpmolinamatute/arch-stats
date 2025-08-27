@@ -16,15 +16,8 @@ export default tseslint.config(
     js.configs.recommended,
     prettierConfig,
     {
-        files: ['./**/*.{js,jsx,ts,tsx}'],
-        ignores: [
-            './vite.config.ts',
-            './tailwind.config.js',
-            './vitest.setup.ts',
-            './vitest.config.ts',
-            './tests/**/*.test.ts',
-            './tests/**/*.spec.ts',
-        ],
+        files: ['./src/**/*.{js,jsx,ts,tsx}'],
+        ignores: [],
         rules: {
             semi: 'error',
             'prefer-const': 'error',
@@ -40,7 +33,7 @@ export default tseslint.config(
             parserOptions: {
                 parser: tsParser,
                 extraFileExtensions: ['.vue'],
-                ecmaVersion: 2022,
+                ecmaVersion: 2023,
                 sourceType: 'module',
                 project: './tsconfig.app.json',
                 tsconfigRootDir: __dirname,

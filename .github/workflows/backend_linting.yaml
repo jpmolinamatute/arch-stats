@@ -90,6 +90,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
       - name: Wait for Postgres to be ready
         run: |
           for i in {1..30}; do
@@ -100,12 +104,6 @@ jobs:
             echo "Waiting for Postgres (attempt $i)..."
             sleep 2
           done
-          # Small extra pause to allow DB initialization
-          sleep 2
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
       - name: Ensure required DB extensions exist
         env:
           PGPASSWORD: "NOT_A_REAL_PASSWORD"
