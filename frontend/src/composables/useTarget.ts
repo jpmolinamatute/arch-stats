@@ -26,11 +26,25 @@ export async function createTarget(payload: TargetsCreate): Promise<Target | nul
             },
             body: JSON.stringify(payload),
         });
-        const json: unknown = await response.json();
-        const data = isRecord(json) ? json['data'] : undefined;
-        if (response.ok && isTarget(data)) {
-            return data;
+        const json: unknown = await response.json().catch(() => ({}));
+        const data = isRecord(json) ? (json['data'] as unknown) : undefined;
+
+        // Server contract (OpenAPI): POST /api/v0/target returns a UUID string, not the entity
+        // Keep the existing return type by fetching the created target when a UUID is returned.
+        if (response.ok) {
+            if (isTarget(data)) {
+                return data;
+            }
+            if (typeof data === 'string' && data) {
+                try {
+                    return await getTargetById(data);
+                } catch (e) {
+                    console.error('Created target id received but fetch failed:', e);
+                    return null;
+                }
+            }
         }
+
         const errors = isRecord(json) && Array.isArray(json.errors) ? json.errors : 'Unknown error';
         console.error('Failed to create target:', errors);
         return null;

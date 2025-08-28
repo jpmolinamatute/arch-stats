@@ -4,7 +4,7 @@
     import { sessionOpened } from './state/session';
     import type { ViewName } from './state/uiManagerStore';
 
-    import NewArrow from './components/forms/NewArrow.vue';
+    import WizardArrows from './components/WizardArrows.vue';
     import WizardSession from './components/WizardSession.vue';
     import CalibrateTarget from './components/forms/CalibrateTarget.vue';
     import ShotsTable from './components/ShotsTable.vue';
@@ -12,7 +12,7 @@
 
     // Map view names to components
     const componentsMap: Record<ViewName, any> = {
-        ArrowForm: NewArrow,
+        ArrowForm: WizardArrows,
         SessionForm: WizardSession,
         TargetForm: CalibrateTarget,
         ShotsTable: ShotsTable,
