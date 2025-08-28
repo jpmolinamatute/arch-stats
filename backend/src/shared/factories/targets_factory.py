@@ -4,7 +4,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from server.schema import TargetFace, TargetsCreate, TargetsRead
+from shared.schema import TargetFace, TargetsCreate, TargetsRead
 
 
 TARGETS_ENDPOINT = "/api/v0/target"

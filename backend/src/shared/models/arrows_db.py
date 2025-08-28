@@ -1,6 +1,6 @@
 from asyncpg import Pool
 
-from server.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
+from shared.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
 from shared.models.base_db import DBBase
 
 

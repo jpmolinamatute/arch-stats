@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 from asyncpg import Pool
 
-from server.schema import ShotsCreate
+from shared.schema import ShotsCreate
 from shared.factories import create_fake_shot, create_many_arrows, create_many_sessions
 from shared.models import DBNotFound, ShotsDB
 

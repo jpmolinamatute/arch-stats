@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from asyncpg import Pool
 
-from server.schema import ArrowsCreate
+from shared.schema import ArrowsCreate
 
 
 ARROWS_ENDPOINT = "/api/v0/arrow"

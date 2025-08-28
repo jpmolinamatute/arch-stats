@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 from asyncpg import Pool
 
-from server.schema import ArrowsUpdate
+from shared.schema import ArrowsUpdate
 from shared.factories import create_fake_arrow
 from shared.models import ArrowsDB, DBNotFound
 

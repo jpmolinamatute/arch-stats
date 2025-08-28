@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import SessionsCreate, SessionsFilters, SessionsRead, SessionsUpdate
+from shared.schema import SessionsCreate, SessionsFilters, SessionsRead, SessionsUpdate
 from shared.models import SessionsDB
 
 

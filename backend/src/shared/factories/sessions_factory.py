@@ -3,7 +3,7 @@ from typing import Any
 
 from asyncpg import Pool
 
-from server.schema import SessionsCreate, SessionsRead
+from shared.schema import SessionsCreate, SessionsRead
 
 
 SESSIONS_ENDPOINT = "/api/v0/session"

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from server.schema import TargetsCreate, TargetsRead, TargetsUpdate
+from shared.schema import TargetsCreate, TargetsRead, TargetsUpdate
 from shared.models.base_db import DBBase
 
 

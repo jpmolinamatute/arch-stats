@@ -1,6 +1,6 @@
 from asyncpg import Pool
 
-from server.schema import SessionsCreate, SessionsRead, SessionsUpdate
+from shared.schema import SessionsCreate, SessionsRead, SessionsUpdate
 from shared.models.base_db import DBBase, DBNotFound
 
 

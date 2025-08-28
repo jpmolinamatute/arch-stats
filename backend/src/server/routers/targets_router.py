@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
+from shared.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 from shared.factories import create_fake_target
 from shared.models import TargetsDB
 
