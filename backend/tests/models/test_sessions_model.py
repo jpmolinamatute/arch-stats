@@ -5,7 +5,7 @@ import pytest
 from asyncpg import Pool
 
 from shared.factories import create_fake_session
-from shared.models import DBNotFound, SessionsDB
+from shared.models import DBException, DBNotFound, SessionsDB
 from shared.schema import SessionsUpdate
 
 
@@ -88,3 +88,31 @@ async def test_get_nonexistent_session_raises(db_pool_initialed: Pool) -> None:
     random_id = uuid4()
     with pytest.raises(DBNotFound):
         await db.get_one_by_id(random_id)
+
+
+@pytest.mark.asyncio
+async def test_get_open_session_helper(db_pool_initialed: Pool) -> None:
+    db = SessionsDB(db_pool_initialed)
+    # Insert two open sessions, then close one properly (set end_time)
+    open_a = create_fake_session(is_opened=True)
+    open_b = create_fake_session(is_opened=True)
+    open_a_id = await db.insert_one(open_a)
+    _ = await db.insert_one(open_b)
+    # Close session A
+    await db.update_one(
+        open_a_id,
+        SessionsUpdate(is_opened=False, end_time=datetime.now(timezone.utc)),
+    )
+
+    found = await db.get_open_session()
+    assert found is not None and found.is_opened is True
+
+
+@pytest.mark.asyncio
+async def test_session_check_constraints(db_pool_initialed: Pool) -> None:
+    db = SessionsDB(db_pool_initialed)
+    # Violates open_session_no_end_time (opened True but end_time provided)
+    bad = create_fake_session(is_opened=True)
+    sid = await db.insert_one(bad)
+    with pytest.raises(DBException):
+        await db.update_one(sid, SessionsUpdate(end_time=datetime.now(timezone.utc)))
