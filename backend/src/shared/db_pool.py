@@ -22,18 +22,29 @@ class DBPool:
 
     @classmethod
     def _socket_or_host(cls) -> str:
-        """Get the socket or host for the database connection."""
-        base_value = ""
-        if settings.postgres_socket_dir and Path(settings.postgres_socket_dir).is_dir():
-            base_value = settings.postgres_socket_dir
-        elif settings.postgres_host:
-            base_value = settings.postgres_host
-        else:
-            raise DBStateError(
-                "Database connection requires either a valid socket directory (postgres_socket_dir)"
-                " or host (postgres_host) to be configured."
-            )
-        return base_value
+        """
+        Get the socket or hostname for the database connection.
+
+        Preference: use Unix socket if the actual socket file exists; otherwise
+        use TCP host if provided. This avoids selecting a socket based solely on
+        the directory existing (common on CI images) when no server is listening.
+        """
+        # Prefer Unix socket only when the socket file exists for the configured port
+        if settings.postgres_socket_dir:
+            socket_dir = Path(settings.postgres_socket_dir)
+            socket_file = socket_dir / f".s.PGSQL.{settings.postgres_port}"
+            if socket_dir.is_dir() and socket_file.exists():
+                return settings.postgres_socket_dir
+
+        # Fallback to TCP host if set
+        if settings.postgres_host:
+            return settings.postgres_host
+
+        # No viable target configured
+        raise DBStateError(
+            "Database connection requires either an active Unix socket at "
+            f"{settings.postgres_socket_dir!r} or a TCP host via 'postgres_host'."
+        )
 
     @classmethod
     def _get_lock(cls) -> asyncio.Lock:

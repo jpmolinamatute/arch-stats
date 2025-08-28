@@ -207,7 +207,7 @@ class ArchyBot:
 
 
 async def run() -> None:
-    logger = get_logger(file_name=__name__, log_lever=LogLevel.INFO)
+    logger = get_logger(file_name=__name__, log_level=LogLevel.INFO)
     pool = await DBPool.open_db_pool()
     app = ArchyBot(logger, pool)
     try:

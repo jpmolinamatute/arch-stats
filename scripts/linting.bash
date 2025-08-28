@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 . "${ROOT_DIR}/scripts/lib/manage_docker"
 
 usage() {
-        cat <<'EOF'
+    cat <<'EOF'
 Usage: scripts/linting.bash [--lint-backend] [--lint-frontend] [--lint-scripts]
 
 When one or more flags are provided, only the selected checks run and staged file detection is skipped.
@@ -78,24 +78,24 @@ main() {
     if [[ $# -gt 0 ]]; then
         while [[ $# -gt 0 ]]; do
             case "$1" in
-                --lint-backend)
-                    needs_backend=true
-                    ;;
-                --lint-frontend)
-                    needs_frontend=true
-                    ;;
-                --lint-scripts)
-                    needs_scripts=true
-                    ;;
-                -h|--help)
-                    usage
-                    exit 0
-                    ;;
-                *)
-                    echo "Unknown option: $1" >&2
-                    usage
-                    exit 1
-                    ;;
+            --lint-backend)
+                needs_backend=true
+                ;;
+            --lint-frontend)
+                needs_frontend=true
+                ;;
+            --lint-scripts)
+                needs_scripts=true
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                exit 1
+                ;;
             esac
             shift
         done
