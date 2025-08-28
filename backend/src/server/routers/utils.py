@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from server.models import DBException, DBNotFound
+from shared.models import DBException, DBNotFound
 
 
 GenericData = TypeVar("GenericData")  # This will be the inner data type (ArrowsRead, etc.)

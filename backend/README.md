@@ -42,6 +42,8 @@ echo "POSTGRES_SOCKET_DIR='/var/run/postgresql'" >> ./.env
 echo "ARCH_STATS_DEV_MODE='true'" >> ./.env
 echo "ARCH_STATS_SERVER_PORT='8000'" >> ./.env
 echo "ARCH_STATS_WS_CHANNEL='archy'" >> ./.env
+echo "PG_POOL_MIN='1'" >> ./.env
+echo "PG_POOL_MAX='10'" >> ./.env
 ```
 
 ## Architecture

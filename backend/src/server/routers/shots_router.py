@@ -5,9 +5,9 @@ from asyncpg import Pool
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
-from server.models import ShotsDB
 from server.routers.utils import HTTPResponse, db_response
-from server.schema import ShotsFilters, ShotsRead
+from shared.models import ShotsDB
+from shared.schema import ShotsFilters, ShotsRead
 
 
 ShotsRouter = APIRouter(prefix="/shot")

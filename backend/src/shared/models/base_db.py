@@ -137,6 +137,20 @@ class DBBase(Generic[CREATETYPE, UPDATETYPE, READTYPE], ABC):
         sql_statement = f"DROP TABLE IF EXISTS {self.table_name};"
         await self.execute(sql_statement)
 
+    async def check_table_exists(self) -> bool:
+        """Return True if the table exists in the current search_path.
+
+        Uses SELECT to_regclass($1) which returns NULL when the relation doesn't
+        exist. This must use a fetch operation (not execute) to read the value.
+        """
+        async with self.db_pool.acquire() as conn:
+            try:
+                regclass = await conn.fetchval("SELECT to_regclass($1);", self.table_name)
+            except Exception as e:
+                # On any error, conservatively return False and let caller decide next steps
+                raise DBException(e) from e
+        return regclass is not None
+
     async def insert_one(self, data: CREATETYPE) -> UUID:
         """
         Insert a new record into the database.

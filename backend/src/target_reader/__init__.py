@@ -1,4 +1,4 @@
-from target_reader.archy import run
+from target_reader.archy_bot import run
 from target_reader.setup import setup
 
 

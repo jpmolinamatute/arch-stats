@@ -6,6 +6,20 @@ ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 # shellcheck source=./lib/manage_docker
 . "${ROOT_DIR}/scripts/lib/manage_docker"
 
+usage() {
+    cat <<'EOF'
+Usage: scripts/linting.bash [--lint-backend] [--lint-frontend] [--lint-scripts]
+
+When one or more flags are provided, only the selected checks run and staged file detection is skipped.
+
+Options:
+    --lint-backend   Run Python format/lint/type/tests for backend
+    --lint-frontend  Run JS/TS lint/format/tests for frontend
+    --lint-scripts   Run shellcheck and shfmt over scripts/*.bash
+    -h, --help       Show this help and exit
+EOF
+}
+
 run_python_tests() {
     local pyproject_path="${1}"
     start_docker
@@ -61,16 +75,42 @@ main() {
     local needs_frontend=false
     local needs_backend=false
     local needs_scripts=false
-    staged_files=$(git diff --cached --name-only)
-    for file in $staged_files; do
-        if [[ $file =~ ^frontend/ ]]; then
-            needs_frontend=true
-        elif [[ $file =~ ^backend/ ]]; then
-            needs_backend=true
-        elif [[ $file =~ ^scripts/ ]]; then
-            needs_scripts=true
-        fi
-    done
+    if [[ $# -gt 0 ]]; then
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+            --lint-backend)
+                needs_backend=true
+                ;;
+            --lint-frontend)
+                needs_frontend=true
+                ;;
+            --lint-scripts)
+                needs_scripts=true
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                exit 1
+                ;;
+            esac
+            shift
+        done
+    else
+        staged_files=$(git diff --cached --name-only)
+        for file in $staged_files; do
+            if [[ $file =~ ^frontend/ ]]; then
+                needs_frontend=true
+            elif [[ $file =~ ^backend/ ]]; then
+                needs_backend=true
+            elif [[ $file =~ ^scripts/ ]]; then
+                needs_scripts=true
+            fi
+        done
+    fi
     if $needs_frontend; then
         run_frontend_checks
     fi
@@ -85,4 +125,4 @@ main() {
     exit 0
 }
 
-main
+main "$@"

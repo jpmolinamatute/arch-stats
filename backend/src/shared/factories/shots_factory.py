@@ -5,7 +5,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from server.schema import ShotsCreate, ShotsRead
+from shared.schema import ShotsCreate, ShotsRead
 
 
 async def insert_shot_db(db_pool: Pool, shot_row: ShotsCreate) -> UUID:

@@ -3,9 +3,9 @@ from uuid import uuid4
 import pytest
 from asyncpg import Pool
 
-from server.models import ArrowsDB, DBNotFound
-from server.schema import ArrowsUpdate
 from shared.factories import create_fake_arrow
+from shared.models import ArrowsDB, DBException, DBNotFound
+from shared.schema import ArrowsUpdate
 
 
 @pytest.mark.asyncio
@@ -83,3 +83,32 @@ async def test_delete_arrow(db_pool_initialed: Pool) -> None:
     await db.delete_one(arrow_id)
     with pytest.raises(DBNotFound):
         await db.get_one_by_id(arrow_id)
+
+
+@pytest.mark.asyncio
+async def test_unique_human_identifier_constraint(db_pool_initialed: Pool) -> None:
+    db = ArrowsDB(db_pool_initialed)
+    p1 = create_fake_arrow(human_identifier="UNIQ-1")
+    p2 = create_fake_arrow(human_identifier="UNIQ-1")
+    await db.insert_one(p1)
+    with pytest.raises(DBException):
+        await db.insert_one(p2)
+
+
+@pytest.mark.asyncio
+async def test_active_voided_consistency_check(db_pool_initialed: Pool) -> None:
+    db = ArrowsDB(db_pool_initialed)
+    p = create_fake_arrow(human_identifier="CCHK-1", is_active=True)
+    _id = await db.insert_one(p)
+    # Setting voided_date while keeping is_active True should violate check
+    with pytest.raises(DBException):
+        await db.update_one(_id, ArrowsUpdate(voided_date=p.registration_date))
+
+
+@pytest.mark.asyncio
+async def test_get_all_filtered(db_pool_initialed: Pool) -> None:
+    db = ArrowsDB(db_pool_initialed)
+    await db.insert_one(create_fake_arrow(human_identifier="F-A", is_programmed=True))
+    await db.insert_one(create_fake_arrow(human_identifier="F-B", is_programmed=False))
+    only_prog = await db.get_all({"is_programmed": True})
+    assert all(a.is_programmed for a in only_prog)

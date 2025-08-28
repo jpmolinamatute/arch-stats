@@ -9,9 +9,9 @@ start_archy() {
     echo "Starting Archy server"
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
-    cd "${ROOT_DIR}/backend/src/target_reader"
+    cd "${ROOT_DIR}/backend/src"
     export PYTHONPATH="${ROOT_DIR}/backend/src"
-    exec "${ROOT_DIR}/backend/src/target_reader/archy.py"
+    exec "${ROOT_DIR}/backend/src/target_reader/archy_bot.py"
 }
 
 main() {
