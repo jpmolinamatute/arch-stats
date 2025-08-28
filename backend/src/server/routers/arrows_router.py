@@ -7,8 +7,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 from shared.models import ArrowsDB
+from shared.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 
 
 ArrowsRouter = APIRouter(prefix="/arrow")

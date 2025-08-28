@@ -3,9 +3,9 @@ from uuid import uuid4
 import pytest
 from asyncpg import Pool
 
-from shared.schema import ArrowsUpdate
 from shared.factories import create_fake_arrow
 from shared.models import ArrowsDB, DBNotFound
+from shared.schema import ArrowsUpdate
 
 
 @pytest.mark.asyncio

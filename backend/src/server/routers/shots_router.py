@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.schema import ShotsFilters, ShotsRead
 from shared.models import ShotsDB
+from shared.schema import ShotsFilters, ShotsRead
 
 
 ShotsRouter = APIRouter(prefix="/shot")

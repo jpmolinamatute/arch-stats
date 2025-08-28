@@ -3,8 +3,8 @@ from uuid import UUID
 from asyncpg import Pool
 from pydantic import BaseModel
 
-from shared.schema import ShotsCreate, ShotsRead
 from shared.models.base_db import DBBase
+from shared.schema import ShotsCreate, ShotsRead
 
 
 # pylint: disable=too-few-public-methods

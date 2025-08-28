@@ -2,8 +2,8 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from shared.schema import TargetsCreate, TargetsRead, TargetsUpdate
 from shared.models.base_db import DBBase
+from shared.schema import TargetsCreate, TargetsRead, TargetsUpdate
 
 
 # pylint: disable=too-few-public-methods

@@ -11,7 +11,7 @@ from asyncpg import Pool
 from shared.db_pool import DBPool
 from shared.logger import LogLevel, get_logger
 from shared.models import ArrowsDB, SessionsDB, ShotsDB
-from shared.schema import ShotsCreate, ArrowsCreate, SessionsCreate
+from shared.schema import ArrowsCreate, SessionsCreate, ShotsCreate
 
 
 class ArchyException(Exception):

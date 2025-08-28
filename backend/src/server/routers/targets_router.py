@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 from shared.factories import create_fake_target
 from shared.models import TargetsDB
+from shared.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 
 
 TargetsRouter = APIRouter(prefix="/target")

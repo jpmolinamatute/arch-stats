@@ -4,9 +4,9 @@ from uuid import UUID, uuid4
 import pytest
 from asyncpg import Pool
 
-from shared.schema import SessionsUpdate
 from shared.factories import create_fake_session
 from shared.models import DBNotFound, SessionsDB
+from shared.schema import SessionsUpdate
 
 
 @pytest.mark.asyncio

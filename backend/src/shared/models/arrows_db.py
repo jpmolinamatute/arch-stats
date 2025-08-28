@@ -1,7 +1,7 @@
 from asyncpg import Pool
 
-from shared.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
 from shared.models.base_db import DBBase
+from shared.schema import ArrowsCreate, ArrowsRead, ArrowsUpdate
 
 
 class ArrowsDB(DBBase[ArrowsCreate, ArrowsUpdate, ArrowsRead]):
