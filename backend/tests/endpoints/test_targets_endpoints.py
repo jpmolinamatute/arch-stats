@@ -17,7 +17,7 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
     # --- Create a session first ---
     session = await create_many_sessions(db_pool, 1)
     # --- Create Target ---
-    target = create_fake_target(session_id=session[0].session_id)
+    target = create_fake_target(session_id=session[0].session_id, min_face_count=1)
     payload_dict = target.model_dump(mode="json", by_alias=True)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
     data = resp.json()
@@ -70,7 +70,7 @@ async def test_target_crud_workflow(async_client: AsyncClient, db_pool: Pool) ->
 async def test_target_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
-    payload = create_fake_target(uuid4())
+    payload = create_fake_target(uuid4(), min_face_count=1)
     payload_dict = payload.model_dump(mode="json", by_alias=True)
     payload_dict.pop(missing_field, None)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
@@ -83,7 +83,7 @@ async def test_target_missing_required_fields(
 @pytest.mark.asyncio
 async def test_get_target_by_id(async_client: AsyncClient, db_pool: Pool) -> None:
     sessions = await create_many_sessions(db_pool, 1)
-    target = create_fake_target(session_id=sessions[0].session_id)
+    target = create_fake_target(session_id=sessions[0].session_id, min_face_count=1)
     payload = target.model_dump(mode="json", by_alias=True)
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload)
     assert resp.status_code == 201
@@ -129,7 +129,7 @@ async def test_get_all_targets_empty(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
-    payload = create_fake_target(uuid4())
+    payload = create_fake_target(uuid4(), min_face_count=1)
     payload_dict = payload.model_dump(mode="json", by_alias=True)
     payload_dict["unexpected_field"] = "forbidden"
     resp = await async_client.post(TARGETS_ENDPOINT, json=payload_dict)
@@ -191,7 +191,7 @@ async def test_targets_filter_invalid_values(async_client: AsyncClient) -> None:
 async def test_patch_nonexistent_target(async_client: AsyncClient, db_pool: Pool) -> None:
     sessions = await create_many_sessions(db_pool, 1)
     # TargetsUpdate requires full shape; reuse a valid create payload
-    payload = create_fake_target(session_id=sessions[0].session_id).model_dump(
+    payload = create_fake_target(session_id=sessions[0].session_id, min_face_count=1).model_dump(
         mode="json", by_alias=True
     )
     resp = await async_client.patch(f"{TARGETS_ENDPOINT}/{uuid4()}", json=payload)
@@ -209,7 +209,7 @@ async def test_patch_target_with_no_fields(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_post_target_wrong_data_types(async_client: AsyncClient) -> None:
-    valid = create_fake_target(uuid4()).model_dump(mode="json", by_alias=True)
+    valid = create_fake_target(uuid4(), min_face_count=1).model_dump(mode="json", by_alias=True)
     # wrong types
     cases = [
         ("max_x", "not-a-float"),

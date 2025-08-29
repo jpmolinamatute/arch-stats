@@ -12,7 +12,7 @@ from shared.models import DBException, DBNotFound, TargetsDB
 async def test_create_target(db_pool_initialed: Pool) -> None:
     session = await create_many_sessions(db_pool_initialed, 1)
     db = TargetsDB(db_pool_initialed)
-    payload = create_fake_target(session[0].session_id)
+    payload = create_fake_target(session[0].session_id, face_count=1)
     payload.faces[0].human_identifier = "T01"
     target_id = await db.insert_one(payload)
     assert target_id is not None
@@ -25,9 +25,9 @@ async def test_create_target(db_pool_initialed: Pool) -> None:
 async def test_get_all_targets(db_pool_initialed: Pool) -> None:
     session = await create_many_sessions(db_pool_initialed, 1)
     db = TargetsDB(db_pool_initialed)
-    payload1 = create_fake_target(session[0].session_id)
+    payload1 = create_fake_target(session[0].session_id, face_count=1)
     payload1.faces[0].human_identifier = "T02"
-    payload2 = create_fake_target(session[0].session_id)
+    payload2 = create_fake_target(session[0].session_id, face_count=1)
     payload2.faces[0].human_identifier = "T03"
     await db.insert_one(payload1)
     await db.insert_one(payload2)
@@ -40,7 +40,7 @@ async def test_get_all_targets(db_pool_initialed: Pool) -> None:
 async def test_get_specific_target(db_pool_initialed: Pool) -> None:
     session = await create_many_sessions(db_pool_initialed, 1)
     db = TargetsDB(db_pool_initialed)
-    payload = create_fake_target(session[0].session_id, human_identifier="T04")
+    payload = create_fake_target(session[0].session_id, face_count=1, human_identifier="T04")
     target_id = await db.insert_one(payload)
     fetched = await db.get_one({"id": target_id})
     assert fetched is not None
@@ -51,7 +51,7 @@ async def test_get_specific_target(db_pool_initialed: Pool) -> None:
 async def test_delete_target(db_pool_initialed: Pool) -> None:
     session = await create_many_sessions(db_pool_initialed, 1)
     db = TargetsDB(db_pool_initialed)
-    payload = create_fake_target(session[0].session_id)
+    payload = create_fake_target(session[0].session_id, face_count=1)
     target_id = await db.insert_one(payload)
     await db.delete_one(target_id)
     with pytest.raises(DBNotFound):
@@ -62,7 +62,7 @@ async def test_delete_target(db_pool_initialed: Pool) -> None:
 async def test_get_one_by_id_target(db_pool_initialed: Pool) -> None:
     session = await create_many_sessions(db_pool_initialed, 1)
     db = TargetsDB(db_pool_initialed)
-    payload = create_fake_target(session[0].session_id)
+    payload = create_fake_target(session[0].session_id, face_count=1)
     payload.faces[0].human_identifier = "T99"
     target_id = await db.insert_one(payload)
     target = await db.get_one_by_id(target_id)
@@ -87,9 +87,9 @@ async def test_delete_nonexistent_target_raises(db_pool_initialed: Pool) -> None
 async def test_get_by_session_id(db_pool_initialed: Pool) -> None:
     sessions = await create_many_sessions(db_pool_initialed, 2)
     db = TargetsDB(db_pool_initialed)
-    t1 = create_fake_target(sessions[0].session_id, human_identifier="S1-T1")
-    t2 = create_fake_target(sessions[0].session_id, human_identifier="S1-T2")
-    t3 = create_fake_target(sessions[1].session_id, human_identifier="S2-T1")
+    t1 = create_fake_target(sessions[0].session_id, face_count=1, human_identifier="S1-T1")
+    t2 = create_fake_target(sessions[0].session_id, face_count=1, human_identifier="S1-T2")
+    t3 = create_fake_target(sessions[1].session_id, face_count=1, human_identifier="S2-T1")
     await db.insert_one(t1)
     await db.insert_one(t2)
     await db.insert_one(t3)

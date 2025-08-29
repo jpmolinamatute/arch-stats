@@ -70,6 +70,7 @@
         "READTYPE",
         "realpath",
         "rgxs",
+        "rmax",
         "scopedstyle",
         "sessionspage",
         "setuptools",
@@ -252,7 +253,6 @@
     ],
     "shellformat.path": "/usr/bin/shfmt",
     "shellformat.flag": "-i 4 -w",
-    "terminal.integrated.cwd": "${workspaceFolder}/backend",
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/backend/src"
     },

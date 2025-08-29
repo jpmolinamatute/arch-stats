@@ -8,28 +8,36 @@ from asyncpg import Pool
 from shared.schema import ShotsCreate, ShotsRead
 
 
-async def insert_shot_db(db_pool: Pool, shot_row: ShotsCreate) -> UUID:
+async def insert_shots_db(db_pool: Pool, shot_rows: list[ShotsCreate]) -> list[ShotsRead]:
+    """Insert multiple shots and return their ShotsRead rows."""
+    if not shot_rows:
+        return []
+    insert_sql = """
+        INSERT INTO shots (
+            arrow_id, session_id, arrow_engage_time, arrow_disengage_time, 
+            arrow_landing_time, x, y
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+        """
+    results: list[ShotsRead] = []
     async with db_pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """
-            INSERT INTO shots (
-                arrow_id, session_id, arrow_engage_time, arrow_disengage_time, 
-                arrow_landing_time, x, y
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id
-            """,
-            shot_row.arrow_id,
-            shot_row.session_id,
-            shot_row.arrow_engage_time,
-            shot_row.arrow_disengage_time,
-            shot_row.arrow_landing_time,
-            shot_row.x,
-            shot_row.y,
-        )
-        if row is None:
-            raise RuntimeError("Insert failed; no id returned")
-        _id: UUID = row["id"]
-        return _id
+        async with conn.transaction():
+            stmt = await conn.prepare(insert_sql)
+            for shot in shot_rows:
+                row = await stmt.fetchrow(
+                    shot.arrow_id,
+                    shot.session_id,
+                    shot.arrow_engage_time,
+                    shot.arrow_disengage_time,
+                    shot.arrow_landing_time,
+                    shot.x,
+                    shot.y,
+                )
+                assert row is not None
+                payload = shot.model_dump(exclude_none=True, by_alias=True)
+                payload["id"] = row["id"]
+                results.append(ShotsRead(**payload))
+    return results
 
 
 def create_fake_shot(arrow_id: UUID, session_id: UUID, **overrides: Any) -> ShotsCreate:
@@ -48,13 +56,12 @@ def create_fake_shot(arrow_id: UUID, session_id: UUID, **overrides: Any) -> Shot
 
 
 async def create_many_shots(
-    db_pool: Pool, arrows_id: list[UUID], session_id: UUID, count: int = 5
+    db_pool: Pool, arrows_id: list[UUID], session_id: UUID, shots_count: int = 5
 ) -> list[ShotsRead]:
-    shots = []
-    for i in range(count):
-        payload = create_fake_shot(arrows_id[i], session_id)
-        shot_id = await insert_shot_db(db_pool, payload)
-        payload_dict = payload.model_dump(exclude_none=True, by_alias=True)
-        payload_dict["id"] = shot_id
-        shots.append(ShotsRead(**payload_dict))
-    return shots
+    shot_rows: list[ShotsCreate] = []
+    if not arrows_id:
+        return []
+    for i in range(shots_count):
+        # cycle through provided arrows if fewer than shots_count
+        shot_rows.append(create_fake_shot(arrows_id[i % len(arrows_id)], session_id))
+    return await insert_shots_db(db_pool, shot_rows)
