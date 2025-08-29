@@ -26,20 +26,20 @@ def create_fake_axis(biggest_radii: float, max_allowed: float) -> float:
 
 
 def create_no_faces(face_count: int) -> int:
-    no: float
+    number: int
     if face_count == 0:
-        no = random.randint(0, 4)
+        number = random.randint(0, 4)
     elif 0 < face_count <= 4:
-        no = face_count
+        number = face_count
     else:
         raise ValueError("face_count must be >= 0 and <= 4")
-    return no
+    return number
 
 
 def create_fake_faces(face_count: int, max_x: float, max_y: float) -> list[TargetFace]:
     """
     Generate a list of TargetFace objects following constraints:
-    - 0 through 4 faces per target.
+    - 0 through 4 faces per target. Unless explicitly specified `face_count`.
     - face[].human_identifier unique per target.
     - radii list has 3..10 items, ascending.
     - points length matches radii.
@@ -93,33 +93,46 @@ def create_fake_target(session_id: UUID, face_count: int = 0, **overrides: Any) 
     return data.model_copy(update=overrides)
 
 
+async def insert_targets_db(db_pool: Pool, target_rows: list[TargetsCreate]) -> list[TargetsRead]:
+    """Insert targets and return their TargetsRead rows."""
+    results: list[TargetsRead] = []
+    if not target_rows:
+        return results
+
+    insert_sql = """
+        INSERT INTO targets (max_x, max_y, session_id, faces)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+    """
+    async with db_pool.acquire() as conn:
+        async with conn.transaction():
+            stmt = await conn.prepare(insert_sql)
+            for target in target_rows:
+                row = await stmt.fetchrow(
+                    target.max_x,
+                    target.max_y,
+                    target.session_id,
+                    target.faces_as_json(),
+                )
+                assert row is not None
+                payload = target.model_dump(mode="json", by_alias=True)
+                payload["id"] = row["id"]
+                results.append(TargetsRead(**payload))
+    return results
+
+
 async def create_many_targets(
     db_pool: Pool,
     session_id: UUID,
-    count: int = 5,
+    targets_count: int = 5,
 ) -> list[TargetsRead]:
-    targets = []
-    for _ in range(count):
-        target = create_fake_target(
-            session_id=session_id,
-            face_count=1,  # ensure at least one face for predictable tests
-        )
-        insert_sql = """
-            INSERT INTO targets (
-                max_x, max_y, session_id, faces
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING id
-        """
-        async with db_pool.acquire() as conn:
-            row = await conn.fetchrow(
-                insert_sql,
-                target.max_x,
-                target.max_y,
-                target.session_id,
-                target.faces_as_json(),
+    targets_to_insert: list[TargetsCreate] = []
+    for _ in range(targets_count):
+        targets_to_insert.append(
+            create_fake_target(
+                session_id=session_id,
+                face_count=1,  # ensure at least one face for predictable tests
             )
-            assert row is not None
-        payload_dict = target.model_dump(mode="json", by_alias=True)
-        payload_dict["id"] = row["id"]
-        targets.append(TargetsRead(**payload_dict))
-    return targets
+        )
+    results = await insert_targets_db(db_pool, targets_to_insert)
+    return results
