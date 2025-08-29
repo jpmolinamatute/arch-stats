@@ -1,6 +1,6 @@
 import { reactive, watch } from 'vue';
 import { sessionOpened } from './session';
-export type ViewName = 'ArrowForm' | 'SessionForm' | 'TargetForm' | 'ShotsTable';
+export type ViewName = 'ArrowForm' | 'SessionForm' | 'ShotsTable';
 export const uiManagerStore = reactive({
     currentView: null as ViewName | null,
     setView(viewName: ViewName) {

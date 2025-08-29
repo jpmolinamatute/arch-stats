@@ -1,20 +1,19 @@
 <script setup lang="ts">
     import { computed } from 'vue';
+    import type { Component } from 'vue';
     import { uiManagerStore } from './state/uiManagerStore';
     import { sessionOpened } from './state/session';
     import type { ViewName } from './state/uiManagerStore';
 
     import WizardArrows from './components/WizardArrows.vue';
     import WizardSession from './components/WizardSession.vue';
-    import CalibrateTarget from './components/forms/CalibrateTarget.vue';
     import ShotsTable from './components/ShotsTable.vue';
     import { closeSession } from './composables/useSession';
 
     // Map view names to components
-    const componentsMap: Record<ViewName, any> = {
+    const componentsMap: Record<ViewName, Component> = {
         ArrowForm: WizardArrows,
         SessionForm: WizardSession,
-        TargetForm: CalibrateTarget,
         ShotsTable: ShotsTable,
     };
 
@@ -47,7 +46,6 @@
         >
             <button @click="handleClick()" class="">{{ buttonText }}</button>
             <button @click="uiManagerStore.setView('ArrowForm')">Register Arrow</button>
-            <button @click="uiManagerStore.setView('TargetForm')">Register Target</button>
             <button @click="uiManagerStore.setView('ShotsTable')">View Shots</button>
         </header>
 

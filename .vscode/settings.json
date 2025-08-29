@@ -70,6 +70,7 @@
         "READTYPE",
         "realpath",
         "rgxs",
+        "rmax",
         "scopedstyle",
         "sessionspage",
         "setuptools",
