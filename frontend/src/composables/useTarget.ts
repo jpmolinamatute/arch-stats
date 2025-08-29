@@ -26,7 +26,15 @@ export async function createTarget(payload: TargetsCreate): Promise<Target | nul
             },
             body: JSON.stringify(payload),
         });
-        const json: unknown = await response.json().catch(() => ({}));
+        let json: unknown;
+        try {
+            json = await response.json();
+        } catch (jsonErr) {
+            // If response is not valid JSON, try to get the raw text for debugging
+            const text = await response.text();
+            console.error('Failed to parse JSON response:', jsonErr, 'Raw response:', text);
+            json = {};
+        }
         const data = isRecord(json) ? (json['data'] as unknown) : undefined;
 
         // Server contract (OpenAPI): POST /api/v0/target returns a UUID string, not the entity
