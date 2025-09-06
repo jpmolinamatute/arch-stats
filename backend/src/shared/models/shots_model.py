@@ -3,14 +3,18 @@ from uuid import UUID
 from asyncpg import Pool
 from pydantic import BaseModel
 
-from shared.models.base_db import DBBase
-from shared.schema import ShotsCreate, ShotsRead
+from shared.models.parent_model import DBException, ParentModel
+from shared.schema import ShotsCreate, ShotsFilters, ShotsRead
+from shared.settings import settings
 
 
 # pylint: disable=too-few-public-methods
-class ShotsDB(DBBase[ShotsCreate, BaseModel, ShotsRead]):
+class ShotsModel(ParentModel[ShotsCreate, BaseModel, ShotsRead, ShotsFilters]):
 
     def __init__(self, db_pool: Pool) -> None:
+        super().__init__("shots", db_pool, ShotsRead)
+
+    async def create(self) -> None:
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             arrow_id UUID NOT NULL,
@@ -36,7 +40,18 @@ class ShotsDB(DBBase[ShotsCreate, BaseModel, ShotsRead]):
                 )
             )
         """
-        super().__init__("shots", schema, db_pool, ShotsRead)
+        channel = settings.arch_stats_ws_channel
+        await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
+        await self.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_arrow_id ON {self.name} (arrow_id);"
+        )
+        await self.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id ON {self.name} (session_id);"
+        )
+        await self.create_notification(channel)
+
+    async def drop(self) -> None:
+        await self.execute(f"DROP TABLE IF EXISTS {self.name} CASCADE;")
 
     async def create_notification(self, channel: str) -> None:
         """Ensure the notification function and trigger exist for new shots inserts."""
@@ -67,7 +82,17 @@ class ShotsDB(DBBase[ShotsCreate, BaseModel, ShotsRead]):
             await conn.execute(trigger_sql)
 
     async def get_by_session_id(self, session_id: UUID) -> list[ShotsRead]:
-        return await self.get_all({"session_id": session_id})
+        where = ShotsFilters(session_id=session_id)
+        return await self.get_all(where)
 
     async def update_one(self, _id: UUID, data: BaseModel) -> None:
         raise NotImplementedError
+
+    async def get_one_by_id(self, _id: UUID) -> ShotsRead:
+        """
+        Retrieve a single record by its UUID.
+        """
+        if not isinstance(_id, UUID):
+            raise DBException("Error: invalid '_id' provided to delete_one method.")
+        where = ShotsFilters(id=_id)
+        return await self.get_one(where)

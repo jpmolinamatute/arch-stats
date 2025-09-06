@@ -12,7 +12,7 @@ from typing_extensions import Literal
 from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
 from shared.db_pool import DBPool
 from shared.logger import LogLevel, get_logger
-from shared.models import ArrowsDB, SessionsDB, ShotsDB, TargetsDB
+from shared.models import ArrowsModel, FacesModel, SessionsModel, ShotsModel, TargetsModel
 from shared.settings import settings
 
 
@@ -20,23 +20,25 @@ TablesAction = Literal["drop", "create"]
 
 
 async def manage_tables(pool: Pool, action: TablesAction) -> None:
-    arrows = ArrowsDB(pool)
-    shots = ShotsDB(pool)
-    sessions = SessionsDB(pool)
-    targets = TargetsDB(pool)
-    channel = settings.arch_stats_ws_channel
+    arrows = ArrowsModel(pool)
+    shots = ShotsModel(pool)
+    sessions = SessionsModel(pool)
+    targets = TargetsModel(pool)
+    faces = FacesModel(pool)
+
     if action == "create":
-        await arrows.create_table()
-        await sessions.create_table()
-        await shots.create_table()
-        await shots.create_notification(channel)
-        await targets.create_validation_function()
-        await targets.create_table()
+        await arrows.create()
+        await sessions.create()
+        await shots.create()
+        await targets.create()
+        await faces.create()
     elif action == "drop":
-        await targets.drop_table()
-        await shots.drop_table()
-        await arrows.drop_table()
-        await sessions.drop_table()
+        # Drop child/dependent tables first to satisfy FK constraints
+        await faces.drop()
+        await targets.drop()
+        await shots.drop()
+        await arrows.drop()
+        await sessions.drop()
 
 
 def log_start(logger: logging.Logger, dev_mode: bool) -> None:

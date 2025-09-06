@@ -1,22 +1,28 @@
-from .arrows_schema import (
+from shared.schema.arrows_schema import (
     ArrowsCreate,
     ArrowsFilters,
     ArrowsRead,
     ArrowsUpdate,
 )
-from .sessions_schema import (
+from shared.schema.faces_schema import (
+    FacesCreate,
+    FacesFilters,
+    FacesRead,
+    FacesUpdate,
+)
+from shared.schema.performance_schema import PerformanceFilter, PerformanceRead
+from shared.schema.sessions_schema import (
     SessionsCreate,
     SessionsFilters,
     SessionsRead,
     SessionsUpdate,
 )
-from .shots_schema import (
+from shared.schema.shots_schema import (
     ShotsCreate,
     ShotsFilters,
     ShotsRead,
 )
-from .targets_schema import Face as TargetFace
-from .targets_schema import (
+from shared.schema.targets_schema import (
     TargetsCreate,
     TargetsFilters,
     TargetsRead,
@@ -29,6 +35,12 @@ __all__ = [
     "ArrowsFilters",
     "ArrowsRead",
     "ArrowsUpdate",
+    "FacesCreate",
+    "FacesFilters",
+    "FacesRead",
+    "FacesUpdate",
+    "PerformanceFilter",
+    "PerformanceRead",
     "SessionsCreate",
     "SessionsFilters",
     "SessionsRead",
@@ -40,5 +52,4 @@ __all__ = [
     "TargetsFilters",
     "TargetsRead",
     "TargetsUpdate",
-    "TargetFace",
 ]

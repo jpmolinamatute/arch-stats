@@ -10,8 +10,8 @@ from asyncpg import Pool
 
 from shared.db_pool import DBPool
 from shared.logger import LogLevel, get_logger
-from shared.models import ArrowsDB, SessionsDB, ShotsDB
-from shared.schema import ArrowsCreate, SessionsCreate, ShotsCreate
+from shared.models import ArrowsModel, SessionsModel, ShotsModel
+from shared.schema import ArrowsCreate, ArrowsFilters, SessionsCreate, ShotsCreate
 
 
 class ArchyException(Exception):
@@ -22,9 +22,9 @@ class ArchyBot:
     def __init__(self, logger: logging.Logger, pool: Pool) -> None:
         self.logger = logger
         self.pool = pool
-        self.arrows_db = ArrowsDB(self.pool)
-        self.shots_db = ShotsDB(self.pool)
-        self.sessions_db = SessionsDB(self.pool)
+        self.arrows_db = ArrowsModel(self.pool)
+        self.shots_db = ShotsModel(self.pool)
+        self.sessions_db = SessionsModel(self.pool)
 
     async def start(self) -> None:
         try:
@@ -40,7 +40,6 @@ class ArchyBot:
             start_time=datetime.now().astimezone(),
             location="default location",
             is_indoor=False,
-            distance=18,
         )
         _id = await self.sessions_db.insert_one(payload)
         self.logger.info("A session was inserted in the DB")
@@ -55,7 +54,7 @@ class ArchyBot:
         return session_id
 
     async def insert_new_arrows(self) -> list[UUID]:
-        """Insert 10 arrows using ArrowsDB.insert_one and return their UUIDs."""
+        """Insert 10 arrows using ArrowsModel.insert_one and return their UUIDs."""
 
         arrow_uuids: list[UUID] = []
         now = datetime.now().astimezone()
@@ -81,16 +80,17 @@ class ArchyBot:
         return arrow_uuids
 
     async def get_all_arrow_ids(self) -> list[UUID]:
-        rows = await self.arrows_db.get_all({"is_active": True})
+        where = ArrowsFilters(is_active=True)
+        rows = await self.arrows_db.get_all(where)
         if rows:
             return [row.get_id() for row in rows]
         return await self.insert_new_arrows()
 
     async def insert_shot(self, session_id: UUID, arrows_ids: list[UUID]) -> None:
-        """Insert a shot using the shared ShotsDB model.
+        """Insert a shot using the shared ShotsModel model.
 
         Chooses a random arrow id, generates times and optional landing/x/y,
-        then persists via ShotsDB.insert_one.
+        then persists via ShotsModel.insert_one.
         """
         arrow_id = random.choice(arrows_ids)
         now = datetime.now().astimezone()
@@ -130,15 +130,12 @@ class ArchyBot:
                 await conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 
             # Check each table; create if needed
-            if not await self.sessions_db.check_table_exists():
-                await self.sessions_db.create_table()
-                self.logger.info("Created 'sessions' table")
-            if not await self.arrows_db.check_table_exists():
-                await self.arrows_db.create_table()
-                self.logger.info("Created 'arrows' table")
-            if not await self.shots_db.check_table_exists():
-                await self.shots_db.create_table()
-                self.logger.info("Created 'shots' table")
+            self.logger.info("Creating 'sessions' table if it doesn't already exist")
+            await self.sessions_db.create()
+            self.logger.info("Creating 'arrows' table if it doesn't already exist")
+            await self.arrows_db.create()
+            self.logger.info("Creating 'shots' table if it doesn't already exist")
+            await self.shots_db.create()
 
             # Ensure notifications are present for shots (uses default channel from settings via
             # server in normal run; here adopt a simple channel name)

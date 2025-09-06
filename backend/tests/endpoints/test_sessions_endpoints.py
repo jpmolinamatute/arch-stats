@@ -69,7 +69,7 @@ async def test_session_crud_workflow(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("missing_field", ["is_opened", "start_time", "location", "distance"])
+@pytest.mark.parametrize("missing_field", ["is_opened", "start_time", "location"])
 async def test_session_missing_required_fields(
     async_client: AsyncClient, missing_field: str
 ) -> None:
@@ -91,7 +91,6 @@ async def test_session_missing_required_fields(
         ("start_time", "not-a-datetime"),
         ("location", 12345),
         ("is_indoor", "not-a-bool"),
-        ("distance", "not-an-int"),
     ],
 )
 async def test_session_wrong_data_type(

@@ -3,6 +3,11 @@ from shared.factories.arrows_factory import (
     create_many_arrows,
     insert_arrows_db,
 )
+from shared.factories.faces_factory import (
+    create_fake_face,
+    create_many_faces,
+    insert_faces_db,
+)
 from shared.factories.sessions_factory import (
     create_fake_session,
     create_many_sessions,
@@ -33,4 +38,7 @@ __all__ = [
     "insert_sessions_db",
     "insert_shots_db",
     "insert_targets_db",
+    "create_fake_face",
+    "create_many_faces",
+    "insert_faces_db",
 ]

@@ -1,32 +1,14 @@
-import json
-from typing import Annotated
 from uuid import UUID
 
-from annotated_types import Len
 from pydantic import BaseModel, ConfigDict, Field
-
-
-class Face(BaseModel):
-    x: float = Field(..., description="X coordinate of face center")
-    y: float = Field(..., description="Y coordinate of face center")
-    radii: Annotated[list[float], Len(min_length=1)] = Field(
-        default_factory=list, description="List of radii for the face rings"
-    )
-    points: Annotated[list[int], Len(min_length=1)] = Field(
-        default_factory=list, description="Points assigned to the face rings"
-    )
-    human_identifier: str = Field(..., description="Human-readable identifier for the face")
 
 
 class TargetsCreate(BaseModel):
     max_x: float = Field(..., description="Max X coordinate of the target")
     max_y: float = Field(..., description="Max Y coordinate of the target")
     session_id: UUID = Field(..., description="ID of the session this target belongs to")
-    faces: list[Face] = Field(default_factory=list, description="A list of target faces")
+    distance: int = Field(..., description="Distance to the target in meters")
     model_config = ConfigDict(extra="forbid")
-
-    def faces_as_json(self) -> str:
-        return json.dumps([f.model_dump(mode="json") for f in self.faces])
 
 
 class TargetsUpdate(TargetsCreate):
@@ -34,12 +16,13 @@ class TargetsUpdate(TargetsCreate):
 
 
 class TargetsFilters(BaseModel):
+    target_id: UUID | None = Field(default=None, alias="id", description="ID of the target")
     session_id: UUID | None = Field(
         default=None, description="ID of the session this target belongs to"
     )
     max_x: float | None = Field(default=None, description="Max X coordinate of the target")
     max_y: float | None = Field(default=None, description="Max Y coordinate of the target")
-    faces: list[Face] | None = Field(default=None, description="A list of target faces")
+    distance: int | None = Field(default=None, description="Distance to the target in meters")
     model_config = ConfigDict(extra="forbid")
 
 

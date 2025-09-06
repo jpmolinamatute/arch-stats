@@ -11,6 +11,7 @@ from shared.db_pool import DBPool
 
 @pytest_asyncio.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
+    """Provide an AsyncClient bound to a fresh app lifecycle per test."""
     logging.basicConfig(level=logging.DEBUG)
     app = run()
     app.state.logger = logging.getLogger("tests")
@@ -33,6 +34,7 @@ async def db_pool() -> AsyncGenerator[Pool, None]:
 
 @pytest_asyncio.fixture
 async def db_pool_initialed() -> AsyncGenerator[Pool, None]:
+    """DB pool with schema created; cleans up tables and closes the pool after use."""
     pool = await DBPool.open_db_pool()
     await manage_tables(pool, "create")
     yield pool

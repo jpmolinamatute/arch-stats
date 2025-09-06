@@ -18,7 +18,6 @@ def create_fake_session(**overrides: Any) -> SessionsCreate:
         start_time=datetime.now(timezone.utc),
         location="Test Range",
         is_indoor=False,
-        distance=18,
     )
     return data.model_copy(update=overrides)
 
@@ -31,9 +30,9 @@ async def insert_sessions_db(
         return []
     insert_sql = """
         INSERT INTO sessions (
-            is_opened, start_time, location, is_indoor, distance, end_time
+            is_opened, start_time, location, is_indoor, end_time
         ) VALUES (
-            $1, $2, $3, $4, $5, $6
+            $1, $2, $3, $4, $5
         ) RETURNING id
     """
     results: list[SessionsRead] = []
@@ -50,7 +49,6 @@ async def insert_sessions_db(
                     s.start_time,
                     s.location,
                     s.is_indoor,
-                    s.distance,
                     end_time,
                 )
                 assert row is not None

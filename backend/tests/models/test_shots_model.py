@@ -5,7 +5,7 @@ import pytest_asyncio
 from asyncpg import Pool
 
 from shared.factories import create_fake_shot, create_many_arrows, create_many_sessions
-from shared.models import DBException, DBNotFound, ShotsDB
+from shared.models import DBException, DBNotFound, ShotsModel
 from shared.schema import ShotsCreate
 
 
@@ -22,7 +22,7 @@ async def fake_shot_data(db_pool_initialed: Pool) -> ShotsCreate:
 
 @pytest.mark.asyncio
 async def test_delete_nonexistent_raises(db_pool_initialed: Pool) -> None:
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     non_existing_id = uuid4()
     with pytest.raises(DBNotFound):
         await shots_db.delete_one(non_existing_id)
@@ -30,7 +30,7 @@ async def test_delete_nonexistent_raises(db_pool_initialed: Pool) -> None:
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_shot_raises(db_pool_initialed: Pool) -> None:
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     with pytest.raises(DBNotFound):
         await shots_db.get_one_by_id(uuid4())
 
@@ -40,7 +40,7 @@ async def test_insert_and_fetch_hit_shot(db_pool_initialed: Pool) -> None:
     # Arrange
     arrows = await create_many_arrows(db_pool_initialed, 1)
     sessions = await create_many_sessions(db_pool_initialed, 1)
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     payload = create_fake_shot(arrows[0].arrow_id, sessions[0].session_id)
 
     # Act
@@ -56,7 +56,7 @@ async def test_insert_and_fetch_miss_shot(db_pool_initialed: Pool) -> None:
     # Arrange
     arrows = await create_many_arrows(db_pool_initialed, 1)
     sessions = await create_many_sessions(db_pool_initialed, 1)
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     payload = create_fake_shot(
         arrows[0].arrow_id,
         sessions[0].session_id,
@@ -78,7 +78,7 @@ async def test_constraint_violation_partial_coordinates_fail(db_pool_initialed: 
     # landing time present but x/y missing must fail per CHECK constraint
     arrows = await create_many_arrows(db_pool_initialed, 1)
     sessions = await create_many_sessions(db_pool_initialed, 1)
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     bad = create_fake_shot(
         arrows[0].arrow_id,
         sessions[0].session_id,
@@ -98,7 +98,7 @@ async def test_get_all_and_by_session(db_pool_initialed: Pool) -> None:
     a1 = create_fake_shot(arrows[0].arrow_id, sessions[0].session_id)
     a2 = create_fake_shot(arrows[1].arrow_id, sessions[0].session_id)
     b1 = create_fake_shot(arrows[2].arrow_id, sessions[1].session_id)
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     await shots_db.insert_one(a1)
     await shots_db.insert_one(a2)
     await shots_db.insert_one(b1)
@@ -116,7 +116,7 @@ async def test_cascade_delete_on_arrow_removes_shots(db_pool_initialed: Pool) ->
     arrows = await create_many_arrows(db_pool_initialed, 1)
     sessions = await create_many_sessions(db_pool_initialed, 1)
     # Insert shot
-    shots_db = ShotsDB(db_pool_initialed)
+    shots_db = ShotsModel(db_pool_initialed)
     shot_id = await shots_db.insert_one(
         create_fake_shot(arrows[0].arrow_id, sessions[0].session_id)
     )

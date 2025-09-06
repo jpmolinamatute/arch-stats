@@ -1,16 +1,17 @@
-from shared.models.arrows_db import ArrowsDB
-from shared.models.base_db import DBException, DBNotFound, DictValues
-from shared.models.sessions_db import SessionsDB
-from shared.models.shots_db import ShotsDB
-from shared.models.targets_db import TargetsDB
+from shared.models.arrows_model import ArrowsModel
+from shared.models.faces_model import FacesModel
+from shared.models.parent_model import DBException, DBNotFound
+from shared.models.sessions_model import SessionsModel
+from shared.models.shots_model import ShotsModel
+from shared.models.targets_model import TargetsModel
 
 
 __all__ = [
-    "SessionsDB",
-    "TargetsDB",
-    "ArrowsDB",
-    "ShotsDB",
+    "SessionsModel",
+    "TargetsModel",
+    "ArrowsModel",
+    "ShotsModel",
+    "FacesModel",
     "DBException",
     "DBNotFound",
-    "DictValues",
 ]

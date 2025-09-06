@@ -112,6 +112,7 @@ class ArrowsUpdate(BaseModel):
 
 
 class ArrowsFilters(BaseModel):
+    arrow_id: UUID | None = Field(default=None, alias="id", description="ID of the arrow")
     registration_date: datetime | None = Field(
         default=None,
         description="Date/time when the arrow was registered and ready to use",

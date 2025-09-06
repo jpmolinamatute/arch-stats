@@ -7,18 +7,18 @@ from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
 from shared.factories import create_fake_target
-from shared.models import TargetsDB
+from shared.models import TargetsModel
 from shared.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
 
 
 TargetsRouter = APIRouter(prefix="/target")
 
 
-async def get_targets_db(request: Request) -> TargetsDB:
+async def get_targets_db(request: Request) -> TargetsModel:
     logger: logging.Logger = request.app.state.logger
-    logger.debug("Getting SessionsDB")
+    logger.debug("Getting TargetsModel")
     db_pool: Pool = request.app.state.db_pool
-    return TargetsDB(db_pool)
+    return TargetsModel(db_pool)
 
 
 async def async_wrapper(session_id: UUID) -> TargetsCreate:
@@ -40,7 +40,7 @@ async def calibrate_target() -> JSONResponse:
 @TargetsRouter.delete("/{target_id}", response_model=HTTPResponse[None])
 async def delete_target(
     target_id: UUID,
-    targets_db: TargetsDB = Depends(get_targets_db),
+    targets_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
     """
     Delete a target configuration by its unique ID.
@@ -58,7 +58,7 @@ async def delete_target(
 async def patch_target(
     target_id: UUID,
     update: TargetsUpdate,
-    target_db: TargetsDB = Depends(get_targets_db),
+    target_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
     """
     Partially update an existing target's data.
@@ -76,7 +76,7 @@ async def patch_target(
 @TargetsRouter.get("/{target_id}", response_model=HTTPResponse[TargetsRead])
 async def get_target(
     target_id: UUID,
-    targets_db: TargetsDB = Depends(get_targets_db),
+    targets_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
     """
     Retrieve an target from the database by its unique ID.
@@ -100,7 +100,7 @@ async def get_target(
 @TargetsRouter.post("", response_model=HTTPResponse[None])
 async def add_target(
     target_data: TargetsCreate,
-    targets_db: TargetsDB = Depends(get_targets_db),
+    targets_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
     """
     Create new target.
@@ -118,19 +118,18 @@ async def add_target(
 @TargetsRouter.get("", response_model=HTTPResponse[list[TargetsRead]])
 async def get_all_targets(
     filters: TargetsFilters = Depends(),
-    targets_db: TargetsDB = Depends(get_targets_db),
+    targets_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
     """
     Retrieve all targets.
     """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(targets_db.get_all, status.HTTP_200_OK, filters_dict)
+    return await db_response(targets_db.get_all, status.HTTP_200_OK, filters)
 
 
 @TargetsRouter.get("/session-id/{session_id}")
 async def get_all_targets_sessionid(
     session_id: UUID,
-    targets_db: TargetsDB = Depends(get_targets_db),
+    targets_db: TargetsModel = Depends(get_targets_db),
 ) -> JSONResponse:
 
     return await db_response(targets_db.get_by_session_id, status.HTTP_200_OK, session_id)

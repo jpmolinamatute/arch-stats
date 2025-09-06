@@ -18,6 +18,7 @@ class ShotsCreate(BaseModel):
 
 
 class ShotsFilters(BaseModel):
+    shot_id: UUID | None = Field(default=None, alias="id", description="ID of the shot")
     arrow_id: UUID | None = Field(default=None, description="ID of the arrow recorded")
     session_id: UUID | None = Field(
         default=None, description="ID of the session this shot belongs to"

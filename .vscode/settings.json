@@ -42,6 +42,7 @@
         "fetchrow",
         "FETCHTYPE",
         "fetchval",
+        "FILTERTYPE",
         "FIXIT",
         "frontend",
         "httpx",

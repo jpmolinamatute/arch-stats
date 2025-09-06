@@ -7,18 +7,18 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.models import ArrowsDB
+from shared.models import ArrowsModel
 from shared.schema import ArrowsCreate, ArrowsFilters, ArrowsRead, ArrowsUpdate
 
 
 ArrowsRouter = APIRouter(prefix="/arrow")
 
 
-async def get_arrows_db(request: Request) -> ArrowsDB:
+async def get_arrows_db(request: Request) -> ArrowsModel:
     logger: logging.Logger = request.app.state.logger
-    logger.debug("Getting ArrowsDB")
+    logger.debug("Getting ArrowsModel")
     db_pool: Pool = request.app.state.db_pool
-    return ArrowsDB(db_pool)
+    return ArrowsModel(db_pool)
 
 
 @ArrowsRouter.get("/new_arrow_uuid", response_model=HTTPResponse[str])
@@ -46,7 +46,7 @@ async def get_arrow_uuid() -> JSONResponse:
 @ArrowsRouter.get("/{arrow_id}", response_model=HTTPResponse[ArrowsRead])
 async def get_arrow(
     arrow_id: UUID,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
+    arrows_db: ArrowsModel = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Retrieve an arrow from the database by its unique ID.
@@ -63,7 +63,7 @@ async def get_arrow(
 @ArrowsRouter.delete("/{arrow_id}", response_model=HTTPResponse[None])
 async def delete_arrow(
     arrow_id: UUID,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
+    arrows_db: ArrowsModel = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Delete an arrow from the database by its unique ID.
@@ -81,7 +81,7 @@ async def delete_arrow(
 async def patch_arrow(
     arrow_id: UUID,
     update: ArrowsUpdate,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
+    arrows_db: ArrowsModel = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Partially update an existing arrow's data.
@@ -106,19 +106,18 @@ async def patch_arrow(
 @ArrowsRouter.get("", response_model=HTTPResponse[list[ArrowsRead]])
 async def get_all_arrows(
     filters: ArrowsFilters = Depends(),
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
+    arrows_db: ArrowsModel = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Retrieve all arrows.
     """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters_dict)
+    return await db_response(arrows_db.get_all, status.HTTP_200_OK, filters)
 
 
 @ArrowsRouter.post("", response_model=HTTPResponse[UUID])
 async def add_arrow(
     arrow_data: ArrowsCreate,
-    arrows_db: ArrowsDB = Depends(get_arrows_db),
+    arrows_db: ArrowsModel = Depends(get_arrows_db),
 ) -> JSONResponse:
     """
     Create and register a new arrow.
