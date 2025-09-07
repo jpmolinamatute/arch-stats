@@ -16,7 +16,7 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
             length REAL NOT NULL,
             human_identifier VARCHAR(10) NOT NULL,
             is_programmed BOOLEAN NOT NULL DEFAULT FALSE,
-            registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+            registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
             voided_date TIMESTAMP WITH TIME ZONE,
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             label_position REAL,

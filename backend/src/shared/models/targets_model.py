@@ -17,6 +17,7 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
             max_y REAL NOT NULL,
             distance INTEGER NOT NULL,
             session_id UUID NOT NULL,
+            CONSTRAINT targets_one_per_session UNIQUE (session_id),
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
         await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")

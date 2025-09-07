@@ -42,20 +42,27 @@ class PerformanceDB(
                 shots.y,
                 arrows.human_identifier AS arrow_human_identifier,
                 arrows.id AS arrow_id,
-                EXTRACT(
+                extract(
                     EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)
                 ) AS time_of_flight_seconds,
-                targets.distance::float / NULLIF(
-                    EXTRACT(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
+                targets.distance::FLOAT / nullif(
+                    extract(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
                     0
                 ) AS arrow_speed,
                 get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score
             FROM
                 shots
-            JOIN
+            INNER JOIN
                 arrows ON shots.arrow_id = arrows.id
-            JOIN
-                targets ON shots.session_id = targets.session_id;
+            INNER JOIN
+                targets ON shots.session_id = targets.session_id
+            WHERE shots.session_id = (
+                SELECT sessions.id
+                FROM sessions
+                WHERE sessions.is_opened = TRUE
+                ORDER BY sessions.start_time DESC
+                LIMIT 1
+            );
         """
         await self.execute(view_sql)
 
@@ -89,7 +96,8 @@ class PerformanceDB(
             -- Check if any faces exist for the target
             SELECT COUNT(*) INTO face_count
             FROM faces
-            WHERE target_id = get_shot_score.target_id;
+            WHERE target_id = get_shot_score.target_id
+            LIMIT 3;
 
             -- If no faces exist, return NULL
             IF face_count = 0 THEN

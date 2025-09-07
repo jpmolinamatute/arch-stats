@@ -17,16 +17,16 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
             x REAL NOT NULL,
             y REAL NOT NULL,
             human_identifier TEXT NOT NULL,
-            radii REAL[] NOT NULL,
-            points INTEGER[] NOT NULL,
+            radii REAL [] NOT NULL,
+            points INTEGER [] NOT NULL,
             target_id UUID NOT NULL,
             FOREIGN KEY (target_id) REFERENCES targets (id) ON DELETE CASCADE,
             UNIQUE (target_id, human_identifier),
             CHECK (
-                array_length(radii, 1) > 0 AND
-                array_length(points, 1) > 0 AND
-                array_length(points, 1) = array_length(radii, 1) AND
-                validate_face_row(target_id, x, y, radii)
+                array_length(radii, 1) > 0
+                AND array_length(points, 1) > 0
+                AND array_length(points, 1) = array_length(radii, 1)
+                AND validate_face_row(target_id, x, y, radii)
             )
         """
         await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({faces_schema});")
@@ -43,7 +43,7 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
                 target_id UUID,
                 x REAL,
                 y REAL,
-                radii REAL[]
+                radii REAL []
             ) RETURNS BOOLEAN AS $$
             DECLARE
                 max_radius REAL;
@@ -55,11 +55,11 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
                 -- Compute max radius
                 SELECT MAX(r) INTO max_radius FROM unnest(radii) AS r;
 
-                -- Ensure face fully contained within target bounds (allowing edge contact)
-                IF (x + max_radius) >= tgt_max_x OR (y + max_radius) >= tgt_max_y THEN
+                -- Ensure face fully contained within target bounds (strictly inside)
+                IF (x + max_radius) > tgt_max_x OR (y + max_radius) > tgt_max_y THEN
                     RETURN FALSE;
                 END IF;
-                IF (x - max_radius) <= 0 OR (y - max_radius) <= 0 THEN
+                IF (x - max_radius) < 0 OR (y - max_radius) < 0 THEN
                     RETURN FALSE;
                 END IF;
 

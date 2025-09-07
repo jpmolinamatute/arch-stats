@@ -78,6 +78,10 @@ addopts = "-vra  --color=yes"
 testpaths = "./tests"
 pythonpath = "./src"
 
+[tool.sqlfluff.core]
+dialect = "postgres"
+max_line_length = 100
+
 [tool.pylint.main]
 # Analyze import fallback blocks. This can be used to support both Python 2 and 3
 # compatible code, which means that the block might have code that exists only in

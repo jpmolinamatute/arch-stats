@@ -20,8 +20,8 @@ class SessionsModel(ParentModel[SessionsCreate, SessionsUpdate, SessionsRead, Se
             end_time TIMESTAMP WITH TIME ZONE,
             is_indoor BOOLEAN DEFAULT FALSE,
             CHECK (
-                (is_opened AND end_time IS NULL) OR
-                (NOT is_opened AND end_time IS NOT NULL)
+                (is_opened AND end_time IS NULL)
+                OR (NOT is_opened AND end_time IS NOT NULL)
             )
         """
         await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")

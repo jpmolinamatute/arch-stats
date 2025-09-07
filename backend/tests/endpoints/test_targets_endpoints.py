@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from shared.factories import (
     create_fake_target,
     create_many_sessions,
-    create_many_targets,
+    insert_targets_db,
 )
 
 
@@ -137,10 +137,17 @@ async def test_post_target_with_extra_field(async_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_targets_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
-    sessions = await create_many_sessions(db_pool, 1)
+    # Create multiple sessions and one target per session (unique constraint: one target per
+    # session)
+    sessions = await create_many_sessions(db_pool, 5)
     session_uuid = sessions[0].session_id
     session_id = str(session_uuid)
-    targets = await create_many_targets(db_pool, session_uuid, 5)
+
+    # Insert one target per session
+    targets = await insert_targets_db(
+        db_pool,
+        [create_fake_target(s.session_id) for s in sessions],
+    )
 
     # --- Filter by session_id ---
 

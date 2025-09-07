@@ -6,8 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class PerformanceRead(BaseModel):
     """
-    Read model for the performance SQL view.
-    Represents a shot enriched with target context and computed metrics.
+    Read model for the performance SQL view that combines shots, arrows, and targets
+    with computed metrics like scoring and flight time. This model does not represent
+    a direct database table, but rather a view that enriches shot data with context and
+    calculations.
     """
 
     shot_id: UUID = Field(..., alias="id", description="Shot identifier (row id from shots)")

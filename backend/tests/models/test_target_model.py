@@ -22,15 +22,17 @@ async def test_create_target(db_pool_initialed: Pool) -> None:
 
 @pytest.mark.asyncio
 async def test_get_all_targets(db_pool_initialed: Pool) -> None:
-    session = await create_many_sessions(db_pool_initialed, 1)
+    # Create multiple sessions and one target per session (unique per session)
+    sessions = await create_many_sessions(db_pool_initialed, 3)
     db = TargetsModel(db_pool_initialed)
-    payload1 = create_fake_target(session[0].session_id)
-    payload2 = create_fake_target(session[0].session_id)
-    await db.insert_one(payload1)
-    await db.insert_one(payload2)
+    payloads = [create_fake_target(s.session_id) for s in sessions]
+    for p in payloads:
+        await db.insert_one(p)
     targets = await db.get_all()
-    assert len(targets) >= 2
-    assert all(t.session_id == session[0].session_id for t in targets)
+    assert len(targets) >= 3
+    session_ids = {t.session_id for t in targets}
+    for s in sessions:
+        assert s.session_id in session_ids
 
 
 @pytest.mark.asyncio
@@ -84,13 +86,12 @@ async def test_delete_nonexistent_target_raises(db_pool_initialed: Pool) -> None
 async def test_get_by_session_id(db_pool_initialed: Pool) -> None:
     sessions = await create_many_sessions(db_pool_initialed, 2)
     db = TargetsModel(db_pool_initialed)
+    # One target per session
     t1 = create_fake_target(sessions[0].session_id)
-    t2 = create_fake_target(sessions[0].session_id)
-    t3 = create_fake_target(sessions[1].session_id)
+    t2 = create_fake_target(sessions[1].session_id)
     await db.insert_one(t1)
     await db.insert_one(t2)
-    await db.insert_one(t3)
 
     s1_targets = await db.get_by_session_id(sessions[0].session_id)
-    assert len(s1_targets) == 2
+    assert len(s1_targets) == 1
     assert all(t.session_id == sessions[0].session_id for t in s1_targets)

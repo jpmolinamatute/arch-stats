@@ -21,5 +21,6 @@
         "ms-vscode-remote.remote-ssh",
         "timonwong.shellcheck",
         "vitest.explorer",
+        "dorzey.vscode-sqlfluff",
     ]
 }

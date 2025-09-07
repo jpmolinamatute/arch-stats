@@ -2,9 +2,12 @@
 -- arch-stats database.
 
 -- An archer opens a session, register arrows and calibrate targets with optional target faces.
+-- Only one session can be is_opened = TRUE at a time.
 -- Afterwards, the archer can record arrow shots.
 -- Scoring ONLY happens when there are target faces associated with a target.
--- If the system record shots.arrow_landing_time, shots.x, and shots.y, it means that the arrow landed somewhere in the target butt. If target faces are present, they can be used for scoring. When scoring, the system checks:
+-- If the system record shots.arrow_landing_time, shots.x, and shots.y, it means that the arrow
+-- landed somewhere in the target butt. If target faces are present, they can be used for scoring.
+-- When scoring, the system checks:
 -- if the shot landed on a target face: the system scores the shot.
 -- if the shot misses the target face BUT landed on the target butt: The system scores 0.
 -- if the shot misses the target entirely: The system does not score the shot (aka null).
@@ -19,8 +22,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     end_time TIMESTAMP WITH TIME ZONE,
     is_indoor BOOLEAN DEFAULT FALSE,
     CHECK (
-        (is_opened AND end_time IS NULL) OR
-        (NOT is_opened AND end_time IS NOT NULL)
+        (is_opened AND end_time IS NULL)
+        OR (NOT is_opened AND end_time IS NOT NULL)
     )
 );
 
@@ -30,6 +33,7 @@ CREATE TABLE IF NOT EXISTS targets (
     max_y REAL NOT NULL,
     distance INTEGER NOT NULL,
     session_id UUID NOT NULL,
+    CONSTRAINT targets_one_per_session UNIQUE (session_id),
     FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
 );
 
@@ -38,16 +42,16 @@ CREATE TABLE IF NOT EXISTS faces (
     x REAL NOT NULL,
     y REAL NOT NULL,
     human_identifier TEXT NOT NULL,
-    radii REAL[] NOT NULL,
-    points INTEGER[] NOT NULL,
+    radii REAL [] NOT NULL,
+    points INTEGER [] NOT NULL,
     target_id UUID NOT NULL,
     FOREIGN KEY (target_id) REFERENCES targets (id) ON DELETE CASCADE,
     UNIQUE (target_id, human_identifier),
     CHECK (
-        array_length(radii, 1) > 0 AND
-        array_length(points, 1) > 0 AND
-        array_length(points, 1) == array_length(radii, 1) AND
-        validate_face_row(target_id, x, y, radii)
+        array_length(radii, 1) > 0
+        AND array_length(points, 1) > 0
+        AND array_length(points, 1) = array_length(radii, 1)
+        AND validate_face_row(target_id, x, y, radii)
     )
 );
 
@@ -56,7 +60,7 @@ CREATE TABLE IF NOT EXISTS arrows (
     length REAL NOT NULL,
     human_identifier VARCHAR(10) NOT NULL,
     is_programmed BOOLEAN NOT NULL DEFAULT FALSE,
-    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    registration_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     voided_date TIMESTAMP WITH TIME ZONE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     label_position REAL,
@@ -82,15 +86,15 @@ CREATE TABLE IF NOT EXISTS shots (
     FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
     CHECK (
         (
-            arrow_landing_time IS NOT NULL AND
-            x IS NOT NULL AND
-            y IS NOT NULL
+            arrow_landing_time IS NOT NULL
+            AND x IS NOT NULL
+            AND y IS NOT NULL
         )
         OR
         (
-            arrow_landing_time IS NULL AND
-            x IS NULL AND
-            y IS NULL
+            arrow_landing_time IS NULL
+            AND x IS NULL
+            AND y IS NULL
         )
     )
 );
@@ -105,20 +109,27 @@ SELECT
     shots.y,
     arrows.human_identifier AS arrow_human_identifier,
     arrows.id AS arrow_id,
-    EXTRACT(
+    extract(
         EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)
     ) AS time_of_flight_seconds,
-    targets.distance::float / NULLIF(
-        EXTRACT(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
+    targets.distance::FLOAT / nullif(
+        extract(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
         0
     ) AS arrow_speed,
     get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score
 FROM
     shots
-JOIN
+INNER JOIN
     arrows ON shots.arrow_id = arrows.id
-JOIN
-    targets ON shots.session_id = targets.session_id;
+INNER JOIN
+    targets ON shots.session_id = targets.session_id
+WHERE shots.session_id = (
+    SELECT sessions.id
+    FROM sessions
+    WHERE sessions.is_opened = TRUE
+    ORDER BY sessions.start_time DESC
+    LIMIT 1
+);
 
 CREATE INDEX IF NOT EXISTS idx_faces_target_id ON faces (target_id);
 CREATE INDEX IF NOT EXISTS idx_targets_session_id ON targets (session_id);
@@ -132,7 +143,7 @@ CREATE OR REPLACE FUNCTION validate_face_row(
     target_id UUID,
     x REAL,
     y REAL,
-    radii REAL[]
+    radii REAL []
 ) RETURNS BOOLEAN AS $$
 DECLARE
     max_radius REAL;
@@ -202,7 +213,8 @@ BEGIN
     -- Check if any faces exist for the target
     SELECT COUNT(*) INTO face_count
     FROM faces
-    WHERE target_id = get_shot_score.target_id;
+    WHERE target_id = get_shot_score.target_id
+    LIMIT 3;
 
     -- If no faces exist, return NULL
     IF face_count = 0 THEN

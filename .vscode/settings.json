@@ -256,6 +256,7 @@
     ],
     "shellformat.path": "/usr/bin/shfmt",
     "shellformat.flag": "-i 4 -w",
+    "sqlfluff.dialect": "postgres",
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/backend/src"
     },
