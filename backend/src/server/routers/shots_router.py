@@ -6,48 +6,31 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.models import ShotsDB
+from shared.models import ShotsModel
 from shared.schema import ShotsFilters, ShotsRead
 
 
 ShotsRouter = APIRouter(prefix="/shot")
 
 
-async def get_shots_db(request: Request) -> ShotsDB:
+async def get_shots_db(request: Request) -> ShotsModel:
     logger: logging.Logger = request.app.state.logger
-    logger.debug("Getting ShotsDB")
+    logger.debug("Getting ShotsModel")
     db_pool: Pool = request.app.state.db_pool
-    return ShotsDB(db_pool)
+    return ShotsModel(db_pool)
 
 
-@ShotsRouter.get("/session-id/{session_id}")
-async def get_all_shots_sessionid(
-    session_id: UUID,
-    shots_db: ShotsDB = Depends(get_shots_db),
-) -> JSONResponse:
-
-    return await db_response(shots_db.get_by_session_id, status.HTTP_200_OK, session_id)
-
-
-# **************************************************************************************************
-# **************************************************************************************************
-# Path: /shot/{shot_id}
-# **************************************************************************************************
-# **************************************************************************************************
-
-
-@ShotsRouter.get("/{shot_id}", response_model=HTTPResponse[ShotsRead])
-async def get_shot(
-    shot_id: UUID,
-    shots_db: ShotsDB = Depends(get_shots_db),
-) -> JSONResponse:
-    return await db_response(shots_db.get_one_by_id, status.HTTP_200_OK, shot_id)
+# # ****************************************
+# # ****************************************
+# Path: /api/v0/shot/{shot_id}
+# # ****************************************
+# # ****************************************
 
 
 @ShotsRouter.delete("/{shot_id}", response_model=HTTPResponse[None])
 async def delete_shot(
     shot_id: UUID,
-    shots_db: ShotsDB = Depends(get_shots_db),
+    shots_db: ShotsModel = Depends(get_shots_db),
 ) -> JSONResponse:
     """
     Delete a specific shot by its unique ID.
@@ -61,20 +44,19 @@ async def delete_shot(
     return await db_response(shots_db.delete_one, status.HTTP_204_NO_CONTENT, shot_id)
 
 
-# **************************************************************************************************
-# **************************************************************************************************
-# Path: /shot
-# **************************************************************************************************
-# **************************************************************************************************
+# # ****************************************
+# # ****************************************
+# Path: /api/v0/shot
+# # ****************************************
+# # ****************************************
 
 
 @ShotsRouter.get("", response_model=HTTPResponse[list[ShotsRead]])
 async def get_all_shots(
     filters: ShotsFilters = Depends(),
-    shots_db: ShotsDB = Depends(get_shots_db),
+    shots_db: ShotsModel = Depends(get_shots_db),
 ) -> JSONResponse:
     """
     Retrieve all shots.
     """
-    filters_dict = filters.model_dump(exclude_none=True)
-    return await db_response(shots_db.get_all, status.HTTP_200_OK, filters_dict)
+    return await db_response(shots_db.get_all, status.HTTP_200_OK, filters)

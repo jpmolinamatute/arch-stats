@@ -18,6 +18,7 @@ class ShotsCreate(BaseModel):
 
 
 class ShotsFilters(BaseModel):
+    shot_id: UUID | None = Field(default=None, alias="id", description="ID of the shot")
     arrow_id: UUID | None = Field(default=None, description="ID of the arrow recorded")
     session_id: UUID | None = Field(
         default=None, description="ID of the session this shot belongs to"
@@ -57,3 +58,8 @@ class ShotsRead(BaseModel):
 
     def get_id(self) -> UUID:
         return self.shot_id
+
+
+class ShotsUpdate(BaseModel):
+    # This is a dummy class just to keep the pattern
+    model_config = ConfigDict(extra="forbid")
