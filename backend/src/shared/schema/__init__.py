@@ -10,7 +10,12 @@ from shared.schema.faces_schema import (
     FacesRead,
     FacesUpdate,
 )
-from shared.schema.performance_schema import PerformanceFilter, PerformanceRead
+from shared.schema.performance_schema import (
+    SessionPerformanceCreate,
+    SessionPerformanceFilter,
+    SessionPerformanceRead,
+    SessionPerformanceUpdate,
+)
 from shared.schema.sessions_schema import (
     SessionsCreate,
     SessionsFilters,
@@ -21,6 +26,7 @@ from shared.schema.shots_schema import (
     ShotsCreate,
     ShotsFilters,
     ShotsRead,
+    ShotsUpdate,
 )
 from shared.schema.targets_schema import (
     TargetsCreate,
@@ -39,8 +45,10 @@ __all__ = [
     "FacesFilters",
     "FacesRead",
     "FacesUpdate",
-    "PerformanceFilter",
-    "PerformanceRead",
+    "SessionPerformanceCreate",
+    "SessionPerformanceFilter",
+    "SessionPerformanceRead",
+    "SessionPerformanceUpdate",
     "SessionsCreate",
     "SessionsFilters",
     "SessionsRead",
@@ -48,6 +56,7 @@ __all__ = [
     "ShotsCreate",
     "ShotsFilters",
     "ShotsRead",
+    "ShotsUpdate",
     "TargetsCreate",
     "TargetsFilters",
     "TargetsRead",

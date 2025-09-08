@@ -20,28 +20,11 @@ async def get_shots_db(request: Request) -> ShotsModel:
     return ShotsModel(db_pool)
 
 
-@ShotsRouter.get("/session-id/{session_id}")
-async def get_all_shots_sessionid(
-    session_id: UUID,
-    shots_db: ShotsModel = Depends(get_shots_db),
-) -> JSONResponse:
-
-    return await db_response(shots_db.get_by_session_id, status.HTTP_200_OK, session_id)
-
-
-# **************************************************************************************************
-# **************************************************************************************************
-# Path: /shot/{shot_id}
-# **************************************************************************************************
-# **************************************************************************************************
-
-
-@ShotsRouter.get("/{shot_id}", response_model=HTTPResponse[ShotsRead])
-async def get_shot(
-    shot_id: UUID,
-    shots_db: ShotsModel = Depends(get_shots_db),
-) -> JSONResponse:
-    return await db_response(shots_db.get_one_by_id, status.HTTP_200_OK, shot_id)
+# # ****************************************
+# # ****************************************
+# Path: /api/v0/shot/{shot_id}
+# # ****************************************
+# # ****************************************
 
 
 @ShotsRouter.delete("/{shot_id}", response_model=HTTPResponse[None])
@@ -61,11 +44,11 @@ async def delete_shot(
     return await db_response(shots_db.delete_one, status.HTTP_204_NO_CONTENT, shot_id)
 
 
-# **************************************************************************************************
-# **************************************************************************************************
-# Path: /shot
-# **************************************************************************************************
-# **************************************************************************************************
+# # ****************************************
+# # ****************************************
+# Path: /api/v0/shot
+# # ****************************************
+# # ****************************************
 
 
 @ShotsRouter.get("", response_model=HTTPResponse[list[ShotsRead]])

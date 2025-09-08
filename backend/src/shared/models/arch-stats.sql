@@ -1,16 +1,38 @@
--- This is a reference file and describe the tables, views, and other database objects in the 
--- arch-stats database.
+/*
+ * Introduction to the arch-stats Database Schema
+ *
+ * This document is a reference file and describe the tables, views, and other database
+ * objects.
+ */
 
--- An archer opens a session, register arrows and calibrate targets with optional target faces.
--- Only one session can be is_opened = TRUE at a time.
--- Afterwards, the archer can record arrow shots.
--- Scoring ONLY happens when there are target faces associated with a target.
--- If the system record shots.arrow_landing_time, shots.x, and shots.y, it means that the arrow
--- landed somewhere in the target butt. If target faces are present, they can be used for scoring.
--- When scoring, the system checks:
--- if the shot landed on a target face: the system scores the shot.
--- if the shot misses the target face BUT landed on the target butt: The system scores 0.
--- if the shot misses the target entirely: The system does not score the shot (aka null).
+--
+-- Sessions and Targets
+--
+
+-- A session represents an archery practice, and only one can be open at a time.
+-- Each session must have exactly one associated target.
+-- Target faces are optional, but if present, they must be contained entirely within the 
+-- target's boundaries.
+
+--
+-- Shots and Scoring
+--
+
+-- An arrow shot can be recorded with or without landing coordinates and time.
+-- If a shot has landing coordinates, it means the arrow hit the target butt.
+-- A shot is only scored if there are target faces on the target.
+-- If a shot with landing coordinates hits a target face, it gets a score based on the face's rings.
+-- If a shot with landing coordinates misses all target faces but hits the target butt, 
+-- it receives a score of 0.
+-- If a shot misses the entire target, it receives a NULL score.
+
+--
+-- Arrows
+--
+
+-- An arrow's human_identifier must be unique among all active arrows.
+-- An arrow is either active (not voided) or inactive (voided), but not both.
+-- The is_active and voided_date fields must be consistent.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

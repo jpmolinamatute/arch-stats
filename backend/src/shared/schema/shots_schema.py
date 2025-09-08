@@ -58,3 +58,8 @@ class ShotsRead(BaseModel):
 
     def get_id(self) -> UUID:
         return self.shot_id
+
+
+class ShotsUpdate(BaseModel):
+    # This is a dummy class just to keep the pattern
+    model_config = ConfigDict(extra="forbid")

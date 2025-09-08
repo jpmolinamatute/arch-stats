@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class PerformanceRead(BaseModel):
+class SessionPerformanceRead(BaseModel):
     """
     Read model for the performance SQL view that combines shots, arrows, and targets
     with computed metrics like scoring and flight time. This model does not represent
@@ -58,7 +58,7 @@ class PerformanceRead(BaseModel):
         return self.shot_id
 
 
-class PerformanceFilter(BaseModel):
+class SessionPerformanceFilter(BaseModel):
     """
     Filter model for the performance SQL view.
     Represents a shot enriched with target context and computed metrics.
@@ -116,4 +116,14 @@ class PerformanceFilter(BaseModel):
     diameter: float | None = Field(default=None, description="Diameter of the arrow in mm")
     spine: float | None = Field(default=None, description="Arrow spine (flexibility rating)")
 
+    model_config = ConfigDict(extra="forbid")
+
+
+class SessionPerformanceCreate(BaseModel):
+    # This is a dummy class just to keep the pattern
+    model_config = ConfigDict(extra="forbid")
+
+
+class SessionPerformanceUpdate(BaseModel):
+    # This is a dummy class just to keep the pattern
     model_config = ConfigDict(extra="forbid")

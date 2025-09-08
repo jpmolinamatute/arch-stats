@@ -3,13 +3,12 @@ from uuid import UUID
 from asyncpg import Pool
 from pydantic import BaseModel
 
-from shared.models.parent_model import DBException, ParentModel
-from shared.schema import ShotsCreate, ShotsFilters, ShotsRead
+from shared.models.parent_model import ParentModel
+from shared.schema import ShotsCreate, ShotsFilters, ShotsRead, ShotsUpdate
 from shared.settings import settings
 
 
-# pylint: disable=too-few-public-methods
-class ShotsModel(ParentModel[ShotsCreate, BaseModel, ShotsRead, ShotsFilters]):
+class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters]):
 
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("shots", db_pool, ShotsRead)
@@ -81,18 +80,11 @@ class ShotsModel(ParentModel[ShotsCreate, BaseModel, ShotsRead, ShotsFilters]):
             await conn.execute(function_sql)
             await conn.execute(trigger_sql)
 
-    async def get_by_session_id(self, session_id: UUID) -> list[ShotsRead]:
-        where = ShotsFilters(session_id=session_id)
-        return await self.get_all(where)
-
     async def update_one(self, _id: UUID, data: BaseModel) -> None:
-        raise NotImplementedError
+        raise NotImplementedError("Shots are write-protected; update not supported here.")
+
+    async def insert_one(self, data: BaseModel) -> UUID:
+        raise NotImplementedError("Shots are write-protected; creation not supported here.")
 
     async def get_one_by_id(self, _id: UUID) -> ShotsRead:
-        """
-        Retrieve a single record by its UUID.
-        """
-        if not isinstance(_id, UUID):
-            raise DBException("Error: invalid '_id' provided to delete_one method.")
-        where = ShotsFilters(id=_id)
-        return await self.get_one(where)
+        raise NotImplementedError("Fetching a single shot is not supported.")

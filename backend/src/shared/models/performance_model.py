@@ -5,23 +5,28 @@ from uuid import UUID
 from asyncpg import Pool
 
 from shared.models.parent_model import ParentModel
-from shared.schema import PerformanceFilter, PerformanceRead
+from shared.schema import (
+    SessionPerformanceFilter,
+    SessionPerformanceRead,
+    SessionPerformanceCreate,
+    SessionPerformanceUpdate,
+)
 
 
-class PerformanceDB(
-    ParentModel[PerformanceRead, PerformanceRead, PerformanceRead, PerformanceFilter]
+class SessionPerformanceModel(
+    ParentModel[
+        SessionPerformanceCreate,
+        SessionPerformanceUpdate,
+        SessionPerformanceRead,
+        SessionPerformanceFilter,
+    ]
 ):
-    """Read-only wrapper over the performance SQL VIEW.
-
-    Aligns with reference SQL: joins shots, arrows, and targets (by session)
-    and exposes computed columns `time_of_flight_seconds`, `arrow_speed`, and
-    `score` (via get_shot_score).
+    """
+    Read-only wrapper over the performance SQL VIEW.
     """
 
     def __init__(self, db_pool: Pool) -> None:
-        # This is a VIEW, so the schema is not a CREATE TABLE schema. We keep a minimal
-        # placeholder but do not call create_table; instead expose create_view().
-        super().__init__("performance", db_pool, PerformanceRead)
+        super().__init__("session_performance", db_pool, SessionPerformanceRead)
 
     async def create(self) -> None:
         """Create or replace the performance SQL view and helper function.
@@ -129,7 +134,7 @@ class PerformanceDB(
         """
         await self.execute(function_sql)
 
-    async def get_by_session_id(self, session_id: UUID) -> list[PerformanceRead]:
+    async def get_by_session_id(self, session_id: UUID) -> list[SessionPerformanceRead]:
         """Fetch performance rows for a given session.
 
         The view doesn't project session_id; query via join to shots.
@@ -149,10 +154,10 @@ class PerformanceDB(
         async with self.db_pool.acquire() as conn:
             await conn.execute(f"DROP VIEW IF EXISTS {self.name};")
 
-    async def insert_one(self, data: PerformanceRead) -> UUID:
+    async def insert_one(self, data: SessionPerformanceCreate) -> UUID:
         raise NotImplementedError(f"{self.name} view is read-only")
 
-    async def update_one(self, _id: UUID, data: PerformanceRead) -> None:
+    async def update_one(self, _id: UUID, data: SessionPerformanceUpdate) -> None:
         raise NotImplementedError(f"{self.name} view is read-only")
 
     async def delete_one(self, _id: UUID) -> None:

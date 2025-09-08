@@ -4,7 +4,7 @@ from shared.models.parent_model import DBException, DBNotFound
 from shared.models.sessions_model import SessionsModel
 from shared.models.shots_model import ShotsModel
 from shared.models.targets_model import TargetsModel
-
+from shared.models.performance_model import SessionPerformanceModel
 
 __all__ = [
     "SessionsModel",
@@ -14,4 +14,5 @@ __all__ = [
     "FacesModel",
     "DBException",
     "DBNotFound",
+    "SessionPerformanceModel",
 ]

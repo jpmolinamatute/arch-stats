@@ -36,13 +36,6 @@ async def test_shot_read_and_delete(async_client: AsyncClient, db_pool: Pool) ->
     shots = resp.json()["data"]
     assert any(s["id"] == shot_id for s in shots)
 
-    # --- Get shot by id ---
-    resp = await async_client.get(f"{SHOTS_ENDPOINT}/{shot_id}")
-    assert resp.status_code == 200
-    shot = resp.json()["data"]
-    assert shot["id"] == shot_id
-    assert shot["arrow_id"] == arrow_id
-
     # --- Filter by arrow_id ---
     resp = await async_client.get(f"{SHOTS_ENDPOINT}?arrow_id={arrow_id}")
     assert resp.status_code == 200
@@ -53,9 +46,11 @@ async def test_shot_read_and_delete(async_client: AsyncClient, db_pool: Pool) ->
     resp = await async_client.delete(f"{SHOTS_ENDPOINT}/{shot_id}")
     assert resp.status_code == 204
 
-    # --- Confirm gone ---
-    resp = await async_client.get(f"{SHOTS_ENDPOINT}/{shot_id}")
-    assert resp.status_code == 404
+    # --- Confirm gone via list ---
+    resp = await async_client.get(SHOTS_ENDPOINT)
+    assert resp.status_code == 200
+    shots_after = resp.json()["data"]
+    assert not any(s["id"] == shot_id for s in shots_after)
 
 
 @pytest.mark.asyncio
@@ -73,9 +68,9 @@ async def test_delete_nonexistent_shot(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_nonexistent_shot(async_client: AsyncClient) -> None:
-    resp = await async_client.get(f"{SHOTS_ENDPOINT}/{str(uuid4())}")
-    assert resp.status_code == 404
+async def test_noop_placeholder() -> None:
+    # Keep file structure stable when ids endpoint is removed.
+    assert True
 
 
 @pytest.mark.asyncio
