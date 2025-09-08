@@ -136,16 +136,6 @@ class ArchyBot:
             await self.arrows_db.create()
             self.logger.info("Creating 'shots' table if it doesn't already exist")
             await self.shots_db.create()
-
-            # Ensure notifications are present for shots (uses default channel from settings via
-            # server in normal run; here adopt a simple channel name)
-            try:
-                # Avoid hard dependency on settings here; use a default dev channel
-                await self.shots_db.create_notification("archy")
-            except Exception as e:
-                # Non-fatal for the bot operation
-                self.logger.debug("Skipping shots notification setup: %s", e)
-
             return True
         except Exception as e:
             self.logger.warning("Pre-start check failed: %s", e)

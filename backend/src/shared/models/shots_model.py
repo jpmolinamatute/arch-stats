@@ -12,6 +12,8 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
 
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("shots", db_pool, ShotsRead)
+        channel = settings.arch_stats_ws_channel
+        self.func_name = f"notify_new_shot_{channel}"
 
     async def create(self) -> None:
         schema = """
@@ -40,23 +42,9 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
             )
         """
         channel = settings.arch_stats_ws_channel
-        await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
-        await self.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_arrow_id ON {self.name} (arrow_id);"
-        )
-        await self.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id ON {self.name} (session_id);"
-        )
-        await self.create_notification(channel)
-
-    async def drop(self) -> None:
-        await self.execute(f"DROP TABLE IF EXISTS {self.name} CASCADE;")
-
-    async def create_notification(self, channel: str) -> None:
-        """Ensure the notification function and trigger exist for new shots inserts."""
-
+        trigger_name = f"{self.func_name}_trigger"
         function_sql = f"""
-        CREATE OR REPLACE FUNCTION notify_new_shot_{channel}() RETURNS TRIGGER AS $$
+        CREATE OR REPLACE FUNCTION {self.func_name}() RETURNS TRIGGER AS $$
         BEGIN
             PERFORM pg_notify('{channel}', row_to_json(NEW)::text);
             RETURN NEW;
@@ -67,18 +55,34 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
         DO $$
         BEGIN
             IF NOT EXISTS (
-                SELECT 1 FROM pg_trigger WHERE tgname = 'shots_notify_trigger_{channel}'
+                SELECT 1 FROM pg_trigger WHERE tgname = '{trigger_name}'
             ) THEN
-                EXECUTE format(
-                    'CREATE TRIGGER shots_notify_trigger_%s AFTER INSERT ON shots
-                     FOR EACH ROW EXECUTE FUNCTION notify_new_shot_%s();',
-                    '{channel}', '{channel}');
+                CREATE TRIGGER {trigger_name}
+                AFTER INSERT ON shots
+                FOR EACH ROW EXECUTE FUNCTION {self.func_name}();
             END IF;
         END$$;
         """
         async with self.db_pool.acquire() as conn:
+            await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
+            await conn.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{self.name}_arrow_id ON {self.name} (arrow_id);"
+            )
+            await conn.execute(
+                f"""CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id
+                ON {self.name} (session_id);"""
+            )
             await conn.execute(function_sql)
             await conn.execute(trigger_sql)
+
+    async def drop(self) -> None:
+        trigger_name = f"{self.func_name}_trigger"
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_session_id;")
+            await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_arrow_id;")
+            await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
+            await conn.execute(f"DROP TRIGGER IF EXISTS {trigger_name} on {self.name} ;")
+            await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 
     async def update_one(self, _id: UUID, data: BaseModel) -> None:
         raise NotImplementedError("Shots are write-protected; update not supported here.")

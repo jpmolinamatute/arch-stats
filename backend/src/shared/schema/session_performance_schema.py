@@ -36,22 +36,7 @@ class SessionPerformanceRead(BaseModel):
         description="Points scored (NULL if no faces configured; 0 for miss; >0 for hit)",
     )
 
-    # Arrow fields (flattened from arrows table)
-    length: float = Field(..., description="Arrow's total length in cm")
     human_identifier: str = Field(..., max_length=10, description="Arrow short unique identifier")
-    is_programmed: bool = Field(..., description="Whether the arrow has been programmed")
-    registration_date: datetime = Field(..., description="Arrow registration datetime")
-    voided_date: datetime | None = Field(
-        default=None, description="When the arrow was voided (no longer in use)"
-    )
-    is_active: bool = Field(..., description="Whether the arrow is active")
-    label_position: float | None = Field(
-        default=None, description="Position of label from nock in cm"
-    )
-    weight: float | None = Field(default=None, description="Arrow's weight in grams")
-    diameter: float | None = Field(default=None, description="Diameter of the arrow in mm")
-    spine: float | None = Field(default=None, description="Arrow spine (flexibility rating)")
-
     model_config = ConfigDict(extra="forbid")
 
     def get_id(self) -> UUID:
@@ -94,27 +79,9 @@ class SessionPerformanceFilter(BaseModel):
         description="Points scored (NULL if no faces configured; 0 for miss; >0 for hit)",
     )
 
-    # Arrow fields (flattened from arrows table)
-    length: float | None = Field(default=None, description="Arrow's total length in cm")
     human_identifier: str | None = Field(
         default=None, max_length=10, description="Arrow short unique identifier"
     )
-    is_programmed: bool | None = Field(
-        default=None, description="Whether the arrow has been programmed"
-    )
-    registration_date: datetime | None = Field(
-        default=None, description="Arrow registration datetime"
-    )
-    voided_date: datetime | None = Field(
-        default=None, description="When the arrow was voided (no longer in use)"
-    )
-    is_active: bool | None = Field(default=None, description="Whether the arrow is active")
-    label_position: float | None = Field(
-        default=None, description="Position of label from nock in cm"
-    )
-    weight: float | None = Field(default=None, description="Arrow's weight in grams")
-    diameter: float | None = Field(default=None, description="Diameter of the arrow in mm")
-    spine: float | None = Field(default=None, description="Arrow spine (flexibility rating)")
 
     model_config = ConfigDict(extra="forbid")
 

@@ -10,7 +10,7 @@ from shared.schema.faces_schema import (
     FacesRead,
     FacesUpdate,
 )
-from shared.schema.performance_schema import (
+from shared.schema.session_performance_schema import (
     SessionPerformanceCreate,
     SessionPerformanceFilter,
     SessionPerformanceRead,

@@ -20,13 +20,19 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
             CONSTRAINT targets_one_per_session UNIQUE (session_id),
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
-        await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
-        await self.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id ON {self.name} (session_id);"
-        )
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
+            await conn.execute(
+                f"""
+                    CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id
+                    ON {self.name} (session_id);
+                """
+            )
 
     async def drop(self) -> None:
-        await self.execute(f"DROP TABLE IF EXISTS {self.name} CASCADE;")
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_session_id;")
+            await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
 
     async def get_by_session_id(self, session_id: UUID) -> list[TargetsRead]:
         where = TargetsFilters(session_id=session_id)

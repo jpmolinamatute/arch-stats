@@ -9,10 +9,24 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from typing_extensions import Literal
 
-from server.routers import ArrowsRouter, SessionsRouter, ShotsRouter, TargetsRouter, WSRouter
+from server.routers import (
+    ArrowsRouter,
+    SessionPerformanceRouter,
+    SessionsRouter,
+    ShotsRouter,
+    TargetsRouter,
+    WSRouter,
+)
 from shared.db_pool import DBPool
 from shared.logger import LogLevel, get_logger
-from shared.models import ArrowsModel, FacesModel, SessionsModel, ShotsModel, TargetsModel
+from shared.models import (
+    ArrowsModel,
+    FacesModel,
+    SessionPerformanceModel,
+    SessionsModel,
+    ShotsModel,
+    TargetsModel,
+)
 from shared.settings import settings
 
 
@@ -25,6 +39,7 @@ async def manage_tables(pool: Pool, action: TablesAction) -> None:
     sessions = SessionsModel(pool)
     targets = TargetsModel(pool)
     faces = FacesModel(pool)
+    session_perf = SessionPerformanceModel(pool)
 
     if action == "create":
         await arrows.create()
@@ -32,8 +47,10 @@ async def manage_tables(pool: Pool, action: TablesAction) -> None:
         await shots.create()
         await targets.create()
         await faces.create()
+        await session_perf.create()
     elif action == "drop":
         # Drop child/dependent tables first to satisfy FK constraints
+        await session_perf.drop()
         await faces.drop()
         await targets.drop()
         await shots.drop()
@@ -89,6 +106,7 @@ def run() -> FastAPI:
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
+    app.include_router(SessionPerformanceRouter, prefix=f"/api/{mayor_version}")
     app.mount(
         "/app",
         StaticFiles(

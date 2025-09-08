@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from datetime import datetime
 from typing import Generic, Protocol, TypeVar
@@ -5,6 +6,9 @@ from uuid import UUID
 
 from asyncpg import Pool
 from pydantic import BaseModel
+
+from shared.logger import LogLevel, get_logger
+from shared.settings import settings
 
 
 Values = str | float | bool | int | UUID | datetime | None | list[int] | list[float]
@@ -35,6 +39,9 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
     Provides basic CRUD methods.
     """
 
+    # Ensure subclasses have a known logger attribute for type checkers
+    logger: logging.Logger
+
     def __init__(
         self,
         table_name: str,
@@ -48,11 +55,13 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
             table_name: The name of the database table.
             db_pool: The asyncpg connection pool.
             read_schema: The Pydantic model used for reads.
-            jsonb_fields: Optional list of column names that are JSONB and need decoding.
         """
         self.name = table_name
         self.read_schema = read_schema
         self.db_pool = db_pool
+        # Emit debug logs in development mode
+        level = LogLevel.DEBUG if settings.arch_stats_dev_mode else LogLevel.INFO
+        self.logger = get_logger(__name__, level)
 
     async def execute(self, sql_statement: str, values: ValuesList | None = None) -> int:
         """

@@ -121,16 +121,16 @@ CREATE TABLE IF NOT EXISTS shots (
     )
 );
 
-CREATE OR REPLACE VIEW performance AS
+CREATE OR REPLACE VIEW session_performance AS
 SELECT
     shots.id,
+    shots.session_id,
+    arrows.id AS arrow_id,
     shots.arrow_engage_time,
     shots.arrow_disengage_time,
     shots.arrow_landing_time,
     shots.x,
     shots.y,
-    arrows.human_identifier AS arrow_human_identifier,
-    arrows.id AS arrow_id,
     extract(
         EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)
     ) AS time_of_flight_seconds,
@@ -138,7 +138,8 @@ SELECT
         extract(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
         0
     ) AS arrow_speed,
-    get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score
+    get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score,
+    arrows.human_identifier
 FROM
     shots
 INNER JOIN
@@ -201,10 +202,8 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_trigger WHERE tgname = 'shots_notify_trigger_archy'
     ) THEN
-        EXECUTE format(
-            'CREATE TRIGGER shots_notify_trigger_%s AFTER INSERT ON shots
-                FOR EACH ROW EXECUTE FUNCTION notify_new_shot_%s();',
-            'archy', 'archy');
+        CREATE TRIGGER shots_notify_trigger_archy AFTER INSERT ON shots
+        FOR EACH ROW EXECUTE FUNCTION notify_new_shot_archy();
     END IF;
 END$$;
 
@@ -235,7 +234,7 @@ BEGIN
     -- Check if any faces exist for the target
     SELECT COUNT(*) INTO face_count
     FROM faces
-    WHERE target_id = get_shot_score.target_id
+    WHERE faces.target_id = get_shot_score.target_id
     LIMIT 3;
 
     -- If no faces exist, return NULL
@@ -247,7 +246,7 @@ BEGIN
     FOR face IN (
         SELECT x, y, radii, points
         FROM faces
-        WHERE target_id = get_shot_score.target_id
+        WHERE faces.target_id = get_shot_score.target_id
     ) LOOP
         distance := SQRT(POWER(shot_x - face.x, 2) + POWER(shot_y - face.y, 2));
         FOR i IN 1..array_length(face.radii, 1) LOOP

@@ -9,10 +9,10 @@ from shared.schema.faces_schema import FacesCreate, FacesFilters, FacesRead, Fac
 class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters]):
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("faces", db_pool, FacesRead)
+        self.func_name = "validate_face_row"
 
     async def create(self) -> None:
-        await self.create_validation_function()
-        faces_schema = """
+        faces_schema = f"""
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             x REAL NOT NULL,
             y REAL NOT NULL,
@@ -26,20 +26,11 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
                 array_length(radii, 1) > 0
                 AND array_length(points, 1) > 0
                 AND array_length(points, 1) = array_length(radii, 1)
-                AND validate_face_row(target_id, x, y, radii)
+                AND {self.func_name}(target_id, x, y, radii)
             )
         """
-        await self.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({faces_schema});")
-        await self.execute(
-            f"CREATE INDEX IF NOT EXISTS idx_{self.name}_target_id ON {self.name} (target_id);"
-        )
-
-    async def drop(self) -> None:
-        await self.execute(f"DROP TABLE IF EXISTS {self.name} CASCADE;")
-
-    async def create_validation_function(self) -> None:
-        validation_function = """
-            CREATE OR REPLACE FUNCTION validate_face_row(
+        function_sql = f"""
+            CREATE OR REPLACE FUNCTION {self.func_name}(
                 target_id UUID,
                 x REAL,
                 y REAL,
@@ -67,7 +58,24 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
             END;
             $$ LANGUAGE plpgsql STABLE;
         """
-        await self.execute(validation_function)
+        async with self.db_pool.acquire() as conn:
+            self.logger.debug("Creating function %s", self.func_name)
+            await conn.execute(function_sql)
+            self.logger.debug("Creating table %s", self.name)
+            await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({faces_schema});")
+            self.logger.debug("Creating index %s", f"idx_{self.name}_target_id")
+            await conn.execute(
+                f"CREATE INDEX IF NOT EXISTS idx_{self.name}_target_id ON {self.name} (target_id);"
+            )
+
+    async def drop(self) -> None:
+        async with self.db_pool.acquire() as conn:
+            self.logger.debug("Dropping index %s", f"idx_{self.name}_target_id")
+            await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_target_id;")
+            self.logger.debug("Dropping table %s", self.name)
+            await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
+            self.logger.debug("Dropping function %s", self.func_name)
+            await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 
     async def get_one_by_id(self, _id: UUID) -> FacesRead:
         """
