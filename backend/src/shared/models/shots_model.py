@@ -45,7 +45,7 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
                     y IS NULL
                 )
             )
-        """
+        """.strip()
         channel = settings.arch_stats_ws_channel
         trigger_name = f"{self.func_name}_trigger"
         function_sql = f"""
@@ -55,7 +55,7 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-        """
+        """.strip()
         trigger_sql = f"""
         DO $$
         BEGIN
@@ -67,7 +67,7 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
                 FOR EACH ROW EXECUTE FUNCTION {self.func_name}();
             END IF;
         END$$;
-        """
+        """.strip()
         async with self.db_pool.acquire() as conn:
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
             await conn.execute(

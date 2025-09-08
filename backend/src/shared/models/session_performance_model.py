@@ -91,7 +91,7 @@ class SessionPerformanceModel(
                 RETURN max_score;
             END;
             $$ LANGUAGE plpgsql STABLE;
-        """
+        """.strip()
 
         view_sql = f"""
             CREATE OR REPLACE VIEW {self.name} AS
@@ -132,7 +132,7 @@ class SessionPerformanceModel(
                 ORDER BY sessions.start_time DESC
                 LIMIT 1
             );
-        """
+        """.strip()
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating function %s", self.func_name)
             await conn.execute(function_sql)

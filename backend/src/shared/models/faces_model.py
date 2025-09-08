@@ -37,7 +37,7 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
                 AND array_length(points, 1) = array_length(radii, 1)
                 AND {self.func_name}(target_id, x, y, radii)
             )
-        """
+        """.strip()
         function_sql = f"""
             CREATE OR REPLACE FUNCTION {self.func_name}(
                 target_id UUID,
@@ -66,7 +66,7 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
                 RETURN TRUE;
             END;
             $$ LANGUAGE plpgsql STABLE;
-        """
+        """.strip()
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating function %s", self.func_name)
             await conn.execute(function_sql)

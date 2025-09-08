@@ -31,7 +31,7 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
                 (is_active = FALSE AND voided_date IS NOT NULL)
                 OR (is_active = TRUE AND voided_date IS NULL)
             )
-        """
+        """.strip()
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating table %s", self.name)
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")

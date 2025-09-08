@@ -22,13 +22,21 @@ async def test_create_session(db_pool_initialed: Pool) -> None:
 @pytest.mark.asyncio
 async def test_get_all_sessions(db_pool_initialed: Pool) -> None:
     db = SessionsModel(db_pool_initialed)
-    payload1 = create_fake_session(location="Range 1")
-    payload2 = create_fake_session(location="Range 2")
-    await db.insert_one(payload1)
-    await db.insert_one(payload2)
+    # Create first session (open) then close it to produce a closed row
+    first_id = await db.insert_one(create_fake_session(location="Range 1", is_opened=True))
+    await db.update_one(
+        first_id,
+        SessionsUpdate(is_opened=False, end_time=datetime.now(timezone.utc)),
+    )
+    # Create a second (current open) session
+    second_id = await db.insert_one(create_fake_session(location="Range 2", is_opened=True))
     sessions = await db.get_all()
     locations = [s.location for s in sessions]
     assert "Range 1" in locations and "Range 2" in locations
+    # Validate open/closed distribution
+    open_sessions = [s for s in sessions if s.is_opened]
+    assert len(open_sessions) == 1
+    assert open_sessions[0].session_id == second_id
 
 
 @pytest.mark.asyncio
@@ -91,21 +99,49 @@ async def test_get_nonexistent_session_raises(db_pool_initialed: Pool) -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_open_session_none_when_no_open(db_pool_initialed: Pool) -> None:
+    db = SessionsModel(db_pool_initialed)
+    # No sessions yet => no open session
+    found = await db.get_open_session()
+    assert found is None
+
+
+@pytest.mark.asyncio
 async def test_get_open_session_helper(db_pool_initialed: Pool) -> None:
     db = SessionsModel(db_pool_initialed)
-    # Insert two open sessions, then close one properly (set end_time)
-    open_a = create_fake_session(is_opened=True)
-    open_b = create_fake_session(is_opened=True)
-    open_a_id = await db.insert_one(open_a)
-    _ = await db.insert_one(open_b)
-    # Close session A
-    await db.update_one(
-        open_a_id,
-        SessionsUpdate(is_opened=False, end_time=datetime.now(timezone.utc)),
-    )
-
+    open_session = create_fake_session(is_opened=True)
+    await db.insert_one(open_session)
     found = await db.get_open_session()
     assert found is not None and found.is_opened is True
+
+
+@pytest.mark.asyncio
+async def test_insert_second_open_session_rejected(db_pool_initialed: Pool) -> None:
+    db = SessionsModel(db_pool_initialed)
+    await db.insert_one(create_fake_session(is_opened=True, location="First"))
+    with pytest.raises(DBException):
+        await db.insert_one(create_fake_session(is_opened=True, location="Second"))
+
+
+@pytest.mark.asyncio
+async def test_update_to_open_when_other_open_rejected(db_pool_initialed: Pool) -> None:
+    db = SessionsModel(db_pool_initialed)
+    # Create a session and immediately close it to have a closed record
+    closed_id = await db.insert_one(create_fake_session(is_opened=True, location="Closed"))
+    await db.update_one(
+        closed_id, SessionsUpdate(is_opened=False, end_time=datetime.now(timezone.utc))
+    )
+    # Create a new open session
+    open_id = await db.insert_one(create_fake_session(is_opened=True, location="Open"))
+    # Attempt to re-open the previously closed one (should fail while another open exists)
+    with pytest.raises(DBException):
+        await db.update_one(closed_id, SessionsUpdate(is_opened=True))
+    # Close current open properly
+    await db.update_one(
+        open_id, SessionsUpdate(is_opened=False, end_time=datetime.now(timezone.utc))
+    )
+    # Now reopen the previously closed session (allowed)
+    await db.update_one(closed_id, SessionsUpdate(is_opened=True))
 
 
 @pytest.mark.asyncio

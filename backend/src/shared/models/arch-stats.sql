@@ -38,7 +38,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    is_opened BOOLEAN NOT NULL,
+    is_opened BOOLEAN NOT NULL DEFAULT FALSE,
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     location VARCHAR(255) NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE,
@@ -161,6 +161,9 @@ CREATE INDEX IF NOT EXISTS idx_shots_session_id ON shots (session_id);
 CREATE UNIQUE INDEX IF NOT EXISTS arrows_uniq_active_human_identifier
 ON arrows (human_identifier)
 WHERE is_active IS TRUE;
+
+CREATE UNIQUE INDEX IF NOT EXISTS sessions_one_open_idx
+ON sessions (is_opened) WHERE is_opened IS TRUE;
 
 CREATE OR REPLACE FUNCTION validate_face_row(
     target_id UUID,

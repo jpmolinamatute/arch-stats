@@ -60,15 +60,29 @@ async def insert_sessions_db(
 
 
 async def create_many_sessions(db_pool: Pool, sessions_count: int = 5) -> list[SessionsRead]:
+    """Create multiple sessions respecting single-open-session rule.
+
+    Generates (sessions_count - 1) closed sessions (each with synthetic end_time)
+    plus one open session (the most recent chronologically). If sessions_count is
+    0, returns empty list; if 1, returns just one open session.
+    """
+    if sessions_count <= 0:
+        return []
     sessions_to_insert: list[SessionsCreate] = []
-    for i in range(sessions_count):
-        start_time = datetime.now(timezone.utc) + timedelta(days=i)
-        is_opened = bool(i % 2)
+    base_time = datetime.now(timezone.utc)
+    # Closed sessions first
+    for i in range(max(0, sessions_count - 1)):
+        start_time = base_time - timedelta(days=sessions_count - 1 - i)
         sessions_to_insert.append(
             create_fake_session(
-                location=f"Range_{i%2}",
+                location=f"Range_closed_{i}",
                 start_time=start_time,
-                is_opened=is_opened,
+                is_opened=False,
+                end_time=start_time + timedelta(hours=3),
             )
         )
+    # Single open session (latest start_time)
+    sessions_to_insert.append(
+        create_fake_session(location="Range_open", start_time=base_time, is_opened=True)
+    )
     return await insert_sessions_db(db_pool, sessions_to_insert)
