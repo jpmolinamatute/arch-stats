@@ -27,7 +27,10 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
             FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
         """
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Creating table %s", self.name)
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
+
+            self.logger.debug("Creating index %s", f"idx_{self.name}_session_id")
             await conn.execute(
                 f"""
                     CREATE INDEX IF NOT EXISTS idx_{self.name}_session_id
@@ -38,7 +41,10 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
     async def drop(self) -> None:
         """Drop the targets table and its session_id index idempotently."""
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Dropping index %s", f"idx_{self.name}_session_id")
             await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_session_id;")
+
+            self.logger.debug("Dropping table %s", self.name)
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
 
     async def get_by_session_id(self, session_id: UUID) -> list[TargetsRead]:

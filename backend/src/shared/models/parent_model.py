@@ -79,6 +79,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         """
         async with self.db_pool.acquire() as conn:
             try:
+                self.logger.debug("Executing SQL: %s", sql_statement)
                 if values is None or not values:
                     result = await conn.execute(sql_statement)
                 else:
@@ -108,23 +109,6 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         """
         raise NotImplementedError("Error: drop method not implemented in child class")
 
-    async def check_table_exists(self) -> bool:
-        """Check whether the backing table exists in the current search_path.
-
-        Returns:
-            True if the relation can be resolved via to_regclass, else False.
-
-        Raises:
-            DBException: If the check fails.
-        """
-        async with self.db_pool.acquire() as conn:
-            try:
-                regclass = await conn.fetchval("SELECT to_regclass($1);", self.name)
-            except Exception as e:
-                # On any error, conservatively return False and let caller decide next steps
-                raise DBException(e) from e
-        return regclass is not None
-
     async def insert_one(self, data: CREATETYPE) -> UUID:
         """Insert a single record.
 
@@ -146,6 +130,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         sql_statement = f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders}) RETURNING id;"
         try:
             async with self.db_pool.acquire() as conn:
+                self.logger.debug("Inserting into %s: %s", self.name, dump)
                 row = await conn.fetchrow(sql_statement, *values)
             if not row or "id" not in row or not isinstance(row["id"], UUID):
                 raise DBException("Insert failed to return id")
@@ -215,6 +200,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
             select_stm += f" WHERE {conditions}"
         select_stm += ";"
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", select_stm)
             row = await conn.fetchrow(select_stm, *values)
             if not row:
                 raise DBNotFound(f"{self.name}: No record found with {where=}")
@@ -250,6 +236,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
                 sql_statement += f" WHERE {conditions}"
         sql_statement += ";"
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", sql_statement)
             rows = (
                 await conn.fetch(sql_statement, *values)
                 if values

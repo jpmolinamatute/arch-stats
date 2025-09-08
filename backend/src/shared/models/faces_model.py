@@ -70,8 +70,10 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating function %s", self.func_name)
             await conn.execute(function_sql)
+
             self.logger.debug("Creating table %s", self.name)
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({faces_schema});")
+
             self.logger.debug("Creating index %s", f"idx_{self.name}_target_id")
             await conn.execute(
                 f"CREATE INDEX IF NOT EXISTS idx_{self.name}_target_id ON {self.name} (target_id);"
@@ -82,8 +84,10 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Dropping index %s", f"idx_{self.name}_target_id")
             await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_target_id;")
+
             self.logger.debug("Dropping table %s", self.name)
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
+
             self.logger.debug("Dropping function %s", self.func_name)
             await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 

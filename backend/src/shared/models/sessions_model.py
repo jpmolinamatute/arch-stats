@@ -34,13 +34,17 @@ class SessionsModel(ParentModel[SessionsCreate, SessionsUpdate, SessionsRead, Se
             WHERE is_opened is TRUE
         """.strip()
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Creating table %s", self.name)
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
+            self.logger.debug("Creating index %s", f"{self.name}_one_open_idx")
             await conn.execute(index)
 
     async def drop(self) -> None:
         """Drop the sessions table if it exists."""
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Dropping table %s", self.name)
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
+            self.logger.debug("Dropping index %s", f"{self.name}_one_open_idx")
             await conn.execute(f"DROP INDEX IF EXISTS {self.name}_one_open_idx;")
 
     async def get_open_session(self) -> SessionsRead | None:
