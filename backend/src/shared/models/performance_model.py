@@ -6,9 +6,9 @@ from asyncpg import Pool
 
 from shared.models.parent_model import ParentModel
 from shared.schema import (
+    SessionPerformanceCreate,
     SessionPerformanceFilter,
     SessionPerformanceRead,
-    SessionPerformanceCreate,
     SessionPerformanceUpdate,
 )
 
