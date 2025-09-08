@@ -288,5 +288,7 @@
     },
     "[github-actions-workflow]": {
         "editor.tabSize": 2
-    }
+    },
+    "workbench.externalBrowser": "/opt/google/chrome/chrome",
+    "workbench.editor.restoreViewState": false
 }

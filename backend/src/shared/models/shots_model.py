@@ -9,13 +9,18 @@ from shared.settings import settings
 
 
 class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters]):
-
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("shots", db_pool, ShotsRead)
         channel = settings.arch_stats_ws_channel
         self.func_name = f"notify_new_shot_{channel}"
 
     async def create(self) -> None:
+        """Create the shots table, indexes, and NOTIFY trigger.
+
+        - Columns: UUID PK, FKs to arrows and sessions, timing fields, optional x/y.
+        - CHECK: (arrow_landing_time, x, y) are all present or all NULL.
+        - Trigger: AFTER INSERT, NOTIFY the configured channel with NEW row JSON.
+        """
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             arrow_id UUID NOT NULL,
@@ -76,6 +81,7 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
             await conn.execute(trigger_sql)
 
     async def drop(self) -> None:
+        """Drop indexes, table, trigger, and notify function created in create()."""
         trigger_name = f"{self.func_name}_trigger"
         async with self.db_pool.acquire() as conn:
             await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_session_id;")
@@ -85,10 +91,25 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
             await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 
     async def update_one(self, _id: UUID, data: BaseModel) -> None:
+        """Disallow updates because shots are write-protected in this model.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError("Shots are write-protected; update not supported here.")
 
     async def insert_one(self, data: BaseModel) -> UUID:
+        """Disallow direct creation because shots are write-protected here.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError("Shots are write-protected; creation not supported here.")
 
     async def get_one_by_id(self, _id: UUID) -> ShotsRead:
+        """Disallow single-record fetch by id in this model.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError("Fetching a single shot is not supported.")

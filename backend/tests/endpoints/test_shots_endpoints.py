@@ -68,12 +68,6 @@ async def test_delete_nonexistent_shot(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_noop_placeholder() -> None:
-    # Keep file structure stable when ids endpoint is removed.
-    assert True
-
-
-@pytest.mark.asyncio
 async def test_shots_filtering(async_client: AsyncClient, db_pool: Pool) -> None:
     # Create arrows and shots
     arrows = await create_many_arrows(db_pool, 5)

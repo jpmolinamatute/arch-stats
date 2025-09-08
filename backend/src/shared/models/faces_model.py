@@ -12,6 +12,15 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
         self.func_name = "validate_face_row"
 
     async def create(self) -> None:
+        """Create the faces table, validation function, and indexes.
+
+        - Defines/updates validate_face_row() used by a CHECK to keep a face
+          fully within its target's bounds based on center (x, y) and
+          max(radii).
+        - Creates the faces table with FK to targets(id), UNIQUE(target_id,
+          human_identifier), and radii/points non-empty with equal length.
+        - Adds idx_faces_target_id to speed up lookups by target.
+        """
         faces_schema = f"""
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             x REAL NOT NULL,
@@ -69,6 +78,7 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
             )
 
     async def drop(self) -> None:
+        """Drop the faces table, index, and validation function idempotently."""
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Dropping index %s", f"idx_{self.name}_target_id")
             await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_target_id;")
@@ -78,8 +88,16 @@ class FacesModel(ParentModel[FacesCreate, FacesUpdate, FacesRead, FacesFilters])
             await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 
     async def get_one_by_id(self, _id: UUID) -> FacesRead:
-        """
-        Retrieve a single record by its UUID.
+        """Fetch a single face by id.
+
+        Args:
+            _id: Face identifier.
+
+        Returns:
+            Face row validated as FacesRead.
+
+        Raises:
+            DBException: If the provided id is invalid.
         """
         if not isinstance(_id, UUID):
             raise DBException("Error: invalid '_id' provided to delete_one method.")

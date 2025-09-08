@@ -11,6 +11,12 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
         super().__init__("targets", db_pool, TargetsRead)
 
     async def create(self) -> None:
+        """Create the targets table and its session_id index idempotently.
+
+        - Enforces one target per session via UNIQUE(session_id).
+        - Adds FK to sessions(id) with ON DELETE CASCADE.
+        - Creates idx_targets_session_id to speed up session queries.
+        """
         schema = """
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             max_x REAL NOT NULL,
@@ -30,17 +36,34 @@ class TargetsModel(ParentModel[TargetsCreate, TargetsUpdate, TargetsRead, Target
             )
 
     async def drop(self) -> None:
+        """Drop the targets table and its session_id index idempotently."""
         async with self.db_pool.acquire() as conn:
             await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_session_id;")
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
 
     async def get_by_session_id(self, session_id: UUID) -> list[TargetsRead]:
+        """Fetch all targets for a given session id.
+
+        Args:
+            session_id: Session identifier.
+
+        Returns:
+            List of TargetsRead entries.
+        """
         where = TargetsFilters(session_id=session_id)
         return await self.get_all(where)
 
     async def get_one_by_id(self, _id: UUID) -> TargetsRead:
-        """
-        Retrieve a single record by its UUID.
+        """Fetch a single target by id.
+
+        Args:
+            _id: Target identifier.
+
+        Returns:
+            Target row validated as TargetsRead.
+
+        Raises:
+            DBException: If the provided id is invalid.
         """
         if not isinstance(_id, UUID):
             raise DBException("Error: invalid '_id' provided to delete_one method.")

@@ -11,6 +11,10 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
         super().__init__("arrows", db_pool, ArrowsRead)
 
     async def create(self) -> None:
+        """Create the arrows table and related indexes."""
+        # - Enforce consistency via CHECK: is_active <-> voided_date presence.
+        # - Add a partial UNIQUE index on human_identifier for active rows
+        #   (WHERE is_active IS TRUE).
         schema = """
             id UUID PRIMARY KEY,
             length REAL NOT NULL,
@@ -41,6 +45,7 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
             )
 
     async def drop(self) -> None:
+        """Drop the arrows table and its partial unique index idempotently."""
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Dropping index %s", f"idx_{self.name}_target_id")
             await conn.execute(f"DROP INDEX IF EXISTS {self.name}_uniq_active_human_identifier;")
@@ -48,8 +53,16 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
 
     async def get_one_by_id(self, _id: UUID) -> ArrowsRead:
-        """
-        Retrieve a single record by its UUID.
+        """Fetch a single arrow by id.
+
+        Args:
+            _id: Arrow identifier.
+
+        Returns:
+            Arrow row validated as ArrowsRead.
+
+        Raises:
+            DBException: If the provided id is invalid.
         """
         if not isinstance(_id, UUID):
             raise DBException("Error: invalid '_id' provided to delete_one method.")

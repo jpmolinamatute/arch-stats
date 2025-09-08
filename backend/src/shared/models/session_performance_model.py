@@ -21,9 +21,7 @@ class SessionPerformanceModel(
         SessionPerformanceFilter,
     ]
 ):
-    """
-    Read-only wrapper over the performance SQL VIEW.
-    """
+    """Read-only wrapper over the session performance SQL view."""
 
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("session_performance", db_pool, SessionPerformanceRead)
@@ -32,8 +30,8 @@ class SessionPerformanceModel(
     async def create(self) -> None:
         """Create or replace the performance SQL view and helper function.
 
-        Matches the provided SQL reference: uses {self.func_name}(shot_x, shot_y,
-        target_id, target_max_x, target_max_y) and selects a minimal column set.
+        Uses {self.func_name}(shot_x, shot_y, target_id, target_max_x,
+        target_max_y) and selects a minimal column set.
         """
         function_sql = f"""
             CREATE OR REPLACE FUNCTION {self.func_name}(
@@ -142,7 +140,7 @@ class SessionPerformanceModel(
             await conn.execute(view_sql)
 
     async def drop(self) -> None:
-        """Drop the performance SQL view if it exists."""
+        """Drop the performance SQL view and helper function if they exist."""
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Dropping view %s", self.name)
             await conn.execute(f"DROP VIEW IF EXISTS {self.name};")
@@ -154,6 +152,14 @@ class SessionPerformanceModel(
     async def get_all(
         self, where: SessionPerformanceFilter | None = None
     ) -> list[SessionPerformanceRead]:
+        """Fetch all rows from the performance view.
+
+        Args:
+            where: Unused placeholder for API parity.
+
+        Returns:
+            List of SessionPerformanceRead entries for the current open session.
+        """
         sql_statement = f"SELECT * FROM {self.name};"
 
         async with self.db_pool.acquire() as conn:
@@ -162,10 +168,25 @@ class SessionPerformanceModel(
         return [self.read_schema(**row) for row in rows]
 
     async def insert_one(self, data: SessionPerformanceCreate) -> UUID:
+        """Disallow inserts because this model wraps a read-only view.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError(f"{self.name} view is read-only")
 
     async def update_one(self, _id: UUID, data: SessionPerformanceUpdate) -> None:
+        """Disallow updates because this model wraps a read-only view.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError(f"{self.name} view is read-only")
 
     async def delete_one(self, _id: UUID) -> None:
+        """Disallow deletes because this model wraps a read-only view.
+
+        Raises:
+            NotImplementedError: Always.
+        """
         raise NotImplementedError(f"{self.name} view is read-only")
