@@ -38,7 +38,7 @@ async def test_get_session_performance_returns_rows(
     assert isinstance(data, list)
     assert len(data) > 0
     first = data[0]
-    print(first)
+
     for key in [
         "id",
         "session_id",

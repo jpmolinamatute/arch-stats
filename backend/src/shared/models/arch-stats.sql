@@ -125,12 +125,13 @@ CREATE OR REPLACE VIEW session_performance AS
 SELECT
     shots.id,
     shots.session_id,
-    arrows.id AS arrow_id,
     shots.arrow_engage_time,
     shots.arrow_disengage_time,
     shots.arrow_landing_time,
     shots.x,
     shots.y,
+    arrows.id AS arrow_id,
+    arrows.human_identifier,
     extract(
         EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)
     ) AS time_of_flight_seconds,
@@ -138,8 +139,7 @@ SELECT
         extract(EPOCH FROM (shots.arrow_landing_time - shots.arrow_disengage_time)),
         0
     ) AS arrow_speed,
-    get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score,
-    arrows.human_identifier
+    get_shot_score(shots.x, shots.y, targets.id, targets.max_x, targets.max_y) AS score
 FROM
     shots
 INNER JOIN
@@ -217,7 +217,7 @@ CREATE OR REPLACE FUNCTION get_shot_score(
 DECLARE
     face RECORD;
     distance REAL;
-    score INTEGER := NULL;
+    score INTEGER := 0;
     max_score INTEGER := 0;
     face_count INTEGER;
 BEGIN
