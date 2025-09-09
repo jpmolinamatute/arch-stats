@@ -182,7 +182,7 @@ async def test_post_second_open_session_rejected(async_client: AsyncClient) -> N
     resp2 = await async_client.post(
         SESSIONS_ENDPOINT, json=second.model_dump(mode="json", by_alias=True)
     )
-    assert resp2.status_code in (400, 409)
+    assert resp2.status_code == 400
     body = resp2.json()
     assert any("one session" in err.lower() for err in body["errors"]) or "Only one" in str(body)
 
