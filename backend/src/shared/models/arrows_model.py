@@ -35,10 +35,10 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating table %s", self.name)
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {self.name} ({schema});")
-            self.logger.debug("Creating index %s", f"idx_{self.name}_target_id")
+            self.logger.debug("Creating index %s", f"idx_{self.name}_uniq_hid")
             await conn.execute(
                 f"""
-                CREATE UNIQUE INDEX IF NOT EXISTS {self.name}_uniq_active_human_identifier
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{self.name}_uniq_hid
                 ON {self.name} (human_identifier)
                 WHERE is_active IS TRUE;
             """
@@ -47,8 +47,9 @@ class ArrowsModel(ParentModel[ArrowsCreate, ArrowsUpdate, ArrowsRead, ArrowsFilt
     async def drop(self) -> None:
         """Drop the arrows table and its partial unique index idempotently."""
         async with self.db_pool.acquire() as conn:
-            self.logger.debug("Dropping index %s", f"idx_{self.name}_target_id")
-            await conn.execute(f"DROP INDEX IF EXISTS {self.name}_uniq_active_human_identifier;")
+            self.logger.debug("Dropping index %s", f"idx_{self.name}_uniq_hid")
+            await conn.execute(f"DROP INDEX IF EXISTS idx_{self.name}_uniq_hid;")
+
             self.logger.debug("Dropping table %s", self.name)
             await conn.execute(f"DROP TABLE IF EXISTS {self.name};")
 

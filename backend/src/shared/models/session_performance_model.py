@@ -136,6 +136,7 @@ class SessionPerformanceModel(
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Creating function %s", self.func_name)
             await conn.execute(function_sql)
+
             self.logger.debug("Creating view %s", self.name)
             await conn.execute(view_sql)
 
@@ -144,6 +145,7 @@ class SessionPerformanceModel(
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Dropping view %s", self.name)
             await conn.execute(f"DROP VIEW IF EXISTS {self.name};")
+
             self.logger.debug("Dropping function %s", self.func_name)
             await conn.execute(
                 f"DROP FUNCTION IF EXISTS {self.func_name}(real, real, uuid, real, real);"

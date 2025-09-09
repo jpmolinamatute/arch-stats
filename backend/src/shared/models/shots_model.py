@@ -104,6 +104,7 @@ class ShotsModel(ParentModel[ShotsCreate, ShotsUpdate, ShotsRead, ShotsFilters])
 
             self.logger.debug("Dropping trigger %s", trigger_name)
             await conn.execute(f"DROP TRIGGER IF EXISTS {trigger_name} on {self.name};")
+
             self.logger.debug("Dropping function %s", self.func_name)
             await conn.execute(f"DROP FUNCTION IF EXISTS {self.func_name};")
 
