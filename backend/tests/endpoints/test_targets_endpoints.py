@@ -226,3 +226,23 @@ async def test_targets_filter_no_match(async_client: AsyncClient) -> None:
     resp = await async_client.get(f"{TARGETS_ENDPOINT}?session_id={fake_uuid}")
     assert resp.status_code == 200
     assert resp.json()["data"] == []
+
+
+@pytest.mark.asyncio
+async def test_unique_target_per_session_endpoint(async_client: AsyncClient, db_pool: Pool) -> None:
+    """Posting a second target for the same session should return 400 (DBException)."""
+    sessions = await create_many_sessions(db_pool, 1)
+    session_id = sessions[0].session_id
+    first = create_fake_target(session_id=session_id).model_dump(mode="json", by_alias=True)
+    second = create_fake_target(session_id=session_id).model_dump(mode="json", by_alias=True)
+    # First insert succeeds
+    resp1 = await async_client.post(TARGETS_ENDPOINT, json=first)
+    assert resp1.status_code == 201
+    # Second insert should violate UNIQUE(session_id)
+    resp2 = await async_client.post(TARGETS_ENDPOINT, json=second)
+    assert resp2.status_code == 400
+    body = resp2.json()
+    assert body["code"] == 400
+    assert body["data"] is None
+    result = any("unique" in err.lower() or "constraint" in err.lower() for err in body["errors"])
+    assert result or body["errors"] != []

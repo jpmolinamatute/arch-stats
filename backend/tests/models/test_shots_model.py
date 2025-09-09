@@ -25,22 +25,4 @@ async def test_delete_nonexistent_raises_once(db_pool_initialed: Pool) -> None:
         await shots_db.delete_one(non_existing_id)
 
 
-@pytest.mark.asyncio
-async def test_fetch_disabled() -> None:
-    # single fetch is no longer supported in model
-    assert True
-
-
-@pytest.mark.asyncio
-async def test_constraints_enforced_via_db() -> None:
-    # Constraints are enforced at DB; model no longer inserts
-    assert True
-
-
-@pytest.mark.asyncio
-async def test_get_all_and_by_session_disabled() -> None:
-    # get_all remains available via router; model custom methods removed
-    assert True
-
-
 # second duplicate removed; behavior covered above

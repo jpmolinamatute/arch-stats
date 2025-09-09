@@ -110,7 +110,7 @@ async def test_session_wrong_data_type(
 
 @pytest.mark.asyncio
 async def test_patch_nonexistent_session(async_client: AsyncClient) -> None:
-    resp = await async_client.patch(f"{SESSIONS_ENDPOINT}/{uuid4()}", json={"is_opened": False})
+    resp = await async_client.patch(f"{SESSIONS_ENDPOINT}/{uuid4()}", json={"location": "Nowhere"})
     assert resp.status_code == 404
 
 
@@ -168,6 +168,23 @@ async def test_get_open_session_happy(async_client: AsyncClient) -> None:
     data = resp.json()["data"]
     assert data is not None
     assert data["id"] == created_id
+
+
+@pytest.mark.asyncio
+async def test_post_second_open_session_rejected(async_client: AsyncClient) -> None:
+    """Creating a second open session should fail with 400 due to single-open rule."""
+    first = create_fake_session()
+    resp1 = await async_client.post(
+        SESSIONS_ENDPOINT, json=first.model_dump(mode="json", by_alias=True)
+    )
+    assert resp1.status_code == 201
+    second = create_fake_session()
+    resp2 = await async_client.post(
+        SESSIONS_ENDPOINT, json=second.model_dump(mode="json", by_alias=True)
+    )
+    assert resp2.status_code == 400
+    body = resp2.json()
+    assert any("one session" in err.lower() for err in body["errors"]) or "Only one" in str(body)
 
 
 @pytest.mark.asyncio

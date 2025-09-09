@@ -34,9 +34,11 @@ class DBNotFound(Exception):
 
 
 class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
-    """
-    Base class for database operations using asyncpg.
-    Provides basic CRUD methods.
+    """Abstract base for asyncpg-backed CRUD models.
+
+    Implements shared helpers for parameterized SQL execution and common CRUD
+    patterns. Subclasses must provide table/view creation and any
+    domain-specific queries.
     """
 
     # Ensure subclasses have a known logger attribute for type checkers
@@ -48,13 +50,12 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         db_pool: Pool,
         read_schema: type[READTYPE],
     ) -> None:
-        """
-        Initialize the ParentModel with table info and connection pool.
+        """Initialize model metadata and database connection pool.
 
         Args:
-            table_name: The name of the database table.
-            db_pool: The asyncpg connection pool.
-            read_schema: The Pydantic model used for reads.
+            table_name: Backing relation name (table or view).
+            db_pool: Asyncpg connection pool.
+            read_schema: Pydantic model used to validate/read rows.
         """
         self.name = table_name
         self.read_schema = read_schema
@@ -64,18 +65,21 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         self.logger = get_logger(__name__, level)
 
     async def execute(self, sql_statement: str, values: ValuesList | None = None) -> int:
-        """
-        Execute an SQL statement with optional parameter binding.
+        """Execute a single SQL statement.
 
         Args:
-            sql_statement: The SQL command to run.
-            values: Optional list of values to bind to the SQL placeholders.
+            sql_statement: SQL command to run (parameterized, no interpolation).
+            values: Optional positional parameters to bind.
 
         Returns:
-            Number of rows affected.
+            Number of rows affected as reported by asyncpg.
+
+        Raises:
+            DBException: If execution fails for any reason.
         """
         async with self.db_pool.acquire() as conn:
             try:
+                self.logger.debug("Executing SQL: %s", sql_statement)
                 if values is None or not values:
                     result = await conn.execute(sql_statement)
                 else:
@@ -90,36 +94,32 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         return affected
 
     async def create(self) -> None:
-        """Create the backing relation for this model (table or view)."""
+        """Create the backing relation for this model (table or view).
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError("Error: create method not implemented in child class")
 
     async def drop(self) -> None:
-        """Drop the backing relation for this model (table or view)."""
+        """Drop the backing relation for this model (table or view).
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError("Error: drop method not implemented in child class")
 
-    async def check_table_exists(self) -> bool:
-        """Return True if the table exists in the current search_path.
-
-        Uses SELECT to_regclass($1) which returns NULL when the relation doesn't
-        exist. This must use a fetch operation (not execute) to read the value.
-        """
-        async with self.db_pool.acquire() as conn:
-            try:
-                regclass = await conn.fetchval("SELECT to_regclass($1);", self.name)
-            except Exception as e:
-                # On any error, conservatively return False and let caller decide next steps
-                raise DBException(e) from e
-        return regclass is not None
-
     async def insert_one(self, data: CREATETYPE) -> UUID:
-        """
-        Insert a new record into the database.
+        """Insert a single record.
 
         Args:
-            data: A CREATETYPE Pydantic model containing the data to insert.
+            data: Pydantic model containing columns and values to insert.
 
         Returns:
-            The UUID of the newly inserted record.
+            UUID of the newly inserted record.
+
+        Raises:
+            DBException: If insertion fails or no id is returned.
         """
 
         dump = data.model_dump(by_alias=True, exclude_unset=True)
@@ -130,6 +130,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         sql_statement = f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders}) RETURNING id;"
         try:
             async with self.db_pool.acquire() as conn:
+                self.logger.debug("Inserting into %s: %s", self.name, dump)
                 row = await conn.fetchrow(sql_statement, *values)
             if not row or "id" not in row or not isinstance(row["id"], UUID):
                 raise DBException("Insert failed to return id")
@@ -139,14 +140,14 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         return _id
 
     async def delete_one(self, _id: UUID) -> None:
-        """
-        Delete a record by its UUID.
+        """Delete a single record by id.
 
         Args:
-            _id: The UUID of the record to delete.
+            _id: Record identifier.
 
         Raises:
-            DBNotFound if no record is found.
+            DBException: If the provided id is invalid or execution fails.
+            DBNotFound: If no record matches the given id.
         """
         if not _id or not isinstance(_id, UUID):
             raise DBException("Error: invalid '_id' provided to delete_one method.")
@@ -156,15 +157,14 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
             raise DBNotFound(f"{self.name}: No record found with id={_id}")
 
     async def update_one(self, _id: UUID, data: UPDATETYPE) -> None:
-        """
-        Update a record by its UUID.
+        """Update a single record by id.
 
         Args:
-            _id: The UUID of the record.
-            data: A UPDATETYPE Pydantic model with the update data.
+            _id: Record identifier.
+            data: Pydantic model with fields to update (partial allowed).
 
         Raises:
-            DBNotFound if no record is found.
+            DBNotFound: If no record matches the given id.
         """
 
         dump = data.model_dump(by_alias=True, exclude_unset=True)
@@ -179,17 +179,16 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
             raise DBNotFound(f"{self.name}: No record found with id={_id}")
 
     async def get_one(self, where: FILTERTYPE) -> READTYPE:
-        """
-        Retrieve a single record that matches the provided filters.
+        """Fetch a single record matching provided filters.
 
         Args:
-            where: Dictionary of column filters.
+            where: Pydantic filter model (only set/non-null fields are applied).
 
         Returns:
-            A READTYPE instance.
+            Instance of the configured read schema.
 
         Raises:
-            DBNotFound if no matching record is found.
+            DBNotFound: If no record matches the filters.
         """
         select_stm = f"SELECT * FROM {self.name}"
         dump = where.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
@@ -201,23 +200,30 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
             select_stm += f" WHERE {conditions}"
         select_stm += ";"
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", select_stm)
             row = await conn.fetchrow(select_stm, *values)
             if not row:
                 raise DBNotFound(f"{self.name}: No record found with {where=}")
             return self.read_schema(**row)
 
     async def get_one_by_id(self, _id: UUID) -> READTYPE:
+        """Fetch a single record by id.
+
+        Subclasses may override to add constraints or joins.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError("Error: get_one_by_id method not implemented in child class")
 
     async def get_all(self, where: FILTERTYPE | None = None) -> list[READTYPE]:
-        """
-        Retrieve all records matching the optional filters.
+        """Fetch all records matching optional filters.
 
         Args:
-            where: Optional dictionary of filters.
+            where: Optional filter model; if omitted, returns all rows.
 
         Returns:
-            List of READTYPE instances.
+            List of validated read-schema instances.
         """
         sql_statement = f"SELECT * FROM {self.name}"
         values: list[Values] | None = None
@@ -230,6 +236,7 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
                 sql_statement += f" WHERE {conditions}"
         sql_statement += ";"
         async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", sql_statement)
             rows = (
                 await conn.fetch(sql_statement, *values)
                 if values
@@ -239,4 +246,10 @@ class ParentModel(Generic[CREATETYPE, UPDATETYPE, READTYPE, FILTERTYPE], ABC):
         return [self.read_schema(**row) for row in rows]
 
     async def get_by_session_id(self, session_id: UUID) -> list[READTYPE]:
+        """Fetch records scoped by a session id.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses that support
+                session scoping.
+        """
         raise NotImplementedError("Error: get_by_session_id method not implemented in child class")
