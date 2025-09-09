@@ -4,7 +4,7 @@ import pytest
 from asyncpg import Pool
 
 from shared.factories import create_fake_target, create_many_sessions
-from shared.models import DBNotFound, TargetsModel
+from shared.models import DBException, DBNotFound, TargetsModel
 from shared.schema.targets_schema import TargetsFilters
 
 
@@ -95,3 +95,20 @@ async def test_get_by_session_id(db_pool_initialed: Pool) -> None:
     s1_targets = await db.get_by_session_id(sessions[0].session_id)
     assert len(s1_targets) == 1
     assert all(t.session_id == sessions[0].session_id for t in s1_targets)
+
+
+@pytest.mark.asyncio
+async def test_unique_target_per_session_constraint(db_pool_initialed: Pool) -> None:
+    """Ensure UNIQUE(session_id) constraint rejects a second target for same session.
+
+    The table schema defines CONSTRAINT targets_one_per_session UNIQUE (session_id).
+    Attempting to insert a second target for the identical session_id must raise DBException
+    (wrapping the underlying asyncpg UniqueViolationError).
+    """
+    sessions = await create_many_sessions(db_pool_initialed, 1)
+    db = TargetsModel(db_pool_initialed)
+    first = create_fake_target(sessions[0].session_id)
+    dup = create_fake_target(sessions[0].session_id)
+    await db.insert_one(first)
+    with pytest.raises(DBException):
+        await db.insert_one(dup)

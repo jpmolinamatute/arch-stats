@@ -43,7 +43,7 @@ async def insert_sessions_db(
                 # End time inferred: if is_opened False, set end_time to start_time + 1h
                 end_time = None
                 if not s.is_opened:
-                    end_time = s.start_time + timedelta(hours=1)
+                    end_time = s.start_time + timedelta(hours=3)
                 row = await stmt.fetchrow(
                     s.is_opened,
                     s.start_time,
@@ -78,7 +78,6 @@ async def create_many_sessions(db_pool: Pool, sessions_count: int = 5) -> list[S
                 location=f"Range_closed_{i}",
                 start_time=start_time,
                 is_opened=False,
-                end_time=start_time + timedelta(hours=3),
             )
         )
     # Single open session (latest start_time)
