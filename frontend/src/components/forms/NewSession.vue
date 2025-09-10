@@ -15,7 +15,6 @@
         start_time: new Date().toISOString(), // API expects ISO 8601
         location: 'Club',
         is_indoor: false,
-        distance: 18, // meters
     });
 
     // UI uses datetime-local; keep a local value in "YYYY-MM-DDTHH:mm"
@@ -34,7 +33,7 @@
     });
 
     // --- Validation ---
-    const errors = ref<{ location?: string; distance?: string; start?: string }>({});
+    const errors = ref<{ location?: string; start?: string }>({});
 
     const isValid = computed(() => {
         errors.value = {};
@@ -42,10 +41,6 @@
 
         if (!form.value.location?.trim()) {
             errors.value.location = 'Location is required.';
-            ok = false;
-        }
-        if (!Number.isFinite(form.value.distance) || form.value.distance <= 0) {
-            errors.value.distance = 'Distance must be a number greater than 0.';
             ok = false;
         }
         const t = Date.parse(form.value.start_time);
@@ -106,19 +101,6 @@
                 </label>
             </div>
         </div>
-
-        <!-- Distance -->
-        <label class="block mb-1 mt-4 font-medium text-slate-200">Distance (m)</label>
-        <input
-            v-model.number="form.distance"
-            type="number"
-            inputmode="decimal"
-            min="1"
-            step="0.5"
-            class="w-full border border-slate-600 rounded p-2 mb-1 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="e.g. 18"
-        />
-        <p v-if="errors.distance" class="text-danger text-sm">{{ errors.distance }}</p>
 
         <!-- Start Time -->
         <label class="block mb-1 mt-4 font-medium text-slate-200">Start Time</label>

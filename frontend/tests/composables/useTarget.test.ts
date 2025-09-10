@@ -6,7 +6,7 @@ import {
     getTargetsBySessionId,
     getTargetById,
     deleteTarget,
-    calibrateTarget,
+    fetchTargetCalibration,
 } from '../../src/composables/useTarget';
 
 // Use any to avoid TS lib dom coupling in Node test env
@@ -83,13 +83,13 @@ describe('listTargets', () => {
 });
 
 describe('getTargetsBySessionId', () => {
-    it('delegates to listTargets with session_id', async () => {
+    it('calls dedicated endpoint and returns array', async () => {
         const data = [{ id: 't1' }];
         fetchMock.mockResolvedValue(okEnvelope(data));
         const res = await getTargetsBySessionId('abc');
         expect(res).toEqual(data);
         const calledUrl: string = fetchMock.mock.calls[0][0] as string;
-        expect(calledUrl).toBe('/api/v0/target?session_id=abc');
+        expect(calledUrl).toBe('/api/v0/target/session-id/abc');
     });
 });
 
@@ -147,22 +147,21 @@ describe('deleteTarget', () => {
     });
 });
 
-describe('calibrateTarget', () => {
-    it('returns Target on ok', async () => {
-        const t = { id: 'cal' };
-        fetchMock.mockResolvedValue(okEnvelope(t));
-        const res = await calibrateTarget();
-        expect(res).toEqual(t);
+describe('fetchTargetCalibration', () => {
+    it('returns calibration object on ok', async () => {
+        const cal = { max_x: 150, max_y: 200 };
+        fetchMock.mockResolvedValue(okEnvelope(cal));
+        const res = await fetchTargetCalibration();
+        expect(res).toEqual(cal);
     });
 
-    it('returns null when ok but no data', async () => {
-        fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
-        const res = await calibrateTarget();
-        expect(res).toBeNull();
+    it('throws on malformed payload', async () => {
+        fetchMock.mockResolvedValue(okEnvelope({ something: 1 }));
+        await expect(fetchTargetCalibration()).rejects.toThrow('Malformed');
     });
 
     it('throws when non-ok', async () => {
-        fetchMock.mockResolvedValue(notOkEnvelope(503, ['unavailable']));
-        await expect(calibrateTarget()).rejects.toThrow('unavailable');
+        fetchMock.mockResolvedValue(notOkEnvelope(500, ['err']));
+        await expect(fetchTargetCalibration()).rejects.toThrow('err');
     });
 });

@@ -1,14 +1,20 @@
 import logging
-from uuid import UUID, uuid4
+import random
+from uuid import UUID
 
 from asyncpg import Pool
 from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from server.routers.utils import HTTPResponse, db_response
-from shared.factories import create_fake_target
 from shared.models import TargetsModel
-from shared.schema import TargetsCreate, TargetsFilters, TargetsRead, TargetsUpdate
+from shared.schema import (
+    TargetCalibration,
+    TargetsCreate,
+    TargetsFilters,
+    TargetsRead,
+    TargetsUpdate,
+)
 
 
 TargetsRouter = APIRouter(prefix="/target")
@@ -21,20 +27,25 @@ async def get_targets_db(request: Request) -> TargetsModel:
     return TargetsModel(db_pool)
 
 
-async def async_wrapper(session_id: UUID) -> TargetsCreate:
-    return create_fake_target(session_id)
+async def async_wrapper() -> TargetCalibration:
+    return TargetCalibration(
+        max_x=random.uniform(120.0, 240.0),
+        max_y=random.uniform(0.0, 100.0),
+    )
 
 
 @TargetsRouter.get("/calibrate")
 async def calibrate_target() -> JSONResponse:
-    return await db_response(async_wrapper, status.HTTP_200_OK, uuid4())
+    # As of now, this is a dummy endpoint to calibrate a new target. At some point we are going to
+    # start using real data from sensors (hardware)
+    return await db_response(async_wrapper, status.HTTP_200_OK)
 
 
-# # ****************************************
-# # ****************************************
+# ****************************************
+# ****************************************
 # Path: /api/v0/target/{target_id}
-# # ****************************************
-# # ****************************************
+# ****************************************
+# ****************************************
 
 
 @TargetsRouter.delete("/{target_id}", response_model=HTTPResponse[None])
@@ -90,11 +101,11 @@ async def get_target(
     return await db_response(targets_db.get_one_by_id, status.HTTP_200_OK, target_id)
 
 
-# # ****************************************
-# # ****************************************
+# ****************************************
+# ****************************************
 # Path: /api/v0/target
-# # ****************************************
-# # ****************************************
+# ****************************************
+# ****************************************
 
 
 @TargetsRouter.post("", response_model=HTTPResponse[None])
