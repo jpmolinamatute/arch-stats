@@ -34,7 +34,7 @@
         try {
             targets.value = await getTargetsBySessionId(sessionOpened.id);
             if (targets.value.length === 1 && targets.value[0]) {
-                selectedTargetId.value = targets.value[0]!.id;
+                selectedTargetId.value = targets.value[0]?.id;
             }
         } catch (e) {
             errorMessage.value = (e as Error).message;

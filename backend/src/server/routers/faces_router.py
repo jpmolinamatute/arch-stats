@@ -32,8 +32,8 @@ async def async_wrapper() -> FaceCalibration:
 
 
 @FacesRouter.get("/face/calibrate")
-async def calibrate_target() -> JSONResponse:
-    # As of now, this is a dummy endpoint to calibrate a new target. At some point we are going to
+async def calibrate_face() -> JSONResponse:
+    # As of now, this is a dummy endpoint to calibrate a new face. At some point we are going to
     # start using real data from sensors (hardware)
     return await db_response(async_wrapper, status.HTTP_200_OK)
 
