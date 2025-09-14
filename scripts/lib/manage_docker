@@ -2,9 +2,21 @@
 
 COMPOSE_FILE="${ROOT_DIR}/docker/docker-compose.yaml"
 
-start_docker() {
-    is_running=$(docker compose -f "${COMPOSE_FILE}" ps --all --quiet | wc -l)
+
+is_docker_running() {
+    local service="${1:-db}"
+    local is_running
+    is_running=$(docker compose -f "${COMPOSE_FILE}" ps --all --quiet "${service}" | wc -l)
     if [[ ${is_running} -eq 0 ]]; then
+        # 1 means not running
+        return 1
+    fi
+    # 0 means running
+    return 0
+}
+
+start_docker() {
+    if ! is_docker_running; then
         echo "Starting docker compose"
         docker compose -f "${COMPOSE_FILE}" up --detach --build
         sleep 2
