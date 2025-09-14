@@ -3,6 +3,11 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class TargetCalibration(BaseModel):
+    max_x: float = Field(..., description="Max X coordinate of the target")
+    max_y: float = Field(..., description="Max Y coordinate of the target")
+
+
 class TargetsCreate(BaseModel):
     max_x: float = Field(..., description="Max X coordinate of the target")
     max_y: float = Field(..., description="Max Y coordinate of the target")

@@ -11,6 +11,7 @@ from typing_extensions import Literal
 
 from server.routers import (
     ArrowsRouter,
+    FacesRouter,
     SessionPerformanceRouter,
     SessionsRouter,
     ShotsRouter,
@@ -105,6 +106,7 @@ def run() -> FastAPI:
     app.include_router(ArrowsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(ShotsRouter, prefix=f"/api/{mayor_version}")
     app.include_router(TargetsRouter, prefix=f"/api/{mayor_version}")
+    app.include_router(FacesRouter, prefix=f"/api/{mayor_version}")
     app.include_router(WSRouter, prefix=f"/api/{mayor_version}")
     app.include_router(SessionPerformanceRouter, prefix=f"/api/{mayor_version}")
     app.mount(

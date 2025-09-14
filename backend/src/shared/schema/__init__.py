@@ -5,6 +5,7 @@ from shared.schema.arrows_schema import (
     ArrowsUpdate,
 )
 from shared.schema.faces_schema import (
+    FaceCalibration,
     FacesCreate,
     FacesFilters,
     FacesRead,
@@ -29,6 +30,7 @@ from shared.schema.shots_schema import (
     ShotsUpdate,
 )
 from shared.schema.targets_schema import (
+    TargetCalibration,
     TargetsCreate,
     TargetsFilters,
     TargetsRead,
@@ -41,6 +43,7 @@ __all__ = [
     "ArrowsFilters",
     "ArrowsRead",
     "ArrowsUpdate",
+    "FaceCalibration",
     "FacesCreate",
     "FacesFilters",
     "FacesRead",
@@ -57,6 +60,7 @@ __all__ = [
     "ShotsFilters",
     "ShotsRead",
     "ShotsUpdate",
+    "TargetCalibration",
     "TargetsCreate",
     "TargetsFilters",
     "TargetsRead",

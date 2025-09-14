@@ -48,8 +48,8 @@ def create_fake_shot(arrow_id: UUID, session_id: UUID, **overrides: Any) -> Shot
         arrow_engage_time=now,
         arrow_disengage_time=now + timedelta(seconds=2),
         arrow_landing_time=now + timedelta(seconds=4),
-        x=random.uniform(0, 100),
-        y=random.uniform(0, 100),
+        x=random.uniform(0.0, 100.0),
+        y=random.uniform(0.0, 100.0),
     )
 
     return data.model_copy(update=overrides)

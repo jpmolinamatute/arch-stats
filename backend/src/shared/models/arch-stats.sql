@@ -36,6 +36,92 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE OR REPLACE FUNCTION validate_face_row(
+    target_id UUID,
+    x REAL,
+    y REAL,
+    radii REAL []
+) RETURNS BOOLEAN AS $$
+DECLARE
+    max_radius REAL;
+    tgt_max_x REAL;
+    tgt_max_y REAL;
+BEGIN
+    SELECT max_x, max_y INTO tgt_max_x, tgt_max_y FROM targets WHERE id = target_id;
+
+    -- Compute max radius
+    SELECT MAX(r) INTO max_radius FROM unnest(radii) AS r;
+
+    -- Ensure face fully contained within target bounds (strictly inside)
+    IF (x + max_radius) > tgt_max_x OR (y + max_radius) > tgt_max_y THEN
+        RETURN FALSE;
+    END IF;
+    IF (x - max_radius) < 0 OR (y - max_radius) < 0 THEN
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION get_shot_score(
+    shot_x REAL,
+    shot_y REAL,
+    target_id UUID,
+    target_max_x REAL,
+    target_max_y REAL
+) RETURNS INTEGER AS $$
+DECLARE
+    face RECORD;
+    distance REAL;
+    score INTEGER := 0;
+    max_score INTEGER := 0;
+    face_count INTEGER;
+BEGIN
+    -- If shot coordinates are null, it missed the target entirely
+    IF shot_x IS NULL OR shot_y IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check unrealistic shot coordinates
+    IF shot_x < 0 OR shot_y < 0 OR shot_x > target_max_x OR shot_y > target_max_y THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if any faces exist for the target
+    SELECT COUNT(*) INTO face_count
+    FROM faces
+    WHERE faces.target_id = get_shot_score.target_id
+    LIMIT 3;
+
+    -- If no faces exist, return NULL
+    IF face_count = 0 THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check up to 3 faces for the target
+    FOR face IN (
+        SELECT x, y, radii, points
+        FROM faces
+        WHERE faces.target_id = get_shot_score.target_id
+    ) LOOP
+        distance := SQRT(POWER(shot_x - face.x, 2) + POWER(shot_y - face.y, 2));
+        FOR i IN 1..array_length(face.radii, 1) LOOP
+            IF distance <= face.radii[i] THEN
+                score := face.points[i];
+                IF max_score IS NULL OR score > max_score THEN
+                    max_score := score;
+                END IF;
+                EXIT;
+            END IF;
+        END LOOP;
+    END LOOP;
+
+    -- Return the highest score, or NULL if no face was hit
+    RETURN max_score;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     is_opened BOOLEAN NOT NULL DEFAULT FALSE,
@@ -165,34 +251,6 @@ WHERE is_active IS TRUE;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_one_open_id
 ON sessions (is_opened) WHERE is_opened IS TRUE;
 
-CREATE OR REPLACE FUNCTION validate_face_row(
-    target_id UUID,
-    x REAL,
-    y REAL,
-    radii REAL []
-) RETURNS BOOLEAN AS $$
-DECLARE
-    max_radius REAL;
-    tgt_max_x REAL;
-    tgt_max_y REAL;
-BEGIN
-    SELECT max_x, max_y INTO tgt_max_x, tgt_max_y FROM targets WHERE id = target_id;
-
-    -- Compute max radius
-    SELECT MAX(r) INTO max_radius FROM unnest(radii) AS r;
-
-    -- Ensure face fully contained within target bounds (strictly inside)
-    IF (x + max_radius) > tgt_max_x OR (y + max_radius) > tgt_max_y THEN
-        RETURN FALSE;
-    END IF;
-    IF (x - max_radius) < 0 OR (y - max_radius) < 0 THEN
-        RETURN FALSE;
-    END IF;
-
-    RETURN TRUE;
-END;
-$$ LANGUAGE plpgsql STABLE;
-
 CREATE OR REPLACE FUNCTION notify_new_shot_archy() RETURNS TRIGGER AS $$
 BEGIN
     PERFORM pg_notify('archy', row_to_json(NEW)::text);
@@ -209,61 +267,3 @@ BEGIN
         FOR EACH ROW EXECUTE FUNCTION notify_new_shot_archy();
     END IF;
 END$$;
-
-CREATE OR REPLACE FUNCTION get_shot_score(
-    shot_x REAL,
-    shot_y REAL,
-    target_id UUID,
-    target_max_x REAL,
-    target_max_y REAL
-) RETURNS INTEGER AS $$
-DECLARE
-    face RECORD;
-    distance REAL;
-    score INTEGER := 0;
-    max_score INTEGER := 0;
-    face_count INTEGER;
-BEGIN
-    -- If shot coordinates are null, it missed the target entirely
-    IF shot_x IS NULL OR shot_y IS NULL THEN
-        RETURN NULL;
-    END IF;
-
-    -- Check unrealistic shot coordinates
-    IF shot_x < 0 OR shot_y < 0 OR shot_x > target_max_x OR shot_y > target_max_y THEN
-        RETURN NULL;
-    END IF;
-
-    -- Check if any faces exist for the target
-    SELECT COUNT(*) INTO face_count
-    FROM faces
-    WHERE faces.target_id = get_shot_score.target_id
-    LIMIT 3;
-
-    -- If no faces exist, return NULL
-    IF face_count = 0 THEN
-        RETURN NULL;
-    END IF;
-
-    -- Check up to 3 faces for the target
-    FOR face IN (
-        SELECT x, y, radii, points
-        FROM faces
-        WHERE faces.target_id = get_shot_score.target_id
-    ) LOOP
-        distance := SQRT(POWER(shot_x - face.x, 2) + POWER(shot_y - face.y, 2));
-        FOR i IN 1..array_length(face.radii, 1) LOOP
-            IF distance <= face.radii[i] THEN
-                score := face.points[i];
-                IF max_score IS NULL OR score > max_score THEN
-                    max_score := score;
-                END IF;
-                EXIT;
-            END IF;
-        END LOOP;
-    END LOOP;
-
-    -- Return the highest score, or NULL if no face was hit
-    RETURN max_score;
-END;
-$$ LANGUAGE plpgsql STABLE;

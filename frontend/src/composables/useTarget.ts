@@ -2,6 +2,11 @@ import type { components } from '../types/types.generated';
 
 type Target = components['schemas']['TargetsRead'];
 type TargetsCreate = components['schemas']['TargetsCreate'];
+// Backend calibration endpoint currently lacks explicit schema in OpenAPI; define inline.
+export interface TargetCalibration {
+    max_x: number;
+    max_y: number;
+}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
     return typeof v === 'object' && v !== null;
@@ -89,7 +94,15 @@ export async function listTargets(
 
 /** Convenience filter for targets by session id. */
 export async function getTargetsBySessionId(sessionId: string): Promise<Target[]> {
-    return listTargets({ session_id: sessionId });
+    const res = await fetch(`/api/v0/target/session-id/${encodeURIComponent(sessionId)}`);
+    const body: unknown = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const errs = isRecord(body) ? (body['errors'] as unknown) : undefined;
+        const msg = Array.isArray(errs) ? errs.join(', ') : 'Failed to list targets for session';
+        throw new Error(msg);
+    }
+    const data = isRecord(body) ? (body['data'] as unknown) : null;
+    return isTargetArray(data) ? data : [];
 }
 
 /**
@@ -130,7 +143,11 @@ export async function deleteTarget(targetId: string): Promise<void> {
 /**
  * Call backend calibration endpoint to get a suggested Target-like payload.
  */
-export async function calibrateTarget(): Promise<Target | null> {
+/**
+ * Fetch a calibration snapshot (sensor-provided values) for a new target.
+ * Backend returns TargetCalibration (max_x, max_y). Distance remains user-provided.
+ */
+export async function fetchTargetCalibration(): Promise<TargetCalibration> {
     const res = await fetch('/api/v0/target/calibrate');
     const body: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -139,5 +156,8 @@ export async function calibrateTarget(): Promise<Target | null> {
         throw new Error(msg);
     }
     const data = isRecord(body) ? (body['data'] as unknown) : null;
-    return isTarget(data) ? data : null;
+    if (!isRecord(data) || typeof data.max_x !== 'number' || typeof data.max_y !== 'number') {
+        throw new Error('Malformed calibration payload');
+    }
+    return { max_x: data.max_x as number, max_y: data.max_y as number };
 }

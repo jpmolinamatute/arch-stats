@@ -5,6 +5,14 @@ from annotated_types import Len
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class FaceCalibration(BaseModel):
+    x: float = Field(..., description="X coordinate of face center")
+    y: float = Field(..., description="Y coordinate of face center")
+    radii: Annotated[list[float], Len(min_length=1)] = Field(
+        default_factory=list, description="List of radii for the face rings"
+    )
+
+
 class Face(BaseModel):
     x: float = Field(..., description="X coordinate of face center")
     y: float = Field(..., description="Y coordinate of face center")
