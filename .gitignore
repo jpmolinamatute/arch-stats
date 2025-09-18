@@ -9,8 +9,9 @@ node_modules/
 frontend/src/types/**
 !frontend/src/types/.gitkeep
 ignore/*
-/backend/src/shared/logs/**
-!/backend/src/shared/logs/.gitkeep
+/backend/src/core/logs/**
+!backend/src/core/logs/.gitkeep
 /backend/src/server/frontend/** 
 !/backend/src/server/frontend/.gitkeep
 /openapi.json
+docker/postgresql/*

@@ -13,7 +13,41 @@ services:
       - "5432:5432"
     networks:
       - arch-stats
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - /var/run/postgresql:/var/run/postgresql
-      - ./conf/postgresql.conf:/etc/postgresql/17/main/postgresql.conf
-      - ./scripts/db_init.sql:/docker-entrypoint-initdb.d/db_init.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready
+        - -U
+        - $$POSTGRES_USER
+        - -d
+        - $$POSTGRES_DB
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  migrations:
+    image: flyway/flyway:latest
+    command:
+      - migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../backend/migrations:/flyway/sql
+    env_file:
+      - ./.env
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://db:${POSTGRES_PORT}/${POSTGRES_DB}
+      - FLYWAY_USER=${POSTGRES_USER}
+      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
+      - FLYWAY_LOCATIONS=filesystem:/flyway/sql
+    networks:
+      - arch-stats
+
+volumes:
+  pgdata:

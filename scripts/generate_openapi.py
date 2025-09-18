@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import json
 
-from server.app import run
+from app import run
 
 
 def generate_openapi_spec() -> None:

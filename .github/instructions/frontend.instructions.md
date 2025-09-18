@@ -1,10 +1,10 @@
+---
+applyTo: "**/*.ts,**/*.js,**/*.vue"
+---
+
 # Frontend instructions
 
 **Audience:** JavaScript/TypeScript developers working in `frontend/` directory
-
----
-applyTo: "**/*.ts,**/*.vue,**/*.js"
----
 
 ## Tech stack
 
@@ -73,7 +73,16 @@ Rules (future state):
 2. Heartbeat frames: `{ "type": "heartbeat", "ts": "..." }` update freshness only.
 3. All domain payloads live under `data` and match generated OpenAPI types.
 
-Action item: When backend adopts envelope, introduce a `useShotsStream()` composable that normalizes both legacy (raw) and envelope formats during the transition window.
+Action item: When backend adopts envelope, introduce a `useShotsStream()` composable that normalizes envelope formats during the transition window.
+
+## Viewport support- Mobile-first:
+
+The app must be fully responsive and work well in the following viewport widths:
+
+- 360px
+- 375px
+- 390px
+- 414px
 
 ## Do / Don't
 
@@ -94,6 +103,5 @@ Action item: When backend adopts envelope, introduce a `useShotsStream()` compos
 
 ## References
 
-- See `frontend/README.md` for structure and VS Code tasks.
 - Architecture & cross-cutting rules: `.github/copilot-instructions.md`.
 - For consistent endpoint usage patterns see existing composables (`useSession.ts`, `useTarget.ts`).

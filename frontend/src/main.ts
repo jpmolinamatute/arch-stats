@@ -1,11 +1,13 @@
 import { createApp } from 'vue';
 import './style.css';
 import App from './App.vue';
+import router from './router';
 
-import { fetchOpenSession } from './state/session';
-
-fetchOpenSession();
 const app = createApp(App);
+
+// Register router
+app.use(router);
+
 app.mount('#app');
 
 app.config.errorHandler = (err, instance, info) => {

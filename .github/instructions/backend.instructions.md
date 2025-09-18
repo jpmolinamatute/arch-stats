@@ -1,17 +1,17 @@
-# Backend instructions
-
-**Audience:** Python developers working in `backend/` directory.
-
 ---
 applyTo: "**/*.py"
 ---
 
+# Backend instructions
+
+**Audience:** Python developers working in `backend/` directory.
+
 ## Tech stack
 
-- **Language:** Python 3.13 (strict typing)
+- **Language:** Python 3.14 (strict typing)
 - **Web framework:** FastAPI
 - **Data models/validation:** Pydantic **v2.x** (`ConfigDict`, `Field`, `extra="forbid"`)
-- **DB:** PostgreSQL 15+ via **`asyncpg` only** (no ORMs)
+- **DB:** PostgreSQL 17+ via **`asyncpg` only** (no ORMs)
 - **Async:** idiomatic `async/await` with connection pools/transactions
 - **Real-time:** WebSockets
 - **Testing:** pytest (+ pytest-asyncio, httpx.AsyncClient)
@@ -27,12 +27,6 @@ applyTo: "**/*.py"
 - Keep DB access **isolated** in small async functions using `asyncpg` with prepared statements when helpful.
 - Avoid global state; pass pools/clients via dependency injection or startup wiring.
 
-### Validation & Single Source of Truth
-
-- Pydantic schemas define external contract & input validation.
-- Database constraints (NOT NULL, UNIQUE, FK, CHECK) must mirror critical invariants; validation is **duplicated only for invariants that protect data integrity** (e.g. FK, uniqueness) to prevent drift.
-- Do not add business-only rules (like max distance heuristics) into DB constraints—keep those at the schema/service layer.
-
 ## Project expectations
 
 - **No synchronous DB clients**, and do not introduce ORMs.
@@ -40,31 +34,28 @@ applyTo: "**/*.py"
 - Follow REST naming patterns already used (snake_case JSON keys).
 - Log useful context (request id, principal, resource id) without spamming.
 
-### Logging Format
+### Logger
 
-Emit structured JSON (preferred) or key=value single line. Minimum fields:
+import and use the core logger from `backend/src/core/logger.py`:
 
-`ts level module msg request_id=<uuid> resource=<entity> latency_ms=<int>`
+```python
+from core import LoggerFactory
 
-If using JSON: `{ "ts": "2025-08-20T12:34:56.123Z", "level": "INFO", "module": "sessions.router", "msg": "session opened", "request_id": "...", "resource": {"type": "session", "id": "..."}, "latency_ms": 12 }`
-
-Never log PII; truncate arrays/large payloads.
+logger = LoggerFactory().get_logger(__name__)
+logger.info("message %s", {"key": value})
+```
 
 ### Connection Pool & Concurrency
 
 Environment variables (documented here, default fallback in code):
 
-| Var | Purpose | Suggested Dev Default |
-|-----|---------|-----------------------|
-| `PG_POOL_MIN` | minimum connections | 1 |
-| `PG_POOL_MAX` | maximum connections | 10 |
-| `API_MAX_CONCURRENT_REQUESTS` | (future) semaphore limit | 100 |
+| Var                           | Purpose                  | Suggested Dev Default |
+| ----------------------------- | ------------------------ | --------------------- |
+| `POSTGRES_POOL_MIN_SIZE`      | minimum connections      | 1                     |
+| `POSTGRES_POOL_MAX_SIZE`      | maximum connections      | 10                    |
+| `API_MAX_CONCURRENT_REQUESTS` | (future) semaphore limit | 100                   |
 
-Guideline: keep `POOL_MAX` <= (CPU cores * 2) for typical IO-bound FastAPI usage. Reassess with load tests.
-
-### Prepared Statements Guidance
-
-Use prepared statements when a query is executed frequently (rule of thumb: > 50 times per process lifetime OR inside high-throughput endpoints). Name statements deterministically: `<area>_<table>_<action>` (e.g., `sessions_select_open`). Avoid preparing one-off migration queries.
+Guideline: keep `POOL_MAX` <= (CPU cores \* 2) for typical IO-bound FastAPI usage. Reassess with load tests.
 
 ### WebSocket (Future Contract Stub)
 
@@ -72,54 +63,28 @@ When implementing the real-time channel, follow this envelope shape (JSON text f
 
 ```json
 {
-	"type": "shot.created",      // event name (snake_case + domain)
-	"ts": "2025-08-20T12:34:56.789Z",
-	"request_id": "<uuid or null>",
-	"data": { /* event-specific payload */ }
+  "type": "shot.created", // event name (snake_case + domain)
+  "ts": "2025-08-20T12:34:56.789Z",
+  "request_id": "<uuid or null>",
+  "data": {
+    /* event-specific payload */
+  }
 }
 ```
 
 Rules:
+
 1. Never block send loop; queue with backpressure (drop oldest after N=1000 if client slow, log WARN).
 2. Heartbeat: server -> client `{"type":"heartbeat","ts":"..."}` every 30s.
 3. No client->server mutation messages until an explicit spec section is added.
 
-### Error Model
-
-Success responses: HTTP 2xx with `HTTPResponse` wrapper (`code`, `data`, `errors=[]`).
-
-Client mistakes (validation, not found, conflict): return appropriate 4xx AND still use wrapper with `data=null`, `errors=[..]` so frontend parsing is uniform. Do *not* return 200 + populated `errors` for true failures.
-
-Server unexpected failures: 500 with wrapper, log stack (not returned). FastAPI exception handlers centralize formatting.
-
-### Migrations Process
-
-Current approach: raw SQL migration files under `backend/src/server/models/migrations/` (create directory if absent) named with ordered prefix: `YYYYMMDDHHMM__short_description.sql`.
-
-Checklist to add a migration:
-1. Create SQL file (idempotent where feasible; guard with `IF NOT EXISTS`).
-2. Include `-- migrate:up` section (and optional `-- migrate:down`).
-3. Provide accompanying minimal test asserting new columns / tables exist.
-4. Run locally against fresh DB (`docker compose down -v && up`) to verify.
-5. Document any destructive change in PR description.
-
-Future tooling placeholder: if adopting a migration runner, integrate here; until then, a lightweight script will apply pending files ordered lexicographically.
-
 ### OpenAPI -> Frontend Types Workflow
 
 Any change to routers or schemas that alters OpenAPI (new field, endpoint, description affecting generated types) requires:
+
 1. Regenerate: `npm run generate:types` (frontend directory) while backend running.
 2. Verify FE build; DO NOT commit `types.generated.ts` (ignored).
 3. Mention in PR checklist: "API types regenerated locally".
-
-### Sensor Simulators (arrow/bow/target)
-
-Target cadence assumptions (guidance for realistic data):
-- Bow reader: emits `arrow_engage` and `arrow_release` with 2–8s average gap during active session.
-- Target reader: landing detection within configurable window (default 3s) after release; if absent, mark miss.
-- Arrow reader: ID association event occurs prior to `arrow_engage` (<=1s).
-
-Tests may mock these timings; do not bake fixed sleeps into production logic—use timestamps from DB rows.
 
 ## Testing discipline
 
@@ -132,25 +97,47 @@ Tests may mock these timings; do not bake fixed sleeps into production logic—u
 
 When adding or updating a server features, ensure changes are consistent across routers, schemas, models, and tests.
 
-### Routers (`backend/src/server/routers/`)
+### Routers (`backend/src/routers/`)
 
 - Keep **endpoint code minimal**: no business logic in routes, only orchestration.
 - Use dependency-injected services and async DB helpers.
-- Follow REST naming and status code patterns used elsewhere.
-- Document inputs/outputs with Pydantic models.
+- Validate inputs/outputs with Pydantic models.
+- Follow REST naming conventions used elsewhere.
+- Routers ALWAYS must return HTTPStatus and a appropriate status code patterns.
 
-### Schemas (`backend/src/server/schema/`)
+```python
+from fastapi import APIRouter, Depends, Response, status, HTTPException
+from uuid import UUID
+from models import ArcherModel
+from schemas import ArcherRead
+
+
+router = APIRouter()
+
+
+@router.get("/{archer_id}", response_model=ArcherRead, status_code=status.HTTP_200_OK)
+async def get_archer(
+    archer_id: UUID,
+    archer_model: ArcherModel = Depends(),
+) -> ArcherRead:
+    try:
+        return await archer_model.get_one(archer_id)
+    except DBNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Archer not found") from e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Archer not found") from e
+```
+
+### Schemas (`backend/src/schema/`)
 
 - All request/response bodies must use **Pydantic v2 models**.
 - `extra="forbid"` and strict typing for all fields.
 - Use `Field(...)` for defaults, constraints, and descriptions.
 - Version schemas when changing existing contracts.
 
-### Models (`backend/src/server/models/`)
+### Models (`backend/src/models/`)
 
 - Add or modify DB table fields with clear migrations.
-- Use only `asyncpg` queries; parameterized, never interpolated SQL.
-- Update helper functions or query builders when schema changes.
 - Keep models dumb: only describe fields and queries, not business rules.
 
 ### Tests (`backend/tests/{endpoints,models}/`)
@@ -186,5 +173,4 @@ Failing to check one of these boxes = incomplete feature.
 
 ## References
 
-- See [backend/README.md](../../backend/README.md) for setup, structure, and VS Code tasks.
- - For style/consistency: see top-level architecture guide `.github/copilot-instructions.md`.
+- For style/consistency: see top-level architecture guide `.github/copilot-instructions.md`.

@@ -8,14 +8,14 @@
 
 Arch-Stats tracks archery performance. Two main runtime surfaces:
 
-1. **Backend (`backend/`)** FastAPI (Python 3.13) + PostgreSQL 15 via `asyncpg` ONLY. Sensor simulators (arrow/bow/target readers) write events to DB; server exposes REST `/api/v0/...` + WebSockets for real-time updates. Modules communicate indirectly through the database and Postgres `LISTEN/NOTIFY` (decoupling - do NOT add direct cross-module imports for runtime coupling).
+1. **Backend (`backend/`)** FastAPI (Python 3.13) + PostgreSQL 17. Sensor simulators (arrow/bow/target readers) write events to DB; server exposes REST `/api/v0/...` + WebSockets for real-time updates. Modules communicate indirectly through the database and Postgres `LISTEN/NOTIFY` (decoupling - do NOT add direct cross-module imports for runtime coupling).
 2. **Frontend (`frontend/`)** Vue 3 + Vite SPA consuming REST + (future) WebSocket stream. Build artifacts emitted into `backend/src/server/frontend/` and then served by FastAPI.
 
 Data flow example (shot lifecycle): sensor script -> insert row(s) -> Postgres NOTIFY -> server/websocket (future) -> frontend updates table/visuals. Maintain this unidirectional flow; avoid tight coupling.
 
 ## 2. Golden Constraints (Never Violate)
 
-- DB access: `asyncpg` only (no ORM, no psycopg2, no sync calls).
+- DB access:
 - Models: Pydantic v2 with `model_config = ConfigDict(extra="forbid")` (no legacy `Config` class).
 - Strict typing: every Python function annotated; pass mypy (strict) without `# type: ignore` unless justified.
 - Formatting: Python (Black + isort + Pylint), JS/TS (ESLint + Prettier). Keep diffs minimal.
@@ -148,7 +148,6 @@ export async function getOpenSession(): Promise<Session | null> {
 - Frontend rules: [./instructions/frontend.instructions.md](./instructions/frontend.instructions.md)
 - Backend rules: [./instructions/backend.instructions.md](./instructions/backend.instructions.md)
 - Google Python style (linked inside backend rules).
-- High-level user overview: [../README.md](../README.md)
 
 ## 10. When Unsure
 

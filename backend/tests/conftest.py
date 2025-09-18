@@ -3,40 +3,39 @@ from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from asyncpg import Pool
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from server.app import lifespan, manage_tables, run
-from shared.db_pool import DBPool
+from app import run
+from core import DBPool
+
+
+# pylint: disable=redefined-outer-name
 
 
 @pytest_asyncio.fixture
-async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    """Provide an AsyncClient bound to a fresh app lifecycle per test."""
-    logging.basicConfig(level=logging.DEBUG)
-    app = run()
-    app.state.logger = logging.getLogger("tests")
-    async with lifespan(app):
-        await manage_tables(app.state.db_pool, "drop")
-        await manage_tables(app.state.db_pool, "create")
-        transport = ASGITransport(app=app)
-        async with AsyncClient(
-            transport=transport,
-            base_url="http://test",
-        ) as ac:
-            yield ac
+async def app() -> AsyncGenerator[FastAPI, None]:
+    application = run()
+    # Manually attach expected state for tests (avoid relying on lifespan hooks)
+    application.state.logger = logging.getLogger("test")
+    application.state.db_pool = await DBPool.open_db_pool()
+    try:
+        yield application
+    finally:
+        await DBPool.close_db_pool()
 
 
 @pytest_asyncio.fixture
-async def db_pool() -> AsyncGenerator[Pool, None]:
-    yield await DBPool.open_db_pool()
-    await DBPool.close_db_pool()
+async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
 
 
 @pytest_asyncio.fixture
-async def db_pool_initialed() -> AsyncGenerator[Pool, None]:
-    """DB pool with schema created; cleans up tables and closes the pool after use."""
-    pool = await DBPool.open_db_pool()
-    await manage_tables(pool, "create")
-    yield pool
-    await manage_tables(pool, "drop")
-    await DBPool.close_db_pool()
+async def db_pool(app: FastAPI) -> AsyncGenerator[Pool, None]:
+    # Reuse the pool attached to the app state to avoid lifecycle conflicts
+    yield app.state.db_pool
