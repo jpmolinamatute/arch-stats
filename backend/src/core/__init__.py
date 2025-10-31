@@ -10,7 +10,7 @@ from core.authentication import (
     verify_google_id_token,
 )
 from core.db_pool import DBPool, DBStateError
-from core.logger import LoggerFactory
+from core.logger import get_logger
 from core.settings import settings
 from core.slot_manager import SlotManager, SlotManagerError
 
@@ -24,7 +24,7 @@ __all__ = [
     "decode_token",
     "GoogleUserData",
     "hash_session_token",
-    "LoggerFactory",
+    "get_logger",
     "login_existing_archer",
     "register_archer",
     "settings",

@@ -1,6 +1,9 @@
+import json
+from asyncio import sleep
 from uuid import UUID
 
-from asyncpg import Pool
+from asyncpg import Connection, Pool
+from asyncpg.pool import PoolConnectionProxy
 
 from models.parent_model import DBNotFound, ParentModel
 from schema import (
@@ -17,9 +20,32 @@ from schema import (
 )
 
 
+async def callback(
+    _: Connection | PoolConnectionProxy, __: int, channel: str, payload: object
+) -> None:
+    """Process the notification"""
+    shot_data = json.loads(str(payload))
+    # Send to WebSocket client
+    print(f"New shot data received on channel {channel}: {shot_data}")
+
+
 class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("slot", db_pool, SlotRead)
+
+    async def listen_for_shots(self, slot_id: UUID) -> None:
+        """Listen for shot notifications for a specific slot_id"""
+        async with self.db_pool.acquire() as conn:
+            # Subscribe to the specific channel for this slot
+            channel_name = f"{self.name}_insert_{slot_id}"
+            await conn.add_listener(channel_name, callback)
+
+            try:
+                # Your WebSocket loop here
+                while True:
+                    await sleep(0.1)
+            finally:
+                await conn.remove_listener(channel_name, callback)
 
     # pylint: disable=[too-many-arguments]
     async def create_one(
@@ -46,7 +72,9 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
             draw_weight=draw_weight,
             club_id=club_id,
         )
-        return await self.insert_one(new_slotassignment)
+        slot_id = await self.insert_one(new_slotassignment)
+        # await self.listen_for_shots(slot_id)
+        return slot_id
 
     async def get_open_participants(self) -> list[SlotRead]:
         """Fetch participants currently shooting in open session (from open_participants view)."""
@@ -98,12 +126,15 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
 
         return {SlotLetterType(row.slot_letter) for row in rows}
 
-    async def get_one(self, where: SlotFilter) -> SlotRead:
+    async def get_slot_with_lane(self, slot_id: UUID) -> SlotRead:
         """Fetch a single slot with computed slot identifier."""
-        select_stm = "SELECT * FROM get_slot_with_lane($1, $2);"
+        select_stm = """
+            SELECT *
+            FROM get_slot_with_lane($1);
+        """
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", select_stm)
-            row = await conn.fetchrow(select_stm, where.archer_id, where.session_id)
+            row = await conn.fetchrow(select_stm, slot_id)
             if not row:
                 raise DBNotFound(f"{self.name}: No record found")
             return self.read_schema(**row)

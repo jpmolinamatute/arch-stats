@@ -44,7 +44,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         """
         query = """
             SELECT session_id
-            FROM slot_shooting_participants
+            FROM active_slots
             WHERE archer_id = $1
             LIMIT 1
         """
@@ -53,9 +53,9 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
             row = await conn.fetchrow(query, archer_id)
         return row["session_id"] if row else None
 
-    async def does_session_exist(self, session: UUID, is_opened: bool = True) -> bool:
-
-        where = SessionFilter(session_id=session, is_opened=is_opened)
+    async def does_open_session_exist(self, session: UUID) -> bool:
+        """Return True if a session with the given ID and is_opened status exists."""
+        where = SessionFilter(session_id=session, is_opened=True)
         try:
             _ = await self.get_one(where)
             result = True
@@ -90,7 +90,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         if session.session_id is None:
             raise ValueError("ERROR: session_id wasn't provided")
 
-        exist = await self.does_session_exist(session.session_id)
+        exist = await self.does_open_session_exist(session.session_id)
         if not exist:
             raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
 
@@ -109,7 +109,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         """
         query = """
             SELECT 1
-            FROM slot_shooting_participants
+            FROM active_slots
             WHERE session_id = $1
             LIMIT 1;
         """

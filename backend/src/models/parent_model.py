@@ -7,10 +7,10 @@ from uuid import UUID
 from asyncpg import Pool
 from pydantic import BaseModel
 
-# NOTE: Import LoggerFactory directly from its module to avoid importing the
+# NOTE: Import get_logger directly from its module to avoid importing the
 # core package __init__ (which re-exports SessionManager and other modules),
 # preventing cyclic imports with models -> parent_model -> core -> session_manager -> models
-from core.logger import LoggerFactory
+from core.logger import get_logger
 
 
 type Values = str | float | bool | int | UUID | datetime | bytes | None | Sequence[int] | Sequence[
@@ -60,7 +60,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         self.read_schema = read_schema
         self.pk = f"{self.name}_id"
         self.db_pool = db_pool
-        self.logger = LoggerFactory().get_logger(__name__)
+        self.logger = get_logger()
 
     def build_select_sql_stm(
         self, where: FILTERTYPE, columns: list[str], limit: int

@@ -40,9 +40,15 @@ class SlotJoinRequest(SlotCommons):
     model_config = ConfigDict(title="Slot Assignment Request", extra="forbid")
 
 
+class SlotReJoinRequest(BaseModel):
+    slot_id: UUID = Field(..., description="ID of the slot assignment to re-join")
+    session_id: UUID = Field(..., description="ID of the session to re-join")
+    archer_id: UUID = Field(..., description="ID of the archer re-joining the session")
+    model_config = ConfigDict(title="Slot Re-Join Request", extra="forbid")
+
+
 class SlotJoinResponse(BaseModel):
     slot_id: UUID = Field(..., description="ID of the slot assignment")
-    target_id: UUID = Field(..., description="ID of the target to assign the slot to")
     slot: str = Field(..., description="Slot assigned to the archer (1A, 3D, 4B)")
 
     model_config = ConfigDict(title="Slot Assignment Response", extra="forbid")
@@ -71,7 +77,9 @@ class SlotRead(BaseModel):
     session_id: UUID = Field(..., description="ID of the session this assignment belongs to")
     face_type: TargetFaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
     slot_letter: SlotLetterType = Field(..., description="Slot letter assigned to the archer (A-D)")
-    slot: str = Field(..., description="Slot code combining lane and letter (e.g., '1A')")
+    slot: str | None = Field(
+        default=None, description="Slot code combining lane and letter (e.g., '1A')"
+    )
     created_at: datetime | None = Field(
         default=None,
         description="Assignment timestamp (UTC)",

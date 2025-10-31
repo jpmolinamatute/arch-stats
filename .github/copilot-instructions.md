@@ -8,14 +8,14 @@
 
 Arch-Stats tracks archery performance. Two main runtime surfaces:
 
-1. **Backend (`backend/`)** FastAPI (Python 3.13) + PostgreSQL 17. Sensor simulators (arrow/bow/target readers) write events to DB; server exposes REST `/api/v0/...` + WebSockets for real-time updates. Modules communicate indirectly through the database and Postgres `LISTEN/NOTIFY` (decoupling - do NOT add direct cross-module imports for runtime coupling).
+1. **Backend (`backend/`)** FastAPI (Python 3.14) + PostgreSQL 17.
 2. **Frontend (`frontend/`)** Vue 3 + Vite SPA consuming REST + (future) WebSocket stream. Build artifacts emitted into `backend/src/server/frontend/` and then served by FastAPI.
 
 Data flow example (shot lifecycle): sensor script -> insert row(s) -> Postgres NOTIFY -> server/websocket (future) -> frontend updates table/visuals. Maintain this unidirectional flow; avoid tight coupling.
 
 ## 2. Golden Constraints (Never Violate)
 
-- DB access:
+- DB access: `asyncpg` only (no ORM, no psycopg2, no sync calls).
 - Models: Pydantic v2 with `model_config = ConfigDict(extra="forbid")` (no legacy `Config` class).
 - Strict typing: every Python function annotated; pass mypy (strict) without `# type: ignore` unless justified.
 - Formatting: Python (Black + isort + Pylint), JS/TS (ESLint + Prettier). Keep diffs minimal.
@@ -51,12 +51,6 @@ Run API locally:
 ./scripts/start_uvicorn.bash   # or VS Code task "Start Uvicorn Dev Server"
 ```
 
-Run sensor bot (simulated shots):
-
-```bash
-./scripts/start_archy_bot.bash # adds shot data for manual testing
-```
-
 Frontend dev:
 
 ```bash
@@ -68,6 +62,7 @@ npm run dev                    # or VS Code task "Start Vite Frontend"
 Generate API types (run whenever backend OpenAPI changes):
 
 ```bash
+cd frontend
 npm run generate:types
 ```
 
@@ -85,6 +80,7 @@ Backend:
 - Routers: accept/return Pydantic models; enforce validation at boundary; snake_case JSON.
 - WebSocket (future/real-time): centralize connection management; handle disconnects gracefully; never block event loop.
 - Avoid global mutable state; acquire DB pool via startup dependency injection.
+- always declare import at the top of the file; no inline imports except for type checking (`if TYPE_CHECKING:`).
 
 Frontend:
 

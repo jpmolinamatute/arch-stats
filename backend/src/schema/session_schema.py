@@ -13,7 +13,9 @@ class SessionCreate(BaseModel):
     )
     is_indoor: bool = Field(default=False, description="Wether the session is indoors or not")
     is_opened: bool = Field(..., description="Wether the session is open or not")
-
+    shot_per_round: int = Field(
+        default=6, description="Number of shots per round for the current session format"
+    )
     model_config = ConfigDict(title="Session Create", extra="forbid", populate_by_name=True)
 
 
@@ -24,7 +26,9 @@ class SessionSet(BaseModel):
     )
     is_opened: bool | None = Field(default=None, description="Open/close session toggle")
     is_indoor: bool | None = Field(default=None, description="Set indoor flag")
-
+    shot_per_round: int | None = Field(
+        default=None, description="Number of shots per round for the current session format"
+    )
     model_config = ConfigDict(title="Session Set", extra="forbid")
 
 
@@ -36,6 +40,9 @@ class SessionFilter(BaseModel):
         description="Open timestamp (UTC)",
     )
     closed_at: datetime | None = Field(default=None, description="Closing timestamp (UTC)")
+    shot_per_round: int | None = Field(
+        default=None, description="Number of shots per round for the current session format"
+    )
     session_location: str | None = Field(
         default=None,
         min_length=1,

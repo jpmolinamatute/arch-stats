@@ -27,6 +27,7 @@ from schema.session_schema import (
     SessionSet,
     SessionUpdate,
 )
+from schema.shot_schema import ShotCreate, ShotFilter, ShotRead, ShotSet, ShotUpdate
 from schema.slot_schema import (
     SlotCreate,
     SlotFilter,
@@ -35,6 +36,7 @@ from schema.slot_schema import (
     SlotJoinResponse,
     SlotLeaveRequest,
     SlotRead,
+    SlotReJoinRequest,
     SlotSet,
     SlotUpdate,
 )
@@ -66,11 +68,17 @@ __all__ = [
     "SessionRead",
     "SessionSet",
     "SessionUpdate",
+    "ShotCreate",
+    "ShotFilter",
+    "ShotRead",
+    "ShotSet",
+    "ShotUpdate",
     "SlotCreate",
     "SlotFilter",
     "SlotId",
     "SlotJoinRequest",
     "SlotJoinResponse",
+    "SlotReJoinRequest",
     "SlotLeaveRequest",
     "SlotLetterType",
     "SlotRead",

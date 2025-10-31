@@ -7,13 +7,13 @@ from models.parent_model import DBNotFound
 from schema import (
     BowStyleType,
     SlotFilter,
-    SlotId,
     SlotJoinRequest,
     SlotJoinResponse,
     SlotLetterType,
     SlotSet,
     TargetFaceType,
 )
+from schema.slot_schema import SlotRead
 
 
 class SlotManagerError(Exception):
@@ -57,7 +57,7 @@ class SlotManager:
             club_id=club_id,
         )
 
-    async def assign_archer_to_slot(self, req_data: SlotJoinRequest) -> SlotId:
+    async def assign_archer_to_slot(self, req_data: SlotJoinRequest) -> SlotJoinResponse:
         """Assigns an archer to a target slot within a session.
 
         This method implements the business logic for assigning an archer to a target slot
@@ -66,7 +66,7 @@ class SlotManager:
         corresponding slot assignment record. Returns the assignment details.
         """
 
-        exists = await self.session.does_session_exist(req_data.session_id)
+        exists = await self.session.does_open_session_exist(req_data.session_id)
 
         if not exists:
             raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
@@ -110,31 +110,56 @@ class SlotManager:
             draw_weight=req_data.draw_weight,
             club_id=req_data.club_id,
         )
-        return SlotId(slot_id=slot_id)
+        return SlotJoinResponse(slot_id=slot_id, slot=f"{lane}{letter.value}")
 
-    async def re_join_session(
-        self, session_req: SlotJoinRequest, current_archer_id: UUID
-    ) -> SlotJoinResponse:
-        # Find an existing inactive assignment for this archer (optionally scoped by session)
+    async def re_join_session(self, slot: SlotRead) -> SlotJoinResponse:
+        """Re-activate a previously inactive slot assignment.
 
-        if session_req.archer_id != current_archer_id:
-            raise SlotManagerError("ERROR: user not allowed to re-join")
+        Steps:
+        1) Ensure slot exists and is currently inactive (is_shooting == False).
+        2) Ensure the corresponding session is still open.
+        3) Mark slot as active and return the compact join response.
 
-        where = SlotFilter(
-            is_shooting=False,
-            archer_id=session_req.archer_id,
-            session_id=session_req.session_id,
-        )
+        Raises:
+            DBNotFound: When slot doesn't exist, is already active, or session is closed.
+            SlotManagerError: On unexpected invariant violations.
+        """
+        # 1) Ensure slot exists and is inactive
+        where = SlotFilter(is_shooting=False, slot_id=slot.slot_id)
         slot_row = await self.slot.get_one(where)
 
-        # Reactivate the assignment
+        # 2) Ensure the session that owns this slot is open
+        exists = await self.session.does_open_session_exist(slot_row.session_id)
+        if not exists:
+            # Keep message in sync with endpoint tests
+            raise DBNotFound("ERROR: The session doesn't exist or it was already closed")
+
+        # 3) Reactivate the assignment
         await self.slot.update(SlotSet(is_shooting=True), where)
+        slot_row = await self.slot.get_slot_with_lane(slot.slot_id)
+        if slot_row.slot is None:
+            raise SlotManagerError("ERROR: slot is unexpectedly None")
+        return SlotJoinResponse(slot_id=slot_row.slot_id, slot=slot_row.slot)
 
-        # Fetch lane from target to compose slot code (e.g., "1A")
-        lane = await self.target.get_lane(slot_row.target_id)
+    async def leave_session(self, slot: SlotRead) -> None:
+        """Deactivate an active slot assignment (leave the session).
 
-        return SlotJoinResponse(
-            slot_id=slot_row.slot_id,
-            target_id=slot_row.target_id,
-            slot=f"{lane}{slot_row.slot_letter.value}",
-        )
+        Steps:
+        1) Ensure slot exists and is currently active (is_shooting == True).
+        2) Ensure the corresponding session is still open.
+        3) Mark slot as inactive.
+
+        Raises:
+            DBNotFound: When slot doesn't exist, is already inactive, or session is closed.
+        """
+        # 1) Ensure slot exists and is active
+        where = SlotFilter(is_shooting=True, slot_id=slot.slot_id)
+        slot_row = await self.slot.get_one(where)
+
+        # 2) Ensure the session that owns this slot is open
+        exists = await self.session.does_open_session_exist(slot_row.session_id)
+        if not exists:
+            raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
+
+        # 3) Deactivate the assignment
+        await self.slot.update(SlotSet(is_shooting=False), where)

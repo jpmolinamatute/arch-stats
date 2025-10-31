@@ -10,11 +10,60 @@ import random
 from collections.abc import Sequence
 from uuid import UUID
 
-from asyncpg import Pool
+from asyncpg import Pool, Connection
+from asyncpg.pool import PoolConnectionProxy
 from faker import Faker
 
 
 fake = Faker()
+
+
+async def _insert_sessions(
+    conn: Connection | PoolConnectionProxy,
+    archer_ids: list[UUID],
+    total_number_session: int,
+    open_session: int,
+) -> list[UUID]:
+    """
+    Helper to insert sessions into the database.
+
+    Args:
+        conn: asyncpg connection.
+        archer_ids: list of archer UUIDs.
+        total_number_session: total number of sessions to create.
+        open_session: number of open sessions to create (rest will be closed).
+
+    Returns:
+        List of created session UUIDs.
+    """
+    session_ids: list[UUID] = []
+    for i in range(total_number_session):
+        owner = archer_ids[i] if i < open_session else archer_ids[i % len(archer_ids)]
+        session_location = fake.city()
+        is_indoor = random.choice([True, False])
+        shot_per_round = random.choice([3, 4, 5, 6])
+        is_opened = i < open_session
+        result = await conn.fetchrow(
+            """
+            INSERT INTO session (
+                owner_archer_id,
+                session_location,
+                is_indoor,
+                shot_per_round,
+                is_opened
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING session_id
+            """,
+            owner,
+            session_location,
+            is_indoor,
+            shot_per_round,
+            is_opened,
+        )
+        if result is not None and "session_id" in result:
+            session_ids.append(result["session_id"])
+    return session_ids
 
 
 async def create_sessions(pool: Pool, qty: int) -> Sequence[UUID]:
@@ -38,50 +87,12 @@ async def create_sessions(pool: Pool, qty: int) -> Sequence[UUID]:
     Raises:
         ValueError: if there are no archers available to own sessions.
     """
-    session_ids: list[UUID] = []
     async with pool.acquire() as conn:
         rows = await conn.fetch("SELECT archer_id FROM archers;")
         archer_ids: list[UUID] = [row["archer_id"] for row in rows]
         if not archer_ids:
             raise ValueError("No archers found. Create archers before creating sessions.")
 
-        # Determine how many open sessions we can safely create (one per archer).
         num_open = min(qty, len(archer_ids))
-
-        # Create the open sessions first, one per distinct archer.
-        for i in range(num_open):
-            owner = archer_ids[i]
-            session_location = fake.city()
-            is_indoor = random.choice([True, False])
-            result = await conn.fetchrow(
-                """
-                INSERT INTO session (owner_archer_id, session_location, is_indoor, is_opened)
-                VALUES ($1, $2, $3, TRUE)
-                RETURNING session_id
-                """,
-                owner,
-                session_location,
-                is_indoor,
-            )
-            if result is not None and "session_id" in result:
-                session_ids.append(result["session_id"])  # UUID
-
-        # Create any remaining sessions as closed, reusing archers round-robin.
-        for j in range(num_open, qty):
-            owner = archer_ids[j % len(archer_ids)]
-            session_location = fake.city()
-            is_indoor = random.choice([True, False])
-            result = await conn.fetchrow(
-                """
-                INSERT INTO session (owner_archer_id, session_location, is_indoor, is_opened)
-                VALUES ($1, $2, $3, FALSE)
-                RETURNING session_id
-                """,
-                owner,
-                session_location,
-                is_indoor,
-            )
-            if result is not None and "session_id" in result:
-                session_ids.append(result["session_id"])  # UUID
-
+        session_ids = await _insert_sessions(conn, archer_ids, qty, num_open)
     return session_ids
