@@ -13,6 +13,7 @@
     const sessionLocation = ref<string>('');
     const isIndoor = ref<boolean>(false);
     const formError = ref<string | null>(null);
+    const shotPerRound = ref<number>(6);
 
     async function handleSubmit() {
         formError.value = null;
@@ -34,6 +35,7 @@
                 session_location: sessionLocation.value.trim(),
                 is_indoor: isIndoor.value,
                 is_opened: true,
+                shot_per_round: shotPerRound.value,
             });
 
             // Emit event but don't redirect yet - parent will show slot assignment form
@@ -82,6 +84,24 @@
                     :disabled="loading"
                 />
                 Indoor session
+            </label>
+
+            <label class="block text-left text-xs text-slate-300">
+                Shots per Round
+                <input
+                    v-model.number="shotPerRound"
+                    type="number"
+                    min="1"
+                    max="12"
+                    step="1"
+                    placeholder="e.g., 6"
+                    class="mt-1 w-full border border-slate-700 p-2 rounded bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                    :disabled="loading"
+                />
+                <span class="text-xs text-slate-500 mt-1 block"
+                    >Typical: 3 or 6 arrows per round</span
+                >
             </label>
 
             <div class="flex gap-3">

@@ -126,6 +126,7 @@ export function useSession() {
                 session_location: payload.session_location,
                 is_indoor: payload.is_indoor,
                 is_opened: payload.is_opened,
+                shot_per_round: payload.shot_per_round,
                 created_at: new Date().toISOString(),
                 closed_at: null,
             };
@@ -151,17 +152,22 @@ export function useSession() {
         error.value = null;
         try {
             // First, leave the slot if the archer is in one (required before closing)
-            const { leaveSession } = useSlot();
+            const { leaveSession, getSlot } = useSlot();
             try {
-                await leaveSession(archerId, sessionId);
+                // Try to get the slot for this archer in this session
+                const slot = await getSlot(sessionId, archerId);
+                if (slot && slot.slot_id) {
+                    await leaveSession(slot.slot_id);
+                }
             } catch (leaveError) {
-                // Silently ignore 409 errors - archer not in slot is acceptable when closing
+                // Silently ignore 404/409 errors - archer not in slot is acceptable when closing
                 if (
-                    !(
-                        leaveError instanceof Error &&
-                        leaveError.message.includes('not participating')
-                    )
+                    leaveError instanceof Error &&
+                    (leaveError.message.includes('not participating') ||
+                        leaveError.message.includes('not found'))
                 ) {
+                    // Not in slot, proceed
+                } else {
                     // Re-throw any other errors
                     throw leaveError;
                 }

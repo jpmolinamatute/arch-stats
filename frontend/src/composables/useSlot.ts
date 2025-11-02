@@ -114,20 +114,19 @@ export function useSlot() {
     /**
      * Leave a session (remove archer from slot).
      */
-    async function leaveSession(archerId: string, sessionId: string): Promise<void> {
+    /**
+     * Leave a session (remove archer from slot) using slot_id in the URL path.
+     */
+    async function leaveSession(slotId: string): Promise<void> {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch('/api/v0/session/slot/leave', {
+            const response = await fetch(`/api/v0/session/slot/leave/${slotId}`, {
                 method: 'PATCH',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    archer_id: archerId,
-                    session_id: sessionId,
-                }),
             });
 
             if (!response.ok) {

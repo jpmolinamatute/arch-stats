@@ -10,7 +10,7 @@ import random
 from collections.abc import Sequence
 from uuid import UUID
 
-from asyncpg import Pool, Connection
+from asyncpg import Connection, Pool
 from asyncpg.pool import PoolConnectionProxy
 from faker import Faker
 
@@ -75,7 +75,7 @@ async def create_sessions(pool: Pool, qty: int) -> Sequence[UUID]:
     - For the first N=min(qty, num_archers), create OPEN sessions (is_opened=True),
       one per distinct archer, to satisfy the unique-open-session-per-archer index.
     - For any remaining sessions (if qty > num_archers), create CLOSED sessions
-      (is_opened=False), which can reuse archers without violating the index.
+      (is_opened=False), which can reuse archer without violating the index.
 
     Args:
         pool: DB pool.
@@ -85,13 +85,13 @@ async def create_sessions(pool: Pool, qty: int) -> Sequence[UUID]:
         Sequence of created session UUIDs.
 
     Raises:
-        ValueError: if there are no archers available to own sessions.
+        ValueError: if there are no archer available to own sessions.
     """
     async with pool.acquire() as conn:
-        rows = await conn.fetch("SELECT archer_id FROM archers;")
+        rows = await conn.fetch("SELECT archer_id FROM archer;")
         archer_ids: list[UUID] = [row["archer_id"] for row in rows]
         if not archer_ids:
-            raise ValueError("No archers found. Create archers before creating sessions.")
+            raise ValueError("No archer found. Create archer before creating sessions.")
 
         num_open = min(qty, len(archer_ids))
         session_ids = await _insert_sessions(conn, archer_ids, qty, num_open)

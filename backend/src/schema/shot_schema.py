@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ShotBase(BaseModel):
@@ -11,23 +11,22 @@ class ShotBase(BaseModel):
     x: float | None = Field(default=None, description="X coordinate in millimeters")
     y: float | None = Field(default=None, description="Y coordinate in millimeters")
     score: int | None = Field(default=None, description="Shot score (non-negative integer)", ge=0)
+    arrow_id: UUID | None = Field(
+        default=None, description="Optional arrow identifier (e.g., arrow number or code)"
+    )
 
     model_config = ConfigDict(title="Shot Base", extra="forbid")
 
-    @field_validator("score", "x", "y")
-    @classmethod
-    def _validate_all_or_none(
-        cls, v: float | int | None, info: ValidationInfo
-    ) -> float | int | None:
+    @model_validator(mode="after")
+    def _validate_all_or_none(self) -> ShotBase:
         """Enforce that all three values (x, y, score) are either all NULL or all present."""
-        values = info.data
-        coords_score_fields = {"x", "y", "score"}
-        set_fields = {k for k in coords_score_fields if k in values and values[k] is not None}
 
-        # If this field is being set and any fields exist in data
-        if len(set_fields) > 0 and len(set_fields) != len(coords_score_fields):
+        if not (
+            (self.x is None and self.y is None and self.score is None)
+            or (self.x is not None and self.y is not None and self.score is not None)
+        ):
             raise ValueError("x, y, and score must all be provided together or all be None")
-        return v
+        return self
 
 
 class ShotCreate(ShotBase):
@@ -51,6 +50,9 @@ class ShotFilter(BaseModel):
     y: float | None = Field(default=None, description="Filter by Y coordinate in millimeters")
     score: int | None = Field(
         default=None, description="Filter by shot score (non-negative integer)", ge=0, le=10
+    )
+    arrow_id: UUID | None = Field(
+        default=None, description="Optional arrow identifier (e.g., arrow number or code)"
     )
     created_at: datetime | None = Field(
         default=None, description="Filter by creation timestamp (UTC)"

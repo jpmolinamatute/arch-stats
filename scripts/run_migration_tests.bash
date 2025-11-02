@@ -343,14 +343,21 @@ test_get_available_targets_occupancy_steps_18() {
     local owner a1 a2 a3 a4 sid tid rows
 
     # Create 5 archers: one owner and four occupants
-    owner="$(create_archer)"; owner="${owner//$'\n'/}"
-    a1="$(create_archer)"; a1="${a1//$'\n'/}"
-    a2="$(create_archer)"; a2="${a2//$'\n'/}"
-    a3="$(create_archer)"; a3="${a3//$'\n'/}"
-    a4="$(create_archer)"; a4="${a4//$'\n'/}"
+    owner="$(create_archer)"
+    owner="${owner//$'\n'/}"
+    a1="$(create_archer)"
+    a1="${a1//$'\n'/}"
+    a2="$(create_archer)"
+    a2="${a2//$'\n'/}"
+    a3="$(create_archer)"
+    a3="${a3//$'\n'/}"
+    a4="$(create_archer)"
+    a4="${a4//$'\n'/}"
 
-    sid="$(create_session "$owner" true)"; sid="${sid//$'\n'/}"
-    tid="$(create_target "$sid" 18 1)"; tid="${tid//$'\n'/}"
+    sid="$(create_session "$owner" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 18 1)"
+    tid="${tid//$'\n'/}"
 
     # 1st slot -> occupied should be 1
     assign_slot "$tid" "$a1" "$sid" '40cm_full' 'A' true >/dev/null
@@ -396,11 +403,15 @@ test_get_slot_with_lane_function() {
 
     local archer_id sid tid slot_id got_slot nonexist_slot_id
 
-    archer_id="$(create_archer)"; archer_id="${archer_id//$'\n'/}"
-    sid="$(create_session "$archer_id" true)"; sid="${sid//$'\n'/}"
+    archer_id="$(create_archer)"
+    archer_id="${archer_id//$'\n'/}"
+    sid="$(create_session "$archer_id" true)"
+    sid="${sid//$'\n'/}"
     # Use lane 4 to make slot text deterministic (e.g., 4A)
-    tid="$(create_target "$sid" 70 4)"; tid="${tid//$'\n'/}"
-    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"; slot_id="${slot_id//$'\n'/}"
+    tid="$(create_target "$sid" 70 4)"
+    tid="${tid//$'\n'/}"
+    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"
+    slot_id="${slot_id//$'\n'/}"
 
     got_slot="$(run_sql "SELECT slot FROM get_slot_with_lane('$slot_id');")"
     got_slot="${got_slot//$'\n'/}"
@@ -411,7 +422,8 @@ test_get_slot_with_lane_function() {
     fi
 
     # Non-existent slot_id should return 0 rows
-    nonexist_slot_id="$(run_sql "SELECT uuid_generate_v4();")"; nonexist_slot_id="${nonexist_slot_id//$'\n'/}"
+    nonexist_slot_id="$(run_sql "SELECT uuid_generate_v4();")"
+    nonexist_slot_id="${nonexist_slot_id//$'\n'/}"
     got_slot="$(run_sql "SELECT slot FROM get_slot_with_lane('$nonexist_slot_id');")"
     if [[ -z "$got_slot" ]]; then
         pass "get_slot_with_lane returned no rows for unknown slot_id"
@@ -427,13 +439,18 @@ test_get_active_slot_id_function() {
 
     local archer_id sid tid slot_id res rnd_archer
 
-    archer_id="$(create_archer)"; archer_id="${archer_id//$'\n'/}"
-    sid="$(create_session "$archer_id" true)"; sid="${sid//$'\n'/}"
-    tid="$(create_target "$sid" 70 2)"; tid="${tid//$'\n'/}"
-    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"; slot_id="${slot_id//$'\n'/}"
+    archer_id="$(create_archer)"
+    archer_id="${archer_id//$'\n'/}"
+    sid="$(create_session "$archer_id" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 70 2)"
+    tid="${tid//$'\n'/}"
+    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"
+    slot_id="${slot_id//$'\n'/}"
 
     # Happy path: active shooter in open session
-    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"; res="${res//$'\n'/}"
+    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
+    res="${res//$'\n'/}"
     if [[ "$res" == "$slot_id" ]]; then
         pass "get_active_slot_id returned expected slot_id for active shooter"
     else
@@ -442,7 +459,8 @@ test_get_active_slot_id_function() {
 
     # Inactive shooter should yield NULL
     run_sql "UPDATE slot SET is_shooting = FALSE WHERE slot_id = '$slot_id';" >/dev/null
-    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"; res="${res//$'\n'/}"
+    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
+    res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
         pass "get_active_slot_id returned NULL for non-active shooter"
     else
@@ -451,7 +469,8 @@ test_get_active_slot_id_function() {
 
     # Closed session should yield NULL even if shooter is set active
     run_sql "UPDATE slot SET is_shooting = TRUE WHERE slot_id = '$slot_id'; UPDATE session SET is_opened = FALSE WHERE session_id = '$sid';" >/dev/null
-    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"; res="${res//$'\n'/}"
+    res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
+    res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
         pass "get_active_slot_id returned NULL for closed session"
     else
@@ -459,8 +478,10 @@ test_get_active_slot_id_function() {
     fi
 
     # Non-existent archer should yield NULL
-    rnd_archer="$(run_sql "SELECT uuid_generate_v4();")"; rnd_archer="${rnd_archer//$'\n'/}"
-    res="$(run_sql "SELECT get_active_slot_id('$rnd_archer');")"; res="${res//$'\n'/}"
+    rnd_archer="$(run_sql "SELECT uuid_generate_v4();")"
+    rnd_archer="${rnd_archer//$'\n'/}"
+    res="$(run_sql "SELECT get_active_slot_id('$rnd_archer');")"
+    res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
         pass "get_active_slot_id returned NULL for unknown archer_id"
     else
@@ -476,21 +497,32 @@ test_get_next_lane_with_full_targets() {
     local a1 a2 a3 a4 a5 a6 a7 a8 sid t1 t2 next
 
     # Create 8 archers
-    a1="$(create_archer)"; a1="${a1//$'\n'/}"
-    a2="$(create_archer)"; a2="${a2//$'\n'/}"
-    a3="$(create_archer)"; a3="${a3//$'\n'/}"
-    a4="$(create_archer)"; a4="${a4//$'\n'/}"
-    a5="$(create_archer)"; a5="${a5//$'\n'/}"
-    a6="$(create_archer)"; a6="${a6//$'\n'/}"
-    a7="$(create_archer)"; a7="${a7//$'\n'/}"
-    a8="$(create_archer)"; a8="${a8//$'\n'/}"
+    a1="$(create_archer)"
+    a1="${a1//$'\n'/}"
+    a2="$(create_archer)"
+    a2="${a2//$'\n'/}"
+    a3="$(create_archer)"
+    a3="${a3//$'\n'/}"
+    a4="$(create_archer)"
+    a4="${a4//$'\n'/}"
+    a5="$(create_archer)"
+    a5="${a5//$'\n'/}"
+    a6="$(create_archer)"
+    a6="${a6//$'\n'/}"
+    a7="$(create_archer)"
+    a7="${a7//$'\n'/}"
+    a8="$(create_archer)"
+    a8="${a8//$'\n'/}"
 
     # Open session owned by a1
-    sid="$(create_session "$a1" true)"; sid="${sid//$'\n'/}"
+    sid="$(create_session "$a1" true)"
+    sid="${sid//$'\n'/}"
 
     # Two targets at lanes 1 and 2
-    t1="$(create_target "$sid" 70 1)"; t1="${t1//$'\n'/}"
-    t2="$(create_target "$sid" 70 2)"; t2="${t2//$'\n'/}"
+    t1="$(create_target "$sid" 70 1)"
+    t1="${t1//$'\n'/}"
+    t2="$(create_target "$sid" 70 2)"
+    t2="${t2//$'\n'/}"
 
     # Fill target 1 (A-D)
     assign_slot "$t1" "$a1" "$sid" '40cm_full' 'A' true >/dev/null
@@ -505,7 +537,8 @@ test_get_next_lane_with_full_targets() {
     assign_slot "$t2" "$a8" "$sid" '40cm_full' 'D' true >/dev/null
 
     # get_next_lane should return 3 regardless of fullness, since max lane is 2
-    next="$(run_sql "SELECT get_next_lane('$sid');")"; next="${next//$'\n'/}"
+    next="$(run_sql "SELECT get_next_lane('$sid');")"
+    next="${next//$'\n'/}"
     if [[ "$next" == "3" ]]; then
         pass "get_next_lane returned 3 when two existing targets were full"
     else
@@ -521,8 +554,10 @@ test_session_shot_per_round_defaults_and_constraints() {
     local owner_default owner_custom sid_default sid_custom got_default got_custom
 
     # Default path: omit shot_per_round and expect DEFAULT 6
-    owner_default="$(create_archer)"; owner_default="${owner_default//$'\n'/}"
-    sid_default="$(create_session "$owner_default" true)"; sid_default="${sid_default//$'\n'/}"
+    owner_default="$(create_archer)"
+    owner_default="${owner_default//$'\n'/}"
+    sid_default="$(create_session "$owner_default" true)"
+    sid_default="${sid_default//$'\n'/}"
     got_default="$(run_sql "SELECT shot_per_round FROM session WHERE session_id = '$sid_default';")"
     got_default="${got_default//$'\n'/}"
     if [[ "$got_default" == "6" ]]; then
@@ -532,8 +567,10 @@ test_session_shot_per_round_defaults_and_constraints() {
     fi
 
     # Custom value path: provide explicit positive value
-    owner_custom="$(create_archer)"; owner_custom="${owner_custom//$'\n'/}"
-    sid_custom="$(create_session "$owner_custom" true 3)"; sid_custom="${sid_custom//$'\n'/}"
+    owner_custom="$(create_archer)"
+    owner_custom="${owner_custom//$'\n'/}"
+    sid_custom="$(create_session "$owner_custom" true 3)"
+    sid_custom="${sid_custom//$'\n'/}"
     got_custom="$(run_sql "SELECT shot_per_round FROM session WHERE session_id = '$sid_custom';")"
     got_custom="${got_custom//$'\n'/}"
     if [[ "$got_custom" == "3" ]]; then
@@ -568,15 +605,22 @@ test_notify_shot_insert_trigger() {
     local listener_a_log listener_b_log listener_a_pid listener_b_pid
 
     # Test setup: 1 session, 1 target, 2 archers, 2 slots
-    owner="$(create_archer)"; owner="${owner//$'\n'/}"
-    archer_a="$(create_archer)"; archer_a="${archer_a//$'\n'/}"
-    archer_b="$(create_archer)"; archer_b="${archer_b//$'\n'/}"
+    owner="$(create_archer)"
+    owner="${owner//$'\n'/}"
+    archer_a="$(create_archer)"
+    archer_a="${archer_a//$'\n'/}"
+    archer_b="$(create_archer)"
+    archer_b="${archer_b//$'\n'/}"
 
-    sid="$(create_session "$owner" true)"; sid="${sid//$'\n'/}"
-    tid="$(create_target "$sid" 18 1)"; tid="${tid//$'\n'/}"
+    sid="$(create_session "$owner" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 18 1)"
+    tid="${tid//$'\n'/}"
 
-    slot_a="$(assign_slot "$tid" "$archer_a" "$sid" '40cm_full' 'A' true)"; slot_a="${slot_a//$'\n'/}"
-    slot_b="$(assign_slot "$tid" "$archer_b" "$sid" '40cm_full' 'B' true)"; slot_b="${slot_b//$'\n'/}"
+    slot_a="$(assign_slot "$tid" "$archer_a" "$sid" '40cm_full' 'A' true)"
+    slot_a="${slot_a//$'\n'/}"
+    slot_b="$(assign_slot "$tid" "$archer_b" "$sid" '40cm_full' 'B' true)"
+    slot_b="${slot_b//$'\n'/}"
 
     chan_a="shot_insert_${slot_a}"
     chan_b="shot_insert_${slot_b}"

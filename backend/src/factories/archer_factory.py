@@ -1,22 +1,23 @@
 """
 Factory for creating Archer records in the database for testing or seeding.
 
-Matches migration V002 (archers table) required fields.
+Matches migration V002 (archer table) required fields.
 """
 
 import random
-from collections.abc import Sequence
 from datetime import date, timedelta
 from uuid import UUID, uuid4
 
 from asyncpg import Pool
 
-
-_GENDERS = ["male", "female", "non_binary", "other", "unspecified"]
-_BOWSTYLES = ["recurve", "compound", "barebow", "longbow"]
+from schema import BowStyleType, GenderType
 
 
-async def create_archers(pool: Pool, qty: int) -> Sequence[UUID]:
+_BOWSTYLE = [style.value for style in BowStyleType]
+_GENDERS = [gender.value for gender in GenderType]
+
+
+async def create_archers(pool: Pool, qty: int) -> list[UUID]:
     """
     Create `qty` Archer records in the database.
 
@@ -36,7 +37,7 @@ async def create_archers(pool: Pool, qty: int) -> Sequence[UUID]:
             email = f"archer{i}-{uid.hex[:8]}@example.com"
             dob = date.today() - timedelta(days=10000 + i)  # Ensure <= current_date
             gender = random.choice(_GENDERS)
-            bowstyle = random.choice(_BOWSTYLES)
+            bowstyle = random.choice(_BOWSTYLE)
             google_subject = f"gs-{uid}"
             google_picture_url = f"https://example.com/pic/{uid.hex}.png"
 

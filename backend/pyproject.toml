@@ -10,8 +10,8 @@ authors = [
 requires-python = "==3.14.*"
 dependencies = [
     "asyncpg>=0.30.0",
-    "fastapi==0.120.1",
-    "google-auth==2.42.0",
+    "fastapi==0.120.4",
+    "google-auth==2.42.1",
     "httpx>=0.28.1",
     "passlib[bcrypt]>=1.7.4",
     "pydantic[email]==2.12.3",

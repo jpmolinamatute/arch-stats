@@ -12,47 +12,25 @@ Covers:
 - PATCH /session/re-open
 """
 
-import time
+from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
-import jwt
 import pytest
 from asyncpg import Pool
 from httpx import AsyncClient
 
-from core import settings
 from factories.archer_factory import create_archers
 
 
-async def _truncate_all(pool: Pool) -> None:
-    async with pool.acquire() as conn:
-        # Order matters due to FK
-        await conn.execute("TRUNCATE slot RESTART IDENTITY CASCADE")
-        await conn.execute("TRUNCATE target RESTART IDENTITY CASCADE")
-        await conn.execute("TRUNCATE session RESTART IDENTITY CASCADE")
-        await conn.execute("TRUNCATE archer RESTART IDENTITY CASCADE")
-
-
-def _jwt_for(archer_id: UUID) -> str:
-    now = int(time.time())
-    return jwt.encode(
-        {
-            "sub": str(archer_id),
-            "iat": now,
-            "exp": now + 3600,
-            "iss": "arch-stats",
-            "typ": "access",
-        },
-        settings.jwt_secret,
-        algorithm=settings.jwt_algorithm,
-    )
-
-
 async def join_session(
-    client: AsyncClient, session_id: UUID, archer_id: UUID, distance: int = 30
+    client: AsyncClient,
+    session_id: UUID,
+    archer_id: UUID,
+    jwt_for: Callable[[UUID], str],
+    distance: int = 30,
 ) -> Any:
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
     payload = {
         "session_id": str(session_id),
         "archer_id": str(archer_id),
@@ -73,12 +51,11 @@ async def join_session(
 
 
 @pytest.mark.asyncio
-async def test_close_session_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
+async def test_close_session_requires_auth(client: AsyncClient) -> None:
     """PATCH /session/close must require authentication.
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # No auth cookie; even with a dummy session_id, the auth dependency should reject
     payload = {"session_id": "00000000-0000-0000-0000-000000000000"}
@@ -93,7 +70,6 @@ async def test_create_session_requires_auth(client: AsyncClient, db_pool: Pool) 
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Seed one archer for a valid payload
     [owner_id] = await create_archers(db_pool, 1)
@@ -110,12 +86,11 @@ async def test_create_session_requires_auth(client: AsyncClient, db_pool: Pool) 
 
 
 @pytest.mark.asyncio
-async def test_join_slot_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
+async def test_join_slot_requires_auth(client: AsyncClient) -> None:
     """POST /session/slot must require authentication.
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Construct a valid SlotJoinRequest payload shape so the request reaches auth
     payload = {
@@ -134,12 +109,11 @@ async def test_join_slot_requires_auth(client: AsyncClient, db_pool: Pool) -> No
 
 
 @pytest.mark.asyncio
-async def test_leave_slot_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_slot_requires_auth(client: AsyncClient) -> None:
     """PATCH /session/slot/leave must require authentication.
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Any UUID path with no auth should trigger 401 via auth dependency
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
@@ -148,12 +122,11 @@ async def test_leave_slot_requires_auth(client: AsyncClient, db_pool: Pool) -> N
 
 
 @pytest.mark.asyncio
-async def test_open_sessions_list_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
+async def test_open_sessions_list_requires_auth(client: AsyncClient) -> None:
     """GET /session/open must require authentication.
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     resp = await client.get("/api/v0/session/open")
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
@@ -166,7 +139,6 @@ async def test_participating_requires_auth(client: AsyncClient, db_pool: Pool) -
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Seed one archer and attempt call without any authentication
     [archer_id] = await create_archers(db_pool, 1)
@@ -183,7 +155,6 @@ async def test_open_session_requires_auth(client: AsyncClient, db_pool: Pool) ->
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Seed one archer and attempt call without any authentication
     [owner_id] = await create_archers(db_pool, 1)
@@ -201,7 +172,6 @@ async def test_closed_sessions_list_requires_auth(client: AsyncClient, db_pool: 
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     # Seed one archer and attempt call without any authentication
     [owner_id] = await create_archers(db_pool, 1)
@@ -214,25 +184,16 @@ async def test_closed_sessions_list_requires_auth(client: AsyncClient, db_pool: 
 
 
 @pytest.mark.asyncio
-async def test_open_session_lifecycle(client: AsyncClient, db_pool: Pool) -> None:
-    await _truncate_all(db_pool)
+async def test_open_session_lifecycle(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
 
     # Seed one owner archer
     [owner_id] = await create_archers(db_pool, 1)
 
     # Set auth cookie for owner to pass the new auth requirement
-    now = int(time.time())
-    token = jwt.encode(
-        {
-            "sub": str(owner_id),
-            "iat": now,
-            "exp": now + 3600,
-            "iss": "arch-stats",
-            "typ": "access",
-        },
-        settings.jwt_secret,
-        algorithm=settings.jwt_algorithm,
-    )
+
+    token = jwt_for(owner_id)
     client.cookies.set("arch_stats_auth", token, path="/")
 
     # Initially: no open session for owner (router returns 200 with null)
@@ -265,20 +226,23 @@ async def test_open_session_lifecycle(client: AsyncClient, db_pool: Pool) -> Non
 
 
 @pytest.mark.asyncio
-async def test_closed_sessions_forbidden_when_not_self(client: AsyncClient, db_pool: Pool) -> None:
-    """GET /session/archer/{archer_id}/close-session should return 403 when authenticated archer differs.
+async def test_closed_sessions_forbidden_when_not_self(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """
+    GET /session/archer/{archer_id}/close-session should return 403 when authenticated archer
+    differs.
 
     Flow:
     - Create two archers (owner and other)
     - Authenticate as other
     - Request owner's closed sessions -> 403
     """
-    await _truncate_all(db_pool)
 
     owner_id, other_id = await create_archers(db_pool, 2)
 
     # Authenticate as the other archer
-    client.cookies.set("arch_stats_auth", _jwt_for(other_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(other_id), path="/")
 
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
     assert resp.status_code == 403
@@ -286,12 +250,13 @@ async def test_closed_sessions_forbidden_when_not_self(client: AsyncClient, db_p
 
 
 @pytest.mark.asyncio
-async def test_closed_sessions_empty_initially(client: AsyncClient, db_pool: Pool) -> None:
+async def test_closed_sessions_empty_initially(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """With no closed sessions, GET /session/archer/{id}/close-session returns empty list."""
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
     assert resp.status_code == 200
@@ -301,12 +266,15 @@ async def test_closed_sessions_empty_initially(client: AsyncClient, db_pool: Poo
 
 
 @pytest.mark.asyncio
-async def test_closed_sessions_after_closing_multiple(client: AsyncClient, db_pool: Pool) -> None:
-    """After opening and closing multiple sessions, closed list returns them all sorted by created_at desc (implementation specific order not asserted, but membership is)."""
-    await _truncate_all(db_pool)
+async def test_closed_sessions_after_closing_multiple(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """
+    After opening and closing multiple sessions, closed list returns them all sorted by
+    created_at desc (implementation specific order not asserted, but membership is)."""
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     # Helper to create and then close a session
     def _make_create_payload() -> dict[str, Any]:
@@ -343,13 +311,14 @@ async def test_closed_sessions_after_closing_multiple(client: AsyncClient, db_po
 
 
 @pytest.mark.asyncio
-async def test_participant_not_participating_initially(client: AsyncClient, db_pool: Pool) -> None:
-    await _truncate_all(db_pool)
+async def test_participant_not_participating_initially(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
 
     _, participant_id = await create_archers(db_pool, 2)
 
     # Authenticate as participant and check participating state
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.get(f"/api/v0/session/archer/{participant_id}/participating")
     assert resp.status_code == 200
     assert resp.json()["session_id"] is None
@@ -357,14 +326,13 @@ async def test_participant_not_participating_initially(client: AsyncClient, db_p
 
 @pytest.mark.asyncio
 async def test_join_session_assigns_slot_and_marks_participating(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-    await _truncate_all(db_pool)
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -376,7 +344,7 @@ async def test_join_session_assigns_slot_and_marks_participating(
     session_id = UUID(resp.json()["session_id"])
 
     # Participant joins via POST /session/slot
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     join_payload = {
         "session_id": str(session_id),
         "archer_id": str(participant_id),
@@ -398,13 +366,14 @@ async def test_join_session_assigns_slot_and_marks_participating(
 
 
 @pytest.mark.asyncio
-async def test_leave_session_clears_participation(client: AsyncClient, db_pool: Pool) -> None:
-    await _truncate_all(db_pool)
+async def test_leave_session_clears_participation(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -416,7 +385,7 @@ async def test_leave_session_clears_participation(client: AsyncClient, db_pool: 
     session_id = UUID(resp.json()["session_id"])
 
     # Participant joins
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     join_payload = {
         "session_id": str(session_id),
         "archer_id": str(participant_id),
@@ -442,24 +411,12 @@ async def test_leave_session_clears_participation(client: AsyncClient, db_pool: 
 
 
 @pytest.mark.asyncio
-async def test_close_session_rules(client: AsyncClient, db_pool: Pool) -> None:
-    await _truncate_all(db_pool)
+async def test_close_session_rules(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
 
     owner_id, p1 = await create_archers(db_pool, 2)
-
-    # Open session (authenticate as owner)
-    now = int(time.time())
-    owner_token = jwt.encode(
-        {
-            "sub": str(owner_id),
-            "iat": now,
-            "exp": now + 3600,
-            "iss": "arch-stats",
-            "typ": "access",
-        },
-        settings.jwt_secret,
-        algorithm=settings.jwt_algorithm,
-    )
+    owner_token = jwt_for(owner_id)
     client.cookies.set("arch_stats_auth", owner_token, path="/")
     payload = {
         "owner_archer_id": str(owner_id),
@@ -481,18 +438,7 @@ async def test_close_session_rules(client: AsyncClient, db_pool: Pool) -> None:
         "draw_weight": 52.3,
     }
     # Authenticate as participant for joining
-    participant_now = int(time.time())
-    participant_token = jwt.encode(
-        {
-            "sub": str(p1),
-            "iat": participant_now,
-            "exp": participant_now + 3600,
-            "iss": "arch-stats",
-            "typ": "access",
-        },
-        settings.jwt_secret,
-        algorithm=settings.jwt_algorithm,
-    )
+    participant_token = jwt_for(p1)
     client.cookies.set("arch_stats_auth", participant_token, path="/")
     resp = await client.post("/api/v0/session/slot", json=join_payload)
     assert resp.status_code == 200
@@ -530,7 +476,9 @@ async def test_close_session_rules(client: AsyncClient, db_pool: Pool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_second_session_fails_with_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_create_second_session_fails_with_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Owner cannot open a second session while one is already open.
 
     Flow:
@@ -538,10 +486,9 @@ async def test_create_second_session_fails_with_422(client: AsyncClient, db_pool
     - create first session -> 201
     - attempt second create -> 422 with specific message
     """
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     payload = {
         "owner_archer_id": str(owner_id),
@@ -561,16 +508,17 @@ async def test_create_second_session_fails_with_422(client: AsyncClient, db_pool
 
 
 @pytest.mark.asyncio
-async def test_create_session_validation_missing_fields(client: AsyncClient, db_pool: Pool) -> None:
+async def test_create_session_validation_missing_fields(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """POST /session returns 422 when required fields are missing.
 
     Checks that error detail entries include the expected field paths.
     """
-    await _truncate_all(db_pool)
 
     # Authenticate any archer so auth passes
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     # Missing owner_archer_id and is_opened
     bad_payload = {
@@ -589,22 +537,23 @@ async def test_create_session_validation_missing_fields(client: AsyncClient, db_
 
 
 @pytest.mark.asyncio
-async def test_create_session_validation_wrong_types(client: AsyncClient, db_pool: Pool) -> None:
+async def test_create_session_validation_wrong_types(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """POST /session returns 422 when fields have wrong types.
 
     Checks that error detail entries include the expected field paths.
     """
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     # Wrong types for several fields
     bad_payload = {
         "owner_archer_id": 123,  # should be UUID string
         "session_location": 42,  # should be string
-        "is_indoor": "notabool",  # should be bool
-        "is_opened": "notabool",  # should be bool
+        "is_indoor": "not_bool",  # should be bool
+        "is_opened": "not_bool",  # should be bool
     }
 
     resp = await client.post("/api/v0/session", json=bad_payload)
@@ -620,12 +569,13 @@ async def test_create_session_validation_wrong_types(client: AsyncClient, db_poo
 
 
 @pytest.mark.asyncio
-async def test_close_already_closed_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_close_already_closed_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/close should return 422 if the session is already closed."""
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     # Create and then close the session
     create_payload = {
@@ -651,13 +601,12 @@ async def test_close_already_closed_session_returns_422(client: AsyncClient, db_
 
 @pytest.mark.asyncio
 async def test_close_session_missing_session_id_returns_400(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """PATCH /session/close should return 400 when session_id is missing in payload."""
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     resp = await client.patch("/api/v0/session/close", json={})
     assert resp.status_code == 400
@@ -666,13 +615,12 @@ async def test_close_session_missing_session_id_returns_400(
 
 @pytest.mark.asyncio
 async def test_close_session_invalid_session_id_type_returns_422(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """PATCH /session/close should return 422 when session_id has invalid type."""
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     # Provide an invalid UUID string to trigger body validation
     resp = await client.patch("/api/v0/session/close", json={"session_id": "not-a-uuid"})
@@ -683,7 +631,9 @@ async def test_close_session_invalid_session_id_type_returns_422(
 
 
 @pytest.mark.asyncio
-async def test_reopen_session_happy_path(client: AsyncClient, db_pool: Pool) -> None:
+async def test_reopen_session_happy_path(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/re-open should re-open a previously closed session.
 
     Flow:
@@ -692,11 +642,10 @@ async def test_reopen_session_happy_path(client: AsyncClient, db_pool: Pool) -> 
     - Owner re-opens the session (202 Accepted)
     - The session is visible again as open for the owner and in the open list
     """
-    await _truncate_all(db_pool)
 
     # Seed one owner archer and authenticate
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     # Create a session via POST /session
     create_payload = {
@@ -741,13 +690,14 @@ async def test_reopen_session_happy_path(client: AsyncClient, db_pool: Pool) -> 
 
 
 @pytest.mark.asyncio
-async def test_reopen_already_open_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_reopen_already_open_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/re-open should fail with 422 if the session is already open."""
-    await _truncate_all(db_pool)
 
     # Seed one owner archer and authenticate
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     # Create a session via POST /session (it starts open)
     create_payload = {
@@ -767,15 +717,16 @@ async def test_reopen_already_open_session_returns_422(client: AsyncClient, db_p
 
 
 @pytest.mark.asyncio
-async def test_reopen_session_forbidden_when_not_owner(client: AsyncClient, db_pool: Pool) -> None:
+async def test_reopen_session_forbidden_when_not_owner(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/re-open should return 403 if the requester is not the owner."""
-    await _truncate_all(db_pool)
 
     # Seed two archers: owner and stranger
     owner_id, stranger_id = await create_archers(db_pool, 2)
 
     # Owner creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     create_payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -791,7 +742,7 @@ async def test_reopen_session_forbidden_when_not_owner(client: AsyncClient, db_p
     assert resp.status_code == 204
 
     # Stranger attempts to re-open
-    client.cookies.set("arch_stats_auth", _jwt_for(stranger_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch("/api/v0/session/re-open", json={"session_id": session_id})
     assert resp.status_code == 403
     assert resp.json()["detail"] == "Archer is not allow to re-open this session"
@@ -799,7 +750,7 @@ async def test_reopen_session_forbidden_when_not_owner(client: AsyncClient, db_p
 
 @pytest.mark.asyncio
 async def test_fifth_archer_joins_new_target_when_first_is_full(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """When 4 archers occupy a target at the same distance, the next archer must be
     allocated to a new target (new target_id and next lane starting at 2).
@@ -807,16 +758,16 @@ async def test_fifth_archer_joins_new_target_when_first_is_full(
     Flow:
     - Create 6 archers (owner + 5 participants)
     - Owner opens a session
-    - First 4 participants at the same distance join and must share the same target (lane 1, slots A-D)
-    - The 4th  and 5th participants at the same distance must be allocated to a NEW target (lane 2, slot A & B)
+    - First 4 participants at the same distance join and must share the same target
+      (lane 1, slots A-D)
+    - The 4th  and 5th participants at the same distance must be allocated to a NEW target
+      (lane 2, slot A & B)
     """
-
-    await _truncate_all(db_pool)
 
     owner_id, a1, a2, a3, a4, a5 = await create_archers(db_pool, 6)
 
     # Owner authenticates and creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     create_payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -828,30 +779,30 @@ async def test_fifth_archer_joins_new_target_when_first_is_full(
     session_id = resp.json()["session_id"]
 
     # First 4 joiners should share the same target_id and occupy letters A-D
-    j1 = await join_session(client, session_id, owner_id)
+    j1 = await join_session(client, session_id, owner_id, jwt_for)
     first_target_id = j1["target_id"]
     assert j1["slot"] == "1A"  # first joiner gets
 
-    j2 = await join_session(client, session_id, a1)
+    j2 = await join_session(client, session_id, a1, jwt_for)
     assert j2["target_id"] == first_target_id
     assert j2["slot"] == "1B"
 
-    j3 = await join_session(client, session_id, a2)
+    j3 = await join_session(client, session_id, a2, jwt_for)
     assert j3["target_id"] == first_target_id
     assert j3["slot"] == "1C"
 
-    j4 = await join_session(client, session_id, a3)
+    j4 = await join_session(client, session_id, a3, jwt_for)
     assert j4["target_id"] == first_target_id
     assert j4["slot"] == "1D"
 
     # The 5th participant must trigger creation of a new target at the same distance
-    j5 = await join_session(client, session_id, a4)
+    j5 = await join_session(client, session_id, a4, jwt_for)
     second_target_id = j5["target_id"]
     assert second_target_id != first_target_id
     # Expect lane to increment to 2 and letter reset to A
     assert j5["slot"] == "2A"
 
-    j6 = await join_session(client, session_id, a5)
+    j6 = await join_session(client, session_id, a5, jwt_for)
     assert j6["target_id"] == second_target_id
     # Expect lane to increment to 2 and letter reset to A
     assert j6["slot"] == "2B"
@@ -859,19 +810,17 @@ async def test_fifth_archer_joins_new_target_when_first_is_full(
 
 @pytest.mark.asyncio
 async def test_new_targets_created_for_different_distances(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """When archers join a session at different distances (20, 30, 40),
     separate targets should be created for each distance. Expect 3 targets
     with lanes 1, 2, 3 respectively, and each assignment should be '1A', '2A', '3A'.
     """
 
-    await _truncate_all(db_pool)
-
     owner_id, a2, a3 = await create_archers(db_pool, 3)
 
     # Owner authenticates and creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     create_payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -883,31 +832,32 @@ async def test_new_targets_created_for_different_distances(
     session_id = resp.json()["session_id"]
 
     # Owner joins at 20m => lane 1, slot A
-    j20 = await join_session(client, session_id, owner_id, 20)
+    j20 = await join_session(client, session_id, owner_id, jwt_for, 20)
     t1 = j20["target_id"]
     assert j20["slot"] == "1A"
 
     # Next archer joins at 30m => new target, lane 2, slot A
-    j30 = await join_session(client, session_id, a2, 30)
+    j30 = await join_session(client, session_id, a2, jwt_for, 30)
     t2 = j30["target_id"]
     assert t2 != t1
     assert j30["slot"] == "2A"
 
     # Next archer joins at 40m => new target, lane 3, slot A
-    j40 = await join_session(client, session_id, a3, 40)
+    j40 = await join_session(client, session_id, a3, jwt_for, 40)
     t3 = j40["target_id"]
     assert t3 not in {t1, t2}
     assert j40["slot"] == "3A"
 
 
 @pytest.mark.asyncio
-async def test_join_nonexistent_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_join_nonexistent_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Joining a non-existent session should return 422 with a clear message."""
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
 
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     payload = {
         "session_id": "00000000-0000-0000-0000-000000000000",  # non-existent
@@ -925,15 +875,16 @@ async def test_join_nonexistent_session_returns_422(client: AsyncClient, db_pool
 
 
 @pytest.mark.asyncio
-async def test_join_session_validation_wrong_types(client: AsyncClient, db_pool: Pool) -> None:
+async def test_join_session_validation_wrong_types(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """POST /session/slot returns 422 when fields have wrong types.
 
     We assert that error detail entries include the expected field paths.
     """
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     # Wrong types: ensure they are non-coercible to trigger validation errors
     bad_payload = {
@@ -960,15 +911,16 @@ async def test_join_session_validation_wrong_types(client: AsyncClient, db_pool:
 
 
 @pytest.mark.asyncio
-async def test_join_session_validation_missing_fields(client: AsyncClient, db_pool: Pool) -> None:
+async def test_join_session_validation_missing_fields(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """POST /session/slot returns 422 when required fields are missing.
 
     We assert that error detail entries include the expected field paths.
     """
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     # Missing multiple required fields
     bad_payload = {
@@ -991,19 +943,20 @@ async def test_join_session_validation_missing_fields(client: AsyncClient, db_po
 
 
 @pytest.mark.asyncio
-async def test_cannot_join_second_open_session(client: AsyncClient, db_pool: Pool) -> None:
+async def test_cannot_join_second_open_session(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """
     An archer already participating in one open session cannot join another.
 
     Expectation: 400 Bad Request with detail 'ERROR: archer already participating in an open
     session'.
     """
-    await _truncate_all(db_pool)
 
     owner1, owner2, participant = await create_archers(db_pool, 3)
 
     # Owner1 creates session S1
-    client.cookies.set("arch_stats_auth", _jwt_for(owner1), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner1), path="/")
     r1 = await client.post(
         "/api/v0/session",
         json={
@@ -1017,10 +970,10 @@ async def test_cannot_join_second_open_session(client: AsyncClient, db_pool: Poo
     s1 = UUID(r1.json()["session_id"])
 
     # Participant joins S1
-    await join_session(client, s1, participant, 30)
+    await join_session(client, s1, participant, jwt_for, 30)
 
     # Owner2 creates session S2
-    client.cookies.set("arch_stats_auth", _jwt_for(owner2), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner2), path="/")
     r2 = await client.post(
         "/api/v0/session",
         json={
@@ -1034,7 +987,7 @@ async def test_cannot_join_second_open_session(client: AsyncClient, db_pool: Poo
     s2 = r2.json()["session_id"]
 
     # Participant attempts to join S2 -> should fail with 409
-    client.cookies.set("arch_stats_auth", _jwt_for(participant), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant), path="/")
     resp = await client.post(
         "/api/v0/session/slot",
         json={
@@ -1053,17 +1006,18 @@ async def test_cannot_join_second_open_session(client: AsyncClient, db_pool: Poo
 
 
 @pytest.mark.asyncio
-async def test_cannot_join_same_session_twice(client: AsyncClient, db_pool: Pool) -> None:
+async def test_cannot_join_same_session_twice(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """An archer attempting to join the same session twice should be blocked.
 
     Expectation: 400 Bad Request with detail 'ERROR: archer already joined this session'.
     """
-    await _truncate_all(db_pool)
 
     owner, participant = await create_archers(db_pool, 2)
 
     # Owner creates session S
-    client.cookies.set("arch_stats_auth", _jwt_for(owner), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner), path="/")
     r = await client.post(
         "/api/v0/session",
         json={
@@ -1077,7 +1031,7 @@ async def test_cannot_join_same_session_twice(client: AsyncClient, db_pool: Pool
     s = r.json()["session_id"]
 
     # Participant joins S successfully
-    client.cookies.set("arch_stats_auth", _jwt_for(participant), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant), path="/")
     first = await client.post(
         "/api/v0/session/slot",
         json={
@@ -1110,13 +1064,14 @@ async def test_cannot_join_same_session_twice(client: AsyncClient, db_pool: Pool
 
 
 @pytest.mark.asyncio
-async def test_leave_nonexistent_slot_returns_409(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_nonexistent_slot_returns_409(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Leaving a non-existent slot should return 409 not participating."""
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
 
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
     assert resp.status_code == 409
@@ -1124,14 +1079,15 @@ async def test_leave_nonexistent_slot_returns_409(client: AsyncClient, db_pool: 
 
 
 @pytest.mark.asyncio
-async def test_leave_closed_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_closed_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Leaving an existing but already-closed session should return 422 with the same message."""
-    await _truncate_all(db_pool)
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     create_payload = {
         "owner_archer_id": str(owner_id),
         "session_location": "Main Range",
@@ -1143,21 +1099,21 @@ async def test_leave_closed_session_returns_422(client: AsyncClient, db_pool: Po
     session_id = resp.json()["session_id"]
 
     # Participant joins and capture slot id
-    j = await join_session(client, UUID(session_id), participant_id, 30)
+    j = await join_session(client, UUID(session_id), participant_id, jwt_for, 30)
 
     # Participant leaves first so the session can be closed
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     leave_slot_id = j["slot_id"]
     resp = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
     assert resp.status_code == 200
 
     # Close the session as owner
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
     assert resp.status_code == 204
 
     # Participant attempts to leave after close -> expect 409 not participating
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
     assert resp.status_code == 409
     assert resp.json()["detail"] == "ERROR: archer is not participating in this session"
@@ -1165,15 +1121,14 @@ async def test_leave_closed_session_returns_422(client: AsyncClient, db_pool: Po
 
 @pytest.mark.asyncio
 async def test_leave_open_session_not_participating_returns_400(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """Leaving an open session when the archer is not participating should return 400."""
-    await _truncate_all(db_pool)
 
     owner_id, stranger_id = await create_archers(db_pool, 2)
 
     # Owner creates an open session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1186,20 +1141,21 @@ async def test_leave_open_session_not_participating_returns_400(
     assert resp.status_code == 201
 
     # Stranger (not participating) attempts to leave (bogus slot id)
-    client.cookies.set("arch_stats_auth", _jwt_for(stranger_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
     assert resp.status_code == 409
     assert resp.json()["detail"] == "ERROR: archer is not participating in this session"
 
 
 @pytest.mark.asyncio
-async def test_leave_session_validation_bad_uuid(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_session_validation_bad_uuid(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/slot/leave returns 422 when slot_id path is malformed."""
-    await _truncate_all(db_pool)
 
     # Authenticate any archer so auth passes
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     resp = await client.patch("/api/v0/session/slot/leave/not-a-uuid")
     # Starlette's UUID path converter does not match invalid UUIDs -> route 404
@@ -1207,12 +1163,13 @@ async def test_leave_session_validation_bad_uuid(client: AsyncClient, db_pool: P
 
 
 @pytest.mark.asyncio
-async def test_leave_session_validation_wrong_types(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_session_validation_wrong_types(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/slot/leave returns 422 when slot_id type is invalid."""
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     resp = await client.patch("/api/v0/session/slot/leave/123")
     # Non-UUID path won't match route, expect 404
@@ -1220,7 +1177,9 @@ async def test_leave_session_validation_wrong_types(client: AsyncClient, db_pool
 
 
 @pytest.mark.asyncio
-async def test_rejoin_session_happy_path(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_session_happy_path(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """An archer can re-join a session by reactivating a previous assignment.
 
     Flow:
@@ -1229,12 +1188,11 @@ async def test_rejoin_session_happy_path(client: AsyncClient, db_pool: Pool) -> 
     - Participant leaves -> clears participation
     - Participant re-joins via PATCH /session/slot/re-join -> 200 with target/slot
     """
-    await _truncate_all(db_pool)
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1248,7 +1206,7 @@ async def test_rejoin_session_happy_path(client: AsyncClient, db_pool: Pool) -> 
     session_id = resp.json()["session_id"]
 
     # Participant joins
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     join_payload = {
         "session_id": session_id,
         "archer_id": str(participant_id),
@@ -1281,12 +1239,13 @@ async def test_rejoin_session_happy_path(client: AsyncClient, db_pool: Pool) -> 
 
 
 @pytest.mark.asyncio
-async def test_rejoin_nonexistent_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_nonexistent_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Re-joining a non-existent session should return 422 with a clear message."""
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     # Non-existent slot_id should yield 422 with standardized message
     resp = await client.patch(
@@ -1300,7 +1259,9 @@ async def test_rejoin_nonexistent_session_returns_422(client: AsyncClient, db_po
 
 
 @pytest.mark.asyncio
-async def test_rejoin_as_another_archer_returns_403(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_as_another_archer_returns_403(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """A user cannot re-join on behalf of another archer.
 
     Flow:
@@ -1309,12 +1270,11 @@ async def test_rejoin_as_another_archer_returns_403(client: AsyncClient, db_pool
     - Archer B attempts to re-join using Archer A's archer_id in payload
     - Expect 403 Forbidden with a clear error message
     """
-    await _truncate_all(db_pool)
 
     owner_id, archer_a, archer_b = await create_archers(db_pool, 3)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1328,7 +1288,7 @@ async def test_rejoin_as_another_archer_returns_403(client: AsyncClient, db_pool
     session_id = resp.json()["session_id"]
 
     # Archer A joins
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_a), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_a), path="/")
     join_payload = {
         "session_id": session_id,
         "archer_id": str(archer_a),
@@ -1347,19 +1307,18 @@ async def test_rejoin_as_another_archer_returns_403(client: AsyncClient, db_pool
     assert resp.status_code == 200
 
     # Archer B attempts to re-join for Archer A -> must be forbidden
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_b), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.patch(f"/api/v0/session/slot/re-join/{joined_slot_id}")
     assert resp.status_code == 403
     assert resp.json()["detail"] == "ERROR: user not allowed to re-join"
 
 
 @pytest.mark.asyncio
-async def test_rejoin_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_requires_auth(client: AsyncClient) -> None:
     """PATCH /session/slot/re-join must require authentication.
 
     Expectation: 401 Unauthorized when no auth cookie/token is provided.
     """
-    await _truncate_all(db_pool)
 
     resp = await client.patch(
         "/api/v0/session/slot/re-join/00000000-0000-0000-0000-000000000001",
@@ -1369,14 +1328,15 @@ async def test_rejoin_requires_auth(client: AsyncClient, db_pool: Pool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_rejoin_closed_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_closed_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Re-joining a closed session should return 422 with standardized message."""
-    await _truncate_all(db_pool)
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1390,7 +1350,7 @@ async def test_rejoin_closed_session_returns_422(client: AsyncClient, db_pool: P
     session_id = resp.json()["session_id"]
 
     # Participant joins then leaves
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     join_payload = {
         "session_id": session_id,
         "archer_id": str(participant_id),
@@ -1407,27 +1367,28 @@ async def test_rejoin_closed_session_returns_422(client: AsyncClient, db_pool: P
     assert rl.status_code == 200
 
     # Close session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     rc = await client.patch("/api/v0/session/close", json={"session_id": session_id})
     assert rc.status_code == 204
     rejoin_payload = {"slot_id": rj.json()["slot_id"]}
 
     # Attempt to re-join closed session
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/re-join/{rejoin_payload['slot_id']}")
     assert resp.status_code == 422
     assert resp.json()["detail"] == "ERROR: The session doesn't exist or it was already closed"
 
 
 @pytest.mark.asyncio
-async def test_rejoin_without_leaving_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_rejoin_without_leaving_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Re-joining while already actively participating should return 422."""
-    await _truncate_all(db_pool)
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1441,7 +1402,7 @@ async def test_rejoin_without_leaving_returns_422(client: AsyncClient, db_pool: 
     session_id = resp.json()["session_id"]
 
     # Participant joins
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     join_payload = {
         "session_id": session_id,
         "archer_id": str(participant_id),
@@ -1465,37 +1426,38 @@ async def test_rejoin_without_leaving_returns_422(client: AsyncClient, db_pool: 
 
 @pytest.mark.asyncio
 async def test_open_session_for_archer_forbidden_when_not_self(
-    client: AsyncClient, db_pool: Pool
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
     """GET /session/archer/{archer_id}/open-session must return 403 for other users."""
-    await _truncate_all(db_pool)
 
     archer_a, archer_b = await create_archers(db_pool, 2)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_b), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.get(f"/api/v0/session/archer/{archer_a}/open-session")
     assert resp.status_code == 403
     assert resp.json()["detail"] == "Forbidden"
 
 
 @pytest.mark.asyncio
-async def test_participating_forbidden_when_not_self(client: AsyncClient, db_pool: Pool) -> None:
+async def test_participating_forbidden_when_not_self(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """GET /session/archer/{archer_id}/participating must return 403 for other users."""
-    await _truncate_all(db_pool)
 
     archer_a, archer_b = await create_archers(db_pool, 2)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_b), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.get(f"/api/v0/session/archer/{archer_a}/participating")
     assert resp.status_code == 403
     assert resp.json()["detail"] == "Forbidden"
 
 
 @pytest.mark.asyncio
-async def test_reopen_nonexistent_session_returns_422(client: AsyncClient, db_pool: Pool) -> None:
+async def test_reopen_nonexistent_session_returns_422(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Re-opening a non-existent session should return 422 with standardized message."""
-    await _truncate_all(db_pool)
 
     [owner_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     resp = await client.patch(
         "/api/v0/session/re-open",
@@ -1506,26 +1468,28 @@ async def test_reopen_nonexistent_session_returns_422(client: AsyncClient, db_po
 
 
 @pytest.mark.asyncio
-async def test_open_sessions_list_empty_returns_empty(client: AsyncClient, db_pool: Pool) -> None:
+async def test_open_sessions_list_empty_returns_empty(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """GET /session/open should return an empty list when there are no open sessions."""
-    await _truncate_all(db_pool)
 
     [archer_id] = await create_archers(db_pool, 1)
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
     resp = await client.get("/api/v0/session/open")
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 @pytest.mark.asyncio
-async def test_letter_reuse_after_leave(client: AsyncClient, db_pool: Pool) -> None:
+async def test_letter_reuse_after_leave(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """Freed slot letters should be reused for the next joiner at the same target."""
-    await _truncate_all(db_pool)
 
     owner_id, a1, a2, a3 = await create_archers(db_pool, 4)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1539,30 +1503,34 @@ async def test_letter_reuse_after_leave(client: AsyncClient, db_pool: Pool) -> N
     session_id = UUID(resp.json()["session_id"])
 
     # a1 joins -> 1A, a2 joins -> 1B
-    j1 = await join_session(client, session_id, a1, 30)
+    j1 = await join_session(client, session_id, a1, jwt_for, 30)
     assert j1["slot"] == "1A"
-    j2 = await join_session(client, session_id, a2, 30)
+    j2 = await join_session(client, session_id, a2, jwt_for, 30)
     assert j2["slot"] == "1B"
 
     # a1 leaves -> free 'A'
-    client.cookies.set("arch_stats_auth", _jwt_for(a1), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(a1), path="/")
     r = await client.patch(f"/api/v0/session/slot/leave/{j1['slot_id']}")
     assert r.status_code == 200
 
     # a3 joins -> should reuse '1A'
-    j3 = await join_session(client, session_id, a3, 30)
+    j3 = await join_session(client, session_id, a3, jwt_for, 30)
     assert j3["slot"] == "1A"
 
 
 @pytest.mark.asyncio
-async def test_leave_same_session_twice_returns_400(client: AsyncClient, db_pool: Pool) -> None:
-    """Leaving the same session twice should return 409 for the second attempt (not participating conflict)."""
-    await _truncate_all(db_pool)
+async def test_leave_same_session_twice_returns_400(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """
+    Leaving the same session twice should return 409 for the second attempt
+    (not participating conflict).
+    """
 
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.post(
         "/api/v0/session",
         json={
@@ -1576,12 +1544,12 @@ async def test_leave_same_session_twice_returns_400(client: AsyncClient, db_pool
     session_id = resp.json()["session_id"]
 
     # Participant joins and capture slot id
-    j = await join_session(client, UUID(session_id), participant_id, 30)
+    j = await join_session(client, UUID(session_id), participant_id, jwt_for, 30)
 
     # First leave
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     # First leave using slot id captured from initial join
-    client.cookies.set("arch_stats_auth", _jwt_for(participant_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     leave_slot_id = j["slot_id"]
     r1 = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
     assert r1.status_code == 200
@@ -1593,19 +1561,20 @@ async def test_leave_same_session_twice_returns_400(client: AsyncClient, db_pool
 
 
 @pytest.mark.asyncio
-async def test_create_session_forbidden_when_not_self(client: AsyncClient, db_pool: Pool) -> None:
+async def test_create_session_forbidden_when_not_self(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """POST /session must return 403 if an authenticated user tries to open
     a session on behalf of another archer.
 
     Expectation: 403 Forbidden with detail
     'ERROR: user not allowed to open a session for another archer'.
     """
-    await _truncate_all(db_pool)
 
     archer_a, archer_b = await create_archers(db_pool, 2)
 
     # Authenticate as archer_b but attempt to create for archer_a
-    client.cookies.set("arch_stats_auth", _jwt_for(archer_b), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     payload = {
         "owner_archer_id": str(archer_a),
         "session_location": "Main Range",
@@ -1618,7 +1587,9 @@ async def test_create_session_forbidden_when_not_self(client: AsyncClient, db_po
 
 
 @pytest.mark.asyncio
-async def test_leave_session_forbidden_when_not_self(client: AsyncClient, db_pool: Pool) -> None:
+async def test_leave_session_forbidden_when_not_self(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
     """PATCH /session/slot/leave must return 403 if an authenticated user tries
     to leave on behalf of another archer.
 
@@ -1627,12 +1598,11 @@ async def test_leave_session_forbidden_when_not_self(client: AsyncClient, db_poo
     - Participant joins
     - Stranger attempts to leave using participant's archer_id -> 403
     """
-    await _truncate_all(db_pool)
 
     owner_id, participant_id, stranger_id = await create_archers(db_pool, 3)
 
     # Owner creates a session
-    client.cookies.set("arch_stats_auth", _jwt_for(owner_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     c = await client.post(
         "/api/v0/session",
         json={
@@ -1646,10 +1616,10 @@ async def test_leave_session_forbidden_when_not_self(client: AsyncClient, db_poo
     session_id = c.json()["session_id"]
 
     # Participant joins and capture slot id
-    pj = await join_session(client, UUID(session_id), participant_id, 30)
+    pj = await join_session(client, UUID(session_id), participant_id, jwt_for, 30)
 
     # Stranger attempts to leave on behalf of participant -> 403 using participant's slot_id
-    client.cookies.set("arch_stats_auth", _jwt_for(stranger_id), path="/")
+    client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/leave/{pj['slot_id']}")
     assert resp.status_code == 403
     assert resp.json()["detail"] == "ERROR: user not allowed to leave"
