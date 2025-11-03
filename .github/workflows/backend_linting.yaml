@@ -115,8 +115,17 @@ jobs:
             -d arch-stats \
             -v ON_ERROR_STOP=1 \
             -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+      - name: Validate migrations secrets
+        env:
+          MIGRATIONS_REPOSITORY: ${{ secrets.MIGRATIONS_REPOSITORY }}
+          MIGRATIONS_PAT: ${{ secrets.MIGRATIONS_PAT }}
+        run: |
+          if [ -z "${MIGRATIONS_REPOSITORY}" ] || [ -z "${MIGRATIONS_PAT}" ]; then
+            echo "Error: MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT secrets are not set." >&2
+            echo "Set them in repo settings to enable Flyway migrations during CI." >&2
+            exit 1
+          fi
       - name: Checkout migrations repository
-        if: ${{ secrets.MIGRATIONS_REPOSITORY != '' && secrets.MIGRATIONS_PAT != '' }}
         # Requires two repo secrets configured in this repository:
         #  - MIGRATIONS_REPOSITORY: e.g. "<owner>/<private-migrations-repo>"
         #  - MIGRATIONS_PAT: a fine-scoped PAT with repo read access
@@ -126,7 +135,6 @@ jobs:
           token: ${{ secrets.MIGRATIONS_PAT }}
           path: backend/migrations
       - name: Run Flyway migrations
-        if: ${{ secrets.MIGRATIONS_REPOSITORY != '' && secrets.MIGRATIONS_PAT != '' }}
         env:
           FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
           FLYWAY_USER: "admin"
@@ -143,12 +151,6 @@ jobs:
             -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
             -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
             flyway/flyway:latest migrate
-      - name: Migrations secrets not set — aborting before tests
-        if: ${{ secrets.MIGRATIONS_REPOSITORY == '' || secrets.MIGRATIONS_PAT == '' }}
-        run: |
-          echo "Error: secrets MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT are not configured." >&2
-          echo "Set them in repo settings to enable Flyway migrations during CI." >&2
-          exit 1
       - name: Run Tests
         env:
           POSTGRES_USER: "admin"
