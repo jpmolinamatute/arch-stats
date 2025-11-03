@@ -78,7 +78,6 @@ jobs:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
           POSTGRES_DB: "arch-stats"
-          GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
         ports:
           - 5432:5432
         options: >-
@@ -126,6 +125,7 @@ jobs:
           ARCH_STATS_DEV_MODE: "true"
           ARCH_STATS_SERVER_PORT: "8000"
           ARCH_STATS_WS_CHANNEL: "archy"
+          GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
           PYTHONPATH: "${{ github.workspace }}/backend/src"
         run: |
           source "${{ github.workspace }}/backend/.venv/bin/activate"
