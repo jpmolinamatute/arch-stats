@@ -115,6 +115,40 @@ jobs:
             -d arch-stats \
             -v ON_ERROR_STOP=1 \
             -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+      - name: Checkout migrations repository
+        if: ${{ secrets.MIGRATIONS_REPOSITORY != '' && secrets.MIGRATIONS_PAT != '' }}
+        # Requires two repo secrets configured in this repository:
+        #  - MIGRATIONS_REPOSITORY: e.g. "<owner>/<private-migrations-repo>"
+        #  - MIGRATIONS_PAT: a fine-scoped PAT with repo read access
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
+          token: ${{ secrets.MIGRATIONS_PAT }}
+          path: backend/migrations
+      - name: Run Flyway migrations
+        if: ${{ secrets.MIGRATIONS_REPOSITORY != '' && secrets.MIGRATIONS_PAT != '' }}
+        env:
+          FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
+          FLYWAY_USER: "admin"
+          FLYWAY_PASSWORD: "NOT_A_REAL_PASSWORD"
+        run: |
+          # Ensure migrations directory exists (checkout above should have created it)
+          mkdir -p "${{ github.workspace }}/backend/migrations"
+          # Run flyway in a container against the service Postgres on localhost
+          docker run --rm \
+            --network host \
+            -e FLYWAY_URL="$FLYWAY_URL" \
+            -e FLYWAY_USER="$FLYWAY_USER" \
+            -e FLYWAY_PASSWORD="$FLYWAY_PASSWORD" \
+            -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
+            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            flyway/flyway:latest migrate
+      - name: Migrations secrets not set — aborting before tests
+        if: ${{ secrets.MIGRATIONS_REPOSITORY == '' || secrets.MIGRATIONS_PAT == '' }}
+        run: |
+          echo "Error: secrets MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT are not configured." >&2
+          echo "Set them in repo settings to enable Flyway migrations during CI." >&2
+          exit 1
       - name: Run Tests
         env:
           POSTGRES_USER: "admin"

@@ -65,14 +65,12 @@ def run() -> FastAPI:
     app.include_router(session_router, prefix=f"/api/{mayor_version}")
     app.include_router(slot_router, prefix=f"/api/{mayor_version}")
     app.include_router(shot_router, prefix=f"/api/{mayor_version}")
-    frontend_dir = current_file_path.joinpath("frontend")
     app.mount(
         "/app",
         StaticFiles(
-            directory=frontend_dir,
+            directory=current_file_path.joinpath("frontend"),
             html=True,
-            # Avoid import-time crashes in CI where the built frontend may not exist.
-            check_dir=frontend_dir.exists(),
+            check_dir=True,
             follow_symlink=True,
         ),
         name="frontend",
