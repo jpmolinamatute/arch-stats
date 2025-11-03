@@ -78,6 +78,7 @@ jobs:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
           POSTGRES_DB: "arch-stats"
+          GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
         ports:
           - 5432:5432
         options: >-
