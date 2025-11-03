@@ -1,99 +1,165 @@
-# Frontend instructions
-
-**Audience:** JavaScript/TypeScript developers working in `frontend/` directory
-
 ---
-applyTo: "**/*.ts,**/*.vue,**/*.js"
+applyTo: "**/*.ts,**/*.js,**/*.vue"
 ---
 
-## Tech stack
+# Frontend Development Instructions
+
+**Audience:** Developers working in the `frontend/` directory using Vue 3 + TypeScript.
+
+## Tech Stack
 
 - **Language:** TypeScript (strict)
 - **Framework:** Vue 3 (Composition API, SFCs)
 - **Build/Dev:** Vite ^6.3.x
-- **Styling:** Tailwind CSS ^4.1.x (class-based dark mode enabled)
+- **Styling:** Tailwind CSS ^4.1.x (class-based dark mode)
 - **Quality:** ESLint + Prettier
-- **API Types:** generated via `npm run generate:types` -> `frontend/src/types/types.generated.ts` (file must remain uncommitted / git ignored)
-- **Runtime:** SPA at `http://localhost:5173`, proxied to backend at `http://localhost:8000/api/v0`
+- **API Types:** generated via `npm run generate:types` → `frontend/src/types/types.generated.ts`
+- **Runtime:** SPA served at `http://localhost:5173`, proxied to backend `http://localhost:8000/api/v0`
 
-## Coding standards
+## Project Organization
 
-- Use **Composition API** (`<script setup lang="ts">`) with explicit prop/event types.
-- Keep components focused; prefer smaller components over large ones.
-- **No implicit `any`**; define interfaces/types for props, emits, and API payloads.
-- Re-use **generated API types** instead of redefining shapes.
-- Centralize state in `frontend/src/state/` small composables in `frontend/src/composables/`.
-- Prefer **fetch wrappers/clients** that return typed results rather than sprinkling raw `fetch` calls.
-- Tailwind utility classes over ad-hoc CSS; avoid inline styles when possible.
+The project has two main functional directories:
 
-### API Type Regeneration Workflow
+- **`frontend/src/components/`** — Vue SFCs in `PascalCase.vue`.
+  Keep components small, cohesive, and presentation-focused.
+- **`frontend/src/composables/`** — Reusable logic modules (`useThing.ts`).
+  Encapsulate all **HTTP requests** here.
 
-Any backend schema or endpoint change (new field, rename, path) requires regenerating types:
+### API Access Rules
 
-1. Ensure backend dev server is running.
-2. Run `npm run generate:types`.
-3. Rebuild / restart Vite if types changed.
-4. NEVER commit `types.generated.ts` (ensure it is listed in a .gitignore pattern such as `frontend/src/types/types.generated.ts`). Document in PR: "API types regenerated locally".
+- All `fetch()` or HTTP client logic must live inside composables.  
+  Components **must never** call `fetch()` directly.
+- Wrap API calls in well-typed functions returning `Promise<ResultType>`.
+- Avoid duplication — extract shared logic into reusable composables  
+  (e.g., `useApiFetch()`, `useSessionApi()`).
 
-If the file ever appears in a diff, remove it and add the ignore rule before merging.
+### Type Synchronization
 
-## File/Folder conventions
+- Always import types from `frontend/src/types/types.generated.ts`.
+- Regenerate types whenever backend schemas change:
 
-- Components: `PascalCase.vue` in `frontend/src/components/` (nest form components under `frontend/src/components/forms/`.
-- Composables: `useThing.ts` in `frontend/src/composables/`.
-- State: Pinia-like stores or simple modules in `frontend/src/state/`.
-- Types: **import from** `frontend/src/types/types.generated.ts` for API schemas.
+```bash
+npm run generate:types
+```
 
-## Performance & DX
+- Never commit `types.generated.ts`; ensure `.gitignore` includes it.
+- Treat manually defined API types as temporary placeholders only.
 
-- Keep render trees shallow; memoize derived state using Vue's computed properties.
-- Avoid reactivity leaks (do not spread reactive objects into plain objects).
-- WebSockets: target pattern is to encapsulate connection logic inside a composable (e.g., `useShotsStream()`). CURRENT STATE: `ShotsTable.vue` holds inline WebSocket setup as a provisional implementation; refactor into a composable before adding additional WS consumers.
-- Debounce user input that triggers network calls (≥150ms) to reduce chatter.
-- Prefer `AbortController` to cancel in-flight fetches when switching views.
-- Avoid large reactive objects in global state; store primitives/flat structures.
+## Coding Standards
 
-### WebSocket Messaging
+1. Use the **Composition API** (`<script setup lang="ts">`) with explicit prop/event types.
+2. No implicit `any`. All data, props, and emits must have defined types.
+3. Prefer smaller components; one logical concern per file.
+4. Keep reactivity localized; do not spread reactive objects.
+5. Use Tailwind utility classes instead of inline styles.
+6. Import from `types.generated.ts` whenever referring to backend entities.
+7. Manage global or shared state through lightweight composables in `src/composables/`.
 
-Current prototype (`ShotsTable.vue`) receives raw `ShotsRead` JSON objects over `ws://.../api/v0/ws/shot` (no envelope). This will transition to a standardized envelope:
+## Mobile-First Design
+
+This webapp is **mobile-first**; over 95% of traffic is expected from phones.
+
+Copilot must:
+
+- Prioritize narrow viewports (360–414 px).
+- Default to vertical stacking and full-width layouts (`w-full`, `flex-col`).
+- Scale up using responsive utilities (`md:`, `lg:`) rather than fixed widths.
+- Avoid desktop-first or pixel-perfect assumptions.
+- Keep layouts **flat** and **lightweight**.
+
+### Nesting Rule
+
+Limit template depth: **no more than three nested layout containers**
+(e.g., `<div><div><div>...</div></div></div>`).
+Deep nesting reduces readability and complicates debugging.
+Use grid/flex utilities or semantic grouping instead of wrapper divs.
+
+## Code Quality
+
+All frontend code must pass linting and formatting before commit.
+
+### Tools
+
+- **ESLint** — code quality and rule enforcement
+- **Prettier** — formatting
+
+You can run these tools individually:
+
+```bash
+npm run lint
+npm run format
+```
+
+or together:
+
+```bash
+./scripts/linting.bash --lint-frontend
+```
+
+Copilot must emit code that conforms to ESLint rules and Prettier formatting automatically.
+
+## Performance & Developer Experience
+
+- Keep render trees shallow; prefer `computed()` over large reactive objects.
+- Debounce network-triggering inputs (≥150 ms).
+- Use `AbortController` to cancel in-flight requests.
+- Encapsulate WebSocket or event-stream logic inside composables (e.g., `useShotsStream()`).
+- Memoize derived state where possible.
+- Prefer primitive/flat structures in global state.
+
+### WebSocket Messaging (current prototype)
+
+The active implementation in `ShotsTable.vue` receives raw JSON (`ShotsRead`) over
+`ws://.../api/v0/ws/shot`. This will evolve to a standardized envelope:
 
 ```json
 {
   "type": "shot.created",
   "ts": "2025-08-20T12:34:56.789Z",
   "data": {
-    /* domain payload (e.g., ShotsRead) */
+    /* domain payload */
   }
 }
 ```
 
-Rules (future state):
+Rules for future state:
 
 1. Unknown `type` values are ignored silently.
-2. Heartbeat frames: `{ "type": "heartbeat", "ts": "..." }` update freshness only.
+2. Heartbeats (`type: "heartbeat"`) update freshness.
 3. All domain payloads live under `data` and match generated OpenAPI types.
 
-Action item: When backend adopts envelope, introduce a `useShotsStream()` composable that normalizes both legacy (raw) and envelope formats during the transition window.
+When the backend adopts this envelope, refactor into `useShotsStream()`.
 
-## Do / Don't
+## Do / Don’t
 
-### Do
+### ✅ Do
 
 - Use `defineProps<...>()` and `defineEmits<...>()` with explicit types.
-- Validate inputs before hitting the API.
-- Return `Promise<ResultType>` / typed promises from API helpers.
-- Use the World Archery palette (base `wa.*` keys or semantic aliases: `primary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`) from `tailwind.config.js` instead of hard-coded hex values.
+- Validate user inputs before calling APIs.
+- Return typed promises from API helpers.
+- Use Tailwind semantic color keys (`primary`, `accent`, `warning`, etc.) from `tailwind.config.js`.
 
-### Don't
+### ❌ Don’t
 
-- Commit `frontend/src/types/types.generated.ts` (add ignore if missing).
-- Add heavy libraries without strong justification.
-- Embed backend assumptions (e.g., SQL details) inside UI components.
-- Keep long term WebSocket logic inline in components (move to composables during refactor).
-- Directly manipulate DOM outside Vue unless using a properly isolated directive.
+- Commit `frontend/src/types/types.generated.ts`.
+- Add large external libraries without clear ROI.
+- Hard-code backend assumptions in UI logic.
+- Inline long-term WebSocket code inside components.
+- Directly manipulate the DOM outside Vue or proper directives.
 
 ## References
 
-- See `frontend/README.md` for structure and VS Code tasks.
-- Architecture & cross-cutting rules: `.github/copilot-instructions.md`.
-- For consistent endpoint usage patterns see existing composables (`useSession.ts`, `useTarget.ts`).
+- Architecture & cross-cutting rules: `.github/copilot-instructions.md`
+- Backend guidelines: `.github/instructions/backend.instructions.md`
+- Existing composables for reference: `useSession.ts`, `useTarget.ts`
+
+## Summary
+
+Copilot must:
+
+- Keep API calls inside `src/composables/`.
+- Use and regenerate `types.generated.ts` frequently.
+- Generate simple, mobile-first layouts (≤3 nested wrappers).
+- Follow ESLint + Prettier formatting.
+- Use Composition API and strict typing.
+- Favor reusability and clarity over nesting and complexity.

@@ -3,15 +3,24 @@
 COMPOSE_FILE="${ROOT_DIR}/docker/docker-compose.yaml"
 
 start_docker() {
-    is_running=$(docker compose -f "${COMPOSE_FILE}" ps --all --quiet | wc -l)
+    is_running=$(docker compose -f "${COMPOSE_FILE}" ps --all --filter status=running --quiet | wc -l)
     if [[ ${is_running} -eq 0 ]]; then
         echo "Starting docker compose"
         docker compose -f "${COMPOSE_FILE}" up --detach --build
         sleep 2
+    else
+        echo "Docker was already running. Nothing to do here"
     fi
 }
 
 stop_docker() {
     echo "Stopping docker compose"
     docker compose -f "${COMPOSE_FILE}" down -v
+    sleep 2
+    is_running=$(docker compose -f "${COMPOSE_FILE}" ps --all --filter status=running --quiet | wc -l)
+    if [[ ${is_running} -eq 0 ]]; then
+        echo "Docker compose stopped successfully"
+    else
+        echo "Failed to stop docker compose" >&2
+    fi
 }

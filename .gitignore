@@ -2,15 +2,17 @@
 npm-debug.log
 yarn-error.log
 __pycache__/
-/.env
+.env
 .venv/
 
-node_modules/
-frontend/src/types/**
-!frontend/src/types/.gitkeep
+frontend/node_modules/
 ignore/*
-/backend/src/shared/logs/**
-!/backend/src/shared/logs/.gitkeep
-/backend/src/server/frontend/** 
-!/backend/src/server/frontend/.gitkeep
-/openapi.json
+frontend/src/types/*
+!frontend/src/types/.gitkeep
+backend/src/core/logs/*
+!backend/src/core/logs/.gitkeep
+backend/src/frontend/*
+!backend/src/frontend/.gitkeep
+openapi.json
+docker/postgresql/
+backend/migrations/

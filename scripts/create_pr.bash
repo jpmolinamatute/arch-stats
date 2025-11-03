@@ -27,17 +27,8 @@ create_pr() {
     if echo "${changed_files}" | grep -q '^frontend/'; then
         labels_to_add+=("--label" "frontend")
     fi
-    if echo "${changed_files}" | grep -q '^backend/src/server/'; then
+    if echo "${changed_files}" | grep -q '^backend/'; then
         labels_to_add+=("--label" "server")
-    fi
-    if echo "${changed_files}" | grep -q '^backend/src/target_reader/'; then
-        labels_to_add+=("--label" "target_reader")
-    fi
-    if echo "${changed_files}" | grep -q '^backend/src/arrow_reader/'; then
-        labels_to_add+=("--label" "arrow_reader")
-    fi
-    if echo "${changed_files}" | grep -q '^backend/src/bow_reader/'; then
-        labels_to_add+=("--label" "bow_reader")
     fi
 
     if echo "${changed_files}" | grep -q '\.md$'; then

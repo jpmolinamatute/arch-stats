@@ -1,24 +1,23 @@
+---
+applyTo: "**/*.bash,**/*.sh"
+---
+
 # DevOps instructions
 
-**Audience:** DevOps developers working in [script/](../../scripts/), and [.github/workflows](../workflows)
-
----
-applyTo: "**/*.bash,.github/workflows/*.yaml"
----
-
+**Audience:** DevOps developers working in [script/](../../scripts/)
 
 **Goal:** When suggesting or completing any `*.bash` or shell snippet, Copilot must produce **safe, readable, and lintable** Bash that passes `shellcheck` and formats with `shfmt`.
 
 ## Language & Environment
 
-* Use **Bash** (not POSIX sh). Assume **Linux**.
-* Always start scripts with this shebang (no extra spaces before/after `#!`):
+- Use **Bash** (not POSIX sh). Assume **Linux**.
+- Always start scripts with this shebang (no extra spaces before/after `#!`):
 
 ```sh
 #!/usr/bin/env bash
 ```
 
-* Use **4-space indentation** to match the repo style.
+- Use **4-space indentation** to match the repo style.
 
 ## Strict Mode & Safety Defaults
 
@@ -28,10 +27,10 @@ Copilot must include these at the top of scripts, beneath the shebang:
 set -Eeuo pipefail
 ```
 
-* `set -e`: exit on error
-* `set -u`: undefined var is an error
-* `set -o pipefail`: fail pipelines early
-* `set -E`: preserve ERR traps in functions
+- `set -e`: exit on error
+- `set -u`: undefined var is an error
+- `set -o pipefail`: fail pipelines early
+- `set -E`: preserve ERR traps in functions
 
 Prefer **double quotes** around expansions, use **`local`** inside functions, and avoid word-splitting surprises.
 
@@ -112,14 +111,14 @@ main "$@"
 
 ## Filesystem & Process Checks
 
-* Before running commands that depend on files/directories, check first:
+- Before running commands that depend on files/directories, check first:
 
-   ```sh
-   [[ -f "$path" ]] || { echo "ERROR: file not found: $path" >&2; exit 3; }
-   [[ -d "$dir"  ]] || { echo "ERROR: directory not found: $dir" >&2; exit 3; }
-   ```
+  ```sh
+  [[ -f "$path" ]] || { echo "ERROR: file not found: $path" >&2; exit 3; }
+  [[ -d "$dir"  ]] || { echo "ERROR: directory not found: $dir" >&2; exit 3; }
+  ```
 
-* For arrays and globs, use `"${arr[@]}"` and `shopt -s nullglob` when needed (avoid SC2048/SC2086 issues).
+- For arrays and globs, use `"${arr[@]}"` and `shopt -s nullglob` when needed (avoid SC2048/SC2086 issues).
 
 ## shellcheck Rules & In-File Directives
 
@@ -131,19 +130,19 @@ Copilot should write code that **passes `shellcheck` without suppressions**. If 
 
 Frequent pitfalls to avoid:
 
-* **SC2046/SC2086**: Always quote expansions unless array spreading is intended.
-* **SC2164**: Check `cd` success: `cd "$dir" || { echo "ERROR: cd $dir" >&2; exit 4; }`
-* **SC2155**: Prefer separate `local` and assignment if it improves clarity.
-* **SC2181**: Prefer `if cmd; then ...` over checking `$?` directly.
+- **SC2046/SC2086**: Always quote expansions unless array spreading is intended.
+- **SC2164**: Check `cd` success: `cd "$dir" || { echo "ERROR: cd $dir" >&2; exit 4; }`
+- **SC2155**: Prefer separate `local` and assignment if it improves clarity.
+- **SC2181**: Prefer `if cmd; then ...` over checking `$?` directly.
 
 ## Formatting with shfmt
 
 Copilot should produce code that formats predictably with `shfmt`. Target options:
 
-* Indentation: **4 spaces**
-* Binary ops at line end
-* Case indentation
-* Simplify redirects
+- Indentation: **4 spaces**
+- Binary ops at line end
+- Case indentation
+- Simplify redirects
 
 Equivalent CLI (for humans):
 
@@ -155,7 +154,7 @@ shfmt -i 4 -bn -ci -sr -w .
 
 ## Subprocess & Pipe Guidelines
 
-* Prefer explicit pipelines:
+- Prefer explicit pipelines:
 
   ```sh
   if ! curl -fsS "$url" -o "$out"; then
@@ -164,8 +163,8 @@ shfmt -i 4 -bn -ci -sr -w .
   fi
   ```
 
-* For `grep`/`awk`/`sed`, quote patterns and variables; avoid useless `cat`.
-* Use `printf` for formatted output; `echo -e` is discouraged.
+- For `grep`/`awk`/`sed`, quote patterns and variables; avoid useless `cat`.
+- Use `printf` for formatted output; `echo -e` is discouraged.
 
 ## Traps & Cleanup (when creating temp resources)
 
@@ -202,28 +201,29 @@ upload_scripts() {
 
 ## Network Timeouts & Retries
 
-* Always set **timeouts** on network calls (`curl -m 10 --retry 2 --retry-all-errors`).
-* Validate success and fail loudly to stderr.
+- Always set **timeouts** on network calls (`curl -m 10 --retry 2 --retry-all-errors`).
+- Validate success and fail loudly to stderr.
 
 ## Environment Variables & Configuration Injection
 
 Deployment / CI jobs must surface required runtime variables explicitly (mirror backend instructions):
 
-| Variable | Purpose | Required | Default (dev) |
-|----------|---------|----------|---------------|
-| `PGHOST` | Postgres host | yes | `localhost` |
-| `PGPORT` | Postgres port | no | `5432` |
-| `PGUSER` | Postgres user | yes | `postgres` |
-| `PGPASSWORD` | Postgres password | yes | *(secret)* |
-| `PGDATABASE` | DB name | yes | `arch_stats` |
-| `PG_POOL_MIN` | Min pool connections | no | `1` |
-| `PG_POOL_MAX` | Max pool connections | no | `10` |
-| `API_MAX_CONCURRENT_REQUESTS` | Future semaphore limit | no | `100` |
+| Variable                      | Purpose                | Required | Default (dev) |
+| ----------------------------- | ---------------------- | -------- | ------------- |
+| `PGHOST`                      | Postgres host          | yes      | `localhost`   |
+| `PGPORT`                      | Postgres port          | no       | `5432`        |
+| `PGUSER`                      | Postgres user          | yes      | `postgres`    |
+| `PGPASSWORD`                  | Postgres password      | yes      | _(secret)_    |
+| `PGDATABASE`                  | DB name                | yes      | `arch_stats`  |
+| `POSTGRES_POOL_MIN_SIZE`      | Min pool connections   | no       | `1`           |
+| `POSTGRES_POOL_MAX_SIZE`      | Max pool connections   | no       | `10`          |
+| `API_MAX_CONCURRENT_REQUESTS` | Future semaphore limit | no       | `100`         |
 
 Guidelines:
-* Provide `.env.example` (non-secret placeholders) when adding new variables.
-* CI workflows should mask secrets (`***`) and never echo raw secret values.
-* Validate required variables early in startup scripts with a helper:
+
+- Provide `.env.example` (non-secret placeholders) when adding new variables.
+- CI workflows should mask secrets (`***`) and never echo raw secret values.
+- Validate required variables early in startup scripts with a helper:
 
 ```bash
 require_var() { local n="$1"; [[ -n "${!n:-}" ]] || { echo "ERROR: required env var $n not set" >&2; exit 2; }; }
@@ -233,6 +233,7 @@ for v in PGHOST PGUSER PGPASSWORD PGDATABASE; do require_var "$v"; done
 ## Migrations Alignment
 
 DevOps workflows running migrations must:
+
 1. Execute pending SQL files (lexicographic order) before app startup.
 2. Fail fast if a migration partially applies (wrap each file in a transaction where safe).
 3. Surface clear logs: `APPLY migration <file> ... OK` / `SKIP already applied`.
@@ -242,16 +243,15 @@ Until an automated runner exists, document manual application steps in release n
 
 ## What Copilot Should **Always** Do
 
-* Insert the **shebang**, **strict mode**, and **main** pattern.
-* Write **quoted**, **lint-clean**, **4-space indented** Bash.
-* Emit **stderr** on errors and **non-zero** exits.
-* Offer **usage** when parsing args.
-* Prefer **functions**, `local` vars, and early returns.
+- Insert the **shebang**, **strict mode**, and **main** pattern.
+- Write **quoted**, **lint-clean**, **4-space indented** Bash.
+- Emit **stderr** on errors and **non-zero** exits.
+- Offer **usage** when parsing args.
+- Prefer **functions**, `local` vars, and early returns.
 
 ## What Copilot Should **Avoid**
 
-* Unquoted expansions; naked `"$@"` is the exception.
-* Silent failures; missing exit codes.
-* Inline `shellcheck` suppressions without justification.
-* `echo -e` for formatting; use `printf`.
-
+- Unquoted expansions; naked `"$@"` is the exception.
+- Silent failures; missing exit codes.
+- Inline `shellcheck` suppressions without justification.
+- `echo -e` for formatting; use `printf`.

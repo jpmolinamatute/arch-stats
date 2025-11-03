@@ -115,6 +115,42 @@ jobs:
             -d arch-stats \
             -v ON_ERROR_STOP=1 \
             -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+      - name: Validate migrations secrets
+        env:
+          MIGRATIONS_REPOSITORY: ${{ secrets.MIGRATIONS_REPOSITORY }}
+          MIGRATIONS_PAT: ${{ secrets.MIGRATIONS_PAT }}
+        run: |
+          if [ -z "${MIGRATIONS_REPOSITORY}" ] || [ -z "${MIGRATIONS_PAT}" ]; then
+            echo "Error: MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT secrets are not set." >&2
+            echo "Set them in repo settings to enable Flyway migrations during CI." >&2
+            exit 1
+          fi
+      - name: Checkout migrations repository
+        # Requires two repo secrets configured in this repository:
+        #  - MIGRATIONS_REPOSITORY: e.g. "<owner>/<private-migrations-repo>"
+        #  - MIGRATIONS_PAT: a fine-scoped PAT with repo read access
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
+          token: ${{ secrets.MIGRATIONS_PAT }}
+          path: backend/migrations
+      - name: Run Flyway migrations
+        env:
+          FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
+          FLYWAY_USER: "admin"
+          FLYWAY_PASSWORD: "NOT_A_REAL_PASSWORD"
+        run: |
+          # Ensure migrations directory exists (checkout above should have created it)
+          mkdir -p "${{ github.workspace }}/backend/migrations"
+          # Run flyway in a container against the service Postgres on localhost
+          docker run --rm \
+            --network host \
+            -e FLYWAY_URL="$FLYWAY_URL" \
+            -e FLYWAY_USER="$FLYWAY_USER" \
+            -e FLYWAY_PASSWORD="$FLYWAY_PASSWORD" \
+            -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
+            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            flyway/flyway:latest migrate
       - name: Run Tests
         env:
           POSTGRES_USER: "admin"
@@ -125,6 +161,7 @@ jobs:
           ARCH_STATS_DEV_MODE: "true"
           ARCH_STATS_SERVER_PORT: "8000"
           ARCH_STATS_WS_CHANNEL: "archy"
+          GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
           PYTHONPATH: "${{ github.workspace }}/backend/src"
         run: |
           source "${{ github.workspace }}/backend/.venv/bin/activate"

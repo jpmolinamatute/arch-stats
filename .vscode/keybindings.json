@@ -1,12 +1,27 @@
 [
     {
-        "key": "ctrl+shift+d",
+        "key": "ctrl+shift+1",
         "command": "workbench.action.tasks.runTask",
         "args": "Start Docker Compose"
     },
     {
-        "key": "ctrl+shift+s",
+        "key": "ctrl+shift+2",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Start Uvicorn Dev Server"
+    },
+    {
+        "key": "ctrl+shift+3",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Start Vite Frontend"
+    },
+    {
+        "key": "ctrl+shift+4",
         "command": "workbench.action.tasks.runTask",
         "args": "Stop Docker Compose"
+    },
+    {
+        "key": "ctrl+shift+5",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Stop & Remove Volumes"
     }
 ]

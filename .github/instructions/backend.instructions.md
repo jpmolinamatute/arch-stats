@@ -1,190 +1,249 @@
-# Backend instructions
-
-**Audience:** Python developers working in `backend/` directory.
-
 ---
 applyTo: "**/*.py"
 ---
 
-## Tech stack
+# Backend Development Instructions for GitHub Copilot
 
-- **Language:** Python 3.13 (strict typing)
-- **Web framework:** FastAPI
-- **Data models/validation:** Pydantic **v2.x** (`ConfigDict`, `Field`, `extra="forbid"`)
-- **DB:** PostgreSQL 15+ via **`asyncpg` only** (no ORMs)
-- **Async:** idiomatic `async/await` with connection pools/transactions
-- **Real-time:** WebSockets
-- **Testing:** pytest (+ pytest-asyncio, httpx.AsyncClient)
-- **Quality:** Black (format), isort (imports), mypy (strict), Pylint (lint)
+These instructions define how GitHub Copilot must generate and modify backend code in this repository.
 
-## Coding standards
+## Project Overview
 
-- [Follow Google's Python Guide Line](./google_standards.md)
-- Every function and module must be **fully typed**; `mypy` should pass with no ignores.
-- prefer Pydantic models for I/O boundaries over dataclasses.
-- Pydantic v2 config via `model_config = ConfigDict(...)`; no inner `Config` class.
-- Validate all inputs at router boundaries; return precise HTTP status codes.
-- Keep DB access **isolated** in small async functions using `asyncpg` with prepared statements when helpful.
-- Avoid global state; pass pools/clients via dependency injection or startup wiring.
+- The backend is a **FastAPI** application located under `backend/src/`.
+- The entry point is `backend/src/app.py`.
+- The Python version used by the project is defined in `backend/.python-version`.
+- Library versions are defined in `backend/pyproject.toml`.
+- PostgreSQL and database migrations are handled through Docker Compose.
+- The backend uses a **virtual environment** located at `backend/.venv`.
+- Python packages are managed using **`uv`**.
+- All code must comply with the configured **code quality tools**:
+  - `black` for formatting
+  - `isort` for import ordering
+  - `mypy` for static type checking
+  - `pylint` for linting and style enforcement
+  - These tools can be run manually or via the script:
+    `./scripts/linting.bash --lint-backend`
 
-### Validation & Single Source of Truth
+## Environment Setup
 
-- Pydantic schemas define external contract & input validation.
-- Database constraints (NOT NULL, UNIQUE, FK, CHECK) must mirror critical invariants; validation is **duplicated only for invariants that protect data integrity** (e.g. FK, uniqueness) to prevent drift.
-- Do not add business-only rules (like max distance heuristics) into DB constraints—keep those at the schema/service layer.
+Copilot must respect and operate within the project’s virtual environment.
 
-## Project expectations
+### Virtual Environment Activation
 
-- **No synchronous DB clients**, and do not introduce ORMs.
-- **WebSocket handlers** must be robust: handle disconnects, timeouts, and backpressure sensibly.
-- Follow REST naming patterns already used (snake_case JSON keys).
-- Log useful context (request id, principal, resource id) without spamming.
+Before running any command or Python process, Copilot must activate the backend virtual environment:
 
-### Logging Format
-
-Emit structured JSON (preferred) or key=value single line. Minimum fields:
-
-`ts level module msg request_id=<uuid> resource=<entity> latency_ms=<int>`
-
-If using JSON: `{ "ts": "2025-08-20T12:34:56.123Z", "level": "INFO", "module": "sessions.router", "msg": "session opened", "request_id": "...", "resource": {"type": "session", "id": "..."}, "latency_ms": 12 }`
-
-Never log PII; truncate arrays/large payloads.
-
-### Connection Pool & Concurrency
-
-Environment variables (documented here, default fallback in code):
-
-| Var | Purpose | Suggested Dev Default |
-|-----|---------|-----------------------|
-| `PG_POOL_MIN` | minimum connections | 1 |
-| `PG_POOL_MAX` | maximum connections | 10 |
-| `API_MAX_CONCURRENT_REQUESTS` | (future) semaphore limit | 100 |
-
-Guideline: keep `POOL_MAX` <= (CPU cores * 2) for typical IO-bound FastAPI usage. Reassess with load tests.
-
-### Prepared Statements Guidance
-
-Use prepared statements when a query is executed frequently (rule of thumb: > 50 times per process lifetime OR inside high-throughput endpoints). Name statements deterministically: `<area>_<table>_<action>` (e.g., `sessions_select_open`). Avoid preparing one-off migration queries.
-
-### WebSocket (Future Contract Stub)
-
-When implementing the real-time channel, follow this envelope shape (JSON text frames):
-
-```json
-{
-	"type": "shot.created",      // event name (snake_case + domain)
-	"ts": "2025-08-20T12:34:56.789Z",
-	"request_id": "<uuid or null>",
-	"data": { /* event-specific payload */ }
-}
+```bash
+source ./backend/.venv/bin/activate
 ```
 
-Rules:
-1. Never block send loop; queue with backpressure (drop oldest after N=1000 if client slow, log WARN).
-2. Heartbeat: server -> client `{"type":"heartbeat","ts":"..."}` every 30s.
-3. No client->server mutation messages until an explicit spec section is added.
+### Package Management
 
-### Error Model
+All Python package operations (install, upgrade, remove, etc.) must be performed using **`uv`**, not pip or poetry.
+For example:
 
-Success responses: HTTP 2xx with `HTTPResponse` wrapper (`code`, `data`, `errors=[]`).
+```bash
+uv add fastapi
+uv remove sqlalchemy
+```
 
-Client mistakes (validation, not found, conflict): return appropriate 4xx AND still use wrapper with `data=null`, `errors=[..]` so frontend parsing is uniform. Do *not* return 200 + populated `errors` for true failures.
+Copilot must never suggest raw `pip install` commands.
 
-Server unexpected failures: 500 with wrapper, log stack (not returned). FastAPI exception handlers centralize formatting.
+### Docker
 
-### Migrations Process
+Start the backend environment using Docker Compose:
 
-Current approach: raw SQL migration files under `backend/src/server/models/migrations/` (create directory if absent) named with ordered prefix: `YYYYMMDDHHMM__short_description.sql`.
+```bash
+docker compose -f ./docker/docker-compose.yaml up --build
+```
 
-Checklist to add a migration:
-1. Create SQL file (idempotent where feasible; guard with `IF NOT EXISTS`).
-2. Include `-- migrate:up` section (and optional `-- migrate:down`).
-3. Provide accompanying minimal test asserting new columns / tables exist.
-4. Run locally against fresh DB (`docker compose down -v && up`) to verify.
-5. Document any destructive change in PR description.
+Or automatically via the VS Code task: **`Start Docker Compose`**.
 
-Future tooling placeholder: if adopting a migration runner, integrate here; until then, a lightweight script will apply pending files ordered lexicographically.
+Stop the environment manually:
 
-### OpenAPI -> Frontend Types Workflow
+```bash
+docker compose -f ./docker/docker-compose.yaml down
+# or
+docker compose -f ./docker/docker-compose.yaml down -v
+```
 
-Any change to routers or schemas that alters OpenAPI (new field, endpoint, description affecting generated types) requires:
-1. Regenerate: `npm run generate:types` (frontend directory) while backend running.
-2. Verify FE build; DO NOT commit `types.generated.ts` (ignored).
-3. Mention in PR checklist: "API types regenerated locally".
+Or via the VS Code tasks: **`Stop Docker Compose`** or **`Stop & Remove Volumes`**.
 
-### Sensor Simulators (arrow/bow/target)
+### FastAPI Dev Server
 
-Target cadence assumptions (guidance for realistic data):
-- Bow reader: emits `arrow_engage` and `arrow_release` with 2–8s average gap during active session.
-- Target reader: landing detection within configurable window (default 3s) after release; if absent, mark miss.
-- Arrow reader: ID association event occurs prior to `arrow_engage` (<=1s).
+Run the FastAPI server after Docker is running and the virtual environment is activated:
 
-Tests may mock these timings; do not bake fixed sleeps into production logic—use timestamps from DB rows.
+```bash
+source ./backend/.venv/bin/activate
+cd ./backend/src
+exec uvicorn --loop asyncio --lifespan on --reload --ws websockets --http h11 --use-colors --log-level debug --timeout-graceful-shutdown 10 --factory --limit-concurrency 10 app:run
+```
 
-## Testing discipline
+Or automatically via the VS Code task: **`Start Uvicorn Dev Server`**.
 
-- Unit-test business logic without hitting the DB where feasible.
-- Integration tests use Dockerized Postgres (see `docker/docker-compose.yaml`).
-- For HTTP, use `httpx.AsyncClient` against the FastAPI app factory.
-- Seed/factories for test data accepted; ensure determinism.
+## Code Structure Rules
 
-## Server feature Integration Checklist
+Copilot must follow these structural and architectural conventions.
 
-When adding or updating a server features, ensure changes are consistent across routers, schemas, models, and tests.
+### Directories
 
-### Routers (`backend/src/server/routers/`)
+- **`backend/src/routers/`**:
+  Define only route declarations and HTTP status handling.
+  Keep routers small and free of business logic.
+- **`backend/src/models/`** and **`backend/src/core/`**:
+  Implement all business logic here.
+  Use clean separation of concerns.
+- **`backend/src/schema/`**:
+  Contain all **Pydantic** models (v2) used for I/O validation.
+  - Models that validate data **coming from the outside world to the DB**.
+  - Models that validate data **coming from the DB to the outside world**.
 
-- Keep **endpoint code minimal**: no business logic in routes, only orchestration.
-- Use dependency-injected services and async DB helpers.
-- Follow REST naming and status code patterns used elsewhere.
-- Document inputs/outputs with Pydantic models.
+## Coding Standards
 
-### Schemas (`backend/src/server/schema/`)
+Copilot must adhere to the following rules and conventions when generating or modifying backend Python code.
 
-- All request/response bodies must use **Pydantic v2 models**.
-- `extra="forbid"` and strict typing for all fields.
-- Use `Field(...)` for defaults, constraints, and descriptions.
-- Version schemas when changing existing contracts.
+1. **Follow [Google’s Python Style Guide](./google_standards.md)**.
+2. Every module, class, and function must be **fully typed**.
+   `mypy` should pass without `# type: ignore` comments.
+3. Always place **import statements at the top** of the file.
+4. Use **Pydantic models** for all I/O boundaries (never dataclasses).
+5. Use **Pydantic v2 syntax**:
 
-### Models (`backend/src/server/models/`)
+   ```python
+   model_config = ConfigDict(...)
+   ```
 
-- Add or modify DB table fields with clear migrations.
-- Use only `asyncpg` queries; parameterized, never interpolated SQL.
-- Update helper functions or query builders when schema changes.
-- Keep models dumb: only describe fields and queries, not business rules.
+   Do not use an inner `Config` class.
 
-### Tests (`backend/tests/{endpoints,models}/`)
+6. Validate all inputs at router boundaries using Pydantic schemas.
+7. Return **precise HTTP status codes** using `HTTPException` as needed.
+8. Keep **database access isolated** in small async functions under `models/` or `core/`.
+9. Use **`asyncpg`** for database access. Use prepared statements when beneficial.
+10. Avoid global state. Pass database pools, clients, and other dependencies through **dependency injection** or startup wiring.
+11. Ensure Copilot **uses the Python version** defined in `backend/.python-version`.
+12. Use library versions and dependencies defined in `backend/pyproject.toml`.
+13. Always activate the virtual environment before running or testing code.
+14. Manage packages exclusively through **`uv`** commands.
 
-- For each new/updated route: add tests under `tests/endpoints/`.
-- For each new/updated model: add tests under `tests/models/`.
-- Cover both success and failure paths (e.g. invalid payloads, DB errors).
-- Use factories or seed data to keep tests deterministic.
-- Use `httpx.AsyncClient` for HTTP tests, transaction rollbacks for DB tests.
+### Code Quality Requirements
 
-### Example Endpoint Test Pattern (Reference)
+All backend code must pass the following tools without errors or warnings:
+
+- isort — import sorting (uses pyproject.toml for settings)
+- black — code formatting
+- mypy — static type checking
+- pylint — linting and style enforcement
+
+Copilot must write code compatible with all these tools.
+
+#### Running Tools Individually
+
+First, activate the virtual environment and move into the backend directory:
+
+```bash
+source ./backend/.venv/bin/activate
+cd backend
+```
+
+Then run:
+
+```bash
+isort --settings-file ./pyproject.toml ./src ./tests
+black --config ./pyproject.toml ./src ./tests
+mypy --config-file ./pyproject.toml ./src ./tests
+pylint --rcfile ./pyproject.toml ./src ./tests
+```
+
+#### Running All at Once
+
+To execute all code quality checks in one step, run the following from the project root directory:
+
+```bash
+./scripts/linting.bash --lint-backend
+```
+
+Copilot must generate code that passes all these checks.
+
+### Example Endpoint Pattern
+
+Copilot must model all FastAPI endpoints according to this style and structure:
 
 ```python
-async def test_create_session(client: AsyncClient) -> None:
-	payload = {"is_opened": True, "start_time": datetime.utcnow().isoformat()+"Z", "location": "range A", "is_indoor": False, "distance": 18}
-	resp = await client.post("/api/v0/session", json=payload)
-	assert resp.status_code == 200
-	body = resp.json()
-	assert body["code"] == 200
-	assert body["errors"] == []
+from fastapi import APIRouter, Depends, Response, status, HTTPException, Request
+from uuid import UUID
+from models import ArcherModel
+from schemas import ArcherRead
+
+router = APIRouter()
+
+async def require_auth(request: Request) -> UUID:
+    """Validate JWT from auth cookie and return authenticated archer ID.
+
+    Raises:
+        HTTPException: If the cookie is missing or invalid (401).
+    """
+    token = request.cookies.get("arch_stats_auth")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized to use this endpoint",
+        )
+    try:
+        sub = decode_token(token, "sub")
+        if not isinstance(sub, str):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User is not authorized to use this endpoint",
+            )
+        return UUID(sub)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized to use this endpoint",
+        ) from exc
+
+
+@router.get("/{archer_id}", response_model=ArcherRead, status_code=status.HTTP_200_OK)
+async def get_archer(
+    archer_id: UUID,
+    current_archer_id: UUID = Depends(require_auth),
+    archer_model: ArcherModel = Depends(),
+) -> ArcherRead:
+    """Retrieve one archer by ID. Enforces caller authorization."""
+    if current_archer_id != archer_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    try:
+        return await archer_model.get_one(archer_id)
+    except DBNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Archer not found",
+        ) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Archer not found",
+        ) from e
 ```
 
-Use similar minimal assertions + any domain specific follow-ups.
+**Copilot must respect these design principles:**
 
-**Rule of thumb:** any new endpoint must have:
+- The `response_model` matches the function’s return type.
+- No hardcoded HTTP responses.
+- Return consistent `HTTPException` structures.
+- Validate user authorization at the router boundary.
+- Business logic resides in models or core modules, not routers.
 
-1. Minimal router code
-2. Schema(s) for validation
-3. Matching model/queries
-4. Unit and integration tests
+## Summary
 
-Failing to check one of these boxes = incomplete feature.
+Copilot must:
 
-## References
-
-- See [backend/README.md](../../backend/README.md) for setup, structure, and VS Code tasks.
- - For style/consistency: see top-level architecture guide `.github/copilot-instructions.md`.
+- Activate the virtual environment from `backend/.venv`.
+- Use `uv` for all Python dependency management.
+- Infer Python version from `backend/.python-version`.
+- Infer dependency versions from `backend/pyproject.toml`.
+- Keep routers minimal, typed, and validated.
+- Centralize business logic in `models` or `core`.
+- Use Pydantic v2 and asyncpg properly.
+- Follow Google’s style guide.
+- Maintain full typing and static validation compatibility.
+- Run linting and formatting tools without errors.

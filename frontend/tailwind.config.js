@@ -21,6 +21,12 @@ export default {
     content: ['./index.html', './src/**/*.{vue,ts,tsx,js,jsx}'],
     theme: {
         extend: {
+            screens: {
+                p360: '360px',
+                p375: '375px',
+                p390: '390px',
+                p414: '414px',
+            },
             colors: {
                 wa: {
                     reflex: '#00209F',

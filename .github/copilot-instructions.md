@@ -8,8 +8,8 @@
 
 Arch-Stats tracks archery performance. Two main runtime surfaces:
 
-1. **Backend (`backend/`)** FastAPI (Python 3.13) + PostgreSQL 15 via `asyncpg` ONLY. Sensor simulators (arrow/bow/target readers) write events to DB; server exposes REST `/api/v0/...` + WebSockets for real-time updates. Modules communicate indirectly through the database and Postgres `LISTEN/NOTIFY` (decoupling - do NOT add direct cross-module imports for runtime coupling).
-2. **Frontend (`frontend/`)** Vue 3 + Vite SPA consuming REST + (future) WebSocket stream. Build artifacts emitted into `backend/src/server/frontend/` and then served by FastAPI.
+1. **Backend (`backend/`)** FastAPI (Python 3.14) + PostgreSQL 17.
+2. **Frontend (`frontend/`)** Vue 3 + Vite SPA consuming REST + (future) WebSocket stream. Build artifacts emitted into `backend/src/frontend/` and then served by FastAPI.
 
 Data flow example (shot lifecycle): sensor script -> insert row(s) -> Postgres NOTIFY -> server/websocket (future) -> frontend updates table/visuals. Maintain this unidirectional flow; avoid tight coupling.
 
@@ -19,20 +19,18 @@ Data flow example (shot lifecycle): sensor script -> insert row(s) -> Postgres N
 - Models: Pydantic v2 with `model_config = ConfigDict(extra="forbid")` (no legacy `Config` class).
 - Strict typing: every Python function annotated; pass mypy (strict) without `# type: ignore` unless justified.
 - Formatting: Python (Black + isort + Pylint), JS/TS (ESLint + Prettier). Keep diffs minimal.
-- Frontend build output path: `backend/src/server/frontend/` (never change path assumptions in server code).
+- Frontend build output path: `backend/src/frontend/` (never change path assumptions in server code).
 - Keep FE/BE separation: no importing backend internals into frontend types; generate API types (`npm run generate:types`).
 
 ## 3. Repository Layout (Key Directories)
 
-| Path                    | Purpose                                                                       |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| `backend/src/server/`   | FastAPI app factory, routers, db pool, static serving.                        |
-| `backend/src/*_reader/` | Sensor simulators (arrow/bow/target). Each isolated; communicate only via DB. |
-| `backend/src/shared/`   | Shared utilities (logging, factories). Keep generic & dependency-light.       |
-| `backend/tests/`        | Pytest suites (models + endpoints). Use these as examples for new tests.      |
-| `frontend/src/`         | Vue SPA code (components, composables, state).                                |
-| `scripts/`              | Automation (linting, start scripts, installation). Bash must be POSIX-safe.   |
-| `docker/`               | Postgres compose + config.                                                    |
+| Path             | Purpose                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| `backend/src/`   | FastAPI app factory, routers, db pool, static serving.                      |
+| `backend/tests/` | Pytest suites (models + endpoints). Use these as examples for new tests.    |
+| `frontend/src/`  | Vue SPA code (components, composables, state).                              |
+| `scripts/`       | Automation (linting, start scripts, installation). Bash must be POSIX-safe. |
+| `docker/`        | Postgres compose + config.                                                  |
 
 ## 4. Core Workflows (Do These Exactly)
 
@@ -51,12 +49,6 @@ Run API locally:
 ./scripts/start_uvicorn.bash   # or VS Code task "Start Uvicorn Dev Server"
 ```
 
-Run sensor bot (simulated shots):
-
-```bash
-./scripts/start_archy_bot.bash # adds shot data for manual testing
-```
-
 Frontend dev:
 
 ```bash
@@ -68,6 +60,7 @@ npm run dev                    # or VS Code task "Start Vite Frontend"
 Generate API types (run whenever backend OpenAPI changes):
 
 ```bash
+cd frontend
 npm run generate:types
 ```
 
@@ -85,6 +78,8 @@ Backend:
 - Routers: accept/return Pydantic models; enforce validation at boundary; snake_case JSON.
 - WebSocket (future/real-time): centralize connection management; handle disconnects gracefully; never block event loop.
 - Avoid global mutable state; acquire DB pool via startup dependency injection.
+- always declare import at the top of the file; no inline imports except for type checking (`if TYPE_CHECKING:`).
+- follow .github/instructions/backend.instructions.md for detailed backend rules.
 
 Frontend:
 
@@ -92,6 +87,7 @@ Frontend:
 - Map view names to components (see `App.vue` `componentsMap`). When adding a new view, extend the discriminated union in `uiManagerStore` and update mapping.
 - Always import generated API types instead of redefining (e.g., use `SessionsRead` from `types.generated.ts`).
 - Keep reactive sources narrow; compute derivatives with `computed()`. Avoid spreading reactive objects before network serialization.
+- follow .github/instructions/frontend.instructions.md for detailed frontend rules.
 
 Scripts:
 
@@ -148,7 +144,6 @@ export async function getOpenSession(): Promise<Session | null> {
 - Frontend rules: [./instructions/frontend.instructions.md](./instructions/frontend.instructions.md)
 - Backend rules: [./instructions/backend.instructions.md](./instructions/backend.instructions.md)
 - Google Python style (linked inside backend rules).
-- High-level user overview: [../README.md](../README.md)
 
 ## 10. When Unsure
 
