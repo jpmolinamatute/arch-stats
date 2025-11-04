@@ -1,7 +1,8 @@
 import logging
 from abc import ABC
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Generic, Protocol, Sequence, TypeVar
+from typing import Generic, Protocol, TypeVar
 from uuid import UUID
 
 from asyncpg import Pool
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 # core package __init__ (which re-exports SessionManager and other modules),
 # preventing cyclic imports with models -> parent_model -> core -> session_manager -> models
 from core.logger import get_logger
+from models.sql_statement_builder import SQLStatementBuilder
 
 
 type Values = str | float | bool | int | UUID | datetime | bytes | None | Sequence[int] | Sequence[
@@ -61,39 +63,44 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         self.pk = f"{self.name}_id"
         self.db_pool = db_pool
         self.logger = get_logger()
+        # SQL builder scoped to this model's primary table. Use for safe SQL assembly.
+        self.sql_builder = SQLStatementBuilder(self.name)
 
     def build_select_sql_stm(
-        self, where: FILTERTYPE, columns: list[str], limit: int
+        self, where: FILTERTYPE, columns: list[str], limit: int = 1
     ) -> tuple[str, ValuesTuple]:
-        sql_stm = "SELECT "
-        sql_stm += ", ".join(columns) if columns else " * "
-        sql_stm += f" FROM {self.name} "
+        """Assemble a parameterized SELECT using SQLStatementBuilder.
+
+        Builds conditions from the provided filter model and returns the
+        SQL string along with a tuple of values in placeholder order.
+        """
         dump = where.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
-        values: ValuesTuple = ()
-        if dump:
-            keys = list(dump.keys())
-            values = tuple(dump.values())
-            sql_stm += " WHERE " + " AND ".join(
-                f"{key} = ${i}" for i, key in enumerate(keys, start=1)
-            )
-        if limit <= 0:
-            sql_stm += ";"
-        else:
-            sql_stm += f" LIMIT {limit};"
+        keys = list(dump.keys())
+        values: ValuesTuple = tuple(dump.values()) if dump else ()
+
+        conditions = [f"{key} = ${i}" for i, key in enumerate(keys, start=1)]
+        sql_stm = self.sql_builder.build_select_with_conditions(columns, conditions, limit)
         return (sql_stm, values)
 
     def build_update_sql_stm(self, data: SETTYPE, where: FILTERTYPE) -> tuple[str, ValuesTuple]:
+        """Assemble a parameterized UPDATE using SQLStatementBuilder.
+
+        Placeholder numbering for WHERE conditions continues after the SET
+        clause to match the bound values order.
+        """
         set_dump = data.model_dump(by_alias=False, exclude_unset=True, exclude_none=True)
         set_keys = list(set_dump.keys())
         set_values = tuple(set_dump.values())
-        set_clause = ", ".join(f"{key} = ${i}" for i, key in enumerate(set_keys, start=1))
+
+        set_data = [(key, f"${i}") for i, key in enumerate(set_keys, start=1)]
+
         where_dump = where.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
         where_keys = list(where_dump.keys())
         where_values = tuple(where_dump.values())
-        where_clause = " AND ".join(
-            f"{key} = ${i}" for i, key in enumerate(where_keys, start=len(set_keys) + 1)
-        )
-        sql_statement = f"UPDATE {self.name} SET {set_clause} WHERE {where_clause};"
+
+        conditions = [f"{key} = ${i}" for i, key in enumerate(where_keys, start=len(set_keys) + 1)]
+
+        sql_statement = self.sql_builder.build_update(set_data, conditions)
         values: ValuesTuple = (*set_values, *where_values)
         return (sql_statement, values)
 
@@ -142,11 +149,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         dump = data.model_dump(by_alias=True, exclude_unset=True)
         keys = list(dump.keys())
         values = list(dump.values())
-        columns = ", ".join(keys)
-        placeholders = ", ".join(f"${i+1}" for i in range(len(keys)))
-        sql_statement = (
-            f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders}) RETURNING {self.pk};"
-        )
+        sql_statement = self.sql_builder.build_insert(keys)
         try:
             async with self.db_pool.acquire() as conn:
                 self.logger.debug("Inserting into %s: %s", self.name, dump)
@@ -202,7 +205,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         Raises:
             DBNotFound: If no record matches the filters.
         """
-        select_stm, params = self.build_select_sql_stm(where, [], 1)
+        select_stm, params = self.build_select_sql_stm(where, [])
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", select_stm)
             row = await conn.fetchrow(select_stm, *params)
@@ -219,7 +222,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         Returns:
             List of validated read-schema instances.
         """
-        sql_statement, params = self.build_select_sql_stm(where, columns, -1)
+        sql_statement, params = self.build_select_sql_stm(where, columns, 0)
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", sql_statement)
             rows = await conn.fetch(sql_statement, *params)

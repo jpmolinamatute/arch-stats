@@ -38,7 +38,11 @@ ok() { printf "%b✓ %s%b\n" "$GREEN" "$1" "$RESET"; }
 err() { printf "%b✗ %s%b\n" "$RED" "$1" "$RESET"; }
 
 fail_count=0
-pass() { ok "$1"; }
+pass_count=0
+pass() {
+    pass_count=$((pass_count + 1))
+    ok "$1"
+}
 fail() {
     err "$1"
     fail_count=$((fail_count + 1))
@@ -65,8 +69,13 @@ load_env() {
 
 run_sql() {
     local sql_statement="${1}"
-    # Print compact SQL for easier debugging (stderr)
-    printf 'Executing SQL: %s\n' "${sql_statement//[$'\n\r']/ }" >&2
+    local enable_debug="${2:-false}"
+
+    if [[ "$enable_debug" == "true" ]]; then
+        # Print compact SQL for easier debugging (stderr)
+        printf 'Executing SQL: %s\n' "${sql_statement//[$'\n\r']/ }" >&2
+    fi
+
     # Use quiet, tuples-only, unaligned output for reliable command-sub substitution
     psql \
         -h "${POSTGRES_HOST}" \
@@ -189,6 +198,94 @@ cleanup_ids() {
 ########################################
 # Tests
 ########################################
+
+test_shot_table_arrow_ownership_and_aggregates() {
+    header "shot table: ownership check and aggregates"
+
+    local archer_a archer_b sid target_a target_b slot_a slot_b
+    local a1 a2 a3 a4 a5 a6
+
+    # Create two archers
+    archer_a="$(create_archer)"
+    archer_a="${archer_a//$'\n'/}"
+    archer_b="$(create_archer)"
+    archer_b="${archer_b//$'\n'/}"
+
+    # Single open session (owned by archer_a for simplicity)
+    sid="$(create_session "$archer_a" true)"
+    sid="${sid//$'\n'/}"
+
+    # Two targets in same session
+    target_a="$(create_target "$sid" 70 1)"
+    target_a="${target_a//$'\n'/}"
+    target_b="$(create_target "$sid" 70 2)"
+    target_b="${target_b//$'\n'/}"
+
+    # Two slots: archer_a on target_a with 80cm_full; archer_b on target_b with none
+    slot_a="$(assign_slot "$target_a" "$archer_a" "$sid" '80cm_full' 'A' true)"
+    slot_a="${slot_a//$'\n'/}"
+    slot_b="$(assign_slot "$target_b" "$archer_b" "$sid" 'none' 'B' true)"
+    slot_b="${slot_b//$'\n'/}"
+
+    # 6 arrows for archer_a (arrow_number 1..6)
+    a1="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 1) RETURNING arrow_id;")"
+    a1="${a1//$'\n'/}"
+    a2="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 2) RETURNING arrow_id;")"
+    a2="${a2//$'\n'/}"
+    a3="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 3) RETURNING arrow_id;")"
+    a3="${a3//$'\n'/}"
+    a4="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 4) RETURNING arrow_id;")"
+    a4="${a4//$'\n'/}"
+    a5="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 5) RETURNING arrow_id;")"
+    a5="${a5//$'\n'/}"
+    a6="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 6) RETURNING arrow_id;")"
+    a6="${a6//$'\n'/}"
+
+    #
+    # Test 1: check_shot_arrow_ownership must pass for archer_a using own arrows in slot_a
+    # Insert 4 scored shots for slot_a with non-null x,y,score and valid arrow ownership
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.10, 0.20, 10, '$a1');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.30, 0.40, 9,  '$a2');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.50, 0.60, 8,  '$a3');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.70, 0.80, 7,  '$a4');" >/dev/null
+    pass "check_shot_arrow_ownership accepted valid arrows for slot_a"
+
+    # archer_b shoots in slot_b with NULL x,y,score and NULL arrow_id (allowed by all-or-none check)
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+
+    #
+    # Test 2: live_stat_by_slot_id for slot_a (scores: 10,9,8,7)
+    # Expect: number_of_shots=4, total_score=34, mean=8.5, max_score=40
+    local mean_a nshots_a total_a max_a
+    IFS="," read -r mean_a nshots_a total_a max_a < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_a';"
+    )
+
+    if [[ "$nshots_a" == "4" && "$total_a" == "34" && "$mean_a" == "8.5" && "$max_a" == "40" ]]; then
+        pass "Aggregates for slot_a match expected values (mean=8.5, total=34, shots=4, max=40)"
+    else
+        fail "Aggregates for slot_a unexpected: mean=$mean_a total=$total_a shots=$nshots_a max=$max_a"
+    fi
+
+    #
+    # Test 3: live_stat_by_slot_id for slot_b (3 shots with NULL score)
+    # View coalesces AVG and SUM to 0; COUNT counts rows via slot_id
+    local mean_b nshots_b total_b
+    IFS="," read -r mean_b nshots_b total_b _ < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_b';"
+    )
+
+    if [[ "$nshots_b" == "3" && "$total_b" == "0" && "$mean_b" == "0" ]]; then
+        pass "Aggregates for slot_b match expected values (mean=0, total=0, shots=3)"
+    else
+        fail "Aggregates for slot_b unexpected: mean=$mean_b total=$total_b shots=$nshots_b"
+    fi
+
+    # Cleanup (shots cascade via slot; arrows cascade via archer)
+    cleanup_ids "$slot_a" "$slot_b" "$target_a" "$target_b" "$sid" "$archer_a" "$archer_b"
+}
 
 test_unique_open_session_per_archer() {
     header "unique_open_session_per_archer index"
@@ -797,13 +894,19 @@ main() {
     test_get_active_slot_id_function
     test_get_next_lane_with_full_targets
     test_session_shot_per_round_defaults_and_constraints
+    test_shot_table_arrow_ownership_and_aggregates
     test_notify_shot_insert_trigger
 
     echo
     hr 80
+    # Summary counters
+    local total_count
+    total_count=$((pass_count + fail_count))
+    info "Test summary: total=${total_count}, passed=${pass_count}, failed=${fail_count}"
+
     stop_docker
     if [[ "$fail_count" -eq 0 ]]; then
-        ok "All migration tests passed"
+        ok "All ${total_count} migration tests passed"
         exit 0
     else
         err "$fail_count test(s) failed"

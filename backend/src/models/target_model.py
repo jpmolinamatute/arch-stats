@@ -24,7 +24,7 @@ class TargetModel(ParentModel[TargetCreate, TargetSet, TargetRead, TargetFilter]
 
     async def get_lane(self, target_id: UUID) -> int | None:
         where = TargetFilter(target_id=target_id)
-        sql_statement, params = self.build_select_sql_stm(where, ["lane"], 1)
+        sql_statement, params = self.build_select_sql_stm(where, ["lane"])
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", sql_statement)
             row = await conn.fetchrow(sql_statement, *params)

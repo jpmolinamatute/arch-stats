@@ -5,8 +5,7 @@ from fastapi import Request
 
 from core import SlotManager
 from models import SessionModel, ShotModel, SlotModel
-
-from .auth import require_auth
+from routers.deps.auth import require_auth
 
 
 async def get_session_model(request: Request) -> SessionModel:

@@ -1,9 +1,6 @@
-import json
-from asyncio import sleep
 from uuid import UUID
 
-from asyncpg import Connection, Pool
-from asyncpg.pool import PoolConnectionProxy
+from asyncpg import Pool
 
 from models.parent_model import DBNotFound, ParentModel
 from schema import (
@@ -20,32 +17,9 @@ from schema import (
 )
 
 
-async def callback(
-    _: Connection | PoolConnectionProxy, __: int, channel: str, payload: object
-) -> None:
-    """Process the notification"""
-    shot_data = json.loads(str(payload))
-    # Send to WebSocket client
-    print(f"New shot data received on channel {channel}: {shot_data}")
-
-
 class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("slot", db_pool, SlotRead)
-
-    async def listen_for_shots(self, slot_id: UUID) -> None:
-        """Listen for shot notifications for a specific slot_id"""
-        async with self.db_pool.acquire() as conn:
-            # Subscribe to the specific channel for this slot
-            channel_name = f"{self.name}_insert_{slot_id}"
-            await conn.add_listener(channel_name, callback)
-
-            try:
-                # Your WebSocket loop here
-                while True:
-                    await sleep(0.1)
-            finally:
-                await conn.remove_listener(channel_name, callback)
 
     # pylint: disable=[too-many-arguments]
     async def create_one(
@@ -87,9 +61,7 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
         """
         Fetch available target for a session and distance (from get_available_targets function).
         """
-        sql = """
-            SELECT * FROM get_available_targets($1, $2);
-        """
+        sql = self.sql_builder.build_select_function("get_available_targets", 2)
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(sql, req_data.session_id, req_data.distance)
         return [TargetRead(**row) for row in rows]
@@ -128,10 +100,7 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
 
     async def get_slot_with_lane(self, slot_id: UUID) -> SlotRead:
         """Fetch a single slot with computed slot identifier."""
-        select_stm = """
-            SELECT *
-            FROM get_slot_with_lane($1);
-        """
+        select_stm = self.sql_builder.build_select_function("get_slot_with_lane", 1)
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", select_stm)
             row = await conn.fetchrow(select_stm, slot_id)

@@ -1,6 +1,6 @@
 # Live data ideas
 
-## Ways to get data
+## Stat data
 
 ```python
 from uuid import UUID
@@ -12,21 +12,34 @@ class Shot(BaseModel):
     score: int = Field(...)
 
 class Stat(BaseModel):
-    shot: list[Shot]  = Field(...) # this list MUST be sorted by created_at
-    count: int = Field(...)
+    shots: list[Shot]  = Field(...) # this list MUST be sorted by created_at
+    number_of_shots: int = Field(...)
     total_score: int = Field(...)
     max_score: int = Field(...)
-    median: float = Field(...)
     mean: float  = Field(...)
 ```
 
+## Ways to get data
+
 ### WebSocket
 
-It will push Stat data (this will include only the last shot)
+It will push Stat data (this will include only the last shot). This is how it's going to accomplish it:
+
+1. Listen to shot_insert_{slot_id}.
+2. query `SELECT * from live_stat_by_slot_id WHERE slot_id = {p_slot_id}
+3. Instantiate a Stat class using the result of step 1 as shots and `number_of_shots`, `total_score`, `max_score`, and `mean` from step 2.
+4. Push the Stat object to the client.
 
 ### GET endpoint
 
 it will return Stat data (this will include all shots)
+
+```sql
+SELECT *
+FROM shot
+WHERE slot_id = {p_slot_id}
+ORDER BY created_at ASC;
+```
 
 ## Frontend
 

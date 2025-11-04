@@ -42,15 +42,14 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         Return a session_id if the archer is actively participating in an open session,
         or None if not found.
         """
-        query = """
-            SELECT session_id
-            FROM active_slots
-            WHERE archer_id = $1
-            LIMIT 1
-        """
-        row = None
+        sql = self.sql_builder.build_select_view(
+            view_name="active_slots",
+            columns=["session_id"],
+            conditions=["archer_id = $1"],
+            limit=1,
+        )
         async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(query, archer_id)
+            row = await conn.fetchrow(sql, archer_id)
         return row["session_id"] if row else None
 
     async def does_open_session_exist(self, session: UUID) -> bool:
@@ -107,14 +106,14 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
 
         Uses base tables to avoid dependency on a specific view in test environments.
         """
-        query = """
-            SELECT 1
-            FROM active_slots
-            WHERE session_id = $1
-            LIMIT 1;
-        """
+        sql = self.sql_builder.build_select_view(
+            view_name="active_slots",
+            columns=["1"],
+            conditions=["session_id = $1"],
+            limit=1,
+        )
         async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(query, session_id)
+            row = await conn.fetchrow(sql, session_id)
         return row is not None
 
     async def re_open_session(self, session: SessionId, archer_id: UUID) -> None:
