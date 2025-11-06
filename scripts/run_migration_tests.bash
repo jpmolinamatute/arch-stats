@@ -38,7 +38,11 @@ ok() { printf "%b✓ %s%b\n" "$GREEN" "$1" "$RESET"; }
 err() { printf "%b✗ %s%b\n" "$RED" "$1" "$RESET"; }
 
 fail_count=0
-pass() { ok "$1"; }
+pass_count=0
+pass() {
+    pass_count=$((pass_count + 1))
+    ok "$1"
+}
 fail() {
     err "$1"
     fail_count=$((fail_count + 1))
@@ -65,8 +69,13 @@ load_env() {
 
 run_sql() {
     local sql_statement="${1}"
-    # Print compact SQL for easier debugging (stderr)
-    printf 'Executing SQL: %s\n' "${sql_statement//[$'\n\r']/ }" >&2
+    local enable_debug="${2:-false}"
+
+    if [[ "$enable_debug" == "true" ]]; then
+        # Print compact SQL for easier debugging (stderr)
+        printf 'Executing SQL: %s\n' "${sql_statement//[$'\n\r']/ }" >&2
+    fi
+
     # Use quiet, tuples-only, unaligned output for reliable command-sub substitution
     psql \
         -h "${POSTGRES_HOST}" \
@@ -190,6 +199,94 @@ cleanup_ids() {
 # Tests
 ########################################
 
+test_shot_table_arrow_ownership_and_aggregates() {
+    header "shot table: ownership check and aggregates"
+
+    local archer_a archer_b sid target_a target_b slot_a slot_b
+    local a1 a2 a3 a4 a5 a6
+
+    # Create two archers
+    archer_a="$(create_archer)"
+    archer_a="${archer_a//$'\n'/}"
+    archer_b="$(create_archer)"
+    archer_b="${archer_b//$'\n'/}"
+
+    # Single open session (owned by archer_a for simplicity)
+    sid="$(create_session "$archer_a" true)"
+    sid="${sid//$'\n'/}"
+
+    # Two targets in same session
+    target_a="$(create_target "$sid" 70 1)"
+    target_a="${target_a//$'\n'/}"
+    target_b="$(create_target "$sid" 70 2)"
+    target_b="${target_b//$'\n'/}"
+
+    # Two slots: archer_a on target_a with 80cm_full; archer_b on target_b with none
+    slot_a="$(assign_slot "$target_a" "$archer_a" "$sid" 'wa_80cm_full' 'A' true)"
+    slot_a="${slot_a//$'\n'/}"
+    slot_b="$(assign_slot "$target_b" "$archer_b" "$sid" 'none' 'B' true)"
+    slot_b="${slot_b//$'\n'/}"
+
+    # 6 arrows for archer_a (arrow_number 1..6)
+    a1="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 1) RETURNING arrow_id;")"
+    a1="${a1//$'\n'/}"
+    a2="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 2) RETURNING arrow_id;")"
+    a2="${a2//$'\n'/}"
+    a3="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 3) RETURNING arrow_id;")"
+    a3="${a3//$'\n'/}"
+    a4="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 4) RETURNING arrow_id;")"
+    a4="${a4//$'\n'/}"
+    a5="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 5) RETURNING arrow_id;")"
+    a5="${a5//$'\n'/}"
+    a6="$(run_sql "INSERT INTO arrow (archer_id, arrow_number) VALUES ('$archer_a', 6) RETURNING arrow_id;")"
+    a6="${a6//$'\n'/}"
+
+    #
+    # Test 1: check_shot_arrow_ownership must pass for archer_a using own arrows in slot_a
+    # Insert 4 scored shots for slot_a with non-null x,y,score and valid arrow ownership
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.10, 0.20, 10, '$a1');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.30, 0.40, 9,  '$a2');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.50, 0.60, 8,  '$a3');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.70, 0.80, 7,  '$a4');" >/dev/null
+    pass "check_shot_arrow_ownership accepted valid arrows for slot_a"
+
+    # archer_b shoots in slot_b with NULL x,y,score and NULL arrow_id (allowed by all-or-none check)
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id) VALUES ('$slot_b');" >/dev/null
+
+    #
+    # Test 2: live_stat_by_slot_id for slot_a (scores: 10,9,8,7)
+    # Expect: number_of_shots=4, total_score=34, mean=8.5, max_score=40
+    local mean_a nshots_a total_a max_a
+    IFS="," read -r mean_a nshots_a total_a max_a < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_a';"
+    )
+
+    if [[ "$nshots_a" == "4" && "$total_a" == "34" && "$mean_a" == "8.5" && "$max_a" == "40" ]]; then
+        pass "Aggregates for slot_a match expected values (mean=8.5, total=34, shots=4, max=40)"
+    else
+        fail "Aggregates for slot_a unexpected: mean=$mean_a total=$total_a shots=$nshots_a max=$max_a"
+    fi
+
+    #
+    # Test 3: live_stat_by_slot_id for slot_b (3 shots with NULL score)
+    # View coalesces AVG and SUM to 0; COUNT counts rows via slot_id
+    local mean_b nshots_b total_b
+    IFS="," read -r mean_b nshots_b total_b _ < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_b';"
+    )
+
+    if [[ "$nshots_b" == "3" && "$total_b" == "0" && "$mean_b" == "0" ]]; then
+        pass "Aggregates for slot_b match expected values (mean=0, total=0, shots=3)"
+    else
+        fail "Aggregates for slot_b unexpected: mean=$mean_b total=$total_b shots=$nshots_b"
+    fi
+
+    # Cleanup (shots cascade via slot; arrows cascade via archer)
+    cleanup_ids "$slot_a" "$slot_b" "$target_a" "$target_b" "$sid" "$archer_a" "$archer_b"
+}
+
 test_unique_open_session_per_archer() {
     header "unique_open_session_per_archer index"
 
@@ -245,7 +342,7 @@ test_get_next_lane_function() {
 }
 
 test_slot_shooting_participants_view() {
-    header "active_slots view"
+    header "open_participants view"
 
     local a1 a2 s_open s_closed t_open cnt
 
@@ -262,21 +359,24 @@ test_slot_shooting_participants_view() {
     t_open="$(create_target "$s_open" 70 1)"
     t_open="${t_open//$'\n'/}"
 
-    assign_slot "$t_open" "$a1" "$s_open" '40cm_full' 'A' true
-    assign_slot "$t_open" "$a2" "$s_open" '40cm_full' 'B' false
+    assign_slot "$t_open" "$a1" "$s_open" 'wa_40cm_full' 'A' true
+    assign_slot "$t_open" "$a2" "$s_open" 'wa_40cm_full' 'B' false
 
     # Create slot in closed session (should not appear in view)
     local t_closed
     t_closed="$(create_target "$s_closed" 70 2)"
     t_closed="${t_closed//$'\n'/}"
-    assign_slot "$t_closed" "$a2" "$s_closed" '40cm_full' 'A' true
+    assign_slot "$t_closed" "$a2" "$s_closed" 'wa_40cm_full' 'A' true
 
-    cnt="$(run_sql "SELECT count(*) FROM active_slots WHERE session_id = '$s_open';")"
+    # Refresh MV to ensure visibility of latest mutations
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
+
+    cnt="$(run_sql "SELECT count(*) FROM open_participants WHERE session_id = '$s_open';")"
     cnt="${cnt//$'\n'/}"
     if [[ "$cnt" == "1" ]]; then
-        pass "active_slots returned 1 active shooter for open session"
+        pass "open_participants returned 1 active shooter for open session"
     else
-        fail "active_slots returned '$cnt' (expected 1)"
+        fail "open_participants returned '$cnt' (expected 1)"
     fi
 
     cleanup_ids "$t_open" "$t_closed" "$s_open" "$s_closed" "$a1" "$a2"
@@ -314,15 +414,15 @@ test_get_available_targets_function() {
     t3="${t3//$'\n'/}"
 
     # Occupy t1 with 3 archer
-    assign_slot "$t1" "$a1" "$s" '40cm_full' 'A' true
-    assign_slot "$t1" "$a2" "$s" '40cm_full' 'B' true
-    assign_slot "$t1" "$a3" "$s" '40cm_full' 'C' true
+    assign_slot "$t1" "$a1" "$s" 'wa_40cm_full' 'A' true
+    assign_slot "$t1" "$a2" "$s" 'wa_40cm_full' 'B' true
+    assign_slot "$t1" "$a3" "$s" 'wa_40cm_full' 'C' true
 
     # Occupy t2 with 4 distinct archer (should be excluded)
-    assign_slot "$t2" "$a5" "$s" '40cm_full' 'A' true
-    assign_slot "$t2" "$a6" "$s" '40cm_full' 'B' true
-    assign_slot "$t2" "$a7" "$s" '40cm_full' 'C' true
-    assign_slot "$t2" "$a8" "$s" '40cm_full' 'D' true
+    assign_slot "$t2" "$a5" "$s" 'wa_40cm_full' 'A' true
+    assign_slot "$t2" "$a6" "$s" 'wa_40cm_full' 'B' true
+    assign_slot "$t2" "$a7" "$s" 'wa_40cm_full' 'C' true
+    assign_slot "$t2" "$a8" "$s" 'wa_40cm_full' 'D' true
 
     # Query available target at distance 70
     local rows
@@ -360,7 +460,7 @@ test_get_available_targets_occupancy_steps_18() {
     tid="${tid//$'\n'/}"
 
     # 1st slot -> occupied should be 1
-    assign_slot "$tid" "$a1" "$sid" '40cm_full' 'A' true >/dev/null
+    assign_slot "$tid" "$a1" "$sid" 'wa_40cm_full' 'A' true >/dev/null
     rows="$(run_sql "SELECT lane, occupied FROM get_available_targets('$sid', 18);")"
     if [[ "$rows" == "1,1" ]]; then
         pass "get_available_targets shows occupied=1 after one slot"
@@ -369,7 +469,7 @@ test_get_available_targets_occupancy_steps_18() {
     fi
 
     # 2nd slot -> occupied should be 2
-    assign_slot "$tid" "$a2" "$sid" '40cm_full' 'B' true >/dev/null
+    assign_slot "$tid" "$a2" "$sid" 'wa_40cm_full' 'B' true >/dev/null
     rows="$(run_sql "SELECT lane, occupied FROM get_available_targets('$sid', 18);")"
     if [[ "$rows" == "1,2" ]]; then
         pass "get_available_targets shows occupied=2 after two slots"
@@ -378,7 +478,7 @@ test_get_available_targets_occupancy_steps_18() {
     fi
 
     # 3rd slot -> occupied should be 3
-    assign_slot "$tid" "$a3" "$sid" '40cm_full' 'C' true >/dev/null
+    assign_slot "$tid" "$a3" "$sid" 'wa_40cm_full' 'C' true >/dev/null
     rows="$(run_sql "SELECT lane, occupied FROM get_available_targets('$sid', 18);")"
     if [[ "$rows" == "1,3" ]]; then
         pass "get_available_targets shows occupied=3 after three slots"
@@ -387,7 +487,7 @@ test_get_available_targets_occupancy_steps_18() {
     fi
 
     # 4th slot -> target becomes full and should be excluded (no rows)
-    assign_slot "$tid" "$a4" "$sid" '40cm_full' 'D' true >/dev/null
+    assign_slot "$tid" "$a4" "$sid" 'wa_40cm_full' 'D' true >/dev/null
     rows="$(run_sql "SELECT lane, occupied FROM get_available_targets('$sid', 18);")"
     if [[ -z "$rows" ]]; then
         pass "get_available_targets excludes full target (occupied=4) as expected"
@@ -410,7 +510,7 @@ test_get_slot_with_lane_function() {
     # Use lane 4 to make slot text deterministic (e.g., 4A)
     tid="$(create_target "$sid" 70 4)"
     tid="${tid//$'\n'/}"
-    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"
+    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" 'wa_40cm_full' 'A' true)"
     slot_id="${slot_id//$'\n'/}"
 
     got_slot="$(run_sql "SELECT slot FROM get_slot_with_lane('$slot_id');")"
@@ -445,10 +545,11 @@ test_get_active_slot_id_function() {
     sid="${sid//$'\n'/}"
     tid="$(create_target "$sid" 70 2)"
     tid="${tid//$'\n'/}"
-    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" '40cm_full' 'A' true)"
+    slot_id="$(assign_slot "$tid" "$archer_id" "$sid" 'wa_40cm_full' 'A' true)"
     slot_id="${slot_id//$'\n'/}"
 
     # Happy path: active shooter in open session
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ "$res" == "$slot_id" ]]; then
@@ -459,6 +560,7 @@ test_get_active_slot_id_function() {
 
     # Inactive shooter should yield NULL
     run_sql "UPDATE slot SET is_shooting = FALSE WHERE slot_id = '$slot_id';" >/dev/null
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
@@ -469,6 +571,7 @@ test_get_active_slot_id_function() {
 
     # Closed session should yield NULL even if shooter is set active
     run_sql "UPDATE slot SET is_shooting = TRUE WHERE slot_id = '$slot_id'; UPDATE session SET is_opened = FALSE WHERE session_id = '$sid';" >/dev/null
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
@@ -480,6 +583,7 @@ test_get_active_slot_id_function() {
     # Non-existent archer should yield NULL
     rnd_archer="$(run_sql "SELECT uuid_generate_v4();")"
     rnd_archer="${rnd_archer//$'\n'/}"
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$rnd_archer');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
@@ -525,16 +629,16 @@ test_get_next_lane_with_full_targets() {
     t2="${t2//$'\n'/}"
 
     # Fill target 1 (A-D)
-    assign_slot "$t1" "$a1" "$sid" '40cm_full' 'A' true >/dev/null
-    assign_slot "$t1" "$a2" "$sid" '40cm_full' 'B' true >/dev/null
-    assign_slot "$t1" "$a3" "$sid" '40cm_full' 'C' true >/dev/null
-    assign_slot "$t1" "$a4" "$sid" '40cm_full' 'D' true >/dev/null
+    assign_slot "$t1" "$a1" "$sid" 'wa_40cm_full' 'A' true >/dev/null
+    assign_slot "$t1" "$a2" "$sid" 'wa_40cm_full' 'B' true >/dev/null
+    assign_slot "$t1" "$a3" "$sid" 'wa_40cm_full' 'C' true >/dev/null
+    assign_slot "$t1" "$a4" "$sid" 'wa_40cm_full' 'D' true >/dev/null
 
     # Fill target 2 (A-D)
-    assign_slot "$t2" "$a5" "$sid" '40cm_full' 'A' true >/dev/null
-    assign_slot "$t2" "$a6" "$sid" '40cm_full' 'B' true >/dev/null
-    assign_slot "$t2" "$a7" "$sid" '40cm_full' 'C' true >/dev/null
-    assign_slot "$t2" "$a8" "$sid" '40cm_full' 'D' true >/dev/null
+    assign_slot "$t2" "$a5" "$sid" 'wa_40cm_full' 'A' true >/dev/null
+    assign_slot "$t2" "$a6" "$sid" 'wa_40cm_full' 'B' true >/dev/null
+    assign_slot "$t2" "$a7" "$sid" 'wa_40cm_full' 'C' true >/dev/null
+    assign_slot "$t2" "$a8" "$sid" 'wa_40cm_full' 'D' true >/dev/null
 
     # get_next_lane should return 3 regardless of fullness, since max lane is 2
     next="$(run_sql "SELECT get_next_lane('$sid');")"
@@ -617,9 +721,9 @@ test_notify_shot_insert_trigger() {
     tid="$(create_target "$sid" 18 1)"
     tid="${tid//$'\n'/}"
 
-    slot_a="$(assign_slot "$tid" "$archer_a" "$sid" '40cm_full' 'A' true)"
+    slot_a="$(assign_slot "$tid" "$archer_a" "$sid" 'wa_40cm_full' 'A' true)"
     slot_a="${slot_a//$'\n'/}"
-    slot_b="$(assign_slot "$tid" "$archer_b" "$sid" '40cm_full' 'B' true)"
+    slot_b="$(assign_slot "$tid" "$archer_b" "$sid" 'wa_40cm_full' 'B' true)"
     slot_b="${slot_b//$'\n'/}"
 
     chan_a="shot_insert_${slot_a}"
@@ -797,13 +901,19 @@ main() {
     test_get_active_slot_id_function
     test_get_next_lane_with_full_targets
     test_session_shot_per_round_defaults_and_constraints
+    test_shot_table_arrow_ownership_and_aggregates
     test_notify_shot_insert_trigger
 
     echo
     hr 80
+    # Summary counters
+    local total_count
+    total_count=$((pass_count + fail_count))
+    info "Test summary: total=${total_count}, passed=${pass_count}, failed=${fail_count}"
+
     stop_docker
     if [[ "$fail_count" -eq 0 ]]; then
-        ok "All migration tests passed"
+        ok "All ${total_count} migration tests passed"
         exit 0
     else
         err "$fail_count test(s) failed"

@@ -26,12 +26,12 @@ from asyncpg import Pool
 from factories.archer_factory import create_archers
 from factories.session_factory import create_sessions
 from factories.target_factory import create_targets
-from schema import BowStyleType, SlotLetterType, TargetFaceType
+from schema import BowStyleType, FaceType, SlotLetterType
 
 
 _BOWSTYLE = [style.value for style in BowStyleType]
 _SLOT_LETTERS = [letter.value for letter in SlotLetterType]
-_FACE_TYPES = [face.value for face in TargetFaceType]
+_FACE_TYPES = [face.value for face in FaceType]
 
 
 async def get_archers(pool: Pool, qty: int, archer_ids: list[UUID] | None) -> list[UUID]:

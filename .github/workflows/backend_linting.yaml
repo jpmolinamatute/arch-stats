@@ -104,17 +104,6 @@ jobs:
             echo "Waiting for Postgres (attempt $i)..."
             sleep 2
           done
-      - name: Ensure required DB extensions exist
-        env:
-          PGPASSWORD: "NOT_A_REAL_PASSWORD"
-        run: |
-          psql \
-            -h 127.0.0.1 \
-            -p 5432 \
-            -U admin \
-            -d arch-stats \
-            -v ON_ERROR_STOP=1 \
-            -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
       - name: Validate migrations secrets
         env:
           MIGRATIONS_REPOSITORY: ${{ secrets.MIGRATIONS_REPOSITORY }}

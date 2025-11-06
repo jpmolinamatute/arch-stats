@@ -6,30 +6,24 @@ from core import SlotManager, SlotManagerError
 from models import DBException, DBNotFound, SlotModel
 from routers.deps.auth import require_auth
 from routers.deps.models import get_slot_manager, get_slot_model
-from schema import (
-    SlotFilter,
-    SlotJoinRequest,
-    SlotJoinResponse,
-    SlotRead,
-)
+from schema import FullSlotInfo, SlotFilter, SlotJoinRequest, SlotJoinResponse
 
 
 router = APIRouter(prefix="/session", tags=["Slots"])
 
 
 @router.get(
-    "/{session_id:uuid}/archer/{archer_id:uuid}/current-slot",
-    response_model=SlotRead,
+    "/slot/archer/{archer_id:uuid}",
+    response_model=FullSlotInfo,
     status_code=status.HTTP_200_OK,
 )
 async def get_archer_current_slot(
-    session_id: UUID,
     archer_id: UUID,
     current_archer_id: UUID = Depends(require_auth),
     slot_model: SlotModel = Depends(get_slot_model),
-) -> SlotRead:
+) -> FullSlotInfo:
     """
-    Get the archer's slot assignment for a given session regardless if is_shooting.
+    Get the archer's current active slot assignment (open session and is_shooting = TRUE).
 
     Responses: 200 OK, 404 Not Found.
     """
@@ -37,25 +31,24 @@ async def get_archer_current_slot(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     try:
-        where = SlotFilter(session_id=session_id, archer_id=archer_id)
-        return await slot_model.get_one(where)
+        return await slot_model.get_full_slot_info(archer_id=archer_id)
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-@router.get("/slot/{slot:uuid}", response_model=SlotRead, status_code=status.HTTP_200_OK)
+@router.get("/slot/{slot:uuid}", response_model=FullSlotInfo, status_code=status.HTTP_200_OK)
 async def get_slot(
     slot: UUID,
     current_archer_id: UUID = Depends(require_auth),
     slot_model: SlotModel = Depends(get_slot_model),
-) -> SlotRead:
+) -> FullSlotInfo:
     """
-    Get slot assignment details.
+    Get active slot assignment details (open session, is_shooting = TRUE).
 
     Responses: 200 OK, 404 Not Found.
     """
     try:
-        slot_row = await slot_model.get_one(SlotFilter(slot_id=slot))
+        slot_row = await slot_model.get_full_slot_info(slot_id=slot)
         if current_archer_id != slot_row.archer_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return slot_row

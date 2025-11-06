@@ -8,7 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from core import DBPool, get_logger, settings
-from routers.v0 import archer_router, auth_router, session_router, shot_router, slot_router
+from routers.v0 import (
+    archer_router,
+    auth_router,
+    faces_router,
+    session_router,
+    shot_router,
+    slot_router,
+)
 
 
 @asynccontextmanager
@@ -46,6 +53,7 @@ def run() -> FastAPI:
             {"name": "Sessions", "description": "Operations about sessions domain"},
             {"name": "Slots", "description": "Operations about slot assignments"},
             {"name": "Shots", "description": "Operations about shots domain"},
+            {"name": "Faces", "description": "Operations about target faces domain"},
         ],
     )
 
@@ -65,6 +73,7 @@ def run() -> FastAPI:
     app.include_router(session_router, prefix=f"/api/{mayor_version}")
     app.include_router(slot_router, prefix=f"/api/{mayor_version}")
     app.include_router(shot_router, prefix=f"/api/{mayor_version}")
+    app.include_router(faces_router, prefix=f"/api/{mayor_version}")
     app.mount(
         "/app",
         StaticFiles(

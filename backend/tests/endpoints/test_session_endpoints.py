@@ -7,8 +7,6 @@ Covers:
 - GET   /session/archer/{archer_id}/close-session
 - POST  /session
 - PATCH /session/close
-- POST  /session/slot
-- PATCH /session/slot/leave
 - PATCH /session/re-open
 """
 
@@ -35,7 +33,7 @@ async def join_session(
         "session_id": str(session_id),
         "archer_id": str(archer_id),
         "distance": distance,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -44,7 +42,7 @@ async def join_session(
     assert r.status_code == 200
     join_data = r.json()
     # Augment with target_id by querying current slot info
-    cs = await client.get(f"/api/v0/session/{session_id}/archer/{archer_id}/current-slot")
+    cs = await client.get(f"/api/v0/session/slot/archer/{archer_id}")
     assert cs.status_code == 200
     join_data["target_id"] = cs.json()["target_id"]
     return join_data
@@ -97,7 +95,7 @@ async def test_join_slot_requires_auth(client: AsyncClient) -> None:
         "session_id": "00000000-0000-0000-0000-000000000000",
         "archer_id": "00000000-0000-0000-0000-000000000000",
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -349,7 +347,7 @@ async def test_join_session_assigns_slot_and_marks_participating(
         "session_id": str(session_id),
         "archer_id": str(participant_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -390,7 +388,7 @@ async def test_leave_session_clears_participation(
         "session_id": str(session_id),
         "archer_id": str(participant_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -433,7 +431,7 @@ async def test_close_session_rules(
         "session_id": str(session_id),
         "archer_id": str(p1),
         "distance": 70,
-        "face_type": "122cm_full",
+        "face_type": "wa_122cm_full",
         "bowstyle": "compound",
         "draw_weight": 52.3,
     }
@@ -863,7 +861,7 @@ async def test_join_nonexistent_session_returns_422(
         "session_id": "00000000-0000-0000-0000-000000000000",  # non-existent
         "archer_id": str(archer_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -927,7 +925,7 @@ async def test_join_session_validation_missing_fields(
         # "session_id": omitted
         # "archer_id": omitted
         # "distance": omitted
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         # "is_shooting": omitted (required in request model)
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -994,7 +992,7 @@ async def test_cannot_join_second_open_session(
             "session_id": s2,
             "archer_id": str(participant),
             "distance": 30,
-            "face_type": "60cm_full",
+            "face_type": "wa_60cm_full",
             "is_shooting": True,
             "bowstyle": "recurve",
             "draw_weight": 30.0,
@@ -1038,7 +1036,7 @@ async def test_cannot_join_same_session_twice(
             "session_id": s,
             "archer_id": str(participant),
             "distance": 30,
-            "face_type": "60cm_full",
+            "face_type": "wa_60cm_full",
             "is_shooting": True,
             "bowstyle": "recurve",
             "draw_weight": 30.0,
@@ -1053,7 +1051,7 @@ async def test_cannot_join_same_session_twice(
             "session_id": s,
             "archer_id": str(participant),
             "distance": 30,
-            "face_type": "60cm_full",
+            "face_type": "wa_60cm_full",
             "is_shooting": True,
             "bowstyle": "recurve",
             "draw_weight": 30.0,
@@ -1211,7 +1209,7 @@ async def test_rejoin_session_happy_path(
         "session_id": session_id,
         "archer_id": str(participant_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -1293,7 +1291,7 @@ async def test_rejoin_as_another_archer_returns_403(
         "session_id": session_id,
         "archer_id": str(archer_a),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -1355,7 +1353,7 @@ async def test_rejoin_closed_session_returns_422(
         "session_id": session_id,
         "archer_id": str(participant_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,
@@ -1407,7 +1405,7 @@ async def test_rejoin_without_leaving_returns_422(
         "session_id": session_id,
         "archer_id": str(participant_id),
         "distance": 30,
-        "face_type": "60cm_full",
+        "face_type": "wa_60cm_full",
         "is_shooting": True,
         "bowstyle": "recurve",
         "draw_weight": 30.0,

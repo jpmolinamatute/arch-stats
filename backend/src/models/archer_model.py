@@ -10,7 +10,7 @@ class ArcherModel(ParentModel[ArcherCreate, ArcherSet, ArcherRead, ArcherFilter]
 
     async def get_by_google_subject(self, sub: str) -> ArcherRead | None:
         where = ArcherFilter(google_subject=sub)
-        select_stm, params = self.build_select_sql_stm(where, [], 1)
+        select_stm, params = self.build_select_sql_stm(where, [])
         async with self.db_pool.acquire() as conn:
             self.logger.debug("Fetching: %s", select_stm)
             row = await conn.fetchrow(select_stm, *params)

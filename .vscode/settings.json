@@ -286,7 +286,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[json]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[vue]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"

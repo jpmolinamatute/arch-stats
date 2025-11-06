@@ -1,12 +1,13 @@
 <script setup lang="ts">
-    import { onMounted, ref } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     import { useRouter } from 'vue-router';
     import { useSlot } from '@/composables/useSlot';
     import { useArcher } from '@/composables/useArcher';
     import { useAuth } from '@/composables/useAuth';
+    import { useFaces } from '@/composables/useFaces';
     import type { components } from '@/types/types.generated';
 
-    type TargetFaceType = components['schemas']['TargetFaceType'];
+    type FaceType = components['schemas']['FaceType'];
     type BowStyleType = components['schemas']['BowStyleType'];
 
     const props = defineProps<{
@@ -20,28 +21,22 @@
     const router = useRouter();
     const { currentSlot, joinSession, getSlot, loading: slotLoading, error: slotError } = useSlot();
     const { getArcher, loading: archerLoading } = useArcher();
+    const { faces, listFaces, loading: facesLoading, error: facesError } = useFaces();
     const { user } = useAuth();
 
-    const faceType = ref<TargetFaceType>('40cm_full');
+    const faceType = ref<FaceType>('none');
     const bowstyle = ref<BowStyleType>('recurve');
     const drawWeight = ref<number>(25);
     const distance = ref<number>(18);
     const formError = ref<string | null>(null);
 
-    // Target face options
-    const faceTypeOptions: { value: TargetFaceType; label: string }[] = [
-        { value: '40cm_full', label: '40cm Full Face' },
-        { value: '60cm_full', label: '60cm Full Face' },
-        { value: '80cm_full', label: '80cm Full Face' },
-        { value: '122cm_full', label: '122cm Full Face' },
-        { value: '40cm_6rings', label: '40cm 6-Ring' },
-        { value: '60cm_6rings', label: '60cm 6-Ring' },
-        { value: '80cm_6rings', label: '80cm 6-Ring' },
-        { value: '122cm_6rings', label: '122cm 6-Ring' },
-        { value: '40cm_triple_vertical', label: '40cm Triple Vertical' },
-        { value: '60cm_triple_triangular', label: '60cm Triple Triangular' },
-        { value: 'none', label: 'None' },
-    ];
+    // Face options from API
+    const faceOptions = computed(() =>
+        (faces.value ?? []).map((f) => ({
+            value: f.face_id as FaceType,
+            label: f.face_name,
+        })),
+    );
 
     // Bowstyle options
     const bowstyleOptions: { value: BowStyleType; label: string }[] = [
@@ -53,7 +48,7 @@
 
     const loading = ref(false);
 
-    // Fetch archer data on mount to pre-fill bowstyle and draw_weight
+    // Fetch data on mount: faces + archer profile
     onMounted(async () => {
         if (!user.value?.archer_id) {
             formError.value = 'User not authenticated';
@@ -62,6 +57,16 @@
 
         try {
             loading.value = true;
+            // Load faces first, then default selection to first available
+            await listFaces();
+            const list = faces.value;
+            if (Array.isArray(list) && list.length > 0) {
+                const first = list[0];
+                if (first && first.face_id) {
+                    faceType.value = first.face_id as FaceType;
+                }
+            }
+
             const archerData = await getArcher(user.value.archer_id);
             bowstyle.value = archerData.bowstyle;
             drawWeight.value = archerData.draw_weight;
@@ -105,7 +110,7 @@
             });
 
             // Fetch the full slot details and store in session state
-            const slotDetails = await getSlot(props.sessionId, user.value.archer_id);
+            const slotDetails = await getSlot();
             currentSlot.value = slotDetails;
 
             emit('slotAssigned', result.slot_id);
@@ -132,27 +137,30 @@
             </div>
 
             <!-- Loading state -->
-            <div v-if="loading || archerLoading" class="text-center py-4">
-                <p class="text-sm text-slate-400">Loading archer data...</p>
+            <div v-if="loading || archerLoading || facesLoading" class="text-center py-4">
+                <p class="text-sm text-slate-400">Loading data...</p>
             </div>
 
             <!-- Form fields -->
             <template v-else>
-                <div v-if="formError || slotError" class="text-sm text-red-600 text-left">
-                    {{ formError || slotError }}
+                <div
+                    v-if="formError || slotError || facesError"
+                    class="text-sm text-red-600 text-left"
+                >
+                    {{ formError || slotError || facesError }}
                 </div>
 
-                <!-- Target Face Type -->
+                <!-- Face Type -->
                 <label class="block text-left text-xs text-slate-300">
-                    Target Face Type
+                    Face Type
                     <select
                         v-model="faceType"
                         class="mt-1 w-full border border-slate-700 p-2 rounded bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
-                        :disabled="slotLoading"
+                        :disabled="slotLoading || facesLoading"
                     >
                         <option
-                            v-for="option in faceTypeOptions"
+                            v-for="option in faceOptions"
                             :key="option.value"
                             :value="option.value"
                         >

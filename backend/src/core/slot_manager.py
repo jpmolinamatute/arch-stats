@@ -6,12 +6,12 @@ from models import SessionModel, SlotModel, TargetModel
 from models.parent_model import DBNotFound
 from schema import (
     BowStyleType,
+    FaceType,
     SlotFilter,
     SlotJoinRequest,
     SlotJoinResponse,
     SlotLetterType,
     SlotSet,
-    TargetFaceType,
 )
 from schema.slot_schema import SlotRead
 
@@ -40,13 +40,13 @@ class SlotManager:
         session_id: UUID,
         target_id: UUID,
         archer_id: UUID,
-        face_type: TargetFaceType,
+        face_type: FaceType,
         slot_letter: SlotLetterType,
         bowstyle: BowStyleType,
         draw_weight: float,
         club_id: UUID | None,
     ) -> UUID:
-        return await self.slot.create_one(
+        new_slot_id = await self.slot.create_one(
             session_id=session_id,
             target_id=target_id,
             archer_id=archer_id,
@@ -56,6 +56,8 @@ class SlotManager:
             draw_weight=draw_weight,
             club_id=club_id,
         )
+        await self.slot.refresh_open_participants()
+        return new_slot_id
 
     async def assign_archer_to_slot(self, req_data: SlotJoinRequest) -> SlotJoinResponse:
         """Assigns an archer to a target slot within a session.
@@ -136,6 +138,8 @@ class SlotManager:
 
         # 3) Reactivate the assignment
         await self.slot.update(SlotSet(is_shooting=True), where)
+        # Keep open_participants in sync (materialized view refresh)
+        await self.slot.refresh_open_participants()
         slot_row = await self.slot.get_slot_with_lane(slot.slot_id)
         if slot_row.slot is None:
             raise SlotManagerError("ERROR: slot is unexpectedly None")
@@ -163,3 +167,5 @@ class SlotManager:
 
         # 3) Deactivate the assignment
         await self.slot.update(SlotSet(is_shooting=False), where)
+        # Ensure materialized view that powers participation checks is updated
+        await self.slot.refresh_open_participants()

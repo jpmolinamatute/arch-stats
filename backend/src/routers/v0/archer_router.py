@@ -1,22 +1,14 @@
 import logging
 from uuid import UUID
 
-from asyncpg import Pool
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from models import ArcherModel, DBNotFound
+from routers.deps.models import get_archer_model
 from schema import ArcherCreate, ArcherFilter, ArcherId, ArcherRead, ArcherUpdate
 
 
 router = APIRouter(prefix="/archer", tags=["Archers"])
-# pylint: disable=duplicate-code
-
-
-async def get_archer_model(request: Request) -> ArcherModel:
-    logger: logging.Logger = request.app.state.logger
-    logger.debug("Getting ArcherModel")
-    db_pool: Pool = request.app.state.db_pool
-    return ArcherModel(db_pool)
 
 
 @router.get("/", response_model=list[ArcherRead])
