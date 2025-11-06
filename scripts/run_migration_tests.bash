@@ -342,7 +342,7 @@ test_get_next_lane_function() {
 }
 
 test_slot_shooting_participants_view() {
-    header "active_slots view"
+    header "open_participants view"
 
     local a1 a2 s_open s_closed t_open cnt
 
@@ -368,12 +368,15 @@ test_slot_shooting_participants_view() {
     t_closed="${t_closed//$'\n'/}"
     assign_slot "$t_closed" "$a2" "$s_closed" '40cm_full' 'A' true
 
-    cnt="$(run_sql "SELECT count(*) FROM active_slots WHERE session_id = '$s_open';")"
+    # Refresh MV to ensure visibility of latest mutations
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
+
+    cnt="$(run_sql "SELECT count(*) FROM open_participants WHERE session_id = '$s_open';")"
     cnt="${cnt//$'\n'/}"
     if [[ "$cnt" == "1" ]]; then
-        pass "active_slots returned 1 active shooter for open session"
+        pass "open_participants returned 1 active shooter for open session"
     else
-        fail "active_slots returned '$cnt' (expected 1)"
+        fail "open_participants returned '$cnt' (expected 1)"
     fi
 
     cleanup_ids "$t_open" "$t_closed" "$s_open" "$s_closed" "$a1" "$a2"
@@ -546,6 +549,7 @@ test_get_active_slot_id_function() {
     slot_id="${slot_id//$'\n'/}"
 
     # Happy path: active shooter in open session
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ "$res" == "$slot_id" ]]; then
@@ -556,6 +560,7 @@ test_get_active_slot_id_function() {
 
     # Inactive shooter should yield NULL
     run_sql "UPDATE slot SET is_shooting = FALSE WHERE slot_id = '$slot_id';" >/dev/null
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
@@ -566,6 +571,7 @@ test_get_active_slot_id_function() {
 
     # Closed session should yield NULL even if shooter is set active
     run_sql "UPDATE slot SET is_shooting = TRUE WHERE slot_id = '$slot_id'; UPDATE session SET is_opened = FALSE WHERE session_id = '$sid';" >/dev/null
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$archer_id');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then
@@ -577,6 +583,7 @@ test_get_active_slot_id_function() {
     # Non-existent archer should yield NULL
     rnd_archer="$(run_sql "SELECT uuid_generate_v4();")"
     rnd_archer="${rnd_archer//$'\n'/}"
+    run_sql "REFRESH MATERIALIZED VIEW open_participants;" >/dev/null
     res="$(run_sql "SELECT get_active_slot_id('$rnd_archer');")"
     res="${res//$'\n'/}"
     if [[ -z "$res" ]]; then

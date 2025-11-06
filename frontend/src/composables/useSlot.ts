@@ -1,11 +1,12 @@
 import { ref } from 'vue';
 import type { components } from '@/types/types.generated';
+import { useAuth } from '@/composables/useAuth';
 
 type SlotJoinRequest = components['schemas']['SlotJoinRequest'];
 type SlotJoinResponse = components['schemas']['SlotJoinResponse'];
-type SlotRead = components['schemas']['SlotRead'];
+type FullSlotInfo = components['schemas']['FullSlotInfo'];
 
-const currentSlot = ref<SlotRead | null>(null);
+const currentSlot = ref<FullSlotInfo | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
@@ -65,22 +66,46 @@ export function useSlot() {
     }
 
     /**
-     * Get slot details by slot ID.
+     * Get current slot details for the authenticated archer.
+     * Resolves the archer_id from the session (/api/v0/auth/me) to avoid mismatches.
+     * Endpoint: GET /api/v0/session/slot/archer/{archer_id}
      */
-    async function getSlot(sessionId: string, archerId: string): Promise<SlotRead> {
+    async function getSlot(): Promise<FullSlotInfo> {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(
-                `/api/v0/session/${sessionId}/archer/${archerId}/current-slot`,
-                {
+            // Prefer using the current user from the auth composable
+            const { user } = useAuth();
+            let archerId = user.value?.archer_id;
+
+            // Fallback: fetch /auth/me if user is not initialized yet
+            if (!archerId) {
+                const meResponse = await fetch('/api/v0/auth/me', {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                });
+                if (!meResponse.ok) {
+                    if (meResponse.status === 401) {
+                        throw new Error('Not authenticated. Please sign in again.');
+                    }
+                    throw new Error(`Failed to resolve user (HTTP ${meResponse.status})`);
+                }
+                const meData = (await meResponse.json()) as {
+                    archer: { archer_id: string };
+                };
+                archerId = meData.archer.archer_id;
+            }
+
+            const response = await fetch(`/api/v0/session/slot/archer/${archerId}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-            );
+            });
 
             if (!response.ok) {
                 let errorMessage = `Failed to fetch slot: ${response.status}`;
@@ -102,7 +127,7 @@ export function useSlot() {
                 throw new Error(errorMessage);
             }
 
-            return (await response.json()) as SlotRead;
+            return (await response.json()) as FullSlotInfo;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to fetch slot';
             throw e;

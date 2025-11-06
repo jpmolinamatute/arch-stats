@@ -10,6 +10,7 @@ from core.authentication import (
     verify_google_id_token,
 )
 from core.db_pool import DBPool, DBStateError
+from core.face_data import face_data
 from core.logger import get_logger
 from core.settings import settings
 from core.slot_manager import SlotManager, SlotManagerError
@@ -31,4 +32,5 @@ __all__ = [
     "SlotManager",
     "SlotManagerError",
     "verify_google_id_token",
+    "face_data",
 ]

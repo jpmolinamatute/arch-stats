@@ -43,7 +43,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         or None if not found.
         """
         sql = self.sql_builder.build_select_view(
-            view_name="active_slots",
+            view_name="open_participants",
             columns=["session_id"],
             conditions=["archer_id = $1"],
             limit=1,
@@ -107,7 +107,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         Uses base tables to avoid dependency on a specific view in test environments.
         """
         sql = self.sql_builder.build_select_view(
-            view_name="active_slots",
+            view_name="open_participants",
             columns=["1"],
             conditions=["session_id = $1"],
             limit=1,

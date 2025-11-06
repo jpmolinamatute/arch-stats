@@ -147,7 +147,7 @@ export function useSession() {
      * @param sessionId - The session to close
      * @param archerId - The archer leaving and closing the session
      */
-    async function closeSession(sessionId: string, archerId: string): Promise<void> {
+    async function closeSession(sessionId: string): Promise<void> {
         loading.value = true;
         error.value = null;
         try {
@@ -155,7 +155,7 @@ export function useSession() {
             const { leaveSession, getSlot } = useSlot();
             try {
                 // Try to get the slot for this archer in this session
-                const slot = await getSlot(sessionId, archerId);
+                const slot = await getSlot();
                 if (slot && slot.slot_id) {
                     await leaveSession(slot.slot_id);
                 }

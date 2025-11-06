@@ -54,7 +54,7 @@ class SQLStatementBuilder:
             f"""
             UPDATE {self.table_name}
             SET $set_clause
-            $where_clause
+            WHERE $where_clause
             $and_clauses;
         """
         )
@@ -69,8 +69,15 @@ class SQLStatementBuilder:
                 FROM $view_name
                 $where_clause
                 $and_clauses
-                ORDER BY created_at ASC
+                $order_by_clause
                 $limit_clause;
+            """
+        )
+        self.delete_template = Template(
+            f"""
+                DELETE FROM {self.table_name}
+                WHERE $condition
+                $and_clauses;
             """
         )
 
@@ -151,7 +158,7 @@ class SQLStatementBuilder:
         return False
 
     def build_select_with_conditions(
-        self, columns: list[str], conditions: list[str], limit: int = 0
+        self, columns: list[str] | None = None, conditions: list[str] | None = None, limit: int = 0
     ) -> str:
         """Build a SELECT statement with optional WHERE and LIMIT.
 
@@ -177,20 +184,20 @@ class SQLStatementBuilder:
             conditions = ["archer_id = $1", "score >= $2"]
             sql = builder.build_select_with_conditions(columns, conditions, 50)
         """
-        # Validate all conditions before constructing the query to avoid SQL injection patterns
-        for condition in conditions:
-            if not self.validate_condition(condition):
-                raise ValueError(f"Invalid SQL condition: {condition}")
-
         columns_str = ", ".join(columns) if columns else "*"
         where_clause = ""
         and_clauses = ""
         limit_clause = f"LIMIT {limit}" if limit > 0 else ""
         if conditions:
+            # Validate all conditions before constructing the query to avoid SQL injection patterns
+            for condition in conditions:
+                if not self.validate_condition(condition):
+                    raise ValueError(f"Invalid SQL condition: {condition}")
             where_clause = "WHERE " + conditions[0]
             and_clauses = ""
             if len(conditions) > 1:
                 and_clauses = " AND " + " AND ".join(conditions[1:])
+
         return self.select_template.substitute(
             columns=columns_str,
             where_clause=where_clause,
@@ -259,7 +266,7 @@ class SQLStatementBuilder:
             if not self.check_placeholder(val):
                 raise ValueError(f"Invalid value placeholder: {val}")
 
-        where_clause = "WHERE " + conditions[0]
+        where_clause = conditions[0]
         and_clauses = ""
         if len(conditions) > 1:
             and_clauses = " AND " + " AND ".join(conditions[1:])
@@ -287,7 +294,12 @@ class SQLStatementBuilder:
         )
 
     def build_select_view(
-        self, view_name: str, columns: list[str], conditions: list[str], limit: int = 0
+        self,
+        view_name: str,
+        order_by_clause: str = "",
+        columns: list[str] | None = None,
+        conditions: list[str] | None = None,
+        limit: int = 0,
     ) -> str:
         """Build a SELECT statement against a view with optional WHERE and LIMIT.
 
@@ -306,24 +318,38 @@ class SQLStatementBuilder:
             ``SELECT col1, col2 FROM view WHERE a = $1 AND b >= $2
             ORDER BY created_at ASC LIMIT 10;``
         """
-        # Validate all conditions before constructing the query to avoid SQL injection patterns
-        for condition in conditions:
-            if not self.validate_condition(condition):
-                raise ValueError(f"Invalid SQL condition: {condition}")
-
         columns_str = ", ".join(columns) if columns else "*"
         where_clause = ""
         and_clauses = ""
         limit_clause = f"LIMIT {limit}" if limit > 0 else ""
         if conditions:
+            # Validate all conditions before constructing the query to avoid SQL injection patterns
+            for condition in conditions:
+                if not self.validate_condition(condition):
+                    raise ValueError(f"Invalid SQL condition: {condition}")
             where_clause = "WHERE " + conditions[0]
             and_clauses = ""
             if len(conditions) > 1:
                 and_clauses = " AND " + " AND ".join(conditions[1:])
+
         return self.select_view_template.substitute(
             view_name=view_name,
             columns=columns_str,
             where_clause=where_clause,
             and_clauses=and_clauses,
+            order_by_clause=order_by_clause,
             limit_clause=limit_clause,
         )
+
+    def build_delete(self, conditions: list[str]) -> str:
+        if not conditions:
+            raise ValueError("Update statement requires at least one condition for safety.")
+
+        for condition in conditions:
+            if not self.validate_condition(condition):
+                raise ValueError(f"Invalid SQL condition: {condition}")
+        where_clause = conditions[0]
+        and_clauses = ""
+        if len(conditions) > 1:
+            and_clauses = " AND " + " AND ".join(conditions[1:])
+        return self.delete_template.substitute(where_clause=where_clause, and_clauses=and_clauses)

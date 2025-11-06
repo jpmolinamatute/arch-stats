@@ -18,7 +18,8 @@ from schema.auth_schema import (
     GoogleOneTapRequest,
     LogoutResponse,
 )
-from schema.enums import AuthStatus, BowStyleType, GenderType, SlotLetterType, TargetFaceType
+from schema.enums import AuthStatus, BowStyleType, GenderType, SlotLetterType
+from schema.face_schema import Face, FaceMinimal, FaceType, Ring, Spot
 from schema.session_schema import (
     SessionCreate,
     SessionFilter,
@@ -36,6 +37,7 @@ from schema.shot_schema import (
     ShotUpdate,
 )
 from schema.slot_schema import (
+    FullSlotInfo,
     SlotCreate,
     SlotFilter,
     SlotId,
@@ -67,6 +69,7 @@ __all__ = [
     "AuthStatus",
     "AuthUpdate",
     "BowStyleType",
+    "FullSlotInfo",
     "GenderType",
     "GoogleOneTapRequest",
     "LogoutResponse",
@@ -94,9 +97,13 @@ __all__ = [
     "SlotSet",
     "SlotUpdate",
     "TargetCreate",
-    "TargetFaceType",
+    "Face",
+    "FaceType",
+    "FaceMinimal",
     "TargetFilter",
     "TargetRead",
     "TargetSet",
     "TargetUpdate",
+    "Spot",
+    "Ring",
 ]

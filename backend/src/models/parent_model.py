@@ -15,9 +15,8 @@ from core.logger import get_logger
 from models.sql_statement_builder import SQLStatementBuilder
 
 
-type Values = str | float | bool | int | UUID | datetime | bytes | None | Sequence[int] | Sequence[
-    float
-]
+type SimpleValues = str | float | bool | int
+type Values = SimpleValues | UUID | datetime | bytes | None | Sequence[int] | Sequence[float]
 type ValuesTuple = Sequence[Values]
 
 

@@ -5,7 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from schema.enums import BowStyleType, SlotLetterType, TargetFaceType
+from schema.enums import BowStyleType, SlotLetterType
+from schema.face_schema import FaceType
 
 
 # SlotCreate and SlotJoinRequest are involved in the creation of a row in the
@@ -17,7 +18,7 @@ from schema.enums import BowStyleType, SlotLetterType, TargetFaceType
 class SlotCommons(BaseModel):
     archer_id: UUID = Field(..., description="ID of the archer to assign to the slot")
     session_id: UUID = Field(..., description="ID of the session for the assignment")
-    face_type: TargetFaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
+    face_type: FaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
     is_shooting: bool = Field(
         default=True, description="Set to True if archer is currently shooting, False otherwise"
     )
@@ -75,7 +76,7 @@ class SlotRead(BaseModel):
     target_id: UUID = Field(..., description="ID of the target this slot is assigned to")
     archer_id: UUID = Field(..., description="ID of the archer assigned to this slot")
     session_id: UUID = Field(..., description="ID of the session this assignment belongs to")
-    face_type: TargetFaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
+    face_type: FaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
     slot_letter: SlotLetterType = Field(..., description="Slot letter assigned to the archer (A-D)")
     slot: str | None = Field(
         default=None, description="Slot code combining lane and letter (e.g., '1A')"
@@ -103,7 +104,7 @@ class SlotSet(BaseModel):
     is_shooting: bool | None = Field(
         None, description="Set to True if archer is currently shooting, False otherwise"
     )
-    face_type: TargetFaceType | None = Field(
+    face_type: FaceType | None = Field(
         None, description="Update the type of target face (e.g., '40cm', '80cm')"
     )
     slot_letter: SlotLetterType | None = Field(
@@ -156,3 +157,26 @@ class SlotUpdate(BaseModel):
         elif v.slot_id is None:
             raise ValueError("where.slot_id must be provided")
         return v
+
+
+class FullSlotInfo(BaseModel):
+    slot_id: UUID = Field(..., description="Unique identifier for the slot assignment")
+    target_id: UUID = Field(..., description="ID of the target this slot is assigned to")
+    archer_id: UUID = Field(..., description="ID of the archer assigned to this slot")
+    session_id: UUID = Field(..., description="ID of the session this assignment belongs to")
+    face_type: FaceType = Field(..., description="Type of target face (e.g., '40cm', '80cm')")
+    slot_letter: SlotLetterType = Field(..., description="Slot letter assigned to the archer (A-D)")
+    is_shooting: bool = Field(
+        ..., description="Whether the archer is currently shooting in this slot"
+    )
+    created_at: datetime = Field(..., description="Assignment timestamp (UTC)")
+    lane: int = Field(..., description="Lane number of the target")
+    distance: int = Field(..., ge=1, le=100, description="Target distance (meters 1-100)")
+    slot: str = Field(..., description="Slot code combining lane and letter (e.g., '1A')")
+    bowstyle: BowStyleType = Field(..., description="Archer bowstyle copied at join time")
+    draw_weight: float = Field(
+        ..., description="Archer draw weight copied at join time", gt=0, le=200
+    )
+    club_id: UUID | None = Field(default=None, description="Archer current club at join time")
+
+    model_config = ConfigDict(title="Full Slot Assignment Info", extra="forbid")

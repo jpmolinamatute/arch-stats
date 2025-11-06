@@ -7,6 +7,7 @@
     import AppHeader from '@/components/layout/AppHeader.vue';
     import ConfirmModal from '@/components/widgets/ConfirmModal.vue';
     import SlotJoinForm from '@/components/forms/SlotJoinForm.vue';
+    import Face from '@/components/Face.vue';
 
     const router = useRouter();
     const { user, isAuthenticated, bootstrapAuth } = useAuth();
@@ -15,6 +16,8 @@
 
     const showCloseModal = ref(false);
     const initializing = ref(true);
+
+    // Face component renders using backend Face data via faceId
 
     onMounted(async () => {
         try {
@@ -41,10 +44,7 @@
             // Fetch the archer's current slot in this session (if any)
             if (currentSession.value && user.value.archer_id) {
                 try {
-                    const slot = await getSlot(
-                        currentSession.value.session_id,
-                        user.value.archer_id,
-                    );
+                    const slot = await getSlot();
                     currentSlot.value = slot;
                 } catch (slotError) {
                     // 404 means archer has no active slot - show SlotJoinForm to complete setup
@@ -75,7 +75,7 @@
 
         try {
             // Close the session (this will automatically leave the slot first)
-            await closeSession(currentSession.value.session_id, user.value.archer_id);
+            await closeSession(currentSession.value.session_id);
 
             // Redirect back to app without triggering re-authentication
             // The router will handle showing the form since no session exists
@@ -93,13 +93,24 @@
         // After slot is assigned, fetch the complete slot details
         if (currentSession.value && user.value) {
             try {
-                const slot = await getSlot(currentSession.value.session_id, user.value.archer_id);
+                const slot = await getSlot();
                 currentSlot.value = slot;
                 console.log('[LiveSession] Slot assigned successfully:', currentSlot.value);
             } catch (e) {
                 console.error('[LiveSession] Failed to fetch slot after assignment:', e);
             }
         }
+    }
+
+    // Face interactions
+    type ShotPayload = { xMm: number; yMm: number; score: number };
+    function handleShot(payload: ShotPayload): void {
+        // TODO: integrate with backend shot creation; for now, log for visibility
+        console.log('[LiveSession] Shot committed:', payload);
+    }
+    function handlePreview(_payload: ShotPayload): void {
+        // Lightweight hover/touch preview hook
+        // console.debug('[LiveSession] Preview:', payload);
     }
 </script>
 
@@ -150,76 +161,20 @@
                 <!-- Show Live Session details only if slot is assigned -->
                 <div
                     v-else-if="currentSlot"
-                    class="p-8 rounded-lg border border-slate-800 bg-slate-900/50 text-center text-slate-400"
+                    class="p-6 md:p-8 rounded-lg border border-slate-800 bg-slate-900/50 text-center text-slate-400"
                 >
-                    <h2 class="text-xl font-semibold text-slate-200 mb-2">Session Active</h2>
-                    <p class="text-sm mb-4">
-                        Your shooting session is now active. This is where shot tracking and
-                        real-time updates will appear.
-                    </p>
-                    <p class="text-xs text-slate-500">
-                        (Live session features will be implemented in the next phase)
-                    </p>
+                    <h2 class="text-xl font-semibold text-slate-200 mb-3">Session Active</h2>
+                    <p class="text-sm mb-6">Tap the target face to record a shot.</p>
 
-                    <div v-if="currentSession" class="mt-8 text-left max-w-md mx-auto">
-                        <h3 class="text-sm font-semibold text-slate-300 mb-3">Session Details</h3>
-                        <dl class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <dt class="text-slate-400">Session ID:</dt>
-                                <dd class="text-slate-200 font-mono text-xs">
-                                    {{ currentSession.session_id }}
-                                </dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-slate-400">Location:</dt>
-                                <dd class="text-slate-200">
-                                    {{ currentSession.session_location }}
-                                </dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-slate-400">Environment:</dt>
-                                <dd class="text-slate-200">
-                                    {{ currentSession.is_indoor ? 'Indoor' : 'Outdoor' }}
-                                </dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-slate-400">Status:</dt>
-                                <dd class="text-green-400">Open</dd>
-                            </div>
-                        </dl>
-
-                        <!-- Slot Details Section -->
-                        <div v-if="currentSlot" class="mt-6 pt-6 border-t border-slate-700">
-                            <h3 class="text-sm font-semibold text-slate-300 mb-3">
-                                Your Shooting Lane
-                            </h3>
-                            <dl class="space-y-2 text-sm">
-                                <div class="flex justify-between">
-                                    <dt class="text-slate-400">Slot:</dt>
-                                    <dd class="text-slate-200 font-semibold text-lg">
-                                        {{ currentSlot.slot }}
-                                    </dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-slate-400">Bow Style:</dt>
-                                    <dd class="text-slate-200 capitalize">
-                                        {{ currentSlot.bowstyle }}
-                                    </dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-slate-400">Draw Weight:</dt>
-                                    <dd class="text-slate-200">
-                                        {{ currentSlot.draw_weight }} lbs
-                                    </dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-slate-400">Target Face:</dt>
-                                    <dd class="text-slate-200 capitalize">
-                                        {{ currentSlot.face_type.replace('_', ' ') }}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </div>
+                    <div class="w-full flex justify-center">
+                        <Face
+                            v-if="currentSlot.face_type"
+                            :face-id="currentSlot.face_type"
+                            :size-px="360"
+                            :show-crosshair="'auto'"
+                            @shot="handleShot"
+                            @preview="handlePreview"
+                        />
                     </div>
                 </div>
             </div>

@@ -7,8 +7,6 @@ Covers:
 - GET   /session/archer/{archer_id}/close-session
 - POST  /session
 - PATCH /session/close
-- POST  /session/slot
-- PATCH /session/slot/leave
 - PATCH /session/re-open
 """
 
@@ -44,7 +42,7 @@ async def join_session(
     assert r.status_code == 200
     join_data = r.json()
     # Augment with target_id by querying current slot info
-    cs = await client.get(f"/api/v0/session/{session_id}/archer/{archer_id}/current-slot")
+    cs = await client.get(f"/api/v0/session/slot/archer/{archer_id}")
     assert cs.status_code == 200
     join_data["target_id"] = cs.json()["target_id"]
     return join_data

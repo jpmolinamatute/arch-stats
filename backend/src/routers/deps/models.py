@@ -4,7 +4,7 @@ from asyncpg import Pool
 from fastapi import Request
 
 from core import SlotManager
-from models import SessionModel, ShotModel, SlotModel
+from models import ArcherModel, SessionModel, ShotModel, SlotModel
 from routers.deps.auth import require_auth
 
 
@@ -42,6 +42,13 @@ async def get_shot_model(request: Request) -> ShotModel:
     logger.debug("Getting ShotModel")
     db_pool: Pool = request.app.state.db_pool
     return ShotModel(db_pool)
+
+
+async def get_archer_model(request: Request) -> ArcherModel:
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting ArcherModel")
+    db_pool: Pool = request.app.state.db_pool
+    return ArcherModel(db_pool)
 
 
 async def get_slot_manager(request: Request) -> SlotManager:
