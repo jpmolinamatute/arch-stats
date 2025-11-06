@@ -105,8 +105,9 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
 
             parsed = json.loads(payload_str)
             # Check for required keys if payload is a JSON object
-            if "shot_id" not in parsed or "score" not in parsed:
-                raise ValueError("Invalid payload structure")
+            missing_keys = [k for k in ("shot_id", "score") if k not in parsed]
+            if missing_keys:
+                raise ValueError(f"Invalid payload structure: missing keys {missing_keys}")
 
             stats: Stats = {
                 "shot": {

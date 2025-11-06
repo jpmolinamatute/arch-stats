@@ -342,8 +342,20 @@ class SQLStatementBuilder:
         )
 
     def build_delete(self, conditions: list[str]) -> str:
+        """Build a validated DELETE statement for the table.
+        All conditions are validated with :py:meth:`validate_condition` to
+        reduce injection risk. At least one condition is required for safety.
+        Args:
+            conditions: List of raw condition strings. The first becomes
+                ``WHERE <cond>``, the rest are joined with ``AND``.
+        Returns:
+            A SQL string like:
+            ``DELETE FROM <table> WHERE a = $1 AND b >= $2;``
+        Raises:
+            ValueError: If no conditions are provided, or if any condition is invalid.
+        """
         if not conditions:
-            raise ValueError("Update statement requires at least one condition for safety.")
+            raise ValueError("Delete statement requires at least one condition for safety.")
 
         for condition in conditions:
             if not self.validate_condition(condition):

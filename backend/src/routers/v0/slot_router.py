@@ -28,7 +28,6 @@ async def get_archer_current_slot(
     Responses: 200 OK, 404 Not Found.
     """
     if current_archer_id != archer_id:
-        print(f"Current archer ID: {current_archer_id}, requested archer ID: {archer_id}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     try:

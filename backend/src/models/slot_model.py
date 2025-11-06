@@ -29,14 +29,14 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
         materialized view). Falls back to a regular refresh if concurrent refresh
         is not supported in the current database state.
         """
-        # try:
-        #     await self.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants;")
-        # except Exception as exc:  # DBException or asyncpg errors
-        #     self.logger.debug(
-        #         "Concurrent refresh failed for open_participants, falling back. Reason: %s",
-        #         exc,
-        #     )
-        await self.execute("REFRESH MATERIALIZED VIEW open_participants;")
+        try:
+            await self.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants;")
+        except Exception as exc:  # DBException or asyncpg errors
+            self.logger.debug(
+                "Concurrent refresh failed for open_participants, falling back. Reason: %s",
+                exc,
+            )
+            await self.execute("REFRESH MATERIALIZED VIEW open_participants;")
 
     # pylint: disable=[too-many-arguments]
     async def create_one(
