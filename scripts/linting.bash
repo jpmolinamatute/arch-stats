@@ -46,7 +46,7 @@ run_python_checks() {
     cd -
 }
 
-run_generate_types(){
+run_generate_types() {
     echo "Generating OpenAPI spec"
     cd "${ROOT_DIR}/backend"
     uv run "${ROOT_DIR}/scripts/generate_openapi.py"
@@ -54,7 +54,6 @@ run_generate_types(){
     echo "Generating TypeScript types from OpenAPI spec"
     npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --immutable --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
 }
-
 
 run_frontend_checks() {
     run_generate_types
