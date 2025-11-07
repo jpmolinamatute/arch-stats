@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ShotBase(BaseModel):
@@ -68,22 +68,6 @@ class ShotUpdate(BaseModel):
     data: ShotSet = Field(..., description="Fields to update on the selected shots")
 
     model_config = ConfigDict(title="Shot Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: ShotSet) -> ShotSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: ShotFilter) -> ShotFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.shot_id is None:
-            raise ValueError("where.shot_id must be provided")
-        return v
 
 
 class ShotRead(ShotBase):

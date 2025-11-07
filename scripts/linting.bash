@@ -49,6 +49,7 @@ run_python_checks() {
 run_generate_types() {
     echo "Generating OpenAPI spec"
     cd "${ROOT_DIR}/backend"
+    export PYTHONPATH="${ROOT_DIR}/backend/src"
     uv run "${ROOT_DIR}/scripts/generate_openapi.py"
     cd "${ROOT_DIR}/frontend"
     echo "Generating TypeScript types from OpenAPI spec"

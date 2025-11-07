@@ -14,6 +14,8 @@ type MeResponseOk =
 const currentSlot = ref<FullSlotInfo | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+// Use a single auth composable instance at module scope to preserve reactive state
+const { user } = useAuth();
 
 export function useSlot() {
     // Local cache (localStorage) helpers
@@ -62,7 +64,6 @@ export function useSlot() {
 
     function clearSlotCache(archerId?: string): void {
         try {
-            const { user } = useAuth();
             const aid = archerId ?? user.value?.archer_id ?? null;
             if (aid) {
                 const ls = getLS();
@@ -134,7 +135,6 @@ export function useSlot() {
             const data = (await response.json()) as SlotJoinResponse;
             // After joining, try to populate state and cache quickly
             try {
-                const { user } = useAuth();
                 if (user.value?.archer_id) {
                     const full = await getSlot(true);
                     currentSlot.value = full;
@@ -162,7 +162,6 @@ export function useSlot() {
         error.value = null;
         try {
             // Prefer using the current user from the auth composable
-            const { user } = useAuth();
             let archerId = user.value?.archer_id;
 
             // Fallback: fetch /auth/me if user is not initialized yet
@@ -296,7 +295,6 @@ export function useSlot() {
         leaveSession,
         // cache utilities (optional exports)
         getSlotCached: (): FullSlotInfo | null => {
-            const { user } = useAuth();
             const archerId = user.value?.archer_id;
             return archerId ? readSlotCache(archerId) : null;
         },

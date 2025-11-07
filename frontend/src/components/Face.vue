@@ -236,7 +236,7 @@
     }
 
     const { createShot } = useShot();
-    const { getSlot, getSlotCached } = useSlot();
+    const { getSlot, getSlotCached, currentSlot } = useSlot();
 
     async function onPointerDown(e: PointerEvent) {
         // Track pointers for pinch
@@ -261,10 +261,14 @@
             const score = scoreFromPoint(xMm, yMm);
             const isX = isXFromPoint(xMm, yMm);
 
-            // Resolve current slot (prefer cached to avoid network on every tap)
-            const slot = getSlotCached() ?? (await getSlot());
+            // Resolve current slot_id without awaiting network in the hot path
+            const slotId = currentSlot.value?.slot_id ?? getSlotCached()?.slot_id;
+            if (!slotId) {
+                console.warn('[Face] No active slot available yet; shot ignored');
+                return;
+            }
             await createShot({
-                slot_id: slot.slot_id,
+                slot_id: slotId,
                 x: xMm,
                 y: yMm,
                 score, // 0..10
@@ -322,6 +326,20 @@
         updateWidth();
         const ro = new ResizeObserver(() => updateWidth());
         if (containerRef.value) ro.observe(containerRef.value);
+
+        // Preload current slot asynchronously to avoid network await on tap
+        if (!currentSlot.value) {
+            const cached = getSlotCached();
+            if (cached) {
+                currentSlot.value = cached;
+            } else {
+                void getSlot()
+                    .then((full) => {
+                        currentSlot.value = full;
+                    })
+                    .catch((err) => console.error('[Face] Failed to preload slot:', err));
+            }
+        }
     });
 </script>
 
