@@ -2,6 +2,12 @@
     import { computed, onMounted, ref, watch } from 'vue';
     import type { components } from '@/types/types.generated';
     import { useFace } from '@/composables/useFace';
+    import SvgCanvas from '@/components/svg/SvgCanvas.vue';
+    import SvgSpot from '@/components/svg/SvgSpot.vue';
+    import SvgMarker from '@/components/svg/SvgMarker.vue';
+    import SvgCrosshair from '@/components/svg/SvgCrosshair.vue';
+    import { useShot } from '@/composables/useShot';
+    import { useSlot } from '@/composables/useSlot';
 
     type Face = components['schemas']['Face'];
     type FaceType = components['schemas']['FaceType'];
@@ -72,7 +78,8 @@
     });
 
     // Derived geometry
-    const svgRef = ref<SVGSVGElement | null>(null);
+    // Reference to SvgCanvas to query bounding box for pointer math
+    const canvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
 
     // Compute the maximum extent in mm so we scale the whole arrangement to fit the viewport
     const maxExtentMm = computed(() => {
@@ -113,6 +120,12 @@
         if (!f) return [] as Face['rings'];
         return [...f.rings].sort((a, b) => a.scoring_zone_radius - b.scoring_zone_radius);
     });
+    const xRingRadius = computed(() => {
+        const f = face.value;
+        if (!f) return null as number | null;
+        const xRing = f.rings.find((r) => r.is_x);
+        return xRing ? xRing.scoring_zone_radius : null;
+    });
 
     const drawCrosshair = computed(() => {
         if (props.showCrosshair === 'auto') return !!face.value?.render_cross;
@@ -125,8 +138,8 @@
     const pinch = ref<{ baseZoom: number; startDist: number } | null>(null);
 
     function clientToLocalMm(evt: PointerEvent): { xMm: number; yMm: number } {
-        const svg = svgRef.value!;
-        const rect = svg.getBoundingClientRect();
+        const rect = canvasRef.value?.getBounds();
+        if (!rect) return { xMm: 0, yMm: 0 };
         const xPx = evt.clientX - rect.left;
         const yPx = evt.clientY - rect.top;
 
@@ -185,6 +198,29 @@
         return bestScore;
     }
 
+    function isXFromPoint(xMm: number, yMm: number): boolean {
+        const f = face.value;
+        const xr = xRingRadius.value;
+        if (!f || xr === null) return false;
+        const ringsAsc = ringsAscByRadius.value;
+        const outermostR = ringsAsc[ringsAsc.length - 1]?.scoring_zone_radius ?? 0;
+
+        for (const s of f.spots) {
+            const sx = xMm - s.x_offset;
+            const sy = yMm - s.y_offset;
+            const d = Math.hypot(sx, sy);
+            const spotRadius = (s.diameter ?? outermostR * 2) / 2;
+            if (d > spotRadius) continue;
+
+            // Consider line thickness for fairness when right on the line
+            const xRing = f.rings.find((r) => r.is_x);
+            const thickness = xRing?.outer_line_thickness ?? 0;
+            const onLine = Math.abs(d - xr) <= thickness / 2;
+            if (d < xr || onLine) return true;
+        }
+        return false;
+    }
+
     function handlePointer(evt: PointerEvent, commit: boolean) {
         const { xMm, yMm } = clientToLocalMm(evt);
         const score = scoreFromPoint(xMm, yMm);
@@ -199,7 +235,10 @@
         else emit('preview', payload);
     }
 
-    function onPointerDown(e: PointerEvent) {
+    const { createShot } = useShot();
+    const { getSlot, getSlotCached, currentSlot } = useSlot();
+
+    async function onPointerDown(e: PointerEvent) {
         // Track pointers for pinch
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (activePointers.size === 2) {
@@ -215,6 +254,31 @@
         }
         // Single-pointer shot
         handlePointer(e, true);
+
+        // Persist shot in DB via composable
+        try {
+            const { xMm, yMm } = clientToLocalMm(e);
+            const score = scoreFromPoint(xMm, yMm);
+            const isX = isXFromPoint(xMm, yMm);
+
+            // Resolve current slot_id without awaiting network in the hot path
+            const slotId = currentSlot.value?.slot_id ?? getSlotCached()?.slot_id;
+            if (!slotId) {
+                console.warn('[Face] No active slot available yet; shot ignored');
+                return;
+            }
+            await createShot({
+                slot_id: slotId,
+                x: xMm,
+                y: yMm,
+                score, // 0..10
+                is_x: isX,
+                // arrow_id: undefined, // optional, wire later if/when available
+            });
+        } catch (err) {
+            // Non-blocking: log and allow UI to continue
+            console.error('[Face] Failed to create shot:', err);
+        }
     }
     function onPointerMove(e: PointerEvent) {
         if (activePointers.has(e.pointerId)) {
@@ -252,8 +316,6 @@
     }
 
     onMounted(() => {
-        // Manage our own gestures; disable native panning/zooming on the svg element
-        svgRef.value?.setAttribute('touch-action', 'none');
         // Observe container width for responsive sizing
         const updateWidth = () => {
             if (containerRef.value) {
@@ -264,26 +326,37 @@
         updateWidth();
         const ro = new ResizeObserver(() => updateWidth());
         if (containerRef.value) ro.observe(containerRef.value);
+
+        // Preload current slot asynchronously to avoid network await on tap
+        if (!currentSlot.value) {
+            const cached = getSlotCached();
+            if (cached) {
+                currentSlot.value = cached;
+            } else {
+                void getSlot()
+                    .then((full) => {
+                        currentSlot.value = full;
+                    })
+                    .catch((err) => console.error('[Face] Failed to preload slot:', err));
+            }
+        }
     });
 </script>
 
 <template>
     <div ref="containerRef" class="w-full flex flex-col items-center">
-        <svg
-            ref="svgRef"
-            :width="renderSizePx"
-            :height="renderSizePx"
+        <SvgCanvas
+            ref="canvasRef"
+            :widthPx="renderSizePx"
+            :heightPx="renderSizePx"
             :viewBox="`0 0 ${renderSizePx} ${renderSizePx}`"
+            background-color="#f5f5f5"
             @pointerdown="onPointerDown"
             @pointermove="onPointerMove"
             @pointerup="onPointerUp"
             @pointercancel="onPointerUp"
             @wheel="onWheel"
-            class="select-none"
         >
-            <!-- Background -->
-            <rect :width="renderSizePx" :height="renderSizePx" fill="#f5f5f5" />
-
             <!-- Drawing origin at canvas center -->
             <g :transform="`translate(${renderSizePx / 2}, ${renderSizePx / 2})`">
                 <!-- Zoom wrapper -->
@@ -293,65 +366,30 @@
                         v-for="s in face?.spots ?? []"
                         :key="`spot-${s.x_offset}-${s.y_offset}-${s.diameter}`"
                     >
-                        <g
-                            :transform="`translate(${s.x_offset * pxPerMm}, ${-s.y_offset * pxPerMm})`"
-                        >
-                            <!-- Bands: draw outermost -> innermost as filled circles -->
-                            <template
-                                v-for="r in ringsDescByRadius"
-                                :key="`ring-fill-${s.x_offset}-${s.y_offset}-${r.scoring_zone_radius}`"
-                            >
-                                <circle
-                                    :r="r.scoring_zone_radius * pxPerMm"
-                                    :fill="r.scoring_zone_color"
-                                />
-                            </template>
-                            <!-- Boundary lines at the outer edge of each scoring zone -->
-                            <template
-                                v-for="r in ringsDescByRadius"
-                                :key="`ring-line-${s.x_offset}-${s.y_offset}-${r.scoring_zone_radius}`"
-                            >
-                                <circle
-                                    :r="r.scoring_zone_radius * pxPerMm"
-                                    fill="none"
-                                    :stroke="r.outer_line_color"
-                                    :stroke-width="
-                                        Math.max(
-                                            1,
-                                            (r.outer_line_thickness ?? 0) *
-                                                pxPerMm *
-                                                lineThicknessScale,
-                                        )
-                                    "
-                                />
-                            </template>
-                        </g>
+                        <SvgSpot
+                            :xOffsetMm="s.x_offset"
+                            :yOffsetMm="s.y_offset"
+                            :ringsDesc="ringsDescByRadius"
+                            :pxPerMm="pxPerMm"
+                            :lineThicknessScale="lineThicknessScale"
+                        />
                     </template>
 
                     <!-- Crosshair at global center -->
-                    <template v-if="drawCrosshair">
-                        <line x1="-8" y1="0" x2="8" y2="0" stroke="#555" stroke-width="1" />
-                        <line x1="0" y1="-8" x2="0" y2="8" stroke="#555" stroke-width="1" />
-                    </template>
+                    <SvgCrosshair v-if="drawCrosshair" />
 
                     <!-- Click marker (global coords) -->
-                    <circle
+                    <SvgMarker
                         v-if="marker"
-                        :cx="marker.xPx - renderSizePx / 2"
-                        :cy="marker.yPx - renderSizePx / 2"
-                        r="4"
-                        fill="#111"
-                        stroke="#fff"
-                        stroke-width="1"
+                        :x="marker.xPx - renderSizePx / 2"
+                        :y="marker.yPx - renderSizePx / 2"
                     />
                 </g>
             </g>
-        </svg>
+        </SvgCanvas>
     </div>
 </template>
 
 <style scoped>
-    svg {
-        touch-action: none;
-    }
+    /* Container-level styles only; SVG handled inside SvgCanvas */
 </style>

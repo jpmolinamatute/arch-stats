@@ -29,6 +29,7 @@ class Spot(BaseModel):
 
 class Ring(BaseModel):
     score: int = Field(..., description="e.g., 10, 9, 8, ...")
+    is_x: bool = Field(default=False, description="Indicates if this ring is the 'X' ring")
     scoring_zone_label: str = Field(..., description="e.g., 'X', '10', '5'")
     scoring_zone_color: str = Field(..., description="Color of the scoring zone")
     scoring_zone_radius: float = Field(..., description="Radius of the scoring zone")

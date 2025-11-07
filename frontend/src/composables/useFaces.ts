@@ -2,6 +2,8 @@ import { ref } from 'vue';
 import type { components } from '@/types/types.generated';
 
 type FaceMinimal = components['schemas']['FaceMinimal'];
+type HTTPValidationError = components['schemas']['HTTPValidationError'];
+type ErrorJson = HTTPValidationError | { detail?: string };
 
 const faces = ref<FaceMinimal[]>([]);
 const loading = ref(false);
@@ -23,10 +25,16 @@ export function useFaces() {
             if (!response.ok) {
                 let errorMessage = `Failed to fetch faces: ${response.status}`;
                 try {
-                    const errorData = (await response.json()) as unknown;
-                    const detail = (errorData as Record<string, unknown>)?.detail;
-                    if (typeof detail === 'string') {
-                        errorMessage = detail;
+                    const errorData = (await response.json()) as ErrorJson;
+                    // 422 validation error from FastAPI
+                    if (Array.isArray((errorData as HTTPValidationError)?.detail)) {
+                        const first = (errorData as HTTPValidationError).detail?.[0];
+                        if (first && typeof first.msg === 'string') {
+                            errorMessage = first.msg;
+                        }
+                    } else if (typeof errorData.detail === 'string') {
+                        // Common FastAPI error shape for 401/403/404
+                        errorMessage = errorData.detail;
                     }
                 } catch (parseError) {
                     console.error('Error parsing error response:', parseError);

@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { components } from '@/types/types.generated';
+import type { components, operations } from '@/types/types.generated';
 
 interface UserSession {
     archer_id: string;
@@ -87,16 +87,9 @@ async function bootstrapAuth(): Promise<void> {
 
             if (meResponse.ok) {
                 // Successfully authenticated via cookie
-                const authData = (await meResponse.json()) as {
-                    archer: {
-                        archer_id: string;
-                        email: string;
-                        first_name?: string | null;
-                        last_name?: string | null;
-                        google_picture_url?: string | null;
-                    };
-                    access_token: string;
-                };
+                type MeResponse =
+                    operations['get_current_user_api_v0_auth_me_get']['responses']['200']['content']['application/json'];
+                const authData = (await meResponse.json()) as MeResponse;
 
                 user.value = {
                     archer_id: authData.archer.archer_id,
@@ -226,7 +219,7 @@ async function beginGoogleLogin(idToken?: string): Promise<void> {
         });
         if (!res.ok) throw new Error(`Login failed (HTTP ${res.status})`);
         // OpenAPI: returns union of AuthAuthenticated | AuthNeedsRegistration
-        const data = (await res.json()) as unknown as AuthLoginResponseBody;
+        const data = (await res.json()) as AuthLoginResponseBody;
         if (isAuthAuthenticated(data)) {
             user.value = {
                 archer_id: data.archer.archer_id,
@@ -292,7 +285,10 @@ async function registerNewArcher(input: {
             body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(`Registration failed (HTTP ${res.status})`);
-        const data = (await res.json()) as unknown;
+        type RegisterResponse =
+            | operations['register_api_v0_auth_register_post']['responses']['201']['content']['application/json']
+            | operations['register_api_v0_auth_register_post']['responses']['200']['content']['application/json'];
+        const data = (await res.json()) as RegisterResponse;
         if (!isAuthAuthenticated(data)) {
             throw new Error('Unexpected registration response');
         }

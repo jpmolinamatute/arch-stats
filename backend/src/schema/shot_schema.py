@@ -3,14 +3,20 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ShotBase(BaseModel):
     slot_id: UUID = Field(..., description="Slot identifier (UUID) this shot belongs to")
     x: float | None = Field(default=None, description="X coordinate in millimeters")
     y: float | None = Field(default=None, description="Y coordinate in millimeters")
-    score: int | None = Field(default=None, description="Shot score (non-negative integer)", ge=0)
+    is_x: bool = Field(default=False, description="Indicates if the shot is an 'X' shot")
+    score: int | None = Field(
+        default=None,
+        description="Shot score (0..10)",
+        ge=0,
+        le=10,
+    )
     arrow_id: UUID | None = Field(
         default=None, description="Optional arrow identifier (e.g., arrow number or code)"
     )
@@ -34,11 +40,7 @@ class ShotCreate(ShotBase):
 
 
 class ShotSet(BaseModel):
-    x: float | None = Field(default=None, description="Updated X coordinate in millimeters")
-    y: float | None = Field(default=None, description="Updated Y coordinate in millimeters")
-    score: int | None = Field(
-        default=None, description="Updated shot score (non-negative integer)", ge=0, le=10
-    )
+    """This is just a placeholder. We don't want to allow updating shot fields."""
 
     model_config = ConfigDict(title="Shot Set", extra="forbid")
 
@@ -66,22 +68,6 @@ class ShotUpdate(BaseModel):
     data: ShotSet = Field(..., description="Fields to update on the selected shots")
 
     model_config = ConfigDict(title="Shot Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: ShotSet) -> ShotSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: ShotFilter) -> ShotFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.shot_id is None:
-            raise ValueError("where.shot_id must be provided")
-        return v
 
 
 class ShotRead(ShotBase):

@@ -20,13 +20,13 @@ Options:
 EOF
 }
 
-# run_python_tests() {
-#     local pyproject_path="${1}"
-#     start_docker
-#     echo "running python tests..."
-#     pytest --config-file "${pyproject_path}"
-#     stop_docker
-# }
+run_python_tests() {
+    local pyproject_path="${1}"
+    start_docker
+    echo "running python tests..."
+    pytest --config-file "${pyproject_path}"
+    stop_docker
+}
 
 run_python_checks() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
@@ -42,16 +42,32 @@ run_python_checks() {
     mypy --config-file "${pyproject_path}" ./src ./tests
     echo "Running pylint..."
     pylint --rcfile "${pyproject_path}" ./src ./tests
-    # run_python_tests "${pyproject_path}"
+    run_python_tests "${pyproject_path}"
     cd -
 }
 
+run_generate_types() {
+    echo "Generating OpenAPI spec"
+    cd "${ROOT_DIR}/backend"
+    export PYTHONPATH="${ROOT_DIR}/backend/src"
+    uv run "${ROOT_DIR}/scripts/generate_openapi.py"
+    cd "${ROOT_DIR}/frontend"
+    echo "Generating TypeScript types from OpenAPI spec"
+    npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --immutable --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
+}
+
 run_frontend_checks() {
+    run_generate_types
     cd "${ROOT_DIR}/frontend"
     echo "Running JS/TS linter"
     npm run lint
     echo "Running JS/TS formatter"
     npm run format
+    # we are building the frontend as a test to ensure there are no build errors
+    echo "Building frontend"
+    npm run build
+    # `npm run build` removes .gitkeep files, so we need to recreate them
+    touch "${ROOT_DIR}/backend/src/frontend/.gitkeep"
     # echo "Running JS/TS tests"
     # npm run test
     cd -

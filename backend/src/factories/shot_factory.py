@@ -4,13 +4,15 @@ Factory for creating Shot records in the database for testing or seeding.
 Aligns with migration V006 (shot table):
 - shot_id UUID PRIMARY KEY DEFAULT uuid_generate_v4()
 - slot_id UUID NOT NULL REFERENCES slot (slot_id) ON DELETE CASCADE
-- x DOUBLE PRECISION, y DOUBLE PRECISION, score INTEGER (0..11)
+- x DOUBLE PRECISION, y DOUBLE PRECISION, score INTEGER (0..10)
+- is_x BOOLEAN NOT NULL DEFAULT FALSE
 - arrow_id UUID REFERENCES arrow (arrow_id) ON DELETE SET NULL
 - created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
 Constraints to respect:
-- CHECK (score BETWEEN 0 AND 11)
+- CHECK (score BETWEEN 0 AND 10)
 - Either all of (x, y, score) are NULL or all are NOT NULL
+ - When score = 10, some shots may be marked as inner-10 via is_x = TRUE (data-level convention)
 
 Notes:
 - This factory generates fully recorded shots (x, y, score all present).
@@ -26,8 +28,8 @@ from uuid import UUID
 from asyncpg import Pool
 
 
-# Basic scoring distribution: bias towards mid/high scores, allow some lows and rare 11 (X).
-# Indices 0..11 correspond to the actual score value.
+# Basic scoring distribution: bias towards mid/high scores, allow some lows.
+# Indices 0..10 correspond to the actual score value.
 _SCORE_WEIGHTS: Final[list[int]] = [
     # 0  1  2  3  4  5
     1,
@@ -36,19 +38,18 @@ _SCORE_WEIGHTS: Final[list[int]] = [
     3,
     5,
     8,
-    # 6   7   8   9    10   11(X)
+    # 6   7   8   9    10
     13,
     21,
     34,
     34,
     21,
-    5,
 ]
 
 
 def _random_score() -> int:
-    """Return a plausible score in [0, 11] using a simple weighted distribution."""
-    values = list(range(12))
+    """Return a plausible score in [0, 10] using a simple weighted distribution."""
+    values = list(range(11))
     return random.choices(values, weights=_SCORE_WEIGHTS, k=1)[0]
 
 
@@ -101,20 +102,23 @@ async def create_shots(
             slot_id = random.choice(tuple(valid_slot_ids))
             x, y = _random_xy()
             score = _random_score()
+            # Mark some 10s as inner-10 (X) for realism. Keep others FALSE.
+            is_x = bool(score == 10 and random.random() < 0.35)
             arrow_id: UUID | None = None
             if arrow_ids:
                 arrow_id = random.choice(list(arrow_ids))
 
             rec = await conn.fetchrow(
                 """
-                INSERT INTO shot (slot_id, x, y, score, arrow_id)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING shot_id
                 """,
                 slot_id,
                 x,
                 y,
                 score,
+                is_x,
                 arrow_id,
             )
             if rec is None or "shot_id" not in rec:

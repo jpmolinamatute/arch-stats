@@ -152,7 +152,7 @@ export function useSession() {
         error.value = null;
         try {
             // First, leave the slot if the archer is in one (required before closing)
-            const { leaveSession, getSlot } = useSlot();
+            const { leaveSession, getSlot, clearSlotCache } = useSlot();
             try {
                 // Try to get the slot for this archer in this session
                 const slot = await getSlot();
@@ -196,6 +196,13 @@ export function useSession() {
 
             // Clear current session
             currentSession.value = null;
+
+            // Also clear any cached slot data to avoid stale state on next load
+            try {
+                clearSlotCache();
+            } catch {
+                /* ignore */
+            }
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to close session';
             throw e;
