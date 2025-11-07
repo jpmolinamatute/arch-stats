@@ -270,7 +270,7 @@
                 score, // 0..10
                 is_x: isX,
                 // arrow_id: undefined, // optional, wire later if/when available
-            } as unknown as components['schemas']['ShotCreate']);
+            });
         } catch (err) {
             // Non-blocking: log and allow UI to continue
             console.error('[Face] Failed to create shot:', err);

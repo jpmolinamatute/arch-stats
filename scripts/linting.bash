@@ -46,14 +46,28 @@ run_python_checks() {
     cd -
 }
 
+run_generate_types(){
+    echo "Generating OpenAPI spec"
+    cd "${ROOT_DIR}/backend"
+    uv run "${ROOT_DIR}/scripts/generate_openapi.py"
+    cd "${ROOT_DIR}/frontend"
+    echo "Generating TypeScript types from OpenAPI spec"
+    npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --immutable --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
+}
+
+
 run_frontend_checks() {
+    run_generate_types
     cd "${ROOT_DIR}/frontend"
     echo "Running JS/TS linter"
     npm run lint
     echo "Running JS/TS formatter"
     npm run format
+    # we are building the frontend as a test to ensure there are no build errors
     echo "Building frontend"
     npm run build
+    # `npm run build` removes .gitkeep files, so we need to recreate them
+    touch "${ROOT_DIR}/backend/src/frontend/.gitkeep"
     # echo "Running JS/TS tests"
     # npm run test
     cd -

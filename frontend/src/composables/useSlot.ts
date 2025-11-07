@@ -1,10 +1,15 @@
 import { ref } from 'vue';
-import type { components } from '@/types/types.generated';
+import type { components, operations } from '@/types/types.generated';
 import { useAuth } from '@/composables/useAuth';
 
 type SlotJoinRequest = components['schemas']['SlotJoinRequest'];
 type SlotJoinResponse = components['schemas']['SlotJoinResponse'];
 type FullSlotInfo = components['schemas']['FullSlotInfo'];
+type HTTPValidationError = components['schemas']['HTTPValidationError'];
+type ValidationError = components['schemas']['ValidationError'];
+type ErrorJson = HTTPValidationError | { detail?: string };
+type MeResponseOk =
+    operations['get_current_user_api_v0_auth_me_get']['responses']['200']['content']['application/json'];
 
 const currentSlot = ref<FullSlotInfo | null>(null);
 const loading = ref(false);
@@ -29,9 +34,9 @@ export function useSlot() {
 
     function setSlotCache(archerId: string, slot: FullSlotInfo): void {
         try {
-            const payload = JSON.stringify({ ts: Date.now(), slot });
+            // Store only the slot object; no timestamp needed.
             const ls = getLS();
-            ls?.setItem(getCacheKey(archerId), payload);
+            ls?.setItem(getCacheKey(archerId), JSON.stringify(slot));
         } catch {
             /* ignore storage errors */
         }
@@ -42,9 +47,14 @@ export function useSlot() {
             const ls = getLS();
             const raw = ls?.getItem(getCacheKey(archerId));
             if (!raw) return null;
-            const obj = JSON.parse(raw) as { ts: number; slot: FullSlotInfo };
-            if (!obj?.slot) return null;
-            return obj.slot;
+            const parsed = JSON.parse(raw) as unknown;
+            // Backward compatibility: previously we stored { ts, slot }.
+            if (typeof parsed === 'object' && parsed !== null && 'slot' in parsed) {
+                const maybe = parsed as { slot?: FullSlotInfo | null };
+                return maybe.slot ?? null;
+            }
+            // New format: the cached value is the FullSlotInfo itself.
+            return parsed as FullSlotInfo;
         } catch {
             return null;
         }
@@ -61,6 +71,21 @@ export function useSlot() {
         } catch {
             /* ignore */
         }
+    }
+
+    function extractErrorMessage(err: ErrorJson | null | undefined): string | null {
+        if (!err) return null;
+        const maybeDetail = (err as { detail?: unknown }).detail;
+        if (Array.isArray(maybeDetail)) {
+            const first = maybeDetail[0] as ValidationError | undefined;
+            if (first && typeof first.msg === 'string' && first.msg.length > 0) {
+                return first.msg;
+            }
+        }
+        if (typeof maybeDetail === 'string' && maybeDetail.length > 0) {
+            return maybeDetail;
+        }
+        return null;
     }
 
     /**
@@ -84,10 +109,9 @@ export function useSlot() {
                 // Try to get error details from response
                 let errorMessage = `Failed to join session: ${response.status}`;
                 try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
+                    const errorData = (await response.json()) as ErrorJson;
+                    const msg = extractErrorMessage(errorData);
+                    if (msg) errorMessage = msg;
                 } catch (parseError) {
                     console.error('Could not parse error response:', parseError);
                 }
@@ -156,10 +180,8 @@ export function useSlot() {
                     }
                     throw new Error(`Failed to resolve user (HTTP ${meResponse.status})`);
                 }
-                const meData = (await meResponse.json()) as {
-                    archer: { archer_id: string };
-                };
-                archerId = meData.archer.archer_id;
+                const meData = (await meResponse.json()) as MeResponseOk;
+                archerId = meData.archer.archer_id as string;
             }
 
             // Try cache first unless forced refresh
@@ -182,10 +204,9 @@ export function useSlot() {
             if (!response.ok) {
                 let errorMessage = `Failed to fetch slot: ${response.status}`;
                 try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
+                    const errorData = (await response.json()) as ErrorJson;
+                    const msg = extractErrorMessage(errorData);
+                    if (msg) errorMessage = msg;
                 } catch (parseError) {
                     console.error('Could not parse error response:', parseError);
                 }
@@ -233,10 +254,9 @@ export function useSlot() {
             if (!response.ok) {
                 let errorMessage = `Failed to leave session: ${response.status}`;
                 try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
+                    const errorData = (await response.json()) as ErrorJson;
+                    const msg = extractErrorMessage(errorData);
+                    if (msg) errorMessage = msg;
                 } catch (parseError) {
                     console.error('Could not parse error response:', parseError);
                 }
