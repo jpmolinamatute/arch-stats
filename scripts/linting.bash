@@ -20,13 +20,13 @@ Options:
 EOF
 }
 
-# run_python_tests() {
-#     local pyproject_path="${1}"
-#     start_docker
-#     echo "running python tests..."
-#     pytest --config-file "${pyproject_path}"
-#     stop_docker
-# }
+run_python_tests() {
+    local pyproject_path="${1}"
+    start_docker
+    echo "running python tests..."
+    pytest --config-file "${pyproject_path}"
+    stop_docker
+}
 
 run_python_checks() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
@@ -42,7 +42,7 @@ run_python_checks() {
     mypy --config-file "${pyproject_path}" ./src ./tests
     echo "Running pylint..."
     pylint --rcfile "${pyproject_path}" ./src ./tests
-    # run_python_tests "${pyproject_path}"
+    run_python_tests "${pyproject_path}"
     cd -
 }
 
@@ -52,6 +52,8 @@ run_frontend_checks() {
     npm run lint
     echo "Running JS/TS formatter"
     npm run format
+    echo "Building frontend"
+    npm run build
     # echo "Running JS/TS tests"
     # npm run test
     cd -

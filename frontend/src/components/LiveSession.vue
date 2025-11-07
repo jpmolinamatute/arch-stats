@@ -12,7 +12,7 @@
     const router = useRouter();
     const { user, isAuthenticated, bootstrapAuth } = useAuth();
     const { currentSession, closeSession, loading, checkForOpenSession } = useSession();
-    const { currentSlot, getSlot } = useSlot();
+    const { currentSlot, getSlot, getSlotCached } = useSlot();
 
     const showCloseModal = ref(false);
     const initializing = ref(true);
@@ -44,7 +44,7 @@
             // Fetch the archer's current slot in this session (if any)
             if (currentSession.value && user.value.archer_id) {
                 try {
-                    const slot = await getSlot();
+                    const slot = getSlotCached() ?? (await getSlot());
                     currentSlot.value = slot;
                 } catch (slotError) {
                     // 404 means archer has no active slot - show SlotJoinForm to complete setup
@@ -93,7 +93,7 @@
         // After slot is assigned, fetch the complete slot details
         if (currentSession.value && user.value) {
             try {
-                const slot = await getSlot();
+                const slot = getSlotCached() ?? (await getSlot(true));
                 currentSlot.value = slot;
                 console.log('[LiveSession] Slot assigned successfully:', currentSlot.value);
             } catch (e) {

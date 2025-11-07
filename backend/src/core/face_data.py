@@ -26,6 +26,7 @@ face_data: list[Face] = [
             # X-ring (inner 10)
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=30.5,  # 61mm diameter / 2
@@ -35,6 +36,7 @@ face_data: list[Face] = [
             # 10 through 1 rings (outer radius in mm)
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=61.0,  # 122mm / 2
@@ -43,6 +45,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=122.0,  # 244mm / 2
@@ -51,6 +54,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=183.0,  # 366mm / 2
@@ -59,6 +63,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=244.0,  # 488mm / 2
@@ -67,6 +72,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=305.0,  # 610mm / 2
@@ -75,6 +81,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=366.0,  # 732mm / 2
@@ -83,6 +90,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=4,
+                is_x=False,
                 scoring_zone_label="4",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=427.0,  # 854mm / 2
@@ -91,6 +99,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=3,
+                is_x=False,
                 scoring_zone_label="3",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=488.0,  # 976mm / 2
@@ -99,6 +108,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=2,
+                is_x=False,
                 scoring_zone_label="2",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=549.0,  # 1098mm / 2
@@ -107,6 +117,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=1,
+                is_x=False,
                 scoring_zone_label="1",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=610.0,  # 1220mm / 2
@@ -130,6 +141,7 @@ face_data: list[Face] = [
         rings=[
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=20.0,  # 40mm / 2
@@ -138,6 +150,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=40.0,  # 80mm / 2
@@ -146,6 +159,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=80.0,  # 160mm / 2
@@ -154,6 +168,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=120.0,  # 240mm / 2
@@ -162,6 +177,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=160.0,  # 320mm / 2
@@ -170,6 +186,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=200.0,  # 400mm / 2
@@ -178,6 +195,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=240.0,  # 480mm / 2
@@ -186,6 +204,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=4,
+                is_x=False,
                 scoring_zone_label="4",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=280.0,  # 560mm / 2
@@ -194,6 +213,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=3,
+                is_x=False,
                 scoring_zone_label="3",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=320.0,  # 640mm / 2
@@ -202,6 +222,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=2,
+                is_x=False,
                 scoring_zone_label="2",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=360.0,  # 720mm / 2
@@ -210,6 +231,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=1,
+                is_x=False,
                 scoring_zone_label="1",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=400.0,  # 800mm / 2
@@ -233,6 +255,7 @@ face_data: list[Face] = [
         rings=[
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=15.0,  # 30mm / 2
@@ -241,6 +264,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=30.0,  # 60mm / 2
@@ -249,6 +273,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=60.0,  # 120mm / 2
@@ -257,6 +282,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=90.0,  # 180mm / 2
@@ -265,6 +291,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=120.0,  # 240mm / 2
@@ -273,6 +300,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=150.0,  # 300mm / 2
@@ -281,6 +309,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=180.0,  # 360mm / 2
@@ -289,6 +318,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=4,
+                is_x=False,
                 scoring_zone_label="4",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=210.0,  # 420mm / 2
@@ -297,6 +327,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=3,
+                is_x=False,
                 scoring_zone_label="3",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=240.0,  # 480mm / 2
@@ -305,6 +336,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=2,
+                is_x=False,
                 scoring_zone_label="2",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=270.0,  # 540mm / 2
@@ -313,6 +345,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=1,
+                is_x=False,
                 scoring_zone_label="1",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=300.0,  # 600mm / 2
@@ -336,6 +369,7 @@ face_data: list[Face] = [
         rings=[
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=10.0,  # 20mm / 2 (recurve X)
@@ -344,6 +378,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=20.0,  # 40mm / 2
@@ -352,6 +387,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=40.0,  # 80mm / 2
@@ -360,6 +396,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=60.0,  # 120mm / 2
@@ -368,6 +405,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=80.0,  # 160mm / 2
@@ -376,6 +414,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=100.0,  # 200mm / 2
@@ -384,6 +423,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=120.0,  # 240mm / 2
@@ -392,6 +432,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=4,
+                is_x=False,
                 scoring_zone_label="4",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=140.0,  # 280mm / 2
@@ -400,6 +441,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=3,
+                is_x=False,
                 scoring_zone_label="3",
                 scoring_zone_color="#000000",
                 scoring_zone_radius=160.0,  # 320mm / 2
@@ -408,6 +450,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=2,
+                is_x=False,
                 scoring_zone_label="2",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=180.0,  # 360mm / 2
@@ -416,6 +459,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=1,
+                is_x=False,
                 scoring_zone_label="1",
                 scoring_zone_color="#FFFFFF",
                 scoring_zone_radius=200.0,  # 400mm / 2
@@ -440,6 +484,7 @@ face_data: list[Face] = [
             # X-ring (inner 10)
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=30.5,  # 61mm / 2
@@ -448,6 +493,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=61.0,  # 122mm / 2
@@ -456,6 +502,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=122.0,  # 244mm / 2
@@ -464,6 +511,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=183.0,  # 366mm / 2
@@ -472,6 +520,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=244.0,  # 488mm / 2
@@ -480,6 +529,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=305.0,  # 610mm / 2
@@ -488,6 +538,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=366.0,  # 732mm / 2 (outermost for 6-ring)
@@ -511,6 +562,7 @@ face_data: list[Face] = [
         rings=[
             Ring(
                 score=10,
+                is_x=True,
                 scoring_zone_label="X",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=20.0,  # 40mm / 2
@@ -519,6 +571,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=10,
+                is_x=False,
                 scoring_zone_label="10",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=40.0,  # 80mm / 2
@@ -527,6 +580,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=9,
+                is_x=False,
                 scoring_zone_label="9",
                 scoring_zone_color="#FFE552",
                 scoring_zone_radius=80.0,  # 160mm / 2
@@ -535,6 +589,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=8,
+                is_x=False,
                 scoring_zone_label="8",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=120.0,  # 240mm / 2
@@ -543,6 +598,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=7,
+                is_x=False,
                 scoring_zone_label="7",
                 scoring_zone_color="#F65058",
                 scoring_zone_radius=160.0,  # 320mm / 2
@@ -551,6 +607,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=6,
+                is_x=False,
                 scoring_zone_label="6",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=200.0,  # 400mm / 2
@@ -559,6 +616,7 @@ face_data: list[Face] = [
             ),
             Ring(
                 score=5,
+                is_x=False,
                 scoring_zone_label="5",
                 scoring_zone_color="#00B4E4",
                 scoring_zone_radius=240.0,  # 480mm / 2 (outermost for 6-ring)

@@ -19,7 +19,14 @@
     }>();
 
     const router = useRouter();
-    const { currentSlot, joinSession, getSlot, loading: slotLoading, error: slotError } = useSlot();
+    const {
+        currentSlot,
+        joinSession,
+        getSlot,
+        getSlotCached,
+        loading: slotLoading,
+        error: slotError,
+    } = useSlot();
     const { getArcher, loading: archerLoading } = useArcher();
     const { faces, listFaces, loading: facesLoading, error: facesError } = useFaces();
     const { user } = useAuth();
@@ -109,8 +116,8 @@
                 club_id: null,
             });
 
-            // Fetch the full slot details and store in session state
-            const slotDetails = await getSlot();
+            // Fetch the full slot details and store in session state (ensure fresh)
+            const slotDetails = getSlotCached() ?? (await getSlot(true));
             currentSlot.value = slotDetails;
 
             emit('slotAssigned', result.slot_id);

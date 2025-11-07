@@ -199,6 +199,143 @@ cleanup_ids() {
 # Tests
 ########################################
 
+test_shot_table_happy_path_from_schema() {
+    header "shot table: happy path (ShotBase schema)"
+
+    local archer sid tid slot shot_id is_x_val arrow_is_null
+
+    # Minimal setup to get a valid slot
+    archer="$(create_archer)"
+    archer="${archer//$'\n'/}"
+    sid="$(create_session "$archer" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 70 9)"
+    tid="${tid//$'\n'/}"
+    slot="$(assign_slot "$tid" "$archer" "$sid" 'wa_40cm_full' 'A' true)"
+    slot="${slot//$'\n'/}"
+
+    # Insert a shot providing all x,y,score and omitting is_x and arrow_id (both have defaults/are optional)
+    shot_id="$(run_sql "INSERT INTO shot (slot_id, x, y, score) VALUES ('${slot}', 1.23, -4.56, 9) RETURNING shot_id;")"
+    shot_id="${shot_id//$'\n'/}"
+    if [[ -z "$shot_id" ]]; then
+        fail "Failed to insert shot row on happy path"
+        cleanup_ids "$slot" "$tid" "$sid" "$archer"
+        return
+    fi
+
+    # Verify defaults/values: is_x should default to false, arrow_id should be NULL
+    IFS="," read -r is_x_val arrow_is_null < <(
+        run_sql "SELECT is_x, (arrow_id IS NULL) FROM shot WHERE shot_id='${shot_id}';"
+    )
+
+    if [[ "$is_x_val" == "f" ]]; then
+        pass "shot.is_x defaulted to FALSE when omitted"
+    else
+        fail "shot.is_x default not FALSE (got: $is_x_val)"
+    fi
+
+    if [[ "$arrow_is_null" == "t" ]]; then
+        pass "shot.arrow_id stored as NULL when omitted"
+    else
+        fail "shot.arrow_id not NULL when omitted (flag: $arrow_is_null)"
+    fi
+
+    cleanup_ids "$shot_id" "$slot" "$tid" "$sid" "$archer"
+}
+
+test_shot_table_score_bounds_constraints() {
+    header "shot table: score bounds (0..10)"
+
+    local archer sid tid slot
+    archer="$(create_archer)"
+    archer="${archer//$'\n'/}"
+    sid="$(create_session "$archer" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 70 5)"
+    tid="${tid//$'\n'/}"
+    slot="$(assign_slot "$tid" "$archer" "$sid" 'wa_40cm_full' 'B' true)"
+    slot="${slot//$'\n'/}"
+
+    # score < 0 should be rejected
+    if run_sql "INSERT INTO shot (slot_id, x, y, score) VALUES ('${slot}', 0.1, 0.2, -1);" >/dev/null 2>&1; then
+        fail "shot.score accepted -1 (expected CHECK rejection)"
+    else
+        pass "shot.score rejects values < 0"
+    fi
+
+    # score > 10 should be rejected
+    if run_sql "INSERT INTO shot (slot_id, x, y, score) VALUES ('${slot}', 0.1, 0.2, 11);" >/dev/null 2>&1; then
+        fail "shot.score accepted 11 (expected CHECK rejection)"
+    else
+        pass "shot.score rejects values > 10"
+    fi
+
+    # Boundary values should be accepted (0 and 10)
+    if run_sql "INSERT INTO shot (slot_id, x, y, score) VALUES ('${slot}', 0.0, 0.0, 0);" >/dev/null; then
+        pass "shot.score accepts boundary value 0"
+    else
+        fail "shot.score rejected boundary value 0"
+    fi
+
+    if run_sql "INSERT INTO shot (slot_id, x, y, score) VALUES ('${slot}', 0.0, 0.0, 10);" >/dev/null; then
+        pass "shot.score accepts boundary value 10"
+    else
+        fail "shot.score rejected boundary value 10"
+    fi
+
+    cleanup_ids "$slot" "$tid" "$sid" "$archer"
+}
+
+test_shot_table_all_or_none_coords_score() {
+    header "shot table: all-or-none check for (x,y,score)"
+
+    local archer sid tid slot
+    archer="$(create_archer)"
+    archer="${archer//$'\n'/}"
+    sid="$(create_session "$archer" true)"
+    sid="${sid//$'\n'/}"
+    tid="$(create_target "$sid" 50 6)"
+    tid="${tid//$'\n'/}"
+    slot="$(assign_slot "$tid" "$archer" "$sid" 'wa_40cm_full' 'C' true)"
+    slot="${slot//$'\n'/}"
+
+    # Only x provided -> reject
+    if run_sql "INSERT INTO shot (slot_id, x) VALUES ('${slot}', 0.1);" >/dev/null 2>&1; then
+        fail "shot accepted only x without y/score (expected rejection)"
+    else
+        pass "shot rejects incomplete set: only x"
+    fi
+
+    # x and y provided but missing score -> reject
+    if run_sql "INSERT INTO shot (slot_id, x, y) VALUES ('${slot}', 0.1, 0.2);" >/dev/null 2>&1; then
+        fail "shot accepted x,y without score (expected rejection)"
+    else
+        pass "shot rejects incomplete set: x,y without score"
+    fi
+
+    # Only score provided -> reject
+    if run_sql "INSERT INTO shot (slot_id, score) VALUES ('${slot}', 5);" >/dev/null 2>&1; then
+        fail "shot accepted score without x,y (expected rejection)"
+    else
+        pass "shot rejects incomplete set: score without x,y"
+    fi
+
+    # Valid cases: all NULLs or all present
+    if run_sql "INSERT INTO shot (slot_id) VALUES ('${slot}');" >/dev/null; then
+        pass "shot accepts all NULLs for x,y,score"
+    else
+        fail "shot rejected all NULLs for x,y,score"
+    fi
+
+    if run_sql "INSERT INTO shot (slot_id, x, y, score, is_x) VALUES ('${slot}', -0.3, 1.1, 7, FALSE);" >/dev/null; then
+        pass "shot accepts complete set x,y,score with is_x provided"
+    else
+        fail "shot rejected complete set x,y,score"
+    fi
+
+    cleanup_ids "$slot" "$tid" "$sid" "$archer"
+}
+
 test_shot_table_arrow_ownership_and_aggregates() {
     header "shot table: ownership check and aggregates"
 
@@ -244,10 +381,10 @@ test_shot_table_arrow_ownership_and_aggregates() {
     #
     # Test 1: check_shot_arrow_ownership must pass for archer_a using own arrows in slot_a
     # Insert 4 scored shots for slot_a with non-null x,y,score and valid arrow ownership
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.10, 0.20, 10, '$a1');" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.30, 0.40, 9,  '$a2');" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.50, 0.60, 8,  '$a3');" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('$slot_a', 0.70, 0.80, 7,  '$a4');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('$slot_a', 0.10, 0.20, 10, TRUE, '$a1');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('$slot_a', 0.30, 0.40, 9,  FALSE, '$a2');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('$slot_a', 0.50, 0.60, 8,  FALSE, '$a3');" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('$slot_a', 0.70, 0.80, 7,  FALSE, '$a4');" >/dev/null
     pass "check_shot_arrow_ownership accepted valid arrows for slot_a"
 
     # archer_b shoots in slot_b with NULL x,y,score and NULL arrow_id (allowed by all-or-none check)
@@ -257,30 +394,30 @@ test_shot_table_arrow_ownership_and_aggregates() {
 
     #
     # Test 2: live_stat_by_slot_id for slot_a (scores: 10,9,8,7)
-    # Expect: number_of_shots=4, total_score=34, mean=8.5, max_score=40
-    local mean_a nshots_a total_a max_a
-    IFS="," read -r mean_a nshots_a total_a max_a < <(
-        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_a';"
+    # Expect: number_of_shots=4, total_score=34, mean=8.5, max_score=40, number_of_x=1
+    local mean_a nshots_a total_a max_a nx_a
+    IFS="," read -r mean_a nshots_a total_a max_a nx_a < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score, number_of_x FROM live_stat_by_slot_id WHERE slot_id = '$slot_a';"
     )
 
-    if [[ "$nshots_a" == "4" && "$total_a" == "34" && "$mean_a" == "8.5" && "$max_a" == "40" ]]; then
-        pass "Aggregates for slot_a match expected values (mean=8.5, total=34, shots=4, max=40)"
+    if [[ "$nshots_a" == "4" && "$total_a" == "34" && "$mean_a" == "8.5" && "$max_a" == "40" && "$nx_a" == "1" ]]; then
+        pass "Aggregates for slot_a match expected values (mean=8.5, total=34, shots=4, max=40, x=1)"
     else
-        fail "Aggregates for slot_a unexpected: mean=$mean_a total=$total_a shots=$nshots_a max=$max_a"
+        fail "Aggregates for slot_a unexpected: mean=$mean_a total=$total_a shots=$nshots_a max=$max_a x=$nx_a"
     fi
 
     #
     # Test 3: live_stat_by_slot_id for slot_b (3 shots with NULL score)
-    # View coalesces AVG and SUM to 0; COUNT counts rows via slot_id
-    local mean_b nshots_b total_b
-    IFS="," read -r mean_b nshots_b total_b _ < <(
-        run_sql "SELECT mean, number_of_shots, total_score, max_score FROM live_stat_by_slot_id WHERE slot_id = '$slot_b';"
+    # View coalesces AVG and SUM to 0; COUNT counts rows via slot_id; number_of_x should be 0
+    local mean_b nshots_b total_b nx_b
+    IFS="," read -r mean_b nshots_b total_b _ nx_b < <(
+        run_sql "SELECT mean, number_of_shots, total_score, max_score, number_of_x FROM live_stat_by_slot_id WHERE slot_id = '$slot_b';"
     )
 
-    if [[ "$nshots_b" == "3" && "$total_b" == "0" && "$mean_b" == "0" ]]; then
-        pass "Aggregates for slot_b match expected values (mean=0, total=0, shots=3)"
+    if [[ "$nshots_b" == "3" && "$total_b" == "0" && "$mean_b" == "0" && "$nx_b" == "0" ]]; then
+        pass "Aggregates for slot_b match expected values (mean=0, total=0, shots=3, x=0)"
     else
-        fail "Aggregates for slot_b unexpected: mean=$mean_b total=$total_b shots=$nshots_b"
+        fail "Aggregates for slot_b unexpected: mean=$mean_b total=$total_b shots=$nshots_b x=$nx_b"
     fi
 
     # Cleanup (shots cascade via slot; arrows cascade via archer)
@@ -769,14 +906,14 @@ SQL
     sleep 0.5
 
     # Insert 8 shots alternating across slots: A, B, A, B, A, B, A, B
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_a}', 1.1, 2.2, 10, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_b}', 1.2, 2.3, 9, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_a}', 1.3, 2.4, 8, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_b}', 1.4, 2.5, 7, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_a}', 1.5, 2.6, 6, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_b}', 1.6, 2.7, 5, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_a}', 1.7, 2.8, 4, NULL);" >/dev/null
-    run_sql "INSERT INTO shot (slot_id, x, y, score, arrow_id) VALUES ('${slot_b}', 1.8, 2.9, 3, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_a}', 1.1, 2.2, 10, TRUE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_b}', 1.2, 2.3, 9, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_a}', 1.3, 2.4, 8, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_b}', 1.4, 2.5, 7, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_a}', 1.5, 2.6, 6, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_b}', 1.6, 2.7, 5, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_a}', 1.7, 2.8, 4, FALSE, NULL);" >/dev/null
+    run_sql "INSERT INTO shot (slot_id, x, y, score, is_x, arrow_id) VALUES ('${slot_b}', 1.8, 2.9, 3, FALSE, NULL);" >/dev/null
 
     # Wait for listeners to process notifications and exit
     wait "$listener_a_pid" || true
@@ -901,6 +1038,9 @@ main() {
     test_get_active_slot_id_function
     test_get_next_lane_with_full_targets
     test_session_shot_per_round_defaults_and_constraints
+    test_shot_table_happy_path_from_schema
+    test_shot_table_score_bounds_constraints
+    test_shot_table_all_or_none_coords_score
     test_shot_table_arrow_ownership_and_aggregates
     test_notify_shot_insert_trigger
 

@@ -10,7 +10,13 @@ class ShotBase(BaseModel):
     slot_id: UUID = Field(..., description="Slot identifier (UUID) this shot belongs to")
     x: float | None = Field(default=None, description="X coordinate in millimeters")
     y: float | None = Field(default=None, description="Y coordinate in millimeters")
-    score: int | None = Field(default=None, description="Shot score (non-negative integer)", ge=0)
+    is_x: bool = Field(default=False, description="Indicates if the shot is an 'X' shot")
+    score: int | None = Field(
+        default=None,
+        description="Shot score (0..10)",
+        ge=0,
+        le=10,
+    )
     arrow_id: UUID | None = Field(
         default=None, description="Optional arrow identifier (e.g., arrow number or code)"
     )
@@ -34,11 +40,7 @@ class ShotCreate(ShotBase):
 
 
 class ShotSet(BaseModel):
-    x: float | None = Field(default=None, description="Updated X coordinate in millimeters")
-    y: float | None = Field(default=None, description="Updated Y coordinate in millimeters")
-    score: int | None = Field(
-        default=None, description="Updated shot score (non-negative integer)", ge=0, le=10
-    )
+    """This is just a placeholder. We don't want to allow updating shot fields."""
 
     model_config = ConfigDict(title="Shot Set", extra="forbid")
 

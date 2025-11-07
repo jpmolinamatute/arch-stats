@@ -11,6 +11,58 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 export function useSlot() {
+    // Local cache (localStorage) helpers
+    const SLOT_CACHE_PREFIX = 'arch-stats:slot:';
+    function getCacheKey(archerId: string): string {
+        return `${SLOT_CACHE_PREFIX}${archerId}`;
+    }
+
+    function getLS(): Storage | null {
+        try {
+            return typeof window !== 'undefined' && window.localStorage
+                ? window.localStorage
+                : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function setSlotCache(archerId: string, slot: FullSlotInfo): void {
+        try {
+            const payload = JSON.stringify({ ts: Date.now(), slot });
+            const ls = getLS();
+            ls?.setItem(getCacheKey(archerId), payload);
+        } catch {
+            /* ignore storage errors */
+        }
+    }
+
+    function readSlotCache(archerId: string): FullSlotInfo | null {
+        try {
+            const ls = getLS();
+            const raw = ls?.getItem(getCacheKey(archerId));
+            if (!raw) return null;
+            const obj = JSON.parse(raw) as { ts: number; slot: FullSlotInfo };
+            if (!obj?.slot) return null;
+            return obj.slot;
+        } catch {
+            return null;
+        }
+    }
+
+    function clearSlotCache(archerId?: string): void {
+        try {
+            const { user } = useAuth();
+            const aid = archerId ?? user.value?.archer_id ?? null;
+            if (aid) {
+                const ls = getLS();
+                ls?.removeItem(getCacheKey(aid));
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+
     /**
      * Join a session by requesting a slot assignment.
      * Returns the slot ID.
@@ -56,6 +108,17 @@ export function useSlot() {
             }
 
             const data = (await response.json()) as SlotJoinResponse;
+            // After joining, try to populate state and cache quickly
+            try {
+                const { user } = useAuth();
+                if (user.value?.archer_id) {
+                    const full = await getSlot(true);
+                    currentSlot.value = full;
+                    setSlotCache(user.value.archer_id, full);
+                }
+            } catch {
+                // non-fatal
+            }
             return data;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to join session';
@@ -70,7 +133,7 @@ export function useSlot() {
      * Resolves the archer_id from the session (/api/v0/auth/me) to avoid mismatches.
      * Endpoint: GET /api/v0/session/slot/archer/{archer_id}
      */
-    async function getSlot(): Promise<FullSlotInfo> {
+    async function getSlot(forceRefresh = false): Promise<FullSlotInfo> {
         loading.value = true;
         error.value = null;
         try {
@@ -97,6 +160,15 @@ export function useSlot() {
                     archer: { archer_id: string };
                 };
                 archerId = meData.archer.archer_id;
+            }
+
+            // Try cache first unless forced refresh
+            if (!forceRefresh && archerId) {
+                const cached = readSlotCache(archerId);
+                if (cached) {
+                    currentSlot.value = cached;
+                    return cached;
+                }
             }
 
             const response = await fetch(`/api/v0/session/slot/archer/${archerId}`, {
@@ -127,7 +199,11 @@ export function useSlot() {
                 throw new Error(errorMessage);
             }
 
-            return (await response.json()) as FullSlotInfo;
+            const full = (await response.json()) as FullSlotInfo;
+            // Update state and cache
+            currentSlot.value = full;
+            if (archerId) setSlotCache(archerId, full);
+            return full;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to fetch slot';
             throw e;
@@ -182,6 +258,7 @@ export function useSlot() {
 
             // Clear current slot after leaving
             currentSlot.value = null;
+            clearSlotCache();
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to leave session';
             throw e;
@@ -197,5 +274,12 @@ export function useSlot() {
         joinSession,
         getSlot,
         leaveSession,
+        // cache utilities (optional exports)
+        getSlotCached: (): FullSlotInfo | null => {
+            const { user } = useAuth();
+            const archerId = user.value?.archer_id;
+            return archerId ? readSlotCache(archerId) : null;
+        },
+        clearSlotCache,
     } as const;
 }
