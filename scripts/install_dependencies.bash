@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-main(){
+main() {
     local app_dir="${1:-}"
     local backend_dir="${app_dir}/backend"
 
@@ -12,7 +12,6 @@ main(){
         exit 2
     fi
 
-    
     if [[ ! -d "$backend_dir" ]]; then
         echo "ERROR: backend directory not found: $backend_dir" >&2
         exit 3

@@ -16,7 +16,6 @@ set -Eeuo pipefail
 # 21 : Service start failure
 # 22 : Service not active after start
 
-
 # Config
 REPO="arch-stats"
 SYSTEM_USER="archy"
@@ -34,15 +33,14 @@ PG_SOCKET_DIR="${PG_SOCKET_DIR:-/var/run/postgresql}"
 PG_PORT="${PG_PORT:-5432}"
 MIGRATIONS_DIR=""
 
-log_info()  { echo "INFO: $*"; }
+log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
-
 
 # Print usage and exit code reference
 print_help() {
-        local script
-        script="${0##*/}"
-        cat <<EOF
+    local script
+    script="${0##*/}"
+    cat <<EOF
 Usage: $script [--help]
 
 Automates deployment of the latest release:
@@ -74,7 +72,6 @@ Exit status codes:
 EOF
 }
 
-
 # Remove existing application directory to ensure clean install
 purge_existing_install() {
     local app_dir
@@ -86,7 +83,6 @@ purge_existing_install() {
         log_info "No existing install to remove at: $app_dir"
     fi
 }
-
 
 # Extract tarball into ${SYSTEM_HOME} (tar contains ${REPO} root) and fix ownership
 extract_app() {
@@ -178,7 +174,7 @@ cleanup_tmp_workspace() {
     fi
 }
 
-get_repo_meta_data(){
+get_repo_meta_data() {
     local api_url="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
     log_info "Resolving latest release metadata from GitHub API"
     if ! curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
@@ -200,7 +196,7 @@ download_migrations_zip() {
     local zip_url
 
     zip_url="https://api.github.com/repos/${OWNER}/${repo}/zipball/main"
-    
+
     log_info "Downloading migrations zip from: $zip_url"
     if ! gh_download "$zip_url" "${MIGRATION_ZIP_OUT}"; then
         log_error "Failed to download migrations zip"
@@ -223,7 +219,7 @@ unpack_migrations_zip() {
         exit 1
     fi
     # Capture the extracted top-level directory (there should be exactly one).
-    
+
     MIGRATIONS_DIR="$(find "${MIGRATIONS_UNPACK_DIR}" -mindepth 1 -maxdepth 1 -type d | head -n1)"
     if [[ -z "${MIGRATIONS_DIR}" ]]; then
         log_error "Could not determine extracted root directory"
@@ -292,12 +288,12 @@ json_get_sha256() {
         gh_download "$checksum_asset_url" "$checksum_file"
         sha="$(grep -Eoi '^[0-9a-f]{64}' "$checksum_file" || true)"
     else
-        log_error "Checksum asset ${ASSET_TARBALL_NAME}.sha256 not found in release assets. Failing.";
+        log_error "Checksum asset ${ASSET_TARBALL_NAME}.sha256 not found in release assets. Failing."
         exit 1
     fi
 
     if [[ -z "$sha" ]]; then
-        log_error "Checksum file did not contain a valid 64 hex sha256. Failing.";
+        log_error "Checksum file did not contain a valid 64 hex sha256. Failing."
         exit 1
     fi
     echo "$sha"
@@ -311,7 +307,7 @@ verify_sha256() {
         log_error "sha256 verification (no expected hash provided)"
         exit 1
     fi
-    
+
     actual="$(sha256sum "$file" | awk '{print $1}')"
     if [[ "$actual" != "$expected" ]]; then
         log_error "sha256 mismatch. Expected=$expected Actual=$actual"
