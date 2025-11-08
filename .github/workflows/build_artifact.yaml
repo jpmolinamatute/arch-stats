@@ -60,20 +60,7 @@ jobs:
             -d arch-stats \
             -v ON_ERROR_STOP=1 \
             -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-      - name: Validate migrations secrets
-        env:
-          MIGRATIONS_REPOSITORY: ${{ secrets.MIGRATIONS_REPOSITORY }}
-          MIGRATIONS_PAT: ${{ secrets.MIGRATIONS_PAT }}
-        run: |
-          if [ -z "${MIGRATIONS_REPOSITORY}" ] || [ -z "${MIGRATIONS_PAT}" ]; then
-            echo "Error: MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT secrets are not set." >&2
-            echo "Set them in repo settings to enable Flyway migrations during CI." >&2
-            exit 1
-          fi
       - name: Checkout migrations repository
-        # Requires two repo secrets configured in this repository:
-        #  - MIGRATIONS_REPOSITORY: e.g. "<owner>/<private-migrations-repo>"
-        #  - MIGRATIONS_PAT: a fine-scoped PAT with repo read access
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
@@ -122,11 +109,19 @@ jobs:
         env:
           XZ_OPT: -9
         run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend/tests' --exclude='backend/.venv' --exclude='backend/.mypy_cache' --exclude='*/__pycache__' ./backend
-      - name: Upload to release (overwrite)
+      - name: Generate checksum
+        run: sha256sum "${GITHUB_WORKSPACE}/arch-stats.tar.xz" > "${GITHUB_WORKSPACE}/arch-stats.tar.xz.sha256"
+      - name: Create GitHub release (versioned tag)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: Latest Build
-          files: ${{ github.workspace}}/arch-stats.tar.xz
+          # Create a new immutable tag for each run so the release points to this commit
+          tag_name: v${{ github.run_number }}
+          name: Build v${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: |
+            ${{ github.workspace}}/arch-stats.tar.xz
+            ${{ github.workspace}}/arch-stats.tar.xz.sha256
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

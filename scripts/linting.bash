@@ -75,12 +75,10 @@ run_frontend_checks() {
 }
 
 run_bash_checks() {
-    cd "${ROOT_DIR}/scripts"
     echo "Running bash linter"
-    shellcheck --shell=bash --color=always -x ./*\.bash
+    shellcheck --shell=bash -x --exclude=SC1091 "${ROOT_DIR}/scripts"/*\.bash
     echo "Running bash formatter"
-    shfmt --language-dialect bash --write -i 4 ./*\.bash
-    cd -
+    shfmt --language-dialect bash --write -i 4 "${ROOT_DIR}/scripts"/*\.bash
 }
 
 main() {

@@ -43,6 +43,7 @@
         "docstrings",
         "Docstrings",
         "drivername",
+        "Eeuo",
         "executemany",
         "fetchrow",
         "FETCHTYPE",
@@ -81,6 +82,7 @@
         "RFID",
         "rgxs",
         "rmax",
+        "runuser",
         "scopedstyle",
         "sessionspage",
         "SETTYPE",
@@ -103,7 +105,8 @@
         "uvloop",
         "VARCHAR",
         "virtualenv",
-        "Vite"
+        "Vite",
+        "zipball"
     ],
     "cSpell.ignoreWords": [
         "Gollum",

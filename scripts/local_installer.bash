@@ -60,7 +60,7 @@ main() {
 
     if [[ ${action} == "install" ]]; then
         echo "Starting remote installation on '${cred}'."
-        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install.bash"
+        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install_dependencies.bash"
         execute_remote_script "${cred}" /tmp/remote_installer.bash
     elif [[ ${action} == "uninstall" ]]; then
         echo "Starting remote uninstallation on '${cred}'."
