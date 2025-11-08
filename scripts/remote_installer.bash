@@ -19,12 +19,12 @@ set -Eeuo pipefail
 # Config
 REPO="arch-stats"
 SYSTEM_USER="archy"
-SYSTEM_HOME="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
+SYSTEM_HOME=""
 SYSTEM_SERVICE="${REPO}.service"
 OWNER="jpmolinamatute"
 USER_AGENT="${REPO}-installer"
 ASSET_TARBALL_NAME="${REPO}.tar.xz"
-TMP_DIR="$(mktemp -d -t ${REPO}-installer.XXXXXX)"
+TMP_DIR="$(mktemp -d -t "${REPO}-installer.XXXXXX")"
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 RELEASE_JSON_FILE="${TMP_DIR}/release.json"
 MIGRATION_ZIP_OUT="${TMP_DIR}/${REPO}-migrations.zip"
@@ -159,10 +159,10 @@ assert_system_service_running() {
 # Download helper that sends Authorization for private assets and follows redirects
 gh_download() {
     local url="$1" out="$2"
-    curl -fL --retry 3 --retry-delay 2 --retry-all-errors \
+    curl -fL --max-time 60 --connect-timeout 10 \
+        --retry 3 --retry-delay 2 --retry-all-errors \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-        -A "${USER_AGENT}" \
-        -o "$out" \
+        --user-agent "${USER_AGENT}" --output "$out" \
         "$url"
 }
 
@@ -179,12 +179,13 @@ cleanup_tmp_workspace() {
 get_repo_meta_data() {
     local api_url="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
     log_info "Resolving latest release metadata from GitHub API"
-    if ! curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
+    if ! curl -fsSL --max-time 60 --connect-timeout 10 \
+        --retry 3 --retry-delay 2 --retry-all-errors \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        -A "${USER_AGENT}" \
-        -o "${RELEASE_JSON_FILE}" \
+        --user-agent "${USER_AGENT}" \
+        --output "${RELEASE_JSON_FILE}" \
         "$api_url"; then
         log_error "Failed to fetch latest release metadata"
         exit 12
@@ -277,9 +278,6 @@ json_get_tarball_url() {
     echo "$url"
 }
 
-# Tries two strategies and echoes the expected sha256 (64 hex chars):
-# 1) If an asset named <tarball>.sha256 exists, download and parse it
-# 2) Else try to parse from release body lines like: "sha256: <hash>"
 json_get_sha256() {
     local checksum_asset_url checksum_file sha
     checksum_asset_url="$(jq -r --arg name "${ASSET_TARBALL_NAME}.sha256" '.assets[] | select(.name==$name) | .browser_download_url' "${RELEASE_JSON_FILE}")"
@@ -331,6 +329,7 @@ main() {
         echo "Please run as root." >&2
         exit 1
     fi
+    SYSTEM_HOME="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
     stop_system_service
     # Verify local PostgreSQL is reachable via Unix socket
     assert_postgres_socket
