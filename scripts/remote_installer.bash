@@ -12,6 +12,7 @@ set -Eeuo pipefail
 # 12 : Network metadata/download failure
 # 13 : Flyway migration failure
 # 14 : Dependency installation (runuser) failure
+# 15 : Download helper (curl) failure
 # 20 : Service stop failure (only if unit exists and remains active)
 # 21 : Service start failure
 # 22 : Service not active after start
@@ -65,6 +66,7 @@ Exit status codes:
     12  Network metadata/download failure
     13  Flyway migration failure
     14  Dependency installation (runuser) failure
+    15  Download helper (curl) failure
     20  Service stop failure (only if unit exists and remains active)
     21  Service start failure
     22  Service not active after start
@@ -159,11 +161,16 @@ assert_system_service_running() {
 # Download helper that sends Authorization for private assets and follows redirects
 gh_download() {
     local url="$1" out="$2"
-    curl -fL --max-time 60 --connect-timeout 10 \
+    local curl_ec
+    if ! curl -fL --max-time 60 --connect-timeout 10 \
         --retry 3 --retry-delay 2 --retry-all-errors \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         --user-agent "${USER_AGENT}" --output "$out" \
-        "$url"
+        "$url"; then
+        curl_ec=$?
+        log_error "Download failed (curl exit=${curl_ec}) url=${url}"
+        exit 15
+    fi
 }
 
 # shellcheck disable=SC2329 # Invoked indirectly via 'trap cleanup_tmp_workspace EXIT' in main
