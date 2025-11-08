@@ -6,6 +6,7 @@ set -Eeuo pipefail
 
 # Exit codes (installer):
 # 1  : Generic fatal error / not root / extraction failure
+# 2  : System user missing / cannot resolve home directory
 # 7  : Dependency installer script missing or not executable
 # 10 : PostgreSQL socket missing
 # 11 : No SQL migrations found
@@ -60,6 +61,7 @@ Requirements:
 
 Exit status codes:
     1   Generic fatal error / not root / extraction failure
+    2   System user missing / cannot resolve home directory
     7   Dependency installer script missing or not executable
     10  PostgreSQL socket missing
     11  No SQL migrations found
@@ -290,7 +292,7 @@ json_get_sha256() {
     checksum_asset_url="$(jq -r --arg name "${ASSET_TARBALL_NAME}.sha256" '.assets[] | select(.name==$name) | .browser_download_url' "${RELEASE_JSON_FILE}")"
 
     if [[ -n "$checksum_asset_url" && "$checksum_asset_url" != "null" ]]; then
-        checksum_file="${TMP_DIR}/$(basename "${ASSET_TARBALL_NAME}").sha256"
+        checksum_file="${TMP_DIR}/${ASSET_TARBALL_NAME}.sha256"
         log_info "Downloading checksum asset"
         gh_download "$checksum_asset_url" "$checksum_file"
         sha="$(grep -Eoi '^[0-9a-f]{64}' "$checksum_file" || true)"
@@ -337,6 +339,10 @@ main() {
         exit 1
     fi
     SYSTEM_HOME="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
+    if [[ -z "$SYSTEM_HOME" ]]; then
+        echo "ERROR: System user '$SYSTEM_USER' does not exist. Cannot determine home directory." >&2
+        exit 2
+    fi
     stop_system_service
     # Verify local PostgreSQL is reachable via Unix socket
     assert_postgres_socket
