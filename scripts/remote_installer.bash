@@ -168,7 +168,9 @@ gh_download() {
 
 # shellcheck disable=SC2329 # Invoked indirectly via 'trap cleanup_tmp_workspace EXIT' in main
 cleanup_tmp_workspace() {
+    # shellcheck disable=SC2317
     if [[ -d "$TMP_DIR" ]]; then
+        # shellcheck disable=SC2317
         rm -rf "$TMP_DIR"
         log_info "Removed temp workspace: ${TMP_DIR}"
     fi
