@@ -94,6 +94,7 @@ class Settings(BaseSettings):
         default=60, description="JWT access token lifetime (minutes)"
     )
 
+    # Rational to ignore this MyPy error https://docs.pydantic.dev/2.0/usage/computed_fields/
     @computed_field  # type: ignore[prop-decorator]
     @property
     def postgres_dsn_host(self) -> str:
