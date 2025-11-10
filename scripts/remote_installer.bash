@@ -268,6 +268,8 @@ assert_postgres_socket() {
 # Run Flyway migrations pointing at the local PostgreSQL via Unix socket
 run_flyway_migrations() {
     export FLYWAY_LOCATIONS="filesystem:${MIGRATIONS_DIR}"
+    FLYWAY_JAVA_CMD="$(command -v java)"
+    export FLYWAY_JAVA_CMD
     log_info "Running Flyway migrations using FLYWAY_LOCATIONS=${FLYWAY_LOCATIONS}"
     if ! flyway -baselineOnMigrate=true migrate; then
         log_error "Flyway migration failure"

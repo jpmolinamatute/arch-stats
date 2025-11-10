@@ -51,9 +51,7 @@ type PendingRegistration = {
 const pendingRegistration = ref<PendingRegistration | null>(null);
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
-const CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID) as string | undefined;
-const USE_FEDCM = String(import.meta.env.VITE_GIS_USE_FEDCM ?? 'true') === 'true';
+const CLIENT_ID = import.meta.env.ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID as string | undefined;
 
 async function loadScript(): Promise<void> {
     // Access Google API dynamically to avoid hard Window typing dependency
@@ -149,7 +147,7 @@ function promptOnce(): void {
 
 async function initGoogleOneTap(container?: HTMLElement | null): Promise<void> {
     if (!CLIENT_ID) {
-        initError.value = 'Missing VITE_GOOGLE_CLIENT_ID (or VITE_GOOGLE_OAUTH_CLIENT_ID)';
+        initError.value = 'Missing ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID';
         return;
     }
     try {
@@ -168,9 +166,9 @@ async function initGoogleOneTap(container?: HTMLElement | null): Promise<void> {
                 callback: handleCredentialResponse,
                 auto_select: true,
                 cancel_on_tap_outside: true,
-                // Enable FedCM per migration guide
-                use_fedcm_for_prompt: USE_FEDCM,
-                itp_support: USE_FEDCM,
+                // Always use FedCM (modern privacy-preserving federated auth)
+                use_fedcm_for_prompt: true,
+                itp_support: true,
             });
             initialized.value = true;
         }

@@ -161,7 +161,7 @@ async def google_one_tap_login(
         secure=cookie_secure,
         samesite="lax",
         path="/",
-        max_age=settings.jwt_ttl_minutes * 60,
+        max_age=settings.arch_stats_jwt_ttl_minutes * 60,
     )
     response.status_code = status.HTTP_201_CREATED
     return authd
@@ -337,7 +337,7 @@ async def register(
         secure=request.url.scheme == "https",
         samesite="lax",
         path="/",
-        max_age=settings.jwt_ttl_minutes * 60,
+        max_age=settings.arch_stats_jwt_ttl_minutes * 60,
     )
     response.status_code = status.HTTP_200_OK if existing else status.HTTP_201_CREATED
     return result

@@ -94,7 +94,9 @@ def decode_token(token: str, attr_name: str) -> str | int | float | None:
         jwt.InvalidTokenError: If the token is invalid or verification fails.
         jwt.ExpiredSignatureError: If the token has expired.
     """
-    decoded = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    decoded = jwt.decode(
+        token, settings.arch_stats_jwt_secret, algorithms=[settings.arch_stats_jwt_algorithm]
+    )
     value: str | int | float | None = decoded.get(attr_name, None)
     return value
 
@@ -113,7 +115,7 @@ async def verify_google_id_token(credential: str) -> GoogleUserData:
             id_token.verify_oauth2_token,
             credential,
             req,
-            settings.google_oauth_client_id,
+            settings.arch_stats_google_oauth_client_id,
         )
         return cast(GoogleUserData, dict(verified))
     except Exception as exc:
@@ -135,7 +137,9 @@ def build_jwt(archer_id: UUID, sid_b64: str, issued_at: datetime, expires_at: da
         "iss": "arch-stats",
         "typ": "access",
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return jwt.encode(
+        payload, settings.arch_stats_jwt_secret, algorithm=settings.arch_stats_jwt_algorithm
+    )
 
 
 async def create_auth_session(
@@ -150,7 +154,7 @@ async def create_auth_session(
 
     raw_session = os.urandom(settings.session_token_bytes)
     token_hash = hash_session_token(raw_session)
-    expires_at = now + timedelta(minutes=settings.jwt_ttl_minutes)
+    expires_at = now + timedelta(minutes=settings.arch_stats_jwt_ttl_minutes)
 
     data = AuthCreate(
         archer_id=archer_id,
