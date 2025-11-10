@@ -74,8 +74,8 @@ def jwt_for() -> Callable[[UUID], str]:
                 "iss": "arch-stats",
                 "typ": "access",
             },
-            settings.jwt_secret,
-            algorithm=settings.jwt_algorithm,
+            settings.arch_stats_jwt_secret,
+            algorithm=settings.arch_stats_jwt_algorithm,
         )
 
     return _jwt_for

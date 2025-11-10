@@ -1,0 +1,29 @@
+[Unit]
+Description=Arch Stats
+After=network.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=arch-stats
+Group=arch-stats
+WorkingDirectory=/opt/arch-stats/backend
+
+# Environment variables (permissions 600, owned by arch-stats)
+EnvironmentFile=/opt/arch-stats/.env
+
+# Run uvicorn from within the virtual environment
+ExecStart=/opt/arch-stats/backend/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# Automatically restart if it crashes
+Restart=always
+RestartSec=5
+
+# Capture logs in journald
+StandardOutput=journal
+StandardError=journal
+
+# Optionally increase open file limit
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
