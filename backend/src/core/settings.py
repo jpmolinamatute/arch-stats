@@ -7,6 +7,8 @@ from pathlib import Path
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from schema import JWTAlgorithm
+
 
 _ENV_FILE = Path(__file__).resolve().parent / ".env"
 _ENV_FILE_STR = str(_ENV_FILE) if _ENV_FILE.exists() else None
@@ -85,7 +87,9 @@ class Settings(BaseSettings):
         default=...,
         description="HMAC secret used to sign JWTs (HS256). Provide strong secret in production.",
     )
-    arch_stats_jwt_algorithm: str = Field(default=..., description="JWT signing algorithm")
+    arch_stats_jwt_algorithm: JWTAlgorithm = Field(
+        default=JWTAlgorithm.HS256, description="JWT signing algorithm"
+    )
     arch_stats_jwt_ttl_minutes: int = Field(
         default=60, description="JWT access token lifetime (minutes)"
     )
