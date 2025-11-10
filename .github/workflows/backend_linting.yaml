@@ -149,7 +149,9 @@ jobs:
           POSTGRES_PORT: "5432"
           ARCH_STATS_DEV_MODE: "true"
           ARCH_STATS_SERVER_PORT: "8000"
-          ARCH_STATS_WS_CHANNEL: "archy"
+          ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
+          ARCH_STATS_JWT_ALGORITHM: "HS256"
+          ARCH_STATS_JWT_TTL_MINUTES: "60"
           ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
           PYTHONPATH: "${{ github.workspace }}/backend/src"
         run: |
