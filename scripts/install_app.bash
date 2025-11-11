@@ -279,19 +279,21 @@ install_dependencies() {
 }
 
 main() {
+    local tar_url checksum_hash tar_path
+    local user_dir="${1}"
     # Help flag
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
         print_help
         exit 0
     fi
     trap cleanup_tmp_workspace EXIT
-    local home_dir="${1}"
-    if [[ ! -d "$home_dir" ]]; then
-        log_error "required argument: home_dir is missing or is not a real directory"
+    
+    if [[ ! -d "$user_dir" ]]; then
+        log_error "required argument: user_dir is missing or is not a real directory"
         log_error "Usage: $0 /path/to/arch-stats"
         exit 2
     fi
-    purge_existing_install "${home_dir}"
+    purge_existing_install "${user_dir}"
     assert_postgres_socket
     get_repo_meta_data
     tar_url="$(json_get_tarball_url)"
@@ -299,10 +301,10 @@ main() {
     tar_path="${TMP_DIR}/${ASSET_TARBALL_NAME}"
     gh_download "$tar_url" "$tar_path"
     verify_sha256 "$tar_path" "$checksum_hash"
-    extract_app "$tar_path" "${home_dir}"
+    extract_app "$tar_path" "${user_dir}"
     download_migrations_zip
     unpack_migrations_zip
-    install_dependencies "${home_dir}"
+    install_dependencies "${user_dir}"
 
     exit 0
 }

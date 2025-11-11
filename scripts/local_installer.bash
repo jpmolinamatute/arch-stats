@@ -53,6 +53,10 @@ main() {
     local cred
     local action
 
+    if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
+        echo "ERROR: .env file not found at ${SCRIPT_DIR}/.env" >&2
+        exit 1
+    fi
     source "${SCRIPT_DIR}/.env"
 
     : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"

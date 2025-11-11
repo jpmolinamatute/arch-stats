@@ -47,11 +47,11 @@ install_app_as_user() {
     local user_dir
     local script_path
 
-    user_dir="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)/backend"
+    user_dir="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
     script_path="${ROOT_DIR}/install_app.bash"
 
     if [[ ! -d "${user_dir}" ]]; then
-        log_error "ERROR: System user '$SYSTEM_USER' does not exist. Cannot determine home directory."
+        log_error "System user '$SYSTEM_USER' does not exist. Cannot determine home directory."
         exit 2
     fi
 
