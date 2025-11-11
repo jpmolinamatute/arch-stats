@@ -76,10 +76,10 @@ cleanup_tmp_workspace() {
 
 # Remove existing application directory to ensure clean install
 purge_existing_install() {
-    local app_dir="${1}/backend"
-    if [[ -d "$app_dir" ]]; then
-        log_info "Removing existing install at: $app_dir"
-        rm -rf -- "$app_dir"
+    local app_home_dir="${1}/backend"
+    if [[ -d "$app_home_dir" ]]; then
+        log_info "Removing existing install at: $app_home_dir"
+        rm -rf -- "$app_home_dir"
     fi
 }
 
@@ -108,7 +108,7 @@ gh_download() {
     fi
     if ! curl "${curl_opts[@]}" "$url"; then
         curl_ec=$?
-        log_error "ERROR: Download failed (curl exit=${curl_ec}) url=${url}"
+        log_error "Download failed (curl exit=${curl_ec}) url=${url}"
         exit 15
     fi
 }
@@ -116,12 +116,12 @@ gh_download() {
 get_repo_meta_data() {
     local api_url="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
 
-    log_info "INFO: Resolving latest release metadata from GitHub API"
+    log_info "Resolving latest release metadata from GitHub API"
     if ! gh_download "$api_url" "${RELEASE_JSON_FILE}" true; then
-        log_error "ERROR: Failed to fetch latest release metadata"
+        log_error "Failed to fetch latest release metadata"
         exit 12
     fi
-    log_info "INFO: Saved release JSON to ${RELEASE_JSON_FILE}"
+    log_info "Saved release JSON to ${RELEASE_JSON_FILE}"
 }
 
 # Echoes the browser_download_url for the tarball asset
@@ -260,15 +260,12 @@ assert_postgres_socket() {
 }
 
 install_dependencies() {
-    local app_dir="${1}/backend"
+    local app_home_dir="${1}/backend"
 
-    if [[ ! -d "$app_dir" ]]; then
-        log_error "ERROR: backend directory not found: $app_dir"
-        exit 3
-    fi
-
-    cd "$app_dir"
-
+    cd "$app_home_dir" || {
+        log_error "backend directory not found: $app_home_dir"
+        exit 4
+    }
     log_info "Running 'uv self update'"
     if ! uv self update; then
         log_error "uv self update failed"
@@ -293,7 +290,7 @@ main() {
     trap cleanup_tmp_workspace EXIT
     local home_dir="${1}"
     if [[ ! -d "$home_dir" ]]; then
-        log_error "ERROR: missing required argument: app_dir or app_dir is not a real directory"
+        log_error "required argument: home_dir is missing or is not a real directory"
         log_error "Usage: $0 /path/to/arch-stats"
         exit 2
     fi
