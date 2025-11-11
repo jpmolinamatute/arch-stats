@@ -5,20 +5,6 @@
 
 set -Eeuo pipefail
 
-# Exit codes (installer):
-# 1  : Generic fatal error / not root / extraction failure
-# 2  : System user missing / cannot resolve home directory
-# 7  : Dependency installer script missing or not executable
-# 10 : PostgreSQL socket missing
-# 11 : No SQL migrations found
-# 12 : Network metadata/download failure
-# 13 : Flyway migration failure
-# 14 : Dependency installation (runuser) failure
-# 15 : Download helper (curl) failure
-# 20 : Service stop failure (only if unit exists and remains active)
-# 21 : Service start failure
-# 22 : Service not active after start
-
 # Config
 REPO="arch-stats"
 SYSTEM_USER="${REPO}"
@@ -49,12 +35,7 @@ Exit status codes:
     1   Generic fatal error / not root / extraction failure
     2   System user missing / cannot resolve home directory
     7   Dependency installer script missing or not executable
-    10  PostgreSQL socket missing
-    11  No SQL migrations found
-    12  Network metadata/download failure
-    13  Flyway migration failure
     14  Dependency installation (runuser) failure
-    15  Download helper (curl) failure
     20  Service stop failure (only if unit exists and remains active)
     21  Service start failure
     22  Service not active after start
