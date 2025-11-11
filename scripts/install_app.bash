@@ -20,8 +20,6 @@ PG_PORT="${PG_PORT:-5432}"
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
 
-
-
 print_help() {
     local script
     script="${0##*/}"
