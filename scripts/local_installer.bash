@@ -6,8 +6,6 @@
 
 set -euo pipefail
 
-
-
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 check_remote() {
@@ -70,7 +68,7 @@ main() {
 
     if [[ ${action} == "install" ]]; then
         echo "Starting remote installation on '${cred}'."
-        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install_dependencies.bash"
+        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install_app.bash"
         execute_remote_script "${cred}" /tmp/remote_installer.bash
     elif [[ ${action} == "uninstall" ]]; then
         echo "Starting remote uninstallation on '${cred}'."

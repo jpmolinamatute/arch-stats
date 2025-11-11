@@ -5,8 +5,6 @@
 
 set -Eeuo pipefail
 
-
-
 # Exit codes (installer):
 # 1  : Generic fatal error / not root / extraction failure
 # 2  : System user missing / cannot resolve home directory
@@ -27,7 +25,6 @@ SYSTEM_USER="${REPO}"
 SYSTEM_SERVICE="${REPO}.service"
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 
-
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
 
@@ -47,10 +44,6 @@ Automates deployment of the latest release:
 
 Requirements:
     - Must be run as root
-    - Environment variables:
-            GITHUB_TOKEN            (required) GitHub token with repo:read access
-            PG_SOCKET_DIR           (optional) Default: /var/run/postgresql
-            PG_PORT                 (optional) Default: 5432
 
 Exit status codes:
     1   Generic fatal error / not root / extraction failure
@@ -69,23 +62,25 @@ Exit status codes:
 EOF
 }
 # Run dependency installation script as the app user
-install_backend_dependencies_as_user() {
-    local app_dir script_path
-    
-    app_dir="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
-    if [[ -z "$app_dir" ]]; then
-        echo "ERROR: System user '$SYSTEM_USER' does not exist. Cannot determine home directory." >&2
+install_app_as_user() {
+    local user_dir
+    local script_path
+
+    user_dir="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)/backend"
+    script_path="${ROOT_DIR}/install_app.bash"
+
+    if [[ ! -d "${user_dir}" ]]; then
+        log_error "ERROR: System user '$SYSTEM_USER' does not exist. Cannot determine home directory."
         exit 2
     fi
-    script_path="${ROOT_DIR}/install_dependencies.bash"
 
     if [[ ! -x "$script_path" ]]; then
         log_error "Dependency installer not found or not executable: $script_path"
         exit 7
     fi
 
-    log_info "Running dependency installer as ${SYSTEM_USER}: $script_path $app_dir"
-    if ! runuser -u "${SYSTEM_USER}" -- "$script_path" "$app_dir"; then
+    log_info "Running dependency installer as ${SYSTEM_USER}: $script_path ${user_dir}"
+    if ! runuser -u "${SYSTEM_USER}" -- "$script_path" "${user_dir}"; then
         log_error "Dependency installation failed for ${SYSTEM_USER} (script exit)"
         exit 14
     fi
@@ -132,21 +127,20 @@ assert_system_service_running() {
     log_info "Service is active: ${SYSTEM_SERVICE}"
 }
 
-
 main() {
     # Help flag
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
         print_help
         exit 0
     fi
-    
+
     if [[ $EUID -ne 0 ]]; then
         log_error "Please run as root."
         exit 1
     fi
-    
+
     stop_system_service
-    install_backend_dependencies_as_user
+    install_app_as_user
     start_system_service
     assert_system_service_running
     log_info "Remote installation completed."

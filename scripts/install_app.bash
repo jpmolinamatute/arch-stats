@@ -10,15 +10,61 @@ REPO="arch-stats"
 OWNER="jpmolinamatute"
 USER_AGENT="${REPO}-installer"
 ASSET_TARBALL_NAME="${REPO}.tar.xz"
+TMP_DIR="$(mktemp -d -t "${REPO}-installer.XXXXXX")"
 RELEASE_JSON_FILE="${TMP_DIR}/release.json"
 MIGRATION_ZIP_OUT="${TMP_DIR}/${REPO}-migrations.zip"
 MIGRATIONS_UNPACK_DIR="${TMP_DIR}/migrations_unpacked"
-TMP_DIR="$(mktemp -d -t "${REPO}-installer.XXXXXX")"
 PG_SOCKET_DIR="${PG_SOCKET_DIR:-/var/run/postgresql}"
 PG_PORT="${PG_PORT:-5432}"
 
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
+
+
+
+print_help() {
+    local script
+    script="${0##*/}"
+    cat <<EOF
+Usage: $script APP_HOME_DIR
+       $script --help
+
+APP_HOME_DIR:
+    (required) Absolute path to the application system user's home directory
+    where the release archive will be extracted. Example: /home/arch-stats
+
+Description:
+    Automates deployment of the latest release:
+      - Fetches release metadata and tarball from GitHub and verifies SHA-256
+      - Extracts into the system user's home directory
+      - Downloads ephemeral SQL migrations and applies them
+      - Installs backend dependencies (production only)
+      - (Service management is not performed by this script version)
+
+Environment Variables:
+    GITHUB_TOKEN    (required) GitHub token with repo:read access
+    POSTGRES_USER   (required) Database user owning the target schema
+    POSTGRES_DB     (required) Target database name
+    PG_SOCKET_DIR   (optional) PostgreSQL socket dir (default: /var/run/postgresql)
+    PG_PORT         (optional) PostgreSQL port (default: 5432)
+
+Exit Status Codes:
+    1   Generic fatal error / extraction failure
+    2   Missing or invalid APP_HOME_DIR
+    7   Dependency installer script missing or not executable
+    10  PostgreSQL socket missing
+    11  No SQL migrations found
+    12  Network metadata/download failure
+    13  Migration failure
+    14  Dependency installation (runuser) failure
+    15  Download helper (curl) failure
+    22  Service not active after start
+
+Example:
+    $script /home/arch-stats
+
+EOF
+}
 
 # shellcheck disable=SC2329 # Invoked indirectly via 'trap cleanup_tmp_workspace EXIT' in main
 cleanup_tmp_workspace() {
@@ -32,7 +78,7 @@ cleanup_tmp_workspace() {
 
 # Remove existing application directory to ensure clean install
 purge_existing_install() {
-    local app_dir="${1}"
+    local app_dir="${1}/backend"
     if [[ -d "$app_dir" ]]; then
         log_info "Removing existing install at: $app_dir"
         rm -rf -- "$app_dir"
@@ -64,17 +110,18 @@ gh_download() {
     fi
     if ! curl "${curl_opts[@]}" "$url"; then
         curl_ec=$?
-        echo "ERROR: Download failed (curl exit=${curl_ec}) url=${url}" >&2
-        return 15
+        log_error "ERROR: Download failed (curl exit=${curl_ec}) url=${url}"
+        exit 15
     fi
 }
 
 get_repo_meta_data() {
     local api_url="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
+
     log_info "INFO: Resolving latest release metadata from GitHub API"
     if ! gh_download "$api_url" "${RELEASE_JSON_FILE}" true; then
         log_error "ERROR: Failed to fetch latest release metadata"
-        return 12
+        exit 12
     fi
     log_info "INFO: Saved release JSON to ${RELEASE_JSON_FILE}"
 }
@@ -129,18 +176,11 @@ verify_sha256() {
 
 extract_app() {
     local tar_path="$1"
-    if [[ -z "${SYSTEM_HOME:-}" ]]; then
-        echo "ERROR: SYSTEM_HOME not set for extract_app" >&2
-        return 1
-    fi
-    echo "INFO: Extracting ${ASSET_TARBALL_NAME} into ${SYSTEM_HOME}"
-    if ! tar -xJf "$tar_path" -C "${SYSTEM_HOME}"; then
-        echo "ERROR: Failed to extract application tarball" >&2
-        return 1
-    fi
-    if [[ -n "${SYSTEM_USER:-}" ]]; then
-        echo "INFO: Setting ownership for ${SYSTEM_HOME}/backend to ${SYSTEM_USER}:${SYSTEM_USER}"
-        chown -R "${SYSTEM_USER}:${SYSTEM_USER}" "${SYSTEM_HOME}/backend" || true
+    local backend_dir="${2}"
+    log_info "Extracting ${ASSET_TARBALL_NAME} into ${backend_dir}"
+    if ! tar -xJf "$tar_path" -C "${backend_dir}"; then
+        log_error "Failed to extract application tarball"
+        exit 1
     fi
 }
 
@@ -165,9 +205,9 @@ run_migrations() {
     log_info "Running migrations '${migrations_dir}'"
     while IFS= read -r -d '' f; do
         if ! psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f "${f}"; then
-        log_error "Migration failed"
-        exit 13
-    fi
+            log_error "Migration failed"
+            exit 13
+        fi
     done < <(find "$migrations_dir" -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
 
     log_info "Migrations completed successfully"
@@ -221,41 +261,45 @@ assert_postgres_socket() {
     log_info "Detected PostgreSQL socket: ${socket_path}"
 }
 
-install_dependencies(){
-    local app_dir="${1}"
-    local backend_dir="${app_dir}/backend"
-    if [[ ! -d "$app_dir" ]]; then
-        echo "ERROR: missing required argument: app_dir or app_dir is not a real directory" >&2
-        echo "Usage: $0 /path/to/arch-stats" >&2
-        exit 2
-    fi
+install_dependencies() {
+    local app_dir="${1}/backend"
 
-    if [[ ! -d "$backend_dir" ]]; then
-        echo "ERROR: backend directory not found: $backend_dir" >&2
+    if [[ ! -d "$app_dir" ]]; then
+        log_error "ERROR: backend directory not found: $app_dir"
         exit 3
     fi
 
-    cd "$backend_dir"
+    cd "$app_dir"
 
-    echo "INFO: Running 'uv self update'"
+    log_info "Running 'uv self update'"
     if ! uv self update; then
-        echo "ERROR: uv self update failed" >&2
+        log_error "uv self update failed"
         exit 5
     fi
 
-    echo "INFO: Syncing production dependencies (no dev, frozen)"
+    log_info "Syncing production dependencies (no dev, frozen)"
     if ! uv sync --no-dev --frozen --python "$(cat .python-version)"; then
-        echo "ERROR: uv sync failed" >&2
+        log_error "uv sync failed"
         exit 6
     fi
 
-    echo "INFO: Dependency installation completed successfully"
+    log_info "Dependency installation completed successfully"
 }
 
 main() {
+    # Help flag
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        print_help
+        exit 0
+    fi
     trap cleanup_tmp_workspace EXIT
-    local backend="${1}"
-    purge_existing_install "${backend}"
+    local home_dir="${1}"
+    if [[ ! -d "$home_dir" ]]; then
+        log_error "ERROR: missing required argument: app_dir or app_dir is not a real directory"
+        log_error "Usage: $0 /path/to/arch-stats"
+        exit 2
+    fi
+    purge_existing_install "${home_dir}"
     assert_postgres_socket
     get_repo_meta_data
     tar_url="$(json_get_tarball_url)"
@@ -263,11 +307,11 @@ main() {
     tar_path="${TMP_DIR}/${ASSET_TARBALL_NAME}"
     gh_download "$tar_url" "$tar_path"
     verify_sha256 "$tar_path" "$checksum_hash"
-    extract_app "$tar_path"
+    extract_app "$tar_path" "${home_dir}"
     download_migrations_zip
     unpack_migrations_zip
-    install_dependencies "${backend}"
-    
+    install_dependencies "${home_dir}"
+
     exit 0
 }
 
