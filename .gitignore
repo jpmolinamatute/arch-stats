@@ -16,3 +16,4 @@ backend/src/frontend/*
 openapi.json
 docker/postgresql/
 backend/migrations/
+google_client_secret.json

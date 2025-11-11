@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# assumes that ssh is configured to connect to the raspberry pi on the local network using only a "host".
+# This script is meant to be run on a local machine to install arch-stats in a remote machine,
+# such as a Raspberry Pi, over SSH. This script assumes that ssh is configured to connect to the
+# raspberry pi using only a "host".
 
 set -euo pipefail
 
@@ -40,9 +42,9 @@ upload_scripts() {
 execute_remote_script() {
     local cred="${1}"
     local script_to_execute="${2}"
-    echo "Executing remote installer on '${cred}'"
+    echo "Executing remote installer on '${cred}' as root"
     # shellcheck disable=SC2029
-    ssh "${cred}" "chmod +x ${script_to_execute} && ${script_to_execute}"
+    ssh "${cred}" "chmod +x ${script_to_execute} && sudo GITHUB_TOKEN='${GITHUB_TOKEN}' POSTGRES_USER='${POSTGRES_USER}' POSTGRES_DB='${POSTGRES_DB}' ${script_to_execute}"
     # shellcheck disable=SC2029
     ssh "${cred}" "rm -f ${script_to_execute}"
 }
@@ -50,17 +52,27 @@ execute_remote_script() {
 main() {
     local cred
     local action
+
+    if [[ ! -f "${SCRIPT_DIR}/.env" ]]; then
+        echo "ERROR: .env file not found at ${SCRIPT_DIR}/.env" >&2
+        exit 1
+    fi
+    source "${SCRIPT_DIR}/.env"
+
+    : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"
+
     if [[ $# -ne 2 ]]; then
         echo "Usage: $0 <remote-host> <action>" >&2
         exit 1
     fi
     cred="${1}"
     action="${2}"
+
     check_remote "${cred}"
 
     if [[ ${action} == "install" ]]; then
         echo "Starting remote installation on '${cred}'."
-        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install_dependencies.bash"
+        upload_scripts "${cred}" "${SCRIPT_DIR}/remote_installer.bash" "${SCRIPT_DIR}/install_app.bash"
         execute_remote_script "${cred}" /tmp/remote_installer.bash
     elif [[ ${action} == "uninstall" ]]; then
         echo "Starting remote uninstallation on '${cred}'."
