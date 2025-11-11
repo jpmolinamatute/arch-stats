@@ -49,14 +49,11 @@ Environment Variables:
 Exit Status Codes:
     1   Generic fatal error / extraction failure
     2   Missing or invalid APP_HOME_DIR
-    7   Dependency installer script missing or not executable
     10  PostgreSQL socket missing
     11  No SQL migrations found
     12  Network metadata/download failure
     13  Migration failure
-    14  Dependency installation (runuser) failure
     15  Download helper (curl) failure
-    22  Service not active after start
 
 Example:
     $script /home/arch-stats
