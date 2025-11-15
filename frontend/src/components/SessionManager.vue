@@ -76,7 +76,7 @@
             <p class="mt-4 text-sm text-slate-400">Checking for active sessions...</p>
         </div>
 
-        <!-- Fallback message if not authenticated -->
+        <!-- Unauthenticated message -->
         <div v-else class="text-center text-slate-400">
             <p class="text-sm">Please sign in to manage sessions</p>
         </div>

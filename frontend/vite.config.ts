@@ -12,6 +12,7 @@ export default defineConfig({
     },
     build: {
         outDir: '../backend/src/frontend',
+        emptyOutDir: true,
     },
     server: {
         headers: {

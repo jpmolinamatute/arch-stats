@@ -167,8 +167,9 @@
                     <p class="text-sm mb-6">Tap the target face to record a shot.</p>
 
                     <div class="w-full flex justify-center">
+                        <!-- Render Face only when a concrete face is assigned (exclude 'none') -->
                         <Face
-                            v-if="currentSlot.face_type"
+                            v-if="currentSlot.face_type && currentSlot.face_type !== 'none'"
                             :face-id="currentSlot.face_type"
                             :size-px="360"
                             :show-crosshair="'auto'"

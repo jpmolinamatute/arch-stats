@@ -44,7 +44,7 @@ execute_remote_script() {
     local script_to_execute="${2}"
     echo "Executing remote installer on '${cred}' as root"
     # shellcheck disable=SC2029
-    ssh "${cred}" "chmod +x ${script_to_execute} && sudo GITHUB_TOKEN='${GITHUB_TOKEN}' POSTGRES_USER='${POSTGRES_USER}' POSTGRES_DB='${POSTGRES_DB}' ${script_to_execute}"
+    ssh "${cred}" "chmod +x ${script_to_execute} && sudo GITHUB_TOKEN='${GITHUB_TOKEN}' ${script_to_execute}"
     # shellcheck disable=SC2029
     ssh "${cred}" "rm -f ${script_to_execute}"
 }

@@ -51,7 +51,8 @@ type PendingRegistration = {
 const pendingRegistration = ref<PendingRegistration | null>(null);
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
-const CLIENT_ID = import.meta.env.ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID as string | undefined;
+const CLIENT_ID = (import.meta.env as unknown as { VITE_GOOGLE_CLIENT_ID?: string })
+    .VITE_GOOGLE_CLIENT_ID as string | undefined;
 
 async function loadScript(): Promise<void> {
     // Access Google API dynamically to avoid hard Window typing dependency
@@ -99,7 +100,7 @@ async function bootstrapAuth(): Promise<void> {
                 isAuthenticated.value = true;
 
                 // Initialize Google One Tap but don't prompt
-                await initGoogleOneTap(null);
+                await initOneTap(null);
                 return;
             } else if (meResponse.status === 401) {
                 // Not authenticated, need to prompt
@@ -117,7 +118,7 @@ async function bootstrapAuth(): Promise<void> {
         }
 
         // Initialize Google One Tap
-        await initGoogleOneTap(null);
+        await initOneTap(null);
         // Only prompt if not already authenticated
         if (!isAuthenticated.value) {
             promptOnce();
@@ -145,9 +146,9 @@ function promptOnce(): void {
     }, 15000);
 }
 
-async function initGoogleOneTap(container?: HTMLElement | null): Promise<void> {
+async function initOneTap(container?: HTMLElement | null): Promise<void> {
     if (!CLIENT_ID) {
-        initError.value = 'Missing ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID';
+        initError.value = 'Missing VITE_GOOGLE_CLIENT_ID';
         return;
     }
     try {
@@ -333,8 +334,7 @@ export function useAuth() {
         initError,
         prompting,
         pendingRegistration,
-        initGoogleOneTap,
-        initOneTap: initGoogleOneTap,
+        initOneTap,
         beginGoogleLogin,
         registerNewArcher,
         bootstrapAuth,

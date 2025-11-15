@@ -3,19 +3,18 @@
 set -Eeuo pipefail
 
 : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"
-: "${POSTGRES_USER:?Environment variable POSTGRES_USER is not set}"
-: "${POSTGRES_DB:?Environment variable POSTGRES_DB is not set}"
 
-REPO="arch-stats"
+APP="arch-stats"
 OWNER="jpmolinamatute"
-USER_AGENT="${REPO}-installer"
-ASSET_TARBALL_NAME="${REPO}.tar.xz"
-TMP_DIR="$(mktemp -d -t "${REPO}-installer.XXXXXX")"
+USER_AGENT="${APP}-installer"
+ASSET_TARBALL_NAME="${APP}.tar.xz"
+TMP_DIR="$(mktemp -d -t "${APP}-installer.XXXXXX")"
 RELEASE_JSON_FILE="${TMP_DIR}/release.json"
-MIGRATION_ZIP_OUT="${TMP_DIR}/${REPO}-migrations.zip"
+MIGRATION_ZIP_OUT="${TMP_DIR}/${APP}-migrations.zip"
 MIGRATIONS_UNPACK_DIR="${TMP_DIR}/migrations_unpacked"
 PG_SOCKET_DIR="${PG_SOCKET_DIR:-/var/run/postgresql}"
 PG_PORT="${PG_PORT:-5432}"
+PATH="/opt/arch-stats/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
@@ -41,14 +40,13 @@ Description:
 
 Environment Variables:
     GITHUB_TOKEN    (required) GitHub token with repo:read access
-    POSTGRES_USER   (required) Database user owning the target schema
-    POSTGRES_DB     (required) Target database name
     PG_SOCKET_DIR   (optional) PostgreSQL socket dir (default: /var/run/postgresql)
     PG_PORT         (optional) PostgreSQL port (default: 5432)
 
 Exit Status Codes:
     1   Generic fatal error / extraction failure
     2   Missing or invalid APP_HOME_DIR
+    3   Unable to change to a safe working directory
     10  PostgreSQL socket missing
     11  No SQL migrations found
     12  Network metadata/download failure
@@ -56,7 +54,7 @@ Exit Status Codes:
     15  Download helper (curl) failure
 
 Example:
-    $script /home/arch-stats
+    $script /opt/${APP}
 
 EOF
 }
@@ -111,7 +109,7 @@ gh_download() {
 }
 
 get_repo_meta_data() {
-    local api_url="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
+    local api_url="https://api.github.com/repos/${OWNER}/${APP}/releases/latest"
 
     log_info "Resolving latest release metadata from GitHub API"
     if ! gh_download "$api_url" "${RELEASE_JSON_FILE}" true; then
@@ -181,10 +179,8 @@ extract_app() {
 
 # Download the private migrations repository as a ZIP into TMP_DIR.
 download_migrations_zip() {
-    local repo="arch-stats-migrations"
     local zip_url
-
-    zip_url="https://api.github.com/repos/${OWNER}/${repo}/zipball/main"
+    zip_url="https://api.github.com/repos/${OWNER}/${APP}-migrations/zipball/main"
 
     log_info "Downloading migrations zip from: $zip_url"
     if ! gh_download "$zip_url" "${MIGRATION_ZIP_OUT}"; then
@@ -194,12 +190,18 @@ download_migrations_zip() {
     log_info "Migrations zip saved to: ${MIGRATION_ZIP_OUT}"
 }
 
-# Run migrations pointing at the local PostgreSQL via Unix socket
+# Run migrations pointing at the local PostgreSQL DB via Unix socket
 run_migrations() {
     local migrations_dir="${1}"
     log_info "Running migrations '${migrations_dir}'"
     while IFS= read -r -d '' f; do
-        if ! psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -f "${f}"; then
+        # Suppress NOTICE messages and routine status tags (e.g., "CREATE TABLE") while
+        # preserving warnings and errors on stderr.
+        # - PGOPTIONS sets client_min_messages=warning (hides NOTICE)
+        # - -q reduces psql chatter; -X ignores ~/.psqlrc; ON_ERROR_STOP stops on SQL errors
+        # - Redirect stdout to /dev/null to hide status lines; keep stderr for warnings/errors
+        if ! PGOPTIONS='-c client_min_messages=warning' \
+            psql -X -q -v ON_ERROR_STOP=1 -U "${APP}" -d "${APP}" -f "${f}" 1>/dev/null; then
             log_error "Migration failed"
             exit 13
         fi
@@ -263,6 +265,7 @@ install_dependencies() {
         log_error "backend directory not found: $app_home_dir"
         exit 4
     }
+
     log_info "Running 'uv self update'"
     if ! uv self update; then
         log_error "uv self update failed"
@@ -287,7 +290,15 @@ main() {
         exit 0
     fi
     trap cleanup_tmp_workspace EXIT
-    
+
+    # Switch to a safe, world-accessible working directory to avoid
+    # 'find: Failed to restore initial working directory' when the caller's
+    # cwd is in a directory this user cannot traverse (e.g., another user's $HOME).
+    cd / || {
+        log_error "Failed to change working directory to /"
+        exit 3
+    }
+
     if [[ ! -d "$user_dir" ]]; then
         log_error "required argument: user_dir is missing or is not a real directory"
         log_error "Usage: $0 /path/to/arch-stats"

@@ -6,9 +6,8 @@
 set -Eeuo pipefail
 
 # Config
-REPO="arch-stats"
-SYSTEM_USER="${REPO}"
-SYSTEM_SERVICE="${REPO}.service"
+APP="arch-stats"
+SYSTEM_SERVICE="${APP}.service"
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 
 log_info() { echo "INFO: $*"; }
@@ -47,11 +46,11 @@ install_app_as_user() {
     local user_dir
     local script_path
 
-    user_dir="$(getent passwd "$SYSTEM_USER" | cut -d: -f6)"
+    user_dir="$(getent passwd "$APP" | cut -d: -f6)"
     script_path="${ROOT_DIR}/install_app.bash"
 
     if [[ ! -d "${user_dir}" ]]; then
-        log_error "System user '$SYSTEM_USER' does not exist. Cannot determine home directory."
+        log_error "System user '$APP' does not exist. Cannot determine home directory."
         exit 2
     fi
 
@@ -60,9 +59,10 @@ install_app_as_user() {
         exit 7
     fi
 
-    log_info "Running dependency installer as ${SYSTEM_USER}: $script_path ${user_dir}"
-    if ! runuser -u "${SYSTEM_USER}" -- "$script_path" "${user_dir}"; then
-        log_error "Dependency installation failed for ${SYSTEM_USER} (script exit)"
+    log_info "Running dependency installer as ${APP}: $script_path ${user_dir}"
+
+    if ! runuser -u "${APP}" "${script_path}" "${user_dir}"; then
+        log_error "Dependency installation failed for ${APP} (script exit)"
         exit 14
     fi
 }
