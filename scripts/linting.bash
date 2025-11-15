@@ -20,30 +20,34 @@ Options:
 EOF
 }
 
+log_info() { echo "INFO: $*"; }
+
 run_python_tests() {
-    local pyproject_path="${1}"
+    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
     start_docker
-    echo "running python tests..."
+    cd "${ROOT_DIR}/backend"
+    log_info "running python tests..."
     pytest --config-file "${pyproject_path}"
+    cd -
     stop_docker
 }
 
 run_python_checks() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
-    cd "${ROOT_DIR}/backend"
+    # cd "${ROOT_DIR}/backend"
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
-    echo "Running isort..."
-    isort --settings-file "${pyproject_path}" ./src ./tests
-    echo "Running black..."
-    black --config "${pyproject_path}" ./src ./tests
-    echo "Running mypy..."
-    mypy --config-file "${pyproject_path}" ./src ./tests
-    echo "Running pylint..."
-    pylint --rcfile "${pyproject_path}" ./src ./tests
-    run_python_tests "${pyproject_path}"
-    cd -
+    log_info "Running isort..."
+    isort --settings-file "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    log_info "Running black..."
+    black --config "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    log_info "Running mypy..."
+    mypy --config-file "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    log_info "Running pylint..."
+    pylint --rcfile "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    run_python_tests
+    # cd -
 }
 
 run_generate_types() {
@@ -52,22 +56,30 @@ run_generate_types() {
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     uv run "${ROOT_DIR}/scripts/generate_openapi.py"
     cd "${ROOT_DIR}/frontend"
-    echo "Generating TypeScript types from OpenAPI spec"
+    log_info "Generating TypeScript types from OpenAPI spec"
     npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --immutable --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
+}
+
+build_frontend() {
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    cd "${ROOT_DIR}/frontend"
+    log_info "Building frontend"
+    # we are building the frontend as a test to ensure there are no build errors
+    npx vue-tsc -b 
+    npx vite build --outDir "${tmp_dir}"
+    rm  -r "${tmp_dir}"
+    cd -
 }
 
 run_frontend_checks() {
     run_generate_types
     cd "${ROOT_DIR}/frontend"
-    echo "Running JS/TS linter"
+    log_info "Running JS/TS linter"
     npm run lint
-    echo "Running JS/TS formatter"
+    log_info "Running JS/TS formatter"
     npm run format
-    # we are building the frontend as a test to ensure there are no build errors
-    echo "Building frontend"
-    npm run build
-    # `npm run build` removes .gitkeep files, so we need to recreate them
-    touch "${ROOT_DIR}/backend/src/frontend/.gitkeep"
+    build_frontend
     # echo "Running JS/TS tests"
     # npm run test
     cd -

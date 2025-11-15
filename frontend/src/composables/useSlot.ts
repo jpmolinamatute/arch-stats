@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { components, operations } from '@/types/types.generated';
+import type { components } from '@/types/types.generated';
 import { useAuth } from '@/composables/useAuth';
 
 type SlotJoinRequest = components['schemas']['SlotJoinRequest'];
@@ -8,8 +8,6 @@ type FullSlotInfo = components['schemas']['FullSlotInfo'];
 type HTTPValidationError = components['schemas']['HTTPValidationError'];
 type ValidationError = components['schemas']['ValidationError'];
 type ErrorJson = HTTPValidationError | { detail?: string };
-type MeResponseOk =
-    operations['get_current_user_api_v0_auth_me_get']['responses']['200']['content']['application/json'];
 
 const currentSlot = ref<FullSlotInfo | null>(null);
 const loading = ref(false);
@@ -36,7 +34,7 @@ export function useSlot() {
 
     function setSlotCache(archerId: string, slot: FullSlotInfo): void {
         try {
-            // Store only the slot object; no timestamp needed.
+            // Store only the slot object.
             const ls = getLS();
             ls?.setItem(getCacheKey(archerId), JSON.stringify(slot));
         } catch {
@@ -49,14 +47,7 @@ export function useSlot() {
             const ls = getLS();
             const raw = ls?.getItem(getCacheKey(archerId));
             if (!raw) return null;
-            const parsed = JSON.parse(raw) as unknown;
-            // Backward compatibility: previously we stored { ts, slot }.
-            if (typeof parsed === 'object' && parsed !== null && 'slot' in parsed) {
-                const maybe = parsed as { slot?: FullSlotInfo | null };
-                return maybe.slot ?? null;
-            }
-            // New format: the cached value is the FullSlotInfo itself.
-            return parsed as FullSlotInfo;
+            return JSON.parse(raw) as FullSlotInfo;
         } catch {
             return null;
         }
@@ -161,30 +152,13 @@ export function useSlot() {
         loading.value = true;
         error.value = null;
         try {
-            // Prefer using the current user from the auth composable
-            let archerId = user.value?.archer_id;
-
-            // Fallback: fetch /auth/me if user is not initialized yet
+            const archerId = user.value?.archer_id;
             if (!archerId) {
-                const meResponse = await fetch('/api/v0/auth/me', {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (!meResponse.ok) {
-                    if (meResponse.status === 401) {
-                        throw new Error('Not authenticated. Please sign in again.');
-                    }
-                    throw new Error(`Failed to resolve user (HTTP ${meResponse.status})`);
-                }
-                const meData = (await meResponse.json()) as MeResponseOk;
-                archerId = meData.archer.archer_id as string;
+                throw new Error('User context missing; auth must be initialized before slot fetch');
             }
 
             // Try cache first unless forced refresh
-            if (!forceRefresh && archerId) {
+            if (!forceRefresh) {
                 const cached = readSlotCache(archerId);
                 if (cached) {
                     currentSlot.value = cached;
@@ -220,9 +194,8 @@ export function useSlot() {
             }
 
             const full = (await response.json()) as FullSlotInfo;
-            // Update state and cache
             currentSlot.value = full;
-            if (archerId) setSlotCache(archerId, full);
+            setSlotCache(archerId, full);
             return full;
         } catch (e) {
             error.value = e instanceof Error ? e.message : 'Failed to fetch slot';
