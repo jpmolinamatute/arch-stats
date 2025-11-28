@@ -28,18 +28,17 @@ class Spot(BaseModel):
 
 
 class Ring(BaseModel):
-    score: int = Field(..., description="e.g., 10, 9, 8, ...")
-    is_x: bool = Field(default=False, description="Indicates if this ring is the 'X' ring")
-    scoring_zone_label: str = Field(..., description="e.g., 'X', '10', '5'")
-    scoring_zone_color: str = Field(..., description="Color of the scoring zone")
-    scoring_zone_radius: float = Field(..., description="Radius of the scoring zone")
-    outer_line_color: str = Field(..., description="Color of the outer line")
-    outer_line_thickness: float = Field(..., description="Thickness of the outer line")
+    data_score: int = Field(..., description="e.g., 10, 9, 8, ...")
+    fill: str = Field(..., description="Color of the scoring zone")
+    r: float = Field(..., description="Radius of the scoring zone")
+    stroke: str = Field(..., description="Color of the outer line")
+    stroke_width: float = Field(..., description="Thickness of the outer line")
+
     model_config = ConfigDict(title="Ring Schema", extra="forbid")
 
 
 class FaceMinimal(BaseModel):
-    face_id: FaceType = Field(..., description="Unique identifier for the face")
+    face_type: FaceType = Field(..., description="Unique identifier for the face")
     face_name: str = Field(..., description="Name of the face")
     model_config = ConfigDict(title="Face Minimal Schema", extra="forbid")
 
@@ -47,6 +46,8 @@ class FaceMinimal(BaseModel):
 class Face(FaceMinimal):
     spots: list[Spot] = Field(..., description="List of spots on the face")
     rings: list[Ring] = Field(..., description="List of rings on the face")
-    svg_scale_factor: float = Field(..., description="Scale factor for the SVG representation")
-    render_cross: bool = Field(..., description="Whether to render the cross in the center")
+    viewBox: float = Field(..., description="SVG viewBox size")
+    render_cross: bool = Field(
+        default=False, description="Whether to render the cross in the center"
+    )
     model_config = ConfigDict(title="Face Schema", extra="forbid")

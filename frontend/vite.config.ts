@@ -3,8 +3,26 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
+import { rmSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 export default defineConfig({
-    plugins: [vue(), tailwindcss()],
+    plugins: [
+        vue(),
+        tailwindcss(),
+        {
+            name: 'clean-out-dir',
+            buildStart() {
+                const outDir = fileURLToPath(new URL('../backend/src/frontend', import.meta.url));
+                const files = readdirSync(outDir);
+                for (const file of files) {
+                    if (file !== '.gitkeep') {
+                        rmSync(join(outDir, file), { recursive: true, force: true });
+                    }
+                }
+            },
+        },
+    ],
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -12,7 +30,7 @@ export default defineConfig({
     },
     build: {
         outDir: '../backend/src/frontend',
-        emptyOutDir: true,
+        emptyOutDir: false,
     },
     server: {
         headers: {

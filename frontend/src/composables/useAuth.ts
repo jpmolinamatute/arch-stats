@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import type { components, operations } from '@/types/types.generated';
+import { api, ApiError } from '@/api/client';
 
 interface UserSession {
     archer_id: string;
@@ -76,45 +77,33 @@ async function bootstrapAuth(): Promise<void> {
 
         // Check if we have a valid auth cookie by calling /auth/me
         try {
-            const meResponse = await fetch('/api/v0/auth/me', {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            type MeResponse =
+                operations['get_current_user_api_v0_auth_me_get']['responses']['200']['content']['application/json'];
 
-            if (meResponse.ok) {
-                // Successfully authenticated via cookie
-                type MeResponse =
-                    operations['get_current_user_api_v0_auth_me_get']['responses']['200']['content']['application/json'];
-                const authData = (await meResponse.json()) as MeResponse;
+            const authData = await api.get<MeResponse>('/auth/me');
 
-                user.value = {
-                    archer_id: authData.archer.archer_id,
-                    email: authData.archer.email,
-                    first_name: authData.archer.first_name ?? null,
-                    last_name: authData.archer.last_name ?? null,
-                    picture_url: authData.archer.google_picture_url ?? null,
-                };
-                isAuthenticated.value = true;
+            user.value = {
+                archer_id: authData.archer.archer_id,
+                email: authData.archer.email,
+                first_name: authData.archer.first_name ?? null,
+                last_name: authData.archer.last_name ?? null,
+                picture_url: authData.archer.google_picture_url ?? null,
+            };
+            isAuthenticated.value = true;
 
-                // Initialize Google One Tap but don't prompt
-                await initOneTap(null);
-                return;
-            } else if (meResponse.status === 401) {
-                // Not authenticated, need to prompt
+            // Initialize Google One Tap but don't prompt
+            await initOneTap(null);
+            return;
+        } catch (checkError) {
+            // If 401, just means not authenticated
+            if (checkError instanceof ApiError && checkError.status === 401) {
                 isAuthenticated.value = false;
                 user.value = null;
             } else {
-                // Other errors, assume not authenticated
+                console.error('[bootstrapAuth] Error checking auth:', checkError);
                 isAuthenticated.value = false;
                 user.value = null;
             }
-        } catch (checkError) {
-            console.error('[bootstrapAuth] Error checking auth:', checkError);
-            isAuthenticated.value = false;
-            user.value = null;
         }
 
         // Initialize Google One Tap
@@ -210,15 +199,9 @@ async function beginGoogleLogin(idToken?: string): Promise<void> {
     }
     loading.value = true;
     try {
-        const res = await fetch('/api/v0/auth/google', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ credential: idToken }),
-        });
-        if (!res.ok) throw new Error(`Login failed (HTTP ${res.status})`);
         // OpenAPI: returns union of AuthAuthenticated | AuthNeedsRegistration
-        const data = (await res.json()) as AuthLoginResponseBody;
+        const data = await api.post<AuthLoginResponseBody>('/auth/google', { credential: idToken });
+
         if (isAuthAuthenticated(data)) {
             user.value = {
                 archer_id: data.archer.archer_id,
@@ -277,17 +260,13 @@ async function registerNewArcher(input: {
             last_name: input.last_name,
             draw_weight: input.draw_weight,
         };
-        const res = await fetch('/api/v0/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error(`Registration failed (HTTP ${res.status})`);
+
         type RegisterResponse =
             | operations['register_api_v0_auth_register_post']['responses']['201']['content']['application/json']
             | operations['register_api_v0_auth_register_post']['responses']['200']['content']['application/json'];
-        const data = (await res.json()) as RegisterResponse;
+
+        const data = await api.post<RegisterResponse>('/auth/register', payload);
+
         if (!isAuthAuthenticated(data)) {
             throw new Error('Unexpected registration response');
         }
@@ -308,7 +287,11 @@ async function registerNewArcher(input: {
 }
 
 async function logout(): Promise<void> {
-    await fetch('/api/v0/auth/logout', { method: 'POST', credentials: 'include' });
+    try {
+        await api.post('/auth/logout');
+    } catch (e) {
+        console.error('Logout failed', e);
+    }
     user.value = null;
     isAuthenticated.value = false;
 }

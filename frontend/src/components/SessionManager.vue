@@ -8,7 +8,7 @@
 
     const router = useRouter();
     const { user, isAuthenticated } = useAuth();
-    const { checkForOpenSession } = useSession();
+    const { checkForOpenSession, currentSession } = useSession();
 
     const checking = ref(true);
     const showSessionForm = ref(false);
@@ -24,19 +24,10 @@
 
         // Check if user has an open session
         try {
-            const openSession = await checkForOpenSession(user.value.archer_id);
-
-            if (openSession) {
-                // Redirect to live session
-                await router.push('/app/live-session');
-            } else {
-                // Show the form to create a new session
-                showSessionForm.value = true;
-            }
+            await checkForOpenSession(user.value.archer_id);
+            // No auto-redirect, just update state
         } catch (e) {
             console.error('[SessionManager] Error checking for open session:', e);
-            // On error, show the form
-            showSessionForm.value = true;
         } finally {
             checking.value = false;
         }
@@ -62,9 +53,32 @@
             <SlotJoinForm :session-id="createdSessionId" @slot-assigned="handleSlotAssigned" />
         </div>
 
-        <!-- Show session creation form when authenticated and no open session -->
-        <div v-else-if="showSessionForm && isAuthenticated">
-            <SessionForm @session-created="handleSessionCreated" />
+        <!-- Show Resume Session button if session exists -->
+        <div v-else-if="currentSession && isAuthenticated" class="text-center">
+            <h2 class="text-xl font-semibold text-slate-200 mb-4">Active Session Found</h2>
+            <p class="text-slate-400 mb-6">
+                You are currently participating in a session at
+                {{ currentSession.session_location }}.
+            </p>
+            <button
+                @click="router.push('/app/live-session')"
+                class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
+            >
+                Resume Session
+            </button>
+        </div>
+
+        <!-- Show session creation button/form when authenticated and no open session -->
+        <div v-else-if="isAuthenticated">
+            <div v-if="!showSessionForm" class="text-center">
+                <button
+                    @click="showSessionForm = true"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                    Open Session
+                </button>
+            </div>
+            <SessionForm v-else @session-created="handleSessionCreated" />
         </div>
 
         <!-- Loading state while checking for open session -->

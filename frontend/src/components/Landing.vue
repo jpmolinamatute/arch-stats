@@ -31,7 +31,7 @@
                         @click="goToApp"
                         class="px-8 py-4 text-lg font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 shadow-lg hover:shadow-xl"
                     >
-                        Get Started
+                        Login
                     </button>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 text-left">

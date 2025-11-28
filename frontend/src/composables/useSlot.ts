@@ -1,13 +1,11 @@
 import { ref } from 'vue';
 import type { components } from '@/types/types.generated';
 import { useAuth } from '@/composables/useAuth';
+import { api, ApiError } from '@/api/client';
 
 type SlotJoinRequest = components['schemas']['SlotJoinRequest'];
 type SlotJoinResponse = components['schemas']['SlotJoinResponse'];
 type FullSlotInfo = components['schemas']['FullSlotInfo'];
-type HTTPValidationError = components['schemas']['HTTPValidationError'];
-type ValidationError = components['schemas']['ValidationError'];
-type ErrorJson = HTTPValidationError | { detail?: string };
 
 const currentSlot = ref<FullSlotInfo | null>(null);
 const loading = ref(false);
@@ -65,21 +63,6 @@ export function useSlot() {
         }
     }
 
-    function extractErrorMessage(err: ErrorJson | null | undefined): string | null {
-        if (!err) return null;
-        const maybeDetail = (err as { detail?: unknown }).detail;
-        if (Array.isArray(maybeDetail)) {
-            const first = maybeDetail[0] as ValidationError | undefined;
-            if (first && typeof first.msg === 'string' && first.msg.length > 0) {
-                return first.msg;
-            }
-        }
-        if (typeof maybeDetail === 'string' && maybeDetail.length > 0) {
-            return maybeDetail;
-        }
-        return null;
-    }
-
     /**
      * Join a session by requesting a slot assignment.
      * Returns the slot ID.
@@ -88,42 +71,8 @@ export function useSlot() {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch('/api/v0/session/slot', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const data = await api.post<SlotJoinResponse>('/session/slot', payload);
 
-            if (!response.ok) {
-                // Try to get error details from response
-                let errorMessage = `Failed to join session: ${response.status}`;
-                try {
-                    const errorData = (await response.json()) as ErrorJson;
-                    const msg = extractErrorMessage(errorData);
-                    if (msg) errorMessage = msg;
-                } catch (parseError) {
-                    console.error('Could not parse error response:', parseError);
-                }
-
-                if (response.status === 409) {
-                    throw new Error('You are already participating in an open session');
-                }
-                if (response.status === 422) {
-                    throw new Error('Session not found or is closed');
-                }
-                if (response.status === 401) {
-                    throw new Error('Not authenticated. Please sign in again.');
-                }
-                if (response.status === 400) {
-                    throw new Error(errorMessage);
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = (await response.json()) as SlotJoinResponse;
             // After joining, try to populate state and cache quickly
             try {
                 if (user.value?.archer_id) {
@@ -136,7 +85,19 @@ export function useSlot() {
             }
             return data;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to join session';
+            if (e instanceof ApiError) {
+                if (e.status === 409) {
+                    error.value = 'You are already participating in an open session';
+                } else if (e.status === 422) {
+                    error.value = 'Session not found or is closed';
+                } else if (e.status === 401) {
+                    error.value = 'Not authenticated. Please sign in again.';
+                } else {
+                    error.value = e.message;
+                }
+            } else {
+                error.value = e instanceof Error ? e.message : 'Failed to join session';
+            }
             throw e;
         } finally {
             loading.value = false;
@@ -166,39 +127,24 @@ export function useSlot() {
                 }
             }
 
-            const response = await fetch(`/api/v0/session/slot/archer/${archerId}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const full = await api.get<FullSlotInfo>(`/session/slot/archer/${archerId}`);
 
-            if (!response.ok) {
-                let errorMessage = `Failed to fetch slot: ${response.status}`;
-                try {
-                    const errorData = (await response.json()) as ErrorJson;
-                    const msg = extractErrorMessage(errorData);
-                    if (msg) errorMessage = msg;
-                } catch (parseError) {
-                    console.error('Could not parse error response:', parseError);
-                }
-
-                if (response.status === 404) {
-                    throw new Error('Slot not found');
-                }
-                if (response.status === 401) {
-                    throw new Error('Not authenticated. Please sign in again.');
-                }
-                throw new Error(errorMessage);
-            }
-
-            const full = (await response.json()) as FullSlotInfo;
             currentSlot.value = full;
             setSlotCache(archerId, full);
             return full;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to fetch slot';
+            if (e instanceof ApiError) {
+                if (e.status === 404) {
+                    throw new Error('Slot not found');
+                }
+                if (e.status === 401) {
+                    throw new Error('Not authenticated. Please sign in again.');
+                }
+                // Propagate original message for other errors
+                error.value = e.message;
+            } else {
+                error.value = e instanceof Error ? e.message : 'Failed to fetch slot';
+            }
             throw e;
         } finally {
             loading.value = false;
@@ -208,51 +154,33 @@ export function useSlot() {
     /**
      * Leave a session (remove archer from slot).
      */
-    /**
-     * Leave a session (remove archer from slot) using slot_id in the URL path.
-     */
     async function leaveSession(slotId: string): Promise<void> {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(`/api/v0/session/slot/leave/${slotId}`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                let errorMessage = `Failed to leave session: ${response.status}`;
-                try {
-                    const errorData = (await response.json()) as ErrorJson;
-                    const msg = extractErrorMessage(errorData);
-                    if (msg) errorMessage = msg;
-                } catch (parseError) {
-                    console.error('Could not parse error response:', parseError);
-                }
-
-                if (response.status === 409) {
-                    throw new Error('Archer is not participating in this session');
-                }
-                if (response.status === 422) {
-                    throw new Error('Session not found or is closed');
-                }
-                if (response.status === 403) {
-                    throw new Error('Not authorized to leave this session');
-                }
-                if (response.status === 401) {
-                    throw new Error('Not authenticated. Please sign in again.');
-                }
-                throw new Error(errorMessage);
-            }
+            await api.patch(`/session/slot/leave/${slotId}`);
 
             // Clear current slot after leaving
             currentSlot.value = null;
             clearSlotCache();
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to leave session';
+            if (e instanceof ApiError) {
+                if (e.status === 409) {
+                    throw new Error('Archer is not participating in this session');
+                }
+                if (e.status === 422) {
+                    throw new Error('Session not found or is closed');
+                }
+                if (e.status === 403) {
+                    throw new Error('Not authorized to leave this session');
+                }
+                if (e.status === 401) {
+                    throw new Error('Not authenticated. Please sign in again.');
+                }
+                error.value = e.message;
+            } else {
+                error.value = e instanceof Error ? e.message : 'Failed to leave session';
+            }
             throw e;
         } finally {
             loading.value = false;

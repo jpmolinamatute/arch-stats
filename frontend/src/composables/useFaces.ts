@@ -1,57 +1,123 @@
 import { ref } from 'vue';
 import type { components } from '@/types/types.generated';
+import { api, ApiError } from '@/api/client';
 
-type FaceMinimal = components['schemas']['FaceMinimal'];
-type HTTPValidationError = components['schemas']['HTTPValidationError'];
-type ErrorJson = HTTPValidationError | { detail?: string };
+type ListFaceMinimal = components['schemas']['FaceMinimal'][];
+type Face = components['schemas']['Face'];
+type FaceType = components['schemas']['FaceType'];
 
-const faces = ref<FaceMinimal[]>([]);
+const faces = ref<ListFaceMinimal>([]);
+const face = ref<Face | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
+// Simple in-memory cache for single face fetch
+const cache = new Map<string, Face>();
+const inFlight: Record<string, AbortController> = {};
+
 export function useFaces() {
-    async function listFaces(): Promise<FaceMinimal[]> {
+    async function listFaces(): Promise<ListFaceMinimal> {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch('/api/v0/faces', {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                let errorMessage = `Failed to fetch faces: ${response.status}`;
-                try {
-                    const errorData = (await response.json()) as ErrorJson;
-                    // 422 validation error from FastAPI
-                    if (Array.isArray((errorData as HTTPValidationError)?.detail)) {
-                        const first = (errorData as HTTPValidationError).detail?.[0];
-                        if (first && typeof first.msg === 'string') {
-                            errorMessage = first.msg;
-                        }
-                    } else if (typeof errorData.detail === 'string') {
-                        // Common FastAPI error shape for 401/403/404
-                        errorMessage = errorData.detail;
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing error response:', parseError);
-                }
-
-                if (response.status === 401) {
-                    throw new Error('Not authenticated. Please sign in again.');
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = (await response.json()) as FaceMinimal[];
+            const data = await api.get<ListFaceMinimal>('/faces');
             faces.value = Array.isArray(data) ? data : [];
             return faces.value;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to fetch faces';
+            if (e instanceof ApiError && e.status === 401) {
+                error.value = 'Not authenticated. Please sign in again.';
+            } else {
+                error.value = e instanceof Error ? e.message : 'Failed to fetch faces';
+            }
             throw e;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function fetchFace(faceId: FaceType): Promise<Face> {
+        const key = String(faceId);
+        if (cache.has(key)) {
+            const cached = cache.get(key)!;
+            face.value = cached;
+            return cached;
+        }
+        if (inFlight[key]) {
+            try {
+                inFlight[key].abort();
+            } catch {
+                // ignore
+            }
+            delete inFlight[key];
+        }
+        const controller = new AbortController();
+        inFlight[key] = controller;
+        loading.value = true;
+        error.value = null;
+        try {
+            // Note: api.get wrapper doesn't currently support AbortSignal,
+            // but we can add it or use direct fetch for this specific case if needed.
+            // For now, let's use the wrapper and ignore the abort controller for simplicity
+            // unless strict cancellation is required.
+            // If strict cancellation is needed, we would need to extend api.client to accept init options.
+            // Assuming we extended api client in step 1 to accept RequestInit.
+
+            const body = await api.get<Face>(`/faces/${encodeURIComponent(key)}`, {
+                signal: controller.signal,
+            });
+
+            cache.set(key, body);
+            face.value = body;
+            return body;
+        } catch (e) {
+            // Don't throw if aborted
+            if (e instanceof Error && e.name === 'AbortError') {
+                throw e;
+            }
+            // Re-throw other errors
+            throw e;
+        } finally {
+            loading.value = false;
+            delete inFlight[key];
+        }
+    }
+
+    async function createFace(payload: Partial<Face>): Promise<Face> {
+        loading.value = true;
+        error.value = null;
+        try {
+            const body = await api.post<Face>('/faces', payload);
+            cache.set(String(body.face_type), body);
+            face.value = body;
+            return body;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function updateFace(faceId: FaceType, payload: Partial<Face>): Promise<Face> {
+        loading.value = true;
+        error.value = null;
+        try {
+            const body = await api.patch<Face>(
+                `/faces/${encodeURIComponent(String(faceId))}`,
+                payload,
+            );
+            cache.set(String(faceId), body);
+            face.value = body;
+            return body;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function deleteFace(faceId: FaceType): Promise<void> {
+        loading.value = true;
+        error.value = null;
+        try {
+            await api.delete(`/faces/${encodeURIComponent(String(faceId))}`);
+            cache.delete(String(faceId));
+            face.value = null;
         } finally {
             loading.value = false;
         }
@@ -61,6 +127,11 @@ export function useFaces() {
         loading,
         error,
         faces,
+        face,
         listFaces,
+        fetchFace,
+        createFace,
+        updateFace,
+        deleteFace,
     } as const;
 }

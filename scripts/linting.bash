@@ -34,7 +34,7 @@ run_python_tests() {
 
 run_python_checks() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
-    # cd "${ROOT_DIR}/backend"
+    cd "${ROOT_DIR}/backend"
     export PYTHONPATH="${ROOT_DIR}/backend/src"
     # shellcheck source=../backend/.venv/bin/activate
     source "${ROOT_DIR}/backend/.venv/bin/activate"
@@ -47,7 +47,7 @@ run_python_checks() {
     log_info "Running pylint..."
     pylint --rcfile "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
     run_python_tests
-    # cd -
+    cd -
 }
 
 run_generate_types() {
@@ -63,13 +63,11 @@ run_generate_types() {
 build_frontend() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    cd "${ROOT_DIR}/frontend"
     log_info "Building frontend"
     # we are building the frontend as a test to ensure there are no build errors
-    npx vue-tsc -b 
+    npx vue-tsc -b
     npx vite build --outDir "${tmp_dir}"
-    rm  -r "${tmp_dir}"
-    cd -
+    rm -r "${tmp_dir}"
 }
 
 run_frontend_checks() {

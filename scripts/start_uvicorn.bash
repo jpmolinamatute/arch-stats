@@ -16,6 +16,7 @@ start_uvicorn() {
 main() {
     start_docker
     start_uvicorn
+    exit 0
 }
 
 main

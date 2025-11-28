@@ -40,7 +40,7 @@
     // Face options from API
     const faceOptions = computed(() =>
         (faces.value ?? []).map((f) => ({
-            value: f.face_id as FaceType,
+            value: f.face_type as FaceType,
             label: f.face_name,
         })),
     );
@@ -69,8 +69,8 @@
             const list = faces.value;
             if (Array.isArray(list) && list.length > 0) {
                 const first = list[0];
-                if (first && first.face_id) {
-                    faceType.value = first.face_id as FaceType;
+                if (first && first.face_type) {
+                    faceType.value = first.face_type as FaceType;
                 }
             }
 
