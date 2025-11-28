@@ -33,7 +33,7 @@ export default tseslint.config(
             parserOptions: {
                 parser: tsParser,
                 extraFileExtensions: ['.vue'],
-                ecmaVersion: 2023,
+                ecmaVersion: 2024,
                 sourceType: 'module',
                 project: './tsconfig.app.json',
                 tsconfigRootDir: __dirname,

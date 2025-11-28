@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import type { components } from '@/types/types.generated';
 import { useSlot } from './useSlot';
+import { api, ApiError } from '@/api/client';
 
 type SessionRead = components['schemas']['SessionRead'];
 type SessionCreate = components['schemas']['SessionCreate'];
@@ -22,24 +23,17 @@ export function useSession() {
         error.value = null;
         try {
             // First, check if the archer has an open session
-            const idResponse = await fetch(`/api/v0/session/archer/${archerId}/open-session`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!idResponse.ok) {
-                if (idResponse.status === 404 || idResponse.status === 422) {
+            let idData: SessionId;
+            try {
+                idData = await api.get<SessionId>(`/session/archer/${archerId}/open-session`);
+            } catch (e) {
+                if (e instanceof ApiError && (e.status === 404 || e.status === 422)) {
                     // No open session found
                     currentSession.value = null;
                     return null;
                 }
-                throw new Error(`Failed to check for open session: ${idResponse.status}`);
+                throw e;
             }
-
-            const idData = (await idResponse.json()) as SessionId;
 
             // If ${archerId} doesn't have an open session, return null
             if (!idData.session_id) {
@@ -48,19 +42,8 @@ export function useSession() {
             }
 
             // Now fetch the specific session details using the new endpoint
-            const sessionResponse = await fetch(`/api/v0/session/${idData.session_id}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const session = await api.get<SessionRead>(`/session/${idData.session_id}`);
 
-            if (!sessionResponse.ok) {
-                throw new Error(`Failed to fetch session details: ${sessionResponse.status}`);
-            }
-
-            const session = (await sessionResponse.json()) as SessionRead;
             currentSession.value = session;
             return session;
         } catch (e) {
@@ -80,40 +63,7 @@ export function useSession() {
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch('/api/v0/session', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                // Try to get error details from response
-                let errorMessage = `Failed to create session: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (parseError) {
-                    console.error('Could not parse error response:', parseError);
-                }
-
-                if (response.status === 409) {
-                    throw new Error('You already have an open session');
-                }
-                if (response.status === 403) {
-                    throw new Error('Not authorized to create session for this archer');
-                }
-                if (response.status === 401) {
-                    throw new Error('Not authenticated. Please sign in again.');
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = (await response.json()) as SessionId;
+            const data = await api.post<SessionId>('/session', payload);
 
             if (!data.session_id) {
                 throw new Error('No session ID returned from server');
@@ -134,7 +84,19 @@ export function useSession() {
 
             return data.session_id;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Failed to create session';
+            if (e instanceof ApiError) {
+                if (e.status === 409) {
+                    error.value = 'You already have an open session';
+                } else if (e.status === 403) {
+                    error.value = 'Not authorized to create session for this archer';
+                } else if (e.status === 401) {
+                    error.value = 'Not authenticated. Please sign in again.';
+                } else {
+                    error.value = e.message;
+                }
+            } else {
+                error.value = e instanceof Error ? e.message : 'Failed to create session';
+            }
             throw e;
         } finally {
             loading.value = false;
@@ -175,23 +137,18 @@ export function useSession() {
             }
 
             // Then close the session
-            const response = await fetch('/api/v0/session/close', {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ session_id: sessionId }),
-            });
-
-            if (!response.ok) {
-                if (response.status === 422) {
-                    throw new Error('Cannot close session with active participants');
+            try {
+                await api.patch('/session/close', { session_id: sessionId });
+            } catch (e) {
+                if (e instanceof ApiError) {
+                    if (e.status === 422) {
+                        throw new Error('Cannot close session with active participants');
+                    }
+                    if (e.status === 404) {
+                        throw new Error('Session not found');
+                    }
                 }
-                if (response.status === 404) {
-                    throw new Error('Session not found');
-                }
-                throw new Error(`Failed to close session: ${response.status}`);
+                throw e;
             }
 
             // Clear current session

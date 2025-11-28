@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -74,8 +74,18 @@ def run() -> FastAPI:
     app.include_router(slot_router, prefix=f"/api/{mayor_version}")
     app.include_router(shot_router, prefix=f"/api/{mayor_version}")
     app.include_router(faces_router, prefix=f"/api/{mayor_version}")
+
+    @app.api_route(
+        "/api/{path:path}",
+        methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+        status_code=status.HTTP_404_NOT_FOUND,
+        include_in_schema=False,
+    )
+    async def api_not_found(path: str) -> dict[str, str]:
+        return {"detail": f"{path} Not Found"}
+
     app.mount(
-        "/app",
+        "",
         StaticFiles(
             directory=current_file_path.joinpath("frontend"),
             html=True,

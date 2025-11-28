@@ -181,18 +181,20 @@
     },
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
+    "eslint.enable": true,
     "eslint.validate": [
         "javascript",
-        "typescript"
+        "typescript",
+        "vue"
     ],
-    "eslint.enable": true,
+    "eslint.workingDirectories": [
+        "./frontend"
+    ],
     "eslint.format.enable": true,
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit",
         "source.fixAll.eslint": "explicit"
     },
-    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-    "github.copilot.chat.scopeSelection": false,
     "isort.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -223,6 +225,8 @@
         "**/.mypy_cache/",
         "**/.pytest_cache/"
     ],
+    // Don't add ${workspaceFolder}/
+    "prettier.configPath": "frontend/.prettierrc",
     "pylint.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -278,11 +282,12 @@
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
-    "vitest.rootConfig": "./frontend/vitest.config.ts",
+    "vitest.rootConfig": "${workspaceFolder}/frontend/vitest.config.ts",
     "[markdown]": {
         "editor.unicodeHighlight.nonBasicASCII": true
     },
     "[javascript]": {
+        "editor.insertSpaces": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[typescript]": {
@@ -297,13 +302,17 @@
     "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
     },
-    "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml"
-    },
-    "[github-actions-workflow]": {
-        "editor.tabSize": 2
+    "[html]": {
+        "editor.suggest.insertMode": "replace",
+        "editor.insertSpaces": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "workbench.externalBrowser": "/opt/google/chrome/chrome",
     "workbench.editor.restoreViewState": false,
-    "terminal.integrated.tabs.title": "${process}:${task}"
+    "terminal.integrated.tabs.title": "${process}:${task}",
+    "eslint.useESLintClass": true,
+    "python.terminal.activateEnvInCurrentTerminal": false,
+    "python-envs.defaultPackageManager": "",
+    "python.terminal.activateEnvironment": false,
+    "python-envs.defaultEnvManager": ""
 }
