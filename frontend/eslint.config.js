@@ -16,8 +16,8 @@ export default tseslint.config(
     js.configs.recommended,
     prettierConfig,
     {
-        files: ['./src/**/*.{js,jsx,ts,tsx}'],
-        ignores: [],
+        files: ['./src/**/*.{js,jsx,ts,tsx,vue}', './tests/**/*.{js,jsx,ts,tsx,vue}'],
+        ignores: ['node_modules/**'],
         rules: {
             semi: 'error',
             'prefer-const': 'error',
@@ -35,7 +35,7 @@ export default tseslint.config(
                 extraFileExtensions: ['.vue'],
                 ecmaVersion: 2024,
                 sourceType: 'module',
-                project: './tsconfig.app.json',
+                project: ['./tsconfig.app.json', './tsconfig.node.json'],
                 tsconfigRootDir: __dirname,
             },
             globals: {
@@ -46,6 +46,9 @@ export default tseslint.config(
                 location: 'readonly',
                 setTimeout: 'readonly',
                 clearTimeout: 'readonly',
+                navigator: 'readonly',
+                requestAnimationFrame: 'readonly',
+                alert: 'readonly',
             },
         },
     },

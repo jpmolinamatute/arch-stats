@@ -77,9 +77,9 @@ run_frontend_checks() {
     npm run lint
     log_info "Running JS/TS formatter"
     npm run format
+    echo "Running JS/TS tests"
+    npm run test
     build_frontend
-    # echo "Running JS/TS tests"
-    # npm run test
     cd -
 
 }
