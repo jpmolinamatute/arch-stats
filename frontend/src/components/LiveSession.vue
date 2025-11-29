@@ -46,7 +46,7 @@
                 try {
                     const slot = getSlotCached() ?? (await getSlot());
                     currentSlot.value = slot;
-                } catch (slotError) {
+                } catch {
                     // 404 means archer has no active slot - show SlotJoinForm to complete setup
                     console.log('[LiveSession] Archer has no active slot, showing join form');
                     currentSlot.value = null;
@@ -108,7 +108,7 @@
         // TODO: integrate with backend shot creation; for now, log for visibility
         console.log('[LiveSession] Shot committed:', payload);
     }
-    function handlePreview(_payload: ShotPayload): void {
+    function handlePreview(): void {
         // Lightweight hover/touch preview hook
         // console.debug('[LiveSession] Preview:', payload);
     }

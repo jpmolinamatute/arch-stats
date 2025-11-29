@@ -282,7 +282,7 @@
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
-    "vitest.rootConfig": "${workspaceFolder}/frontend/vitest.config.ts",
+    "vitest.rootConfig": "./frontend/vitest.config.ts",
     "[markdown]": {
         "editor.unicodeHighlight.nonBasicASCII": true
     },
