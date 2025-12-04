@@ -25,10 +25,8 @@ log_info() { echo "INFO: $*"; }
 run_python_tests() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
     start_docker
-    cd "${ROOT_DIR}/backend"
     log_info "running python tests..."
     pytest --config-file "${pyproject_path}"
-    cd -
     stop_docker
 }
 

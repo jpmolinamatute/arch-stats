@@ -2,7 +2,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-from models.parent_model import ParentModel
+from models.parent_model import DBNotFound, ParentModel
 from schema import TargetCreate, TargetFilter, TargetRead, TargetSet
 
 
@@ -16,16 +16,19 @@ class TargetModel(ParentModel[TargetCreate, TargetSet, TargetRead, TargetFilter]
 
     async def get_next_empty_lane(self, session_id: UUID) -> int:
         """Get the next empty lane for a session by executing get_next_lane SQL function."""
-        sql = "SELECT get_next_lane($1) AS next_lane;"
-        async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(sql, session_id)
+        sql, params = self.build_select_function_sql_stm("get_next_lane", [session_id])
+        try:
+            row = await self.fetchrow((sql, params))
+        except DBNotFound:
+            row = None
         # Returns 1 if no lanes exist for the session (function returns NULL)
-        return row["next_lane"] if row and row["next_lane"] is not None else 1
+        return row["get_next_lane"] if row and row["get_next_lane"] is not None else 1
 
     async def get_lane(self, target_id: UUID) -> int | None:
         where = TargetFilter(target_id=target_id)
         sql_statement, params = self.build_select_sql_stm(where, ["lane"])
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching: %s", sql_statement)
-            row = await conn.fetchrow(sql_statement, *params)
+        try:
+            row = await self.fetchrow((sql_statement, params))
+        except DBNotFound:
+            row = None
         return row["lane"] if row else None

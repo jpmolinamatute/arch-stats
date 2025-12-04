@@ -7,8 +7,6 @@ __pycache__/
 
 frontend/node_modules/
 ignore/*
-frontend/src/types/*
-!frontend/src/types/.gitkeep
 backend/src/core/logs/*
 !backend/src/core/logs/.gitkeep
 backend/src/frontend/*

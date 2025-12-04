@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Generic, Protocol, TypeVar
 from uuid import UUID
 
-from asyncpg import Pool
+from asyncpg import Pool, Record
 from pydantic import BaseModel
 
 # NOTE: Import get_logger directly from its module to avoid importing the
@@ -66,7 +66,11 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         self.sql_builder = SQLStatementBuilder(self.name)
 
     def build_select_sql_stm(
-        self, where: FILTERTYPE, columns: list[str], limit: int = 1
+        self,
+        where: FILTERTYPE,
+        columns: list[str],
+        limit: int = 1,
+        is_desc: bool = False,
     ) -> tuple[str, ValuesTuple]:
         """Assemble a parameterized SELECT using SQLStatementBuilder.
 
@@ -78,7 +82,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         values: ValuesTuple = tuple(dump.values()) if dump else ()
 
         conditions = [f"{key} = ${i}" for i, key in enumerate(keys, start=1)]
-        sql_stm = self.sql_builder.build_select_with_conditions(columns, conditions, limit)
+        sql_stm = self.sql_builder.build_select_with_conditions(columns, conditions, limit, is_desc)
         return (sql_stm, values)
 
     def build_update_sql_stm(self, data: SETTYPE, where: FILTERTYPE) -> tuple[str, ValuesTuple]:
@@ -102,6 +106,111 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         sql_statement = self.sql_builder.build_update(set_data, conditions)
         values: ValuesTuple = (*set_values, *where_values)
         return (sql_statement, values)
+
+    def build_insert_sql_stm(self, data: CREATETYPE | list[CREATETYPE]) -> tuple[str, ValuesTuple]:
+        """Assemble a parameterized INSERT using SQLStatementBuilder.
+
+        Returns the SQL string along with a tuple of values in placeholder order.
+        """
+        if isinstance(data, list):
+            data_list = data
+        else:
+            data_list = [data]
+
+        # if data_list is empty, raise ValueError
+        if not data_list:
+            raise ValueError("No data provided for insert")
+
+        # Assume all items have the same keys (Pydantic ensures this for same model type)
+        first_dump = data_list[0].model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
+        keys = list(first_dump.keys())
+
+        all_values: list[Values] = []
+        for item in data_list:
+            dump = item.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
+            # Ensure order matches keys
+            for key in keys:
+                all_values.append(dump[key])
+
+        sql_stm = self.sql_builder.build_insert(keys, num_rows=len(data_list))
+        return (sql_stm, all_values)
+
+    def build_delete_sql_stm(self, where: FILTERTYPE) -> tuple[str, ValuesTuple]:
+        """Assemble a parameterized DELETE using SQLStatementBuilder."""
+        dump = where.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
+        keys = list(dump.keys())
+        values = tuple(dump.values()) if dump else ()
+
+        conditions = [f"{key} = ${i}" for i, key in enumerate(keys, start=1)]
+        sql_stm = self.sql_builder.build_delete(conditions)
+        return (sql_stm, values)
+
+    def build_select_view_sql_stm(
+        self,
+        view_name: str,
+        where: BaseModel,
+        columns: list[str],
+        limit: int = 1,
+        is_desc: bool = False,
+    ) -> tuple[str, ValuesTuple]:
+        """Assemble a parameterized SELECT from a VIEW using SQLStatementBuilder."""
+        dump = where.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
+        keys = list(dump.keys())
+        values = tuple(dump.values()) if dump else ()
+
+        conditions = [f"{key} = ${i}" for i, key in enumerate(keys, start=1)]
+        order_by = "ORDER BY created_at DESC" if is_desc else ""
+
+        sql_stm = self.sql_builder.build_select_view(
+            view_name=view_name,
+            columns=columns,
+            conditions=conditions,
+            order_by=order_by,
+            limit=limit,
+        )
+        return (sql_stm, values)
+
+    def build_select_function_sql_stm(
+        self, function_name: str, args: list[Values]
+    ) -> tuple[str, ValuesTuple]:
+        """Assemble a parameterized SELECT from a FUNCTION using SQLStatementBuilder."""
+        sql_stm = self.sql_builder.build_select_function(function_name, len(args))
+        return (sql_stm, tuple(args))
+
+    async def fetch(self, query_data: tuple[str, ValuesTuple]) -> list[Record]:
+        """Execute a SELECT query and return a list of records.
+
+        Args:
+            query_data: Tuple containing the SQL statement and values.
+
+        Returns:
+            List of asyncpg.Record objects. Returns empty list if no results.
+        """
+        sql_statement, values = query_data
+        async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", sql_statement)
+            rows = await conn.fetch(sql_statement, *values)
+        return rows
+
+    async def fetchrow(self, query_data: tuple[str, ValuesTuple]) -> Record:
+        """Execute a SELECT query and return a single record.
+
+        Args:
+            query_data: Tuple containing the SQL statement and values.
+
+        Returns:
+            asyncpg.Record object.
+
+        Raises:
+            DBNotFound: If no record is found.
+        """
+        sql_statement, values = query_data
+        async with self.db_pool.acquire() as conn:
+            self.logger.debug("Fetching: %s", sql_statement)
+            row = await conn.fetchrow(sql_statement, *values)
+        if not row:
+            raise DBNotFound(f"{self.name}: No record found")
+        return row
 
     async def execute(self, sql_statement: str, values: ValuesTuple | None = None) -> int:
         """Execute a single SQL statement.
@@ -145,15 +254,10 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
             DBException: If insertion fails or no id is returned.
         """
 
-        dump = data.model_dump(by_alias=True, exclude_unset=True)
-        keys = list(dump.keys())
-        values = list(dump.values())
-        sql_statement = self.sql_builder.build_insert(keys)
+        sql_statement, values = self.build_insert_sql_stm(data)
         try:
-            async with self.db_pool.acquire() as conn:
-                self.logger.debug("Inserting into %s: %s", self.name, dump)
-                row = await conn.fetchrow(sql_statement, *values)
-            if not row or self.pk not in row or not isinstance(row[self.pk], UUID):
+            row = await self.fetchrow((sql_statement, values))
+            if self.pk not in row or not isinstance(row[self.pk], UUID):
                 raise DBException(f"Insert failed to return {self.pk}")
             _id: UUID = row[self.pk]
         except Exception as e:
@@ -177,6 +281,22 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         if affected == 0:
             raise DBNotFound(f"{self.name}: No record found with {self.pk}={_id}")
 
+    async def get_one(self, where: FILTERTYPE) -> READTYPE:
+        """Fetch a single record matching provided filters.
+
+        Args:
+            where: Pydantic filter model (only set/non-null fields are applied).
+
+        Returns:
+            Instance of the configured read schema.
+
+        Raises:
+            DBNotFound: If no record matches the filters.
+        """
+        query_data = self.build_select_sql_stm(where, [], 1, False)
+        row = await self.fetchrow(query_data)
+        return self.read_schema(**row)
+
     async def update(self, data: SETTYPE, where: FILTERTYPE) -> None:
         """Update a single record by id.
 
@@ -192,25 +312,16 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         if affected == 0:
             raise DBNotFound(f"{self.name}: No record(s) found")
 
-    async def get_one(self, where: FILTERTYPE) -> READTYPE:
-        """Fetch a single record matching provided filters.
+    async def insert_many(self, data: list[CREATETYPE]) -> list[UUID]:
+        """Insert multiple records at once."""
+        sql_statement, values = self.build_insert_sql_stm(data)
 
-        Args:
-            where: Pydantic filter model (only set/non-null fields are applied).
+        rows = await self.fetch((sql_statement, values))
 
-        Returns:
-            Instance of the configured read schema.
+        if not rows:
+            raise DBNotFound(f"No {self.name} created")
 
-        Raises:
-            DBNotFound: If no record matches the filters.
-        """
-        select_stm, params = self.build_select_sql_stm(where, [])
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching: %s", select_stm)
-            row = await conn.fetchrow(select_stm, *params)
-            if not row:
-                raise DBNotFound(f"{self.name}: No record found")
-            return self.read_schema(**row)
+        return [r[self.pk] for r in rows]
 
     async def get_all(self, where: FILTERTYPE, columns: list[str]) -> list[READTYPE]:
         """Fetch all records matching optional filters.
@@ -221,10 +332,8 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
         Returns:
             List of validated read-schema instances.
         """
-        sql_statement, params = self.build_select_sql_stm(where, columns, 0)
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching: %s", sql_statement)
-            rows = await conn.fetch(sql_statement, *params)
+        query_data = self.build_select_sql_stm(where, columns, 0, False)
+        rows = await self.fetch(query_data)
 
         return [self.read_schema(**row) for row in rows]
 

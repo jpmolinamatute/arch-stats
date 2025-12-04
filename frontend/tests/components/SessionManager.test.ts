@@ -86,6 +86,7 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
 
         mount(SessionManager);
@@ -96,7 +97,7 @@ describe('SessionManager', () => {
         expect(mockCheckForOpenSession).toHaveBeenCalledWith('archer_1');
     });
 
-    it('renders resume button if session exists', async () => {
+    it('redirects to live session if session exists', async () => {
         vi.mocked(useAuth).mockReturnValue({
             user: ref<UserSession>({
                 first_name: 'John',
@@ -120,7 +121,15 @@ describe('SessionManager', () => {
             beginGoogleLogin: vi.fn(),
         });
         vi.mocked(useSession).mockReturnValue({
-            checkForOpenSession: mockCheckForOpenSession,
+            checkForOpenSession: mockCheckForOpenSession.mockResolvedValue({
+                session_id: 'sess_1',
+                session_location: 'Range A',
+                owner_archer_id: 'archer_1',
+                is_indoor: true,
+                is_opened: true,
+                shot_per_round: 3,
+                created_at: '2023-01-01',
+            }),
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
                 session_location: 'Range A',
@@ -135,14 +144,13 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => true),
+            clearSessionCache: vi.fn(),
         });
 
-        const wrapper = mount(SessionManager);
+        mount(SessionManager);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(wrapper.text()).toContain('Active Session Found');
-        expect(wrapper.text()).toContain('Range A');
-        expect(wrapper.find('button').text()).toBe('Resume Session');
+        expect(mockRouterPush).toHaveBeenCalledWith('/app/live-session');
     });
 
     it('renders open session button if no session exists', async () => {
@@ -176,6 +184,7 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
 
         const wrapper = mount(SessionManager);
@@ -215,6 +224,7 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
 
         const wrapper = mount(SessionManager);
@@ -256,6 +266,7 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
 
         const wrapper = mount(SessionManager);
@@ -320,6 +331,7 @@ describe('SessionManager', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
 
         const wrapper = mount(SessionManager);

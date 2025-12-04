@@ -14,6 +14,58 @@ const error = ref<string | null>(null);
 export function useSession() {
     const hasOpenSession = computed(() => currentSession.value !== null);
 
+    // Local cache (localStorage) helpers
+    const SESSION_CACHE_PREFIX = 'arch-stats:session:';
+    function getCacheKey(archerId: string): string {
+        return `${SESSION_CACHE_PREFIX}${archerId}`;
+    }
+
+    function getLS(): Storage | null {
+        try {
+            return typeof window !== 'undefined' && window.localStorage
+                ? window.localStorage
+                : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function setSessionCache(archerId: string, session: SessionRead): void {
+        try {
+            const ls = getLS();
+            ls?.setItem(getCacheKey(archerId), JSON.stringify(session));
+        } catch {
+            /* ignore storage errors */
+        }
+    }
+
+    function readSessionCache(archerId: string): SessionRead | null {
+        try {
+            const ls = getLS();
+            const raw = ls?.getItem(getCacheKey(archerId));
+            if (!raw) return null;
+            return JSON.parse(raw) as SessionRead;
+        } catch {
+            return null;
+        }
+    }
+
+    function clearSessionCache(archerId?: string): void {
+        try {
+            // If no specific archerId provided, we can't easily clear specific session
+            // unless we store current archerId somewhere else or pass it in.
+            // For now, we'll rely on the caller passing it or just clearing if we have a user context.
+            // But useSession doesn't have direct access to user context inside these helpers unless we pass it.
+            // Let's assume the caller handles it or we use the one passed to functions.
+            if (archerId) {
+                const ls = getLS();
+                ls?.removeItem(getCacheKey(archerId));
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+
     /**
      * Check if the authenticated archer has an open session.
      * Returns the session if found, null otherwise.
@@ -22,31 +74,69 @@ export function useSession() {
         loading.value = true;
         error.value = null;
         try {
-            // First, check if the archer has an open session
-            let idData: SessionId;
-            try {
-                idData = await api.get<SessionId>(`/session/archer/${archerId}/open-session`);
-            } catch (e) {
-                if (e instanceof ApiError && (e.status === 404 || e.status === 422)) {
-                    // No open session found
-                    currentSession.value = null;
-                    return null;
-                }
-                throw e;
+            // Try cache first
+            const cached = readSessionCache(archerId);
+            if (cached) {
+                // We have a cached session, but we must verify it's still valid with the backend.
+                // If we return it immediately, we risk showing a stale session that was closed on another device
+                // or if the backend state changed.
+                // So we just set it to currentSession for immediate UI feedback, but continue to fetch.
+                currentSession.value = cached;
             }
 
-            // If ${archerId} doesn't have an open session, return null
-            if (!idData.session_id) {
+            // Step 1: Check if the archer has an active slot (is participating)
+            // This is the happy path for active users.
+            let sessionId: string | null = null;
+            try {
+                // We need to define FullSlotInfo type locally or import it, but for now we just need session_id.
+                // Since we can't easily import types inside the function without changing imports,
+                // and we don't want to add a dependency on useSlot types if possible,
+                // we'll cast the response to any or a minimal interface.
+                // Actually, let's rely on the fact that the response has session_id.
+                const slot = await api.get<{ session_id: string }>(
+                    `/session/slot/archer/${archerId}`,
+                );
+                sessionId = slot.session_id;
+            } catch (e) {
+                // If 404, it means no active slot. Proceed to check for owned session.
+                if (!(e instanceof ApiError && e.status === 404)) {
+                    throw e;
+                }
+            }
+
+            // Step 2: If no slot found, check if the archer owns an open session (Recovery State)
+            // This happens if they created a session but crashed/closed before joining a slot.
+            if (!sessionId) {
+                try {
+                    const idData = await api.get<SessionId>(
+                        `/session/archer/${archerId}/open-session`,
+                    );
+                    sessionId = idData.session_id || null;
+                } catch (e) {
+                    if (e instanceof ApiError && (e.status === 404 || e.status === 422)) {
+                        // No owned session either.
+                        sessionId = null;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            // If still no session ID, the user is not participating in any session.
+            if (!sessionId) {
                 currentSession.value = null;
+                clearSessionCache(archerId);
                 return null;
             }
 
-            // Now fetch the specific session details using the new endpoint
-            const session = await api.get<SessionRead>(`/session/${idData.session_id}`);
+            // Step 3: Fetch full session details
+            const session = await api.get<SessionRead>(`/session/${sessionId}`);
 
             currentSession.value = session;
+            setSessionCache(archerId, session);
             return session;
         } catch (e) {
+            // Only set error for unexpected failures, not for "not participating"
             error.value = e instanceof Error ? e.message : 'Failed to check for open session';
             console.error('[useSession] Error checking for open session:', e);
             return null;
@@ -81,6 +171,7 @@ export function useSession() {
                 closed_at: null,
             };
             currentSession.value = session;
+            setSessionCache(payload.owner_archer_id, session);
 
             return data.session_id;
         } catch (e) {
@@ -152,7 +243,12 @@ export function useSession() {
             }
 
             // Clear current session
+            const archerId = currentSession.value?.owner_archer_id;
             currentSession.value = null;
+
+            if (archerId) {
+                clearSessionCache(archerId);
+            }
 
             // Also clear any cached slot data to avoid stale state on next load
             try {
@@ -175,5 +271,7 @@ export function useSession() {
         checkForOpenSession,
         createSession,
         closeSession,
+        // Expose cache helpers if needed, or just use internally
+        clearSessionCache,
     } as const;
 }

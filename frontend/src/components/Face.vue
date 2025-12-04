@@ -5,12 +5,16 @@
     import { api } from '@/api/client';
     // import { useShot } from '@/composables/useShot';
     import { useSlot } from '@/composables/useSlot';
+    import { useSession } from '@/composables/useSession';
 
     type Face = components['schemas']['Face'];
     type FaceType = components['schemas']['FaceType'];
     const { fetchFace } = useFaces();
+    const { currentSession } = useSession();
     const face = ref<Face | null>(null);
     const SVGWidth = ref(300); // default value
+    const svgRef = ref<SVGSVGElement | null>(null);
+    const shots = ref<{ x: number; y: number }[]>([]);
 
     function isMobile(): boolean {
         const hasTouch = navigator.maxTouchPoints > 0;
@@ -40,6 +44,16 @@
 
     let resizeObserver: ResizeObserver | null = null;
 
+    function getSVGCoordinates(clientX: number, clientY: number): { x: number; y: number } | null {
+        if (!svgRef.value) return null;
+        const svg = svgRef.value;
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+        return { x: svgP.x, y: svgP.y };
+    }
+
     async function saving_score(score: number, x: number, y: number) {
         const slot = useSlot();
         const currentSlot = slot.currentSlot.value;
@@ -47,6 +61,16 @@
         if (!currentSlot || !currentSlot.session_id || !currentSlot.slot_id) {
             console.error('Missing slot or session ID');
             return;
+        }
+
+        // Add visual feedback
+        const svgCoords = getSVGCoordinates(x, y);
+        if (svgCoords) {
+            shots.value.push(svgCoords);
+            const limit = currentSession.value?.shot_per_round ?? 6; // Default to 6 if not set
+            if (shots.value.length > limit) {
+                shots.value.shift(); // Remove oldest shot
+            }
         }
 
         try {
@@ -94,6 +118,7 @@
     <div class="w-full flex flex-col items-center">
         <svg
             v-if="face"
+            ref="svgRef"
             id="app"
             :width="SVGWidth"
             :height="SVGWidth"
@@ -153,6 +178,18 @@
                     +
                 </text>
             </g>
+            <!-- Visual feedback for shots -->
+            <circle
+                v-for="(shot, index) in shots"
+                :key="`shot-${index}`"
+                :cx="shot.x"
+                :cy="shot.y"
+                r="2.5"
+                fill="transparent"
+                stroke="black"
+                stroke-width="1"
+                pointer-events="none"
+            />
         </svg>
     </div>
 </template>

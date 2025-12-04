@@ -11,6 +11,7 @@ from schema import (
     SessionRead,
     SessionSet,
 )
+from schema.archer_schema import ArcherFilter
 
 
 class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFilter]):
@@ -42,15 +43,21 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         Return a session_id if the archer is actively participating in an open session,
         or None if not found.
         """
-        sql = self.sql_builder.build_select_view(
+        where = ArcherFilter(archer_id=archer_id)
+        sql, params = self.build_select_view_sql_stm(
             view_name="open_participants",
+            where=where,
             columns=["session_id"],
-            conditions=["archer_id = $1"],
             limit=1,
+            is_desc=False,
         )
-        async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(sql, archer_id)
-        return row["session_id"] if row else None
+        session_id: UUID | None
+        try:
+            row = await self.fetchrow((sql, params))
+            session_id = row["session_id"]
+        except DBNotFound:
+            session_id = None
+        return session_id
 
     async def does_open_session_exist(self, session: UUID) -> bool:
         """Return True if a session with the given ID and is_opened status exists."""
@@ -106,15 +113,19 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
 
         Uses base tables to avoid dependency on a specific view in test environments.
         """
-        sql = self.sql_builder.build_select_view(
+        where = SessionFilter(session_id=session_id)
+        sql, params = self.build_select_view_sql_stm(
             view_name="open_participants",
+            where=where,
             columns=["1"],
-            conditions=["session_id = $1"],
             limit=1,
+            is_desc=False,
         )
-        async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(sql, session_id)
-        return row is not None
+        try:
+            await self.fetchrow((sql, params))
+            return True
+        except DBNotFound:
+            return False
 
     async def re_open_session(self, session: SessionId, archer_id: UUID) -> None:
         if session.session_id is None:

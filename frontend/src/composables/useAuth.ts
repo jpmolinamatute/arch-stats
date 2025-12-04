@@ -292,6 +292,21 @@ async function logout(): Promise<void> {
     } catch (e) {
         console.error('Logout failed', e);
     }
+
+    // Clear local caches to prevent stale state on next login
+    if (user.value?.archer_id) {
+        try {
+            const SESSION_CACHE_PREFIX = 'arch-stats:session:';
+            const SLOT_CACHE_PREFIX = 'arch-stats:slot:';
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.removeItem(`${SESSION_CACHE_PREFIX}${user.value.archer_id}`);
+                window.localStorage.removeItem(`${SLOT_CACHE_PREFIX}${user.value.archer_id}`);
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+
     user.value = null;
     isAuthenticated.value = false;
 }

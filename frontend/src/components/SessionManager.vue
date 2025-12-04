@@ -8,7 +8,7 @@
 
     const router = useRouter();
     const { user, isAuthenticated } = useAuth();
-    const { checkForOpenSession, currentSession } = useSession();
+    const { checkForOpenSession } = useSession();
 
     const checking = ref(true);
     const showSessionForm = ref(false);
@@ -24,8 +24,12 @@
 
         // Check if user has an open session
         try {
-            await checkForOpenSession(user.value.archer_id);
-            // No auto-redirect, just update state
+            const session = await checkForOpenSession(user.value.archer_id);
+            if (session) {
+                // Auto-redirect to live session if participating
+                await router.push('/app/live-session');
+                return;
+            }
         } catch (e) {
             console.error('[SessionManager] Error checking for open session:', e);
         } finally {
@@ -53,23 +57,8 @@
             <SlotJoinForm :session-id="createdSessionId" @slot-assigned="handleSlotAssigned" />
         </div>
 
-        <!-- Show Resume Session button if session exists -->
-        <div v-else-if="currentSession && isAuthenticated" class="text-center">
-            <h2 class="text-xl font-semibold text-slate-200 mb-4">Active Session Found</h2>
-            <p class="text-slate-400 mb-6">
-                You are currently participating in a session at
-                {{ currentSession.session_location }}.
-            </p>
-            <button
-                @click="router.push('/app/live-session')"
-                class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
-            >
-                Resume Session
-            </button>
-        </div>
-
         <!-- Show session creation button/form when authenticated and no open session -->
-        <div v-else-if="isAuthenticated">
+        <div v-else-if="isAuthenticated && !checking">
             <div v-if="!showSessionForm" class="text-center">
                 <button
                     @click="showSessionForm = true"

@@ -11,21 +11,31 @@ from schema import ShotCreate, ShotFilter, ShotId, ShotRead, SlotFilter
 router = APIRouter(prefix="/shot", tags=["Shots"])
 
 
-@router.post("", response_model=ShotId, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ShotId | list[ShotId], status_code=status.HTTP_201_CREATED)
 async def create_shot(
-    shot: ShotCreate,
+    shots: ShotCreate | list[ShotCreate],
     current_archer_id: UUID = Depends(require_auth),
     shot_model: ShotModel = Depends(get_shot_model),
     slot_model: SlotModel = Depends(get_slot_model),
-) -> ShotId:
+) -> ShotId | list[ShotId]:
     try:
-        # Verify that the slot belongs to the archer
-        slot = await slot_model.get_one(SlotFilter(slot_id=shot.slot_id))
-        if slot.archer_id != current_archer_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+        result: ShotId | list[ShotId]
+        if isinstance(shots, ShotCreate):
+            # Verify that the slot belongs to the archer
+            slot = await slot_model.get_one(SlotFilter(slot_id=shots.slot_id))
+            if slot.archer_id != current_archer_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-        shot_id = await shot_model.insert_one(shot)
-        return ShotId(shot_id=shot_id)
+            shot_id = await shot_model.insert_one(shots)
+            result = ShotId(shot_id=shot_id)
+        elif isinstance(shots, list):
+            for shot in shots:
+                slot = await slot_model.get_one(SlotFilter(slot_id=shot.slot_id))
+                if slot.archer_id != current_archer_id:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            shot_ids = await shot_model.insert_many(shots)
+            result = [ShotId(shot_id=shot_id) for shot_id in shot_ids]
+        return result
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 

@@ -73,9 +73,10 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
         """
         Fetch available target for a session and distance (from get_available_targets function).
         """
-        sql = self.sql_builder.build_select_function("get_available_targets", 2)
-        async with self.db_pool.acquire() as conn:
-            rows = await conn.fetch(sql, req_data.session_id, req_data.distance)
+        sql, params = self.build_select_function_sql_stm(
+            "get_available_targets", [req_data.session_id, req_data.distance]
+        )
+        rows = await self.fetch((sql, params))
         return [TargetRead(**row) for row in rows]
 
     async def stop_all_in_session(self, session_id: UUID) -> None:
@@ -107,13 +108,11 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
 
     async def get_slot_with_lane(self, slot_id: UUID) -> SlotRead:
         """Fetch a single slot with computed slot identifier."""
-        select_stm = self.sql_builder.build_select_function("get_slot_with_lane", 1)
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching: %s", select_stm)
-            row = await conn.fetchrow(select_stm, slot_id)
-            if not row:
-                raise DBNotFound(f"{self.name}: No record found")
-            return self.read_schema(**row)
+        select_stm, params = self.build_select_function_sql_stm("get_slot_with_lane", [slot_id])
+        row = await self.fetchrow((select_stm, params))
+        if not row:
+            raise DBNotFound(f"{self.name}: No record found")
+        return self.read_schema(**row)
 
     async def get_full_slot_info(
         self, *, slot_id: UUID | None = None, archer_id: UUID | None = None
@@ -144,21 +143,13 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
             filters = SlotFilter(archer_id=archer_id)
 
         # Mirror ParentModel.build_select_sql_stm but target the view
-        dump = filters.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
-        keys = list(dump.keys())
-        values = tuple(dump.values()) if dump else ()
-        conditions = [f"{key} = ${i}" for i, key in enumerate(keys, start=1)]
-
-        sql = self.sql_builder.build_select_view(
+        # Mirror ParentModel.build_select_sql_stm but target the view
+        sql, params = self.build_select_view_sql_stm(
             view_name="open_participants",
-            order_by_clause="",
+            where=filters,
             columns=[],
-            conditions=conditions,
             limit=1,
+            is_desc=False,
         )
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching: %s", sql)
-            row = await conn.fetchrow(sql, *values)
-            if row is None:
-                raise DBNotFound(f"{self.name}: No record found")
-            return FullSlotInfo(**row)
+        row = await self.fetchrow((sql, params))
+        return FullSlotInfo(**row)
