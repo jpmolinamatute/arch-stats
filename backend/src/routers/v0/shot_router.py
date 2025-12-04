@@ -29,10 +29,18 @@ async def create_shot(
             shot_id = await shot_model.insert_one(shots)
             result = ShotId(shot_id=shot_id)
         elif isinstance(shots, list):
-            for shot in shots:
-                slot = await slot_model.get_one(SlotFilter(slot_id=shot.slot_id))
-                if slot.archer_id != current_archer_id:
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            slot_ids = {shot.slot_id for shot in shots}
+            if len(slot_ids) != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="All shots must belong to the same slot",
+                )
+
+            slot_id = slot_ids.pop()
+            slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
+            if slot.archer_id != current_archer_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
             shot_ids = await shot_model.insert_many(shots)
             result = [ShotId(shot_id=shot_id) for shot_id in shot_ids]
         return result

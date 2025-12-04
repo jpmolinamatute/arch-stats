@@ -26,9 +26,11 @@ class TargetModel(ParentModel[TargetCreate, TargetSet, TargetRead, TargetFilter]
 
     async def get_lane(self, target_id: UUID) -> int | None:
         where = TargetFilter(target_id=target_id)
+        result: int | None
         sql_statement, params = self.build_select_sql_stm(where, ["lane"])
         try:
             row = await self.fetchrow((sql_statement, params))
+            result = row["lane"]
         except DBNotFound:
-            row = None
-        return row["lane"] if row else None
+            result = None
+        return result
