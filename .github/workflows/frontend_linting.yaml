@@ -30,7 +30,6 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs:
-      - format
       - lint
     steps:
       - name: Checkout code
