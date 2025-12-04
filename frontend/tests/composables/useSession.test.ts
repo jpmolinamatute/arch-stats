@@ -33,14 +33,10 @@ describe('useSession', () => {
         vi.clearAllMocks();
     });
 
-    it('checkForOpenSession returns session when found', async () => {
+    it('checkForOpenSession returns session when active slot found (Step 1)', async () => {
         const { checkForOpenSession, currentSession } = useSession();
 
-        type SessionId = components['schemas']['SessionId'];
-        type SessionRead = components['schemas']['SessionRead'];
-
-        const mockSessionId: SessionId = { session_id: 'sess_123' };
-        const mockSession: SessionRead = {
+        const mockSession: components['schemas']['SessionRead'] = {
             session_id: 'sess_123',
             owner_archer_id: 'archer_1',
             session_location: 'Range',
@@ -51,18 +47,54 @@ describe('useSession', () => {
             closed_at: null,
         };
 
-        vi.mocked(api.get).mockResolvedValueOnce(mockSessionId).mockResolvedValueOnce(mockSession);
+        // Mock Step 1: Slot found
+        vi.mocked(api.get).mockResolvedValueOnce({ session_id: 'sess_123' });
+        // Mock Step 3: Fetch session
+        vi.mocked(api.get).mockResolvedValueOnce(mockSession);
 
         const result = await checkForOpenSession('archer_1');
 
+        expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1');
         expect(result).toEqual(mockSession);
         expect(currentSession.value).toEqual(mockSession);
     });
 
-    it('checkForOpenSession returns null when no open session', async () => {
+    it('checkForOpenSession returns session when owned session found (Step 2 - Recovery)', async () => {
         const { checkForOpenSession, currentSession } = useSession();
 
-        vi.mocked(api.get).mockRejectedValue(new ApiError('Not Found', 404));
+        const mockSession: components['schemas']['SessionRead'] = {
+            session_id: 'sess_123',
+            owner_archer_id: 'archer_1',
+            session_location: 'Range',
+            is_indoor: true,
+            is_opened: true,
+            shot_per_round: 3,
+            created_at: '2023-01-01',
+            closed_at: null,
+        };
+
+        // Mock Step 1: Slot NOT found (404)
+        vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404));
+        // Mock Step 2: Owned session found
+        vi.mocked(api.get).mockResolvedValueOnce({ session_id: 'sess_123' });
+        // Mock Step 3: Fetch session
+        vi.mocked(api.get).mockResolvedValueOnce(mockSession);
+
+        const result = await checkForOpenSession('archer_1');
+
+        expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1');
+        expect(api.get).toHaveBeenCalledWith('/session/archer/archer_1/open-session');
+        expect(result).toEqual(mockSession);
+        expect(currentSession.value).toEqual(mockSession);
+    });
+
+    it('checkForOpenSession returns null when neither found', async () => {
+        const { checkForOpenSession, currentSession } = useSession();
+
+        // Mock Step 1: Slot NOT found (404)
+        vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404));
+        // Mock Step 2: Owned session NOT found (404)
+        vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404));
 
         const result = await checkForOpenSession('archer_1');
 

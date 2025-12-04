@@ -100,6 +100,7 @@ describe('LiveSession', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref(null),
@@ -150,6 +151,7 @@ describe('LiveSession', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref(null),
@@ -209,6 +211,7 @@ describe('LiveSession', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => true),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref(null),
@@ -269,6 +272,7 @@ describe('LiveSession', () => {
             createSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => true),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({
@@ -345,6 +349,7 @@ describe('LiveSession', () => {
             error: ref(null),
             createSession: vi.fn(),
             hasOpenSession: computed(() => true),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({

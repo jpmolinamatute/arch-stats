@@ -38,6 +38,7 @@ describe('SessionForm', () => {
             checkForOpenSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false) as unknown as ComputedRef<boolean>,
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useAuth).mockReturnValue({
             user: ref<UserSession>({
@@ -77,6 +78,7 @@ describe('SessionForm', () => {
             checkForOpenSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useAuth).mockReturnValue({
             user: ref<UserSession>({
@@ -119,6 +121,7 @@ describe('SessionForm', () => {
             checkForOpenSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false),
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useAuth).mockReturnValue({
             user: ref<UserSession>({
@@ -171,6 +174,7 @@ describe('SessionForm', () => {
             checkForOpenSession: vi.fn(),
             closeSession: vi.fn(),
             hasOpenSession: computed(() => false) as unknown as ComputedRef<boolean>,
+            clearSessionCache: vi.fn(),
         });
         vi.mocked(useAuth).mockReturnValue({
             user: ref<UserSession>({

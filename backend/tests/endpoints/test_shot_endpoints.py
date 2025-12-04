@@ -236,3 +236,56 @@ async def test_create_shot_rejects_incomplete_coordinates_set(
         json={"slot_id": str(slot_id), "x": -0.3, "y": 1.1, "score": 7},
     )
     assert r5.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_create_multiple_shots_success(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot with a list of shots (bulk insert)."""
+
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
+    )
+
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    # Prepare 6 shots
+    shots_payload = []
+    for i in range(6):
+        shots_payload.append(
+            {
+                "slot_id": str(slot_id),
+                "x": float(i),
+                "y": float(i),
+                "score": i,  # 0..5
+            }
+        )
+
+    # Act
+    resp = await client.post("/api/v0/shot", json=shots_payload)
+
+    # Assert
+    assert resp.status_code == 201
+    data = resp.json()
+    assert isinstance(data, list)
+    assert len(data) == 6
+    # Verify they are all valid UUIDs
+    created_ids = [UUID(item["shot_id"]) for item in data]
+    assert len(set(created_ids)) == 6
+
+    # Verify persistence
+    resp_get = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
+    assert resp_get.status_code == 200
+    fetched_shots = resp_get.json()
+    assert len(fetched_shots) == 6
+
+    # Verify content of one of them (e.g. score 5)
+    shot_5 = next((s for s in fetched_shots if s["score"] == 5), None)
+    assert shot_5 is not None
+    assert shot_5["x"] == 5.0
+    assert shot_5["y"] == 5.0

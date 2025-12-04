@@ -39,14 +39,14 @@ class SQLStatementBuilder:
                 FROM {self.table_name}
                 $where_clause
                 $and_clauses
-                ORDER BY created_at ASC
+                ORDER BY created_at $direction
                 $limit_clause;
             """
         )
         self.insert_template = Template(
             f"""
                 INSERT INTO {self.table_name} ($columns)
-                VALUES ($values)
+                VALUES $values
                 RETURNING {self.table_name}_id;
             """
         )
@@ -158,7 +158,11 @@ class SQLStatementBuilder:
         return False
 
     def build_select_with_conditions(
-        self, columns: list[str] | None = None, conditions: list[str] | None = None, limit: int = 0
+        self,
+        columns: list[str] | None,
+        conditions: list[str] | None,
+        limit: int,
+        is_desc: bool,
     ) -> str:
         """Build a SELECT statement with optional WHERE and LIMIT.
 
@@ -203,6 +207,7 @@ class SQLStatementBuilder:
             where_clause=where_clause,
             and_clauses=and_clauses,
             limit_clause=limit_clause,
+            direction="DESC" if is_desc else "ASC",
         )
 
     def build_simple_select(self) -> str:
@@ -215,23 +220,32 @@ class SQLStatementBuilder:
             columns=[],
             conditions=[],
             limit=0,
+            is_desc=False,
         )
 
-    def build_insert(self, columns: list[str]) -> str:
+    def build_insert(self, columns: list[str], num_rows: int = 1) -> str:
         """Build an INSERT statement with positional placeholders.
 
         Args:
             columns: Column names to insert values into.
+            num_rows: Number of rows to insert.
 
         Returns:
-            SQL string like ``INSERT INTO table (c1, c2) VALUES ($1, $2)
+            SQL string like ``INSERT INTO table (c1, c2) VALUES ($1, $2), ($3, $4)
             RETURNING table_id;``
 
         Notes:
             Assumes the primary key follows the ``<table>_id`` convention for
             the ``RETURNING`` clause.
         """
-        values = ", ".join(f"${i}" for i in range(1, len(columns) + 1))
+        num_cols = len(columns)
+        values_list = []
+        for row_idx in range(num_rows):
+            start_idx = row_idx * num_cols + 1
+            row_placeholders = ", ".join(f"${i}" for i in range(start_idx, start_idx + num_cols))
+            values_list.append(f"({row_placeholders})")
+
+        values = ", ".join(values_list)
 
         return self.insert_template.substitute(
             columns=", ".join(columns),
@@ -277,7 +291,7 @@ class SQLStatementBuilder:
             and_clauses=and_clauses,
         )
 
-    def build_select_function(self, function_name: str, no_placeholders: int = 0) -> str:
+    def build_select_function(self, function_name: str, no_placeholders: int) -> str:
         """Build ``SELECT * FROM <function>($1, ...);``.
 
         Args:
@@ -293,13 +307,14 @@ class SQLStatementBuilder:
             function_name=function_name, placeholders=placeholders
         )
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def build_select_view(
         self,
         view_name: str,
-        order_by_clause: str = "",
-        columns: list[str] | None = None,
-        conditions: list[str] | None = None,
-        limit: int = 0,
+        columns: list[str] | None,
+        conditions: list[str] | None,
+        order_by: str,
+        limit: int,
     ) -> str:
         """Build a SELECT statement against a view with optional WHERE and LIMIT.
 
@@ -337,7 +352,7 @@ class SQLStatementBuilder:
             columns=columns_str,
             where_clause=where_clause,
             and_clauses=and_clauses,
-            order_by_clause=order_by_clause,
+            order_by_clause=order_by,
             limit_clause=limit_clause,
         )
 

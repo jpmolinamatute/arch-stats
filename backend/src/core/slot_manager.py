@@ -10,6 +10,7 @@ from schema import (
     SlotFilter,
     SlotJoinRequest,
     SlotJoinResponse,
+    SlotLeaveRequest,
     SlotLetterType,
     SlotSet,
 )
@@ -166,6 +167,5 @@ class SlotManager:
             raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
 
         # 3) Deactivate the assignment
-        await self.slot.update(SlotSet(is_shooting=False), where)
-        # Ensure materialized view that powers participation checks is updated
-        await self.slot.refresh_open_participants()
+        req = SlotLeaveRequest(session_id=slot_row.session_id, archer_id=slot_row.archer_id)
+        await self.slot.leave_session(req)

@@ -1,32 +1,13 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import TypedDict
 from uuid import UUID
 
 from asyncpg import Connection, Pool
 from asyncpg.pool import PoolConnectionProxy
 
-from models.parent_model import ParentModel
-from schema import ShotCreate, ShotFilter, ShotRead, ShotSet
-
-
-class ShotScore(TypedDict):
-    shot_id: UUID
-    score: int
-
-
-class LiveStat(TypedDict):
-    slot_id: UUID
-    number_of_shots: int
-    total_score: int
-    max_score: int
-    mean: float
-
-
-class Stats(TypedDict):
-    shot: ShotScore
-    stats: LiveStat
+from models.parent_model import DBNotFound, ParentModel
+from schema import LiveStat, ShotCreate, ShotFilter, ShotRead, ShotScore, ShotSet, Stats
 
 
 class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
@@ -42,33 +23,36 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
         shots per slot. If no row exists for the provided slot (no shots yet),
         returns zeros.
         """
-        query = """
-            SELECT *
-            FROM live_stat_by_slot_id
-            WHERE slot_id = $1
-            LIMIT 1;
-            """
+        where = ShotFilter(slot_id=slot_id)
+        query, params = self.build_select_view_sql_stm(
+            view_name="live_stat_by_slot_id",
+            where=where,
+            columns=["*"],
+            limit=1,
+            is_desc=False,
+        )
         result: LiveStat
-        async with self.db_pool.acquire() as conn:
-            self.logger.debug("Fetching live stats: %s", query)
-            row = await conn.fetchrow(query, slot_id)
+        try:
+            row = await self.fetchrow((query, params))
+        except DBNotFound:
+            row = None
 
         if row is None:
-            result = {
-                "slot_id": slot_id,
-                "number_of_shots": 0,
-                "total_score": 0,
-                "max_score": 0,
-                "mean": 0.0,
-            }
+            result = LiveStat(
+                slot_id=slot_id,
+                number_of_shots=0,
+                total_score=0,
+                max_score=0,
+                mean=0.0,
+            )
         else:
-            result = {
-                "slot_id": row["slot_id"],
-                "number_of_shots": row["number_of_shots"],
-                "total_score": row["total_score"],
-                "max_score": row["max_score"],
-                "mean": row["mean"],
-            }
+            result = LiveStat(
+                slot_id=row["slot_id"],
+                number_of_shots=row["number_of_shots"],
+                total_score=row["total_score"],
+                max_score=row["max_score"],
+                mean=row["mean"],
+            )
 
         return result
 
@@ -109,13 +93,10 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
             if missing_keys:
                 raise ValueError(f"Invalid payload structure: missing keys {missing_keys}")
 
-            stats: Stats = {
-                "shot": {
-                    "shot_id": UUID(parsed["shot_id"]),
-                    "score": parsed["score"],
-                },
-                "stats": await self.get_live_stat(slot_id),
-            }
+            stats = Stats(
+                shot=ShotScore(shot_id=UUID(parsed["shot_id"]), score=parsed["score"]),
+                stats=await self.get_live_stat(slot_id),
+            )
             await queue.put(stats)
 
         async with self.db_pool.acquire() as conn:
