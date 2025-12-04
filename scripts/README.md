@@ -61,6 +61,29 @@ Here are the primary scripts used in the project lifecycle:
 | [`remote_installer.bash`](./remote_installer.bash) | Sets up the application and systemd service on a remote Linux server. |
 | [`local_installer.bash`](./local_installer.bash) | Orchestrates remote installation/uninstallation via SSH. |
 
+## Git Hooks & Safety Net
+
+To prevent committing broken code, "activate" the git pre-commit hook by creating a symlink to the
+linting script:
+
+```bash
+ln -sfr ./scripts/linting.bash ./.git/hooks/pre-commit
+```
+
+This ensures that all linters and tests pass before a commit is allowed.
+
+### Pull Requests
+
+After pushing your changes, use the helper script to create a Pull Request:
+
+```bash
+./scripts/create_pr.bash
+```
+
+> [!IMPORTANT]
+> Workflows are triggered selectively based on the files changed (e.g., frontend changes do not
+> trigger backend tests). All **triggered** workflows must pass for a PR to be mergeable.
+
 ## Structure
 
 The directory is organized by function:
