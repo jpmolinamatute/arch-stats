@@ -1,86 +1,260 @@
-# Arch-Stats Frontend
+# Arch Stats Frontend
 
-This is the Web App for the Arch-Stats project. We are using Vue3 with TypeScript.
+## Description
+
+**Arch Stats frontend** is a specialized application for tracking and analyzing archery statistics.
+This frontend provides a modern, mobile-first interface for archers to log their sessions, visualize
+their performance, and track their progress over time. It is built to be fast, responsive, and easy
+to use on the range.
+
+## Development Guidelines
+
+**Audience:** Developers working in the `frontend/` directory.
+
+## Architecture
+
+The frontend is a Single Page Application (SPA) built with a modern stack:
+
+- **Framework**: [Vue 3](https://vuejs.org/) (Composition API, SFCs)
+- **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict mode)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) (v4, class-based dark mode)
+- **State Management**: Minimal global state; prefers Composables.
+- **API Integration**: Generated TypeScript clients from OpenAPI specs.
+
+It communicates with a Python backend (FastAPI/Uvicorn) served at `http://localhost:8000`.
+
+## Golden Constraints (must-follow)
+
+- **Composition API**: Use `<script setup lang="ts">` only.
+- **Generated types**: Import API entities from `types.generated.ts`.
+- **API calls in composables**: Components must not call `fetch()` directly.
+- **Strict typing**: No implicit `any`; keep TypeScript strict.
+- **Formatting**: ESLint + Prettier; keep diffs minimal and focused.
+- **Build output path**: `npm run build` emits to `../backend/src/frontend/`.
 
 ## Prerequisites
 
-- Node.js (v25.2.1 or higher)
-- npm (v11.6.4 or higher)
+Before you start, ensure your environment is ready:
 
-## Mandatory steps
+- **Node.js**: v25.2.1+
+- **npm**: v11.6.4+
+- **Backend**: The backend service must be running for full functionality.
 
-Before we run or build the Web App, we need to generate `./frontend/src/types/types.generated.ts` from the backend API. This file is essential to keep the backend and frontend in sync.
+## Setup
 
-We have two ways to do this:
+Follow these steps to get from zero to "Hello World":
+
+1. **Install Dependencies**:
+
+    ```bash
+    npm install
+    ```
+
+2. **Generate API Types**:
+    Ensure the backend is running, then generate the TypeScript client:
+
+    ```bash
+    npm run generate:types
+    ```
+
+    > [!IMPORTANT]
+    > This step is crucial to ensure your frontend types match the latest backend schema. Run this
+    > whenever the backend API changes.
+
+3. **Start Development Server**:
+
+    ```bash
+    npm run dev
+    ```
+
+    The app will be available at `http://localhost:5173`.
+
+4. **Start Backend (Required for API)**:
+    Open a new terminal and run:
+
+    ```bash
+    ./scripts/start_uvicorn.bash
+    ```
+
+## Quickstart (VS Code tasks)
+
+If you use VS Code, the workspace defines helpful tasks:
+
+- Start frontend dev server: Run task `Start Vite Frontend`.
+- Start backend API: Run task `Start Uvicorn Dev Server`.
+- Start/stop database: Run tasks `Start Docker Compose` and
+  `Stop Docker Compose` (or `Stop & Remove Volumes`).
+
+## Scripts
+
+Here are the common commands you'll need:
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Start the Vite development server. |
+| `npm run build` | Type-check and build the production bundle. |
+| `npm run preview` | Preview the production build locally. |
+| `npm run lint` | Lint and fix code using ESLint. |
+| `npm run test` | Run unit tests with Vitest. |
+| `npm run generate:types` | Regenerate API types from the running backend. |
+
+## Git Hooks & Safety Net
+
+To prevent committing broken code, "activate" the git pre-commit hook by creating a symlink to the
+linting script:
 
 ```bash
-# On one terminal
-./scripts/start_uvicorn.bash
-
-# On another terminal
-npm run generate:types
-
-# After the types file is generated, you need to kill the uvicorn process, by pressing Ctrl+C on the first terminal.
+ln -sfr ./scripts/linting.bash ./.git/hooks/pre-commit
 ```
 
-The other way is to run
+This ensures that all linters and tests pass before a commit is allowed.
+
+### Pull Requests
+
+After pushing your changes, use the helper script to create a Pull Request:
 
 ```bash
-uv run "./scripts/generate_openapi.py"
-cd "./frontend"
-npx openapi-typescript "../openapi.json" --export-type --immutable --output "./src/types/types.generated.ts"
+./scripts/create_pr.bash
 ```
 
-**Note**: The `/frontend/src/types/types.generated.ts` file is gitignored, and must NOT be committed to the repository. We also need to generate this file often, since there might be changes in the backend API that need to be reflected in the frontend.
+> [!IMPORTANT]
+> Workflows are triggered selectively based on the files changed (e.g., frontend changes do not
+> trigger backend tests). All **triggered** workflows must pass for a PR to be mergeable.
 
-## How to run the app
+## Structure
 
-### In development
+The codebase is organized by function:
 
-We use Vite to serve the web app in development. Run `npm run dev` to start the development server. The app will be available at <http://localhost:5173>. We also vite to proxy the API requests to the backend server running at <http://localhost:3000>.
+- **`frontend/src/api/`**: API client configuration.
+- **`frontend/src/components/`**: Vue Single File Components (SFCs). Kept small and presentation-focused.
+- **`frontend/src/composables/`**: Reusable logic and state management. **All HTTP requests live here.**
+- **`frontend/src/router/`**: Application routing configuration.
+- **`frontend/src/types/`**: Generated TypeScript types (`types.generated.ts`).
+- **`frontend/src/assets/`**: Static assets (images, icons, fonts).
+- **`frontend/tests/`**: Unit tests using Vitest.
 
-### In production
+### Frontend contribution pattern
 
-We use Uvicorn to serve the web app and the API server. Run `uvicorn main:app --host 0.0.0.0 --port 8000` to start the production server. The whole app will be available at <http://localhost:8000>.
+When adding a new feature or integrating a new API endpoint:
 
-## Code quality
+1. Ensure backend is running. Generate types with `npm run generate:types`.
+2. Add a composable in `src/composables/` wrapping the API call and returning typed data.
+3. Connect components to the composable; keep components presentational and small.
+4. Add tests in `frontend/tests/` for components and composables.
+5. Run `npm run lint` and ensure type checks pass via `npm run build`.
 
-We use ESLint and Prettier to enforce code quality. Run `npm run lint` to lint the code, and `npm run format` to format the code. We also use Vitest to run tests. Run `npm run test` to run the tests. We also have `./scripts/linting.bash --lint-frontend` script to do all this and more. This script will:
+### Style Guidelines
 
-- Generate types` file from the backend API.
-- Lint the code.
-- Format the code.
-- Run tests.
-- Build the app to make sure it works.
+> [!IMPORTANT]
+> Follow the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) for consistency.
 
-## Project Structure
+### Coding Standards
 
-The project is organized as follows:
+1. **Composition API**: Use `<script setup lang="ts">`.
+2. **Explicit Types**: No implicit `any`. Define types for all props, emits, and data.
+3. **Tailwind**: Use utility classes over inline styles.
+4. **Type Sync**: Import entities from `types.generated.ts`.
+5. **Logic Separation**: Keep complex logic in `composables/`.
 
-- `src/api`: Contains the API client and configuration. This is where all backend communication happens.
-- `src/composables`: Contains reusable business logic and state management using Vue's Composition API. We prefer composables over a global store for modularity.
-- `src/components`: Reusable UI components. These should be dumb components as much as possible.
-- `src/views`: Page-level components that connect composables with UI components.
-- `src/types`: TypeScript definitions. `types.generated.ts` is auto-generated from the backend OpenAPI spec.
+### Contribution Pattern
 
-## Key Technologies & Decisions
+When adding a new feature or integrating a new API endpoint:
 
-- **Vue 3 & Composition API**: We use `<script setup>` syntax for all components.
-- **TailwindCSS**: We use a custom configuration with World Archery (WA) brand colors.
-  - Use `wa-reflex`, `wa-pink`, `wa-yellow`, etc., for brand colors.
-  - Use semantic aliases like `primary`, `accent`, `success` for intent-driven styling.
-- **Type Safety**: We rely heavily on `types.generated.ts` to ensure our frontend code matches the backend API. **Never manually edit this file.**
+1. Ensure backend is running. Generate types with `npm run generate:types`.
+2. Add a composable in `src/composables/` wrapping the API call and returning typed data.
+3. Connect components to the composable; keep components presentational and small.
+4. Add tests in `frontend/tests/` for components and composables.
+5. Run `npm run lint` and ensure type checks pass via `npm run build`.
 
-## Development Workflow
+### Mobile-First Design
 
-1. **New Features**:
-    - Create a new branch.
-    - If the backend API changed, run `npm run generate:types` (see Mandatory steps).
-    - Implement logic in a Composable (if stateful) or Utility.
-    - Create/Update Components.
-    - Assemble in a View.
-2. **Styling**:
-    - Use Tailwind utility classes.
-    - For custom colors, always use the `wa-*` or semantic classes defined in `tailwind.config.js`.
-3. **Testing**:
-    - Run `npm run test` to ensure no regressions.
+This app is primarily used on phones.
+
+- **Viewport**: Prioritize 360–414px widths.
+- **Layout**: Default to `w-full` and `flex-col`. Use `md:`/`lg:` for larger screens.
+- **Nesting**: Limit depth to **3 levels** of layout containers.
+
+### API Access Rules
+
+- **No Direct Fetch**: Components must not call `fetch()` directly.
+- **Composables**: Wrap all API calls in composables returning typed Promises.
+- **Type Generation**: Run `npm run generate:types` when the backend schema changes.
+
+### Code Quality
+
+All code must pass linting:
+
+```bash
+npm run lint
+```
+
+We use **ESLint** with the **Antfu** configuration.
+
+### Performance
+
+- Debounce inputs (≥150ms).
+- Use `AbortController` for cancellable requests.
+- Keep render trees shallow.
+
+### Development Proxy
+
+In development (`npm run dev`), Vite serves the frontend at `http://localhost:5173`. API requests to
+`/api/v0` are proxied to the backend at `http://localhost:8000` to avoid CORS issues.
+
+**Configuration (`vite.config.ts`):**
+
+```typescript
+server: {
+  proxy: {
+    '/api/v0': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+      ws: true,
+    },
+  },
+}
+```
+
+### Production Build
+
+In production, the frontend is built into static files and served directly by the backend (Uvicorn).
+
+1. **Build the Frontend**:
+
+    ```bash
+    npm run build
+    ```
+
+    This compiles the app to `../backend/src/frontend/`.
+
+2. **Serve with Uvicorn**:
+    When you start the backend:
+
+    ```bash
+    ./scripts/start_uvicorn.bash
+    ```
+
+    Uvicorn serves the API at `/api/v0` AND the static frontend files at the root `/`.
+
+## Troubleshooting
+
+- Types missing or out of date: Ensure backend is running and run
+  `npm run generate:types`.
+- Proxy not working: Check `vite.config.ts` proxy to `http://localhost:8000` and ports.
+- CORS errors in dev: Use the dev proxy (`/api/v0`), not absolute backend URLs.
+- Node/npm issues: Ensure versions match the prerequisites listed above.
+- Build path mismatch: Production build must emit to `../backend/src/frontend/`.
+
+### Do / Don't
+
+| ✅ Do | ❌ Don't |
+| :--- | :--- |
+| Use `defineProps` & `defineEmits` with types. | Add large libs without good reason. |
+| Validate inputs before API calls. | Hard-code backend URLs/assumptions. |
+| Use Tailwind semantic colors (`primary`, `warning`). | Avoid complex WS logic in components. |
+
+## References
+
+- **Backend**: [backend/README.md](../backend/README.md)
+- **Scripts**: [scripts/README.md](../scripts/README.md)

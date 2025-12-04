@@ -1,45 +1,40 @@
 {
-    "name": "arch-stats_frontend",
-    "private": true,
-    "version": "0.0.0",
-    "type": "module",
-    "scripts": {
-        "dev": "vite",
-        "build": "vue-tsc -b && vite build",
-        "preview": "vite preview",
-        "lint": "eslint --config ./eslint.config.js --fix ./src ./tests",
-        "format": "prettier --config ./.prettierrc --write ./src ./tests",
-        "clear:vite_cache": "rm -rf ./node_modules/.vite",
-        "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "test:coverage": "vitest run --coverage"
-    },
-    "dependencies": {
-        "vue": "^3.5.24",
-        "vue-router": "^4.6.3"
-    },
-    "devDependencies": {
-        "@tailwindcss/vite": "^4.1.17",
-        "@types/node": "^24.10.1",
-        "@vitejs/plugin-vue": "^6.0.1",
-        "@vitest/coverage-v8": "^4.0.14",
-        "@vue/eslint-config-typescript": "^14.6.0",
-        "@vue/test-utils": "^2.4.6",
-        "@vue/tsconfig": "^0.8.1",
-        "autoprefixer": "^10.4.22",
-        "eslint": "^9.39.1",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-prettier": "^5.5.4",
-        "eslint-plugin-vue": "^10.5.1",
-        "jsdom": "^27.2.0",
-        "openapi-typescript": "^7.10.1",
-        "postcss": "^8.5.6",
-        "prettier": "^3.6.2",
-        "tailwindcss": "^4.1.17",
-        "typescript": "~5.9.3",
-        "vite": "^7.2.2",
-        "vitest": "^4.0.14",
-        "vue-tsc": "^3.1.3"
-    }
+  "name": "arch-stats_frontend",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint --fix .",
+    "clear:vite_cache": "rm -rf ./node_modules/.vite",
+    "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "vue": "^3.5.24",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.4.1",
+    "@tailwindcss/vite": "^4.1.17",
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/coverage-v8": "^4.0.14",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
+    "autoprefixer": "^10.4.22",
+    "eslint": "^9.39.1",
+    "jsdom": "^27.2.0",
+    "openapi-typescript": "^7.10.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.14",
+    "vue-tsc": "^3.1.3"
+  }
 }
