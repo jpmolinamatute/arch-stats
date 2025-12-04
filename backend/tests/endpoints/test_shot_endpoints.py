@@ -335,3 +335,21 @@ async def test_create_multiple_shots_different_slots_fails(
     # Assert
     assert resp.status_code == 400
     assert resp.json()["detail"] == "All shots must belong to the same slot"
+
+
+@pytest.mark.asyncio
+async def test_create_shots_empty_list_fails(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot with an empty list should fail."""
+
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    # Act
+    resp = await client.post("/api/v0/shot", json=[])
+
+    # Assert
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid input"
