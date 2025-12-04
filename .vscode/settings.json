@@ -44,6 +44,7 @@
         "Docstrings",
         "drivername",
         "Eeuo",
+        "esac",
         "executemany",
         "fetchrow",
         "FETCHTYPE",
@@ -51,6 +52,7 @@
         "FILTERTYPE",
         "FIXIT",
         "frontend",
+        "getopts",
         "healthcheck",
         "httpx",
         "inlinevar",
@@ -65,15 +67,23 @@
         "minversion",
         "MODELTYPE",
         "msvs",
+        "mvdan",
         "mymodule",
         "mypackage",
         "neato",
         "nosec",
         "nthreads",
         "ondelete",
+        "OPTARG",
+        "OPTIND",
         "optparse",
         "overgeneral",
+        "PGDATABASE",
+        "PGHOST",
+        "PGPORT",
         "PGSQL",
+        "PGUSER",
+        "pipefail",
         "poolclass",
         "Pydantic",
         "pygtk",
@@ -193,7 +203,8 @@
     "eslint.format.enable": true,
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit",
-        "source.fixAll.eslint": "explicit"
+        "source.fixAll.eslint": "explicit",
+        "source.fixAll.markdownlint": "explicit"
     },
     "isort.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
@@ -205,6 +216,24 @@
         "--settings-file",
         "${workspaceFolder}/backend/pyproject.toml"
     ],
+    "markdownlint.config": {
+        "MD003": {
+            "style": "atx"
+        },
+        "MD030": {
+            "ul_single": 1,
+            "ol_single": 1,
+            "ul_multi": 1,
+            "ol_multi": 1
+        },
+        "MD007": {
+            "indent": 4
+        },
+        "MD013": {
+            "line_length": 100
+        },
+        "no-hard-tabs": true
+    },
     "markdown.preview.scrollEditorWithPreview": false,
     "markdown.preview.scrollPreviewWithEditor": false,
     "mypy-type-checker.args": [
@@ -226,7 +255,6 @@
         "**/.pytest_cache/"
     ],
     // Don't add ${workspaceFolder}/
-    "prettier.configPath": "frontend/.prettierrc",
     "pylint.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -284,20 +312,21 @@
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
     "[markdown]": {
-        "editor.unicodeHighlight.nonBasicASCII": true
+        "editor.unicodeHighlight.nonBasicASCII": true,
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
     },
     "[javascript]": {
         "editor.insertSpaces": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[vue]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
@@ -305,7 +334,7 @@
     "[html]": {
         "editor.suggest.insertMode": "replace",
         "editor.insertSpaces": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "workbench.externalBrowser": "/opt/google/chrome/chrome",
     "workbench.editor.restoreViewState": false,

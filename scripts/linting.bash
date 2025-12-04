@@ -55,7 +55,7 @@ run_generate_types() {
     uv run "${ROOT_DIR}/scripts/generate_openapi.py"
     cd "${ROOT_DIR}/frontend"
     log_info "Generating TypeScript types from OpenAPI spec"
-    npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --immutable --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
+    npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --alphabetize --root-types --root-types-no-schema-prefix --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
 }
 
 build_frontend() {
@@ -71,10 +71,8 @@ build_frontend() {
 run_frontend_checks() {
     run_generate_types
     cd "${ROOT_DIR}/frontend"
-    log_info "Running JS/TS linter"
+    log_info "Running JS/TS linter and formatter"
     npm run lint
-    log_info "Running JS/TS formatter"
-    npm run format
     echo "Running JS/TS tests"
     npm run test
     build_frontend
