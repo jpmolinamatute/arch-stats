@@ -292,43 +292,6 @@ async def test_create_multiple_shots_success(
 
 
 @pytest.mark.asyncio
-async def test_create_multiple_shots_same_slot_success(
-    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
-) -> None:
-    """POST /shot with a list of shots for the SAME slot (bulk insert)."""
-
-    # Arrange
-    (archer_id,) = await create_archers(db_pool, 1)
-    (session_id,) = await create_sessions(db_pool, 1)
-    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
-    (slot_id,) = await create_slot_assignments(
-        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
-    )
-
-    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
-
-    # Prepare 3 shots
-    shots_payload = []
-    for i in range(3):
-        shots_payload.append(
-            {
-                "slot_id": str(slot_id),
-                "x": float(i),
-                "y": float(i),
-                "score": i,
-            }
-        )
-
-    # Act
-    resp = await client.post("/api/v0/shot", json=shots_payload)
-
-    # Assert
-    assert resp.status_code == 201
-    data = resp.json()
-    assert len(data) == 3
-
-
-@pytest.mark.asyncio
 async def test_create_multiple_shots_different_slots_fails(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:

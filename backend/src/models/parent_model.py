@@ -130,10 +130,7 @@ class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
             dump = item.model_dump(by_alias=True, exclude_unset=True, exclude_none=True)
             # Ensure order matches keys
             for key in keys:
-                if key in dump:
-                    all_values.append(dump[key])
-                else:
-                    raise ValueError(f"Key {key} not found in data")
+                all_values.append(dump[key])
 
         sql_stm = self.sql_builder.build_insert(keys, num_rows=len(data_list))
         return (sql_stm, all_values)

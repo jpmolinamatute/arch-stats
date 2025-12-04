@@ -28,7 +28,7 @@ async def create_shot(
 
             shot_id = await shot_model.insert_one(shots)
             result = ShotId(shot_id=shot_id)
-        elif isinstance(shots, list):
+        elif isinstance(shots, list) and len(shots) > 0:
             slot_ids = {shot.slot_id for shot in shots}
             if len(slot_ids) != 1:
                 raise HTTPException(
@@ -43,6 +43,8 @@ async def create_shot(
 
             shot_ids = await shot_model.insert_many(shots)
             result = [ShotId(shot_id=shot_id) for shot_id in shot_ids]
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input")
         return result
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
