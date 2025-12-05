@@ -477,14 +477,14 @@ describe('liveSession', () => {
     expect(face.exists()).toBe(true)
 
     // Simulate shot event
-    ;(face as any).vm.$emit('shot', { score: 9, x: 100, y: 100 })
+    ;(face as any).vm.$emit('shot', { score: 9, x: 100, y: 100, is_x: true })
 
     expect(api.createShot).toHaveBeenCalledWith({
       slot_id: 'slot_1',
       score: 9,
       x: 100,
       y: 100,
-      is_x: false,
+      is_x: true,
     })
   })
 })

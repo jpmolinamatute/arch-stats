@@ -146,6 +146,7 @@ describe('face', () => {
     expect(wrapper.emitted('shot')).toBeTruthy()
     expect(wrapper.emitted('shot')![0][0]).toEqual(expect.objectContaining({
       score: 1,
+      is_x: false,
     }))
 
     // Check if a new circle was added (1 ring + 1 shot = 2 circles)

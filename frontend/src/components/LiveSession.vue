@@ -107,7 +107,7 @@ async function handleSlotAssigned() {
   }
 }
 
-async function handleShot(payload: { score: number, x: number, y: number }) {
+async function handleShot(payload: { score: number, x: number, y: number, is_x: boolean }) {
   if (!currentSlot.value || !currentSlot.value.slot_id) {
     console.error('No active slot to record shot')
     return
@@ -119,7 +119,7 @@ async function handleShot(payload: { score: number, x: number, y: number }) {
       score: payload.score,
       x: payload.x,
       y: payload.y,
-      is_x: false,
+      is_x: payload.is_x,
     })
   }
   catch (e) {

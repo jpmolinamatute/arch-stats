@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'shot', payload: { score: number, x: number, y: number }): void
+  (e: 'shot', payload: { score: number, x: number, y: number, is_x: boolean }): void
 }>()
 
 const { fetchFace } = useFaces()
@@ -82,7 +82,7 @@ async function loadFace() {
   }
 }
 
-function handleShotClick(score: number, clientX: number, clientY: number) {
+function handleShotClick(score: number, clientX: number, clientY: number, isX: boolean = false) {
   const svgCoords = getSVGCoordinates(clientX, clientY)
   if (!svgCoords)
     return
@@ -96,7 +96,7 @@ function handleShotClick(score: number, clientX: number, clientY: number) {
     shots.value.shift() // Remove oldest shot
   }
 
-  emit('shot', { score, x, y })
+  emit('shot', { score, x, y, is_x: isX })
 }
 
 watch(() => props.faceId, loadFace)
@@ -149,7 +149,7 @@ onUnmounted(() => {
         v-for="(ring, index) in face.rings"
         :key="index"
         class="cursor-pointer"
-        @click="handleShotClick(ring.data_score, $event.clientX, $event.clientY)"
+        @click="handleShotClick(ring.data_score, $event.clientX, $event.clientY, !!(face.render_cross && index === face.rings.length - 1))"
       >
         <circle
           :cx="face.viewBox / 2"
