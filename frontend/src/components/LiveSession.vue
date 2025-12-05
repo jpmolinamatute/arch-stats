@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { api } from '@/api/client'
 import Face from '@/components/Face.vue'
 import SlotJoinForm from '@/components/forms/SlotJoinForm.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -105,6 +106,27 @@ async function handleSlotAssigned() {
     }
   }
 }
+
+async function handleShot(payload: { score: number, x: number, y: number }) {
+  if (!currentSlot.value || !currentSlot.value.slot_id) {
+    console.error('No active slot to record shot')
+    return
+  }
+
+  try {
+    await api.createShot({
+      slot_id: currentSlot.value.slot_id,
+      score: payload.score,
+      x: payload.x,
+      y: payload.y,
+      is_x: false,
+    })
+  }
+  catch (e) {
+    console.error('Failed to record shot:', e)
+    // TODO: Show error feedback to user
+  }
+}
 </script>
 
 <template>
@@ -171,8 +193,8 @@ async function handleSlotAssigned() {
             <Face
               v-if="currentSlot.face_type && currentSlot.face_type !== 'none'"
               :face-id="currentSlot.face_type"
-              :size-px="360"
-              show-crosshair="auto"
+              :max-shots="currentSession?.shot_per_round"
+              @shot="handleShot"
             />
           </div>
         </div>

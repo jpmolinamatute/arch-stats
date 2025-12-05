@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import type { components } from '@/types/types.generated'
-import { onMounted, onUnmounted, ref } from 'vue'
-import { api } from '@/api/client'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useFaces } from '@/composables/useFaces'
-import { useSession } from '@/composables/useSession'
-// import { useShot } from '@/composables/useShot';
-import { useSlot } from '@/composables/useSlot'
 
 type Face = components['schemas']['Face']
 type FaceType = components['schemas']['FaceType']
+
+const props = defineProps<{
+  faceId: FaceType
+  maxShots?: number
+  width?: number
+}>()
+
+const emit = defineEmits<{
+  (e: 'shot', payload: { score: number, x: number, y: number }): void
+}>()
+
 const { fetchFace } = useFaces()
-const { currentSession } = useSession()
 const face = ref<Face | null>(null)
 const SVGWidth = ref(300) // default value
 const svgRef = ref<SVGSVGElement | null>(null)
@@ -27,6 +33,11 @@ function getOrientation(): 'portrait' | 'landscape' {
 }
 
 function updateSVGWidth() {
+  if (props.width) {
+    SVGWidth.value = props.width
+    return
+  }
+
   const mobile = isMobile()
   let width: number
   if (mobile) {
@@ -57,51 +68,44 @@ function getSVGCoordinates(clientX: number, clientY: number): { x: number, y: nu
   return { x: svgP.x, y: svgP.y }
 }
 
-async function saving_score(score: number, x: number, y: number) {
-  const slot = useSlot()
-  const currentSlot = slot.currentSlot.value
-
-  if (!currentSlot || !currentSlot.session_id || !currentSlot.slot_id) {
-    console.error('Missing slot or session ID')
+async function loadFace() {
+  if (!props.faceId || props.faceId === 'none') {
+    face.value = null
     return
   }
-
-  // Add visual feedback
-  const svgCoords = getSVGCoordinates(x, y)
-  if (svgCoords) {
-    shots.value.push(svgCoords)
-    const limit = currentSession.value?.shot_per_round ?? 6 // Default to 6 if not set
-    if (shots.value.length > limit) {
-      shots.value.shift() // Remove oldest shot
-    }
-  }
-
   try {
-    await api.createShot({
-      slot_id: currentSlot.slot_id,
-      score,
-      x,
-      y,
-      is_x: false,
-    })
+    const result = await fetchFace(props.faceId)
+    face.value = result
   }
   catch (e) {
-    console.error('Failed to record shot:', e)
+    console.error('Failed to load face:', e)
   }
 }
 
+function handleShotClick(score: number, clientX: number, clientY: number) {
+  const svgCoords = getSVGCoordinates(clientX, clientY)
+  if (!svgCoords)
+    return
+
+  const { x, y } = svgCoords
+
+  // Add visual feedback
+  shots.value.push({ x, y })
+  const limit = props.maxShots ?? 6
+  if (shots.value.length > limit) {
+    shots.value.shift() // Remove oldest shot
+  }
+
+  emit('shot', { score, x, y })
+}
+
+watch(() => props.faceId, loadFace)
+watch(() => props.width, updateSVGWidth)
+
 onMounted(async () => {
   updateSVGWidth()
-  const slot = useSlot()
-  const faceType: FaceType | undefined = slot.currentSlot.value?.face_type
-  if (!faceType || faceType === 'none') {
-    throw new Error('No valid face_type found in current slot')
-  }
-  const result = await fetchFace(faceType)
-  if (!result) {
-    throw new Error('Face data could not be loaded')
-  }
-  face.value = result
+  await loadFace()
+
   resizeObserver = new ResizeObserver(() => {
     requestAnimationFrame(updateSVGWidth)
   })
@@ -139,13 +143,13 @@ onUnmounted(() => {
         stroke-width="3"
         data-score="0"
         class="cursor-pointer"
-        @click="saving_score(0, $event.clientX, $event.clientY)"
+        @click="handleShotClick(0, $event.clientX, $event.clientY)"
       />
       <g
         v-for="(ring, index) in face.rings"
         :key="index"
         class="cursor-pointer"
-        @click="saving_score(ring.data_score, $event.clientX, $event.clientY)"
+        @click="handleShotClick(ring.data_score, $event.clientX, $event.clientY)"
       >
         <circle
           :cx="face.viewBox / 2"
