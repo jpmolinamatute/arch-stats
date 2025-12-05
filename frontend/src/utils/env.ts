@@ -4,16 +4,16 @@
  * Everything else is false.
  */
 export function isEnvTrue(value: unknown): boolean {
-  let is_true = false
+  let isTrue = false
   if (typeof value === 'boolean' && value) {
-    is_true = true
+    isTrue = true
   }
-  if (typeof value === 'number') {
-    is_true = value === 1
+  else if (typeof value === 'number') {
+    isTrue = value === 1
   }
-  if (typeof value === 'string') {
+  else if (typeof value === 'string') {
     const v = value.toLowerCase()
-    is_true = v === 'true' || v === 't' || v === '1'
+    isTrue = v === 'true' || v === 't' || v === '1'
   }
-  return is_true
+  return isTrue
 }

@@ -102,11 +102,13 @@ describe('useSession', () => {
     expect(currentSession.value).toBeNull()
   })
 
-  it('checkForOpenSession handles 404 error gracefully', async () => {
+  it('checkForOpenSession handles 404 error during session details fetch gracefully', async () => {
     const { checkForOpenSession, currentSession, error } = useSession()
     const { ApiError } = await import('../../src/api/client')
 
-    // Mock Step 1: Throw 404
+    // Mock Step 1: Slot found (successful)
+    vi.mocked(api.get).mockResolvedValueOnce({ session_id: 'sess_123' })
+    // Mock Step 3: Fetch session fails with 404
     vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404))
 
     const result = await checkForOpenSession('archer_1')

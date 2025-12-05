@@ -1,6 +1,7 @@
 import logging
 import time
 from collections.abc import AsyncGenerator, Callable
+from unittest.mock import AsyncMock
 from uuid import UUID
 
 import jwt
@@ -12,6 +13,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app import run
 from core import DBPool, settings
+from models import ArcherModel, AuthModel
 
 
 # pylint: disable=redefined-outer-name
@@ -79,3 +81,14 @@ def jwt_for() -> Callable[[UUID], str]:
         )
 
     return _jwt_for
+
+
+# Mock Fixtures for individual dependencies
+@pytest.fixture
+def mock_archers() -> AsyncMock:
+    return AsyncMock(spec=ArcherModel)
+
+
+@pytest.fixture
+def mock_sessions() -> AsyncMock:
+    return AsyncMock(spec=AuthModel)

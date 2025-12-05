@@ -157,7 +157,11 @@ export function useSession() {
     try {
       const data = await api.post<SessionId>('/session', payload)
 
-      if (!data || !data.session_id) {
+      if (!data) {
+        throw new Error('No response from server')
+      }
+
+      if (!data.session_id) {
         throw new Error('No session ID returned from server')
       }
 

@@ -146,7 +146,7 @@ export function useSlot() {
       const full = await api.get<FullSlotInfo>(`/session/slot/archer/${archerId}`)
 
       if (!full) {
-        throw new Error('Failed to fetch slot details')
+        throw new Error('No response from server')
       }
 
       currentSlot.value = full
