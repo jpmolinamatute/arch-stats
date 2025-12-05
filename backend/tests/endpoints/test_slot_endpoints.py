@@ -1,7 +1,6 @@
 """Endpoint tests for slot-related endpoints (join/leave/re-join)."""
 
 from collections.abc import Callable
-from typing import Any
 from uuid import UUID
 
 import pytest
@@ -9,33 +8,7 @@ from asyncpg import Pool
 from httpx import AsyncClient
 
 from factories.archer_factory import create_archers
-
-
-async def join_session(
-    client: AsyncClient,
-    session_id: UUID,
-    archer_id: UUID,
-    jwt_for: Callable[[UUID], str],
-    distance: int = 30,
-) -> Any:
-    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
-    payload = {
-        "session_id": str(session_id),
-        "archer_id": str(archer_id),
-        "distance": distance,
-        "face_type": "wa_60cm_full",
-        "is_shooting": True,
-        "bowstyle": "recurve",
-        "draw_weight": 30.0,
-    }
-    r = await client.post("/api/v0/session/slot", json=payload)
-    assert r.status_code == 200
-    join_data = r.json()
-    # Augment with target_id by querying current slot info
-    cs = await client.get(f"/api/v0/session/slot/archer/{archer_id}")
-    assert cs.status_code == 200
-    join_data["target_id"] = cs.json()["target_id"]
-    return join_data
+from tests.utils import join_session
 
 
 @pytest.mark.asyncio
@@ -173,7 +146,7 @@ async def test_fifth_archer_joins_new_target_when_first_is_full(
     - Owner opens a session
     - First 4 participants at the same distance join and must share the same target
       (lane 1, slots A-D)
-    - The 4th  and 5th participants at the same distance must be allocated to a NEW target
+    - The 5th and 6th participants at the same distance must be allocated to a NEW target
       (lane 2, slot A & B)
     """
 
@@ -905,8 +878,6 @@ async def test_leave_same_session_twice_returns_400(
     # Participant joins and capture slot id
     j = await join_session(client, UUID(session_id), participant_id, jwt_for, 30)
 
-    # First leave
-    client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     # First leave using slot id captured from initial join
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     leave_slot_id = j["slot_id"]

@@ -12,7 +12,7 @@ from factories.slot_factory import create_slot_assignments
 from factories.target_factory import create_targets
 
 
-async def _create_shot(
+async def _create_shot_for_test(
     client: AsyncClient, jwt_for: Callable[[UUID], str], slot_id: UUID, archer_id: UUID, value: int
 ) -> Any:
     client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
@@ -74,10 +74,10 @@ async def test_get_shots_by_slot_returns_only_expected(
 
     # Create 4 shots for each slot
     slot1_shots = [
-        await _create_shot(client, jwt_for, slot1_id, archer1_id, v) for v in range(1, 5)
+        await _create_shot_for_test(client, jwt_for, slot1_id, archer1_id, v) for v in range(1, 5)
     ]
     slot2_shots = [
-        await _create_shot(client, jwt_for, slot2_id, archer2_id, v) for v in range(5, 9)
+        await _create_shot_for_test(client, jwt_for, slot2_id, archer2_id, v) for v in range(5, 9)
     ]
 
     # Test: archer1 gets only their shots for slot1
