@@ -1,31 +1,20 @@
 import datetime
-from collections.abc import Iterator
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 
-from core import AuthDeps, settings
-from routers.v0.auth_router import get_deps
+from core import settings
 from schema import ArcherRead, BowStyleType, GenderType
-
-
-# Override the AuthDeps dependency using the mock fixtures
-@pytest.fixture
-def setup_auth_deps(
-    app: FastAPI, mock_archers: AsyncMock, mock_sessions: AsyncMock
-) -> Iterator[None]:
-    deps = AuthDeps(archers=mock_archers, sessions=mock_sessions)
-    app.dependency_overrides[get_deps] = lambda: deps
-    yield
-    app.dependency_overrides = {}
 
 
 @pytest.mark.asyncio
 async def test_dummy_login_creates_new_archer(
-    client: AsyncClient, setup_auth_deps: None, mock_archers: AsyncMock, mock_sessions: AsyncMock
+    client: AsyncClient,
+    setup_auth_deps: None,  # pylint: disable=unused-argument
+    mock_archers: AsyncMock,
+    mock_sessions: AsyncMock,
 ) -> None:
     """Test dummy login creates a new archer when one doesn't exist."""
 
@@ -82,13 +71,16 @@ async def test_dummy_login_creates_new_archer(
         # Verify cookie is set correctly
         assert "arch_stats_auth" in response.cookies
         cookie = next(c for c in response.cookies.jar if c.name == "arch_stats_auth")
-        assert cookie.secure == False  # Localhost/http
+        assert cookie.secure is False  # Localhost/http
         assert cookie.path == "/"
 
 
 @pytest.mark.asyncio
 async def test_dummy_login_existing_archer(
-    client: AsyncClient, setup_auth_deps: None, mock_archers: AsyncMock, mock_sessions: AsyncMock
+    client: AsyncClient,
+    setup_auth_deps: None,  # pylint: disable=unused-argument
+    mock_archers: AsyncMock,
+    mock_sessions: AsyncMock,
 ) -> None:
     """Test dummy login logs in existing archer if already created."""
 
@@ -133,7 +125,10 @@ async def test_dummy_login_existing_archer(
 
 
 @pytest.mark.asyncio
-async def test_dummy_login_disabled_in_prod(client: AsyncClient, setup_auth_deps: None) -> None:
+async def test_dummy_login_disabled_in_prod(
+    client: AsyncClient,
+    setup_auth_deps: None,  # pylint: disable=unused-argument
+) -> None:
     """Test dummy login fails when dev mode is False."""
     with patch.object(settings, "arch_stats_dev_mode", False):
         response = await client.post("/api/v0/auth/dummy")
