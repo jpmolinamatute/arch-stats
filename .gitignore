@@ -7,6 +7,8 @@ __pycache__/
 
 frontend/node_modules/
 frontend/.vitest-localstorage
+frontend/.vitest-localstorage-shm
+frontend/.vitest-localstorage-wal
 ignore/*
 backend/src/core/logs/*
 !backend/src/core/logs/.gitkeep

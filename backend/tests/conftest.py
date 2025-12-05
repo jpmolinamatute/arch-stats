@@ -1,6 +1,6 @@
 import logging
 import time
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Iterator
 from unittest.mock import AsyncMock
 from uuid import UUID
 
@@ -12,8 +12,9 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app import run
-from core import DBPool, settings
+from core import AuthDeps, DBPool, settings
 from models import ArcherModel, AuthModel
+from routers.v0.auth_router import get_deps
 
 
 # pylint: disable=redefined-outer-name
@@ -92,3 +93,14 @@ def mock_archers() -> AsyncMock:
 @pytest.fixture
 def mock_sessions() -> AsyncMock:
     return AsyncMock(spec=AuthModel)
+
+
+# Override the AuthDeps dependency using the mock fixtures
+@pytest.fixture
+def setup_auth_deps(
+    app: FastAPI, mock_archers: AsyncMock, mock_sessions: AsyncMock
+) -> Iterator[None]:
+    deps = AuthDeps(archers=mock_archers, sessions=mock_sessions)
+    app.dependency_overrides[get_deps] = lambda: deps
+    yield
+    app.dependency_overrides = {}
