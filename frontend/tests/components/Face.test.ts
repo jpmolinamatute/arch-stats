@@ -1,32 +1,15 @@
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
-import { api } from '@/api/client'
+import { ref } from 'vue'
 import Face from '@/components/Face.vue'
 import { useFaces } from '@/composables/useFaces'
-import { useSession } from '@/composables/useSession'
-
-import { useSlot } from '@/composables/useSlot'
 
 type FaceSchema = components['schemas']['Face']
-type SlotRead = components['schemas']['FullSlotInfo']
-type SessionRead = components['schemas']['SessionRead']
 
 // Mock composables and api
 vi.mock('@/composables/useFaces', () => ({
   useFaces: vi.fn(),
-}))
-vi.mock('@/composables/useSlot', () => ({
-  useSlot: vi.fn(),
-}))
-vi.mock('@/composables/useSession', () => ({
-  useSession: vi.fn(),
-}))
-vi.mock('@/api/client', () => ({
-  api: {
-    createShot: vi.fn(),
-  },
 }))
 
 describe('face', () => {
@@ -109,50 +92,12 @@ describe('face', () => {
       updateFace: vi.fn(),
       deleteFace: vi.fn(),
     })
-    vi.mocked(useSlot).mockReturnValue({
-      currentSlot: ref<SlotRead>({
-        face_type: 'wa_40cm_full',
-        session_id: 'sess_1',
-        slot_id: 'slot_1',
-        target_id: 'target_1',
-        archer_id: 'archer_1',
-        is_shooting: true,
-        bowstyle: 'recurve',
-        draw_weight: 40,
-        distance: 18,
-        created_at: '2023-01-01',
-        slot_letter: 'A',
-        lane: 1,
-        slot: '1A',
-      }),
-      joinSession: vi.fn(),
-      getSlot: vi.fn(),
-      getSlotCached: vi.fn(),
-      loading: ref(false),
-      error: ref(null),
-      leaveSession: vi.fn(),
-      clearSlotCache: vi.fn(),
-    })
-    vi.mocked(useSession).mockReturnValue({
-      currentSession: ref<SessionRead>({
-        session_id: 'sess_1',
-        owner_archer_id: 'archer_1',
-        session_location: 'test',
-        is_indoor: true,
-        is_opened: true,
-        shot_per_round: 6,
-        created_at: '2023-01-01',
-      }),
-      hasOpenSession: computed(() => true),
-      loading: ref(false),
-      error: ref(null),
-      checkForOpenSession: vi.fn(),
-      createSession: vi.fn(),
-      closeSession: vi.fn(),
-      clearSessionCache: vi.fn(),
-    })
 
-    const wrapper = mount(Face)
+    const wrapper = mount(Face, {
+      props: {
+        faceId: 'wa_40cm_full',
+      },
+    })
 
     // Wait for onMounted
     await new Promise(resolve => setTimeout(resolve, 0))
@@ -164,7 +109,7 @@ describe('face', () => {
     expect(wrapper.findAll('circle').length).toBe(2)
   })
 
-  it('records shot on click and shows visual feedback', async () => {
+  it('emits shot event on click and shows visual feedback', async () => {
     vi.mocked(useFaces).mockReturnValue({
       fetchFace: mockFetchFace.mockResolvedValue({
         face_type: 'wa_40cm_full',
@@ -183,50 +128,13 @@ describe('face', () => {
       updateFace: vi.fn(),
       deleteFace: vi.fn(),
     })
-    vi.mocked(useSlot).mockReturnValue({
-      currentSlot: ref<SlotRead>({
-        face_type: 'wa_40cm_full',
-        session_id: 'sess_1',
-        slot_id: 'slot_1',
-        target_id: 'target_1',
-        archer_id: 'archer_1',
-        is_shooting: true,
-        bowstyle: 'recurve',
-        draw_weight: 40,
-        distance: 18,
-        created_at: '2023-01-01',
-        slot_letter: 'A',
-        lane: 1,
-        slot: '1A',
-      }),
-      joinSession: vi.fn(),
-      getSlot: vi.fn(),
-      getSlotCached: vi.fn(),
-      loading: ref(false),
-      error: ref(null),
-      leaveSession: vi.fn(),
-      clearSlotCache: vi.fn(),
-    })
-    vi.mocked(useSession).mockReturnValue({
-      currentSession: ref<SessionRead>({
-        session_id: 'sess_1',
-        owner_archer_id: 'archer_1',
-        session_location: 'test',
-        is_indoor: true,
-        is_opened: true,
-        shot_per_round: 3, // Limit to 3 for testing
-        created_at: '2023-01-01',
-      }),
-      hasOpenSession: computed(() => true),
-      loading: ref(false),
-      error: ref(null),
-      checkForOpenSession: vi.fn(),
-      createSession: vi.fn(),
-      closeSession: vi.fn(),
-      clearSessionCache: vi.fn(),
-    })
 
-    const wrapper = mount(Face)
+    const wrapper = mount(Face, {
+      props: {
+        faceId: 'wa_40cm_full',
+        maxShots: 3,
+      },
+    })
 
     // Wait for onMounted
     await new Promise(resolve => setTimeout(resolve, 0))
@@ -235,13 +143,11 @@ describe('face', () => {
     // Click on the ring (g element)
     await wrapper.find('g').trigger('click', { clientX: 10, clientY: 10 })
 
-    expect(api.createShot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        slot_id: 'slot_1',
-        score: 1,
-        is_x: false,
-      }),
-    )
+    expect(wrapper.emitted('shot')).toBeTruthy()
+    expect(wrapper.emitted('shot')![0][0]).toEqual(expect.objectContaining({
+      score: 1,
+      is_x: false,
+    }))
 
     // Check if a new circle was added (1 ring + 1 shot = 2 circles)
     expect(wrapper.findAll('circle').length).toBe(2)
@@ -255,7 +161,7 @@ describe('face', () => {
     expect(wrapper.findAll('circle').length).toBe(4)
   })
 
-  it('handles missing face type in slot', async () => {
+  it('does not render if faceId is missing', async () => {
     vi.mocked(useFaces).mockReturnValue({
       fetchFace: mockFetchFace,
       loading: ref(false),
@@ -267,49 +173,15 @@ describe('face', () => {
       updateFace: vi.fn(),
       deleteFace: vi.fn(),
     })
-    vi.mocked(useSlot).mockReturnValue({
-      currentSlot: ref({
-        face_type: null,
-      } as unknown as SlotRead), // Intentionally invalid for test case
-      joinSession: vi.fn(),
-      getSlot: vi.fn(),
-      getSlotCached: vi.fn(),
-      loading: ref(false),
-      error: ref(null),
-      leaveSession: vi.fn(),
-      clearSlotCache: vi.fn(),
-    })
-    vi.mocked(useSession).mockReturnValue({
-      currentSession: ref(null),
-      hasOpenSession: computed(() => false),
-      loading: ref(false),
-      error: ref(null),
-      checkForOpenSession: vi.fn(),
-      createSession: vi.fn(),
-      closeSession: vi.fn(),
-      clearSessionCache: vi.fn(),
-    })
 
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    const errorHandler = vi.fn()
-    mount(Face, {
-      global: {
-        config: {
-          errorHandler,
-        },
+    const wrapper = mount(Face, {
+      props: {
+        faceId: 'none',
       },
     })
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(errorHandler).toHaveBeenCalled()
-    const error = errorHandler.mock.calls[0][0]
-    expect(error).toBeInstanceOf(Error)
-    expect(error.message).toBe('No valid face_type found in current slot')
-
     expect(mockFetchFace).not.toHaveBeenCalled()
-    consoleWarnSpy.mockRestore()
-    consoleErrorSpy.mockRestore()
+    expect(wrapper.find('svg').exists()).toBe(false)
   })
 })
