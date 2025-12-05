@@ -21,7 +21,10 @@ export function useFaces() {
     error.value = null
     try {
       const data = await api.get<ListFaceMinimal>('/faces')
-      faces.value = Array.isArray(data) ? data : []
+      if (!data) {
+        throw new Error('No response from server')
+      }
+      faces.value = data
       return faces.value
     }
     catch (e) {
@@ -70,6 +73,9 @@ export function useFaces() {
         signal: controller.signal,
       })
 
+      if (!body)
+        throw new Error('No response from server')
+
       cache.set(key, body)
       face.value = body
       return body
@@ -93,6 +99,8 @@ export function useFaces() {
     error.value = null
     try {
       const body = await api.post<Face>('/faces', payload)
+      if (!body)
+        throw new Error('No response from server')
       cache.set(String(body.face_type), body)
       face.value = body
       return body
@@ -110,6 +118,8 @@ export function useFaces() {
         `/faces/${encodeURIComponent(String(faceId))}`,
         payload,
       )
+      if (!body)
+        throw new Error('No response from server')
       cache.set(String(faceId), body)
       face.value = body
       return body

@@ -1,6 +1,6 @@
 import type { components } from '@/types/types.generated'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { api, ApiError } from '../../src/api/client'
+import { api } from '../../src/api/client'
 import { useSession } from '../../src/composables/useSession'
 
 // Mock the api client
@@ -54,7 +54,7 @@ describe('useSession', () => {
 
     const result = await checkForOpenSession('archer_1')
 
-    expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1')
+    expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1', { ignoreStatus: [404] })
     expect(result).toEqual(mockSession)
     expect(currentSession.value).toEqual(mockSession)
   })
@@ -73,8 +73,8 @@ describe('useSession', () => {
       closed_at: null,
     }
 
-    // Mock Step 1: Slot NOT found (404)
-    vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404))
+    // Mock Step 1: Slot NOT found (null due to ignoreStatus)
+    vi.mocked(api.get).mockResolvedValueOnce(null)
     // Mock Step 2: Owned session found
     vi.mocked(api.get).mockResolvedValueOnce({ session_id: 'sess_123' })
     // Mock Step 3: Fetch session
@@ -82,8 +82,8 @@ describe('useSession', () => {
 
     const result = await checkForOpenSession('archer_1')
 
-    expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1')
-    expect(api.get).toHaveBeenCalledWith('/session/archer/archer_1/open-session')
+    expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1', { ignoreStatus: [404] })
+    expect(api.get).toHaveBeenCalledWith('/session/archer/archer_1/open-session', { ignoreStatus: [404] })
     expect(result).toEqual(mockSession)
     expect(currentSession.value).toEqual(mockSession)
   })
@@ -91,15 +91,31 @@ describe('useSession', () => {
   it('checkForOpenSession returns null when neither found', async () => {
     const { checkForOpenSession, currentSession } = useSession()
 
-    // Mock Step 1: Slot NOT found (404)
-    vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404))
-    // Mock Step 2: Owned session NOT found (404)
+    // Mock Step 1: Slot NOT found (null)
+    vi.mocked(api.get).mockResolvedValueOnce(null)
+    // Mock Step 2: Owned session NOT found (null)
+    vi.mocked(api.get).mockResolvedValueOnce(null)
+
+    const result = await checkForOpenSession('archer_1')
+
+    expect(result).toBeNull()
+    expect(currentSession.value).toBeNull()
+  })
+
+  it('checkForOpenSession handles 404 error during session details fetch gracefully', async () => {
+    const { checkForOpenSession, currentSession, error } = useSession()
+    const { ApiError } = await import('../../src/api/client')
+
+    // Mock Step 1: Slot found (successful)
+    vi.mocked(api.get).mockResolvedValueOnce({ session_id: 'sess_123' })
+    // Mock Step 3: Fetch session fails with 404
     vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404))
 
     const result = await checkForOpenSession('archer_1')
 
     expect(result).toBeNull()
     expect(currentSession.value).toBeNull()
+    expect(error.value).toBeNull()
   })
 
   it('createSession sets current session', async () => {
@@ -131,6 +147,9 @@ describe('useSession', () => {
     currentSession.value = {
       session_id: 'sess_1',
     } as unknown as components['schemas']['SessionRead']
+
+    // Mock successful close response
+    vi.mocked(api.patch).mockResolvedValue({ status: 'closed' })
 
     await closeSession('sess_1')
 

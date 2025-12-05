@@ -36,28 +36,32 @@ function extractErrorMessage(err: ErrorJson | null | undefined): string | null {
   return null
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, ignoreStatus: number[] = []): Promise<T | null> {
   if (!response.ok) {
+    if (ignoreStatus.includes(response.status)) {
+      return null
+    }
+
     let errorMessage = `Request failed: ${response.status}`
     let errorData: unknown
 
     try {
-      errorData = await response.json()
-      const extracted = extractErrorMessage(errorData as ErrorJson)
-      if (extracted) {
-        errorMessage = extracted
-      }
-    }
-    catch {
-      // If JSON parsing fails, try text
+      const text = await response.text()
       try {
-        const text = await response.text()
+        errorData = JSON.parse(text)
+        const extracted = extractErrorMessage(errorData as ErrorJson)
+        if (extracted) {
+          errorMessage = extracted
+        }
+      }
+      catch {
+        // If JSON parsing fails, use text
         if (text)
           errorMessage = `${errorMessage} - ${text}`
       }
-      catch {
-        // Ignore text parsing error
-      }
+    }
+    catch {
+      // Ignore text reading error
     }
 
     throw new ApiError(errorMessage, response.status, errorData)
@@ -68,17 +72,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return undefined as T
   }
 
-  return response.json() as Promise<T>
+  const text = await response.text()
+  if (!text) {
+    return undefined as T
+  }
+
+  try {
+    return JSON.parse(text) as T
+  }
+  catch {
+    throw new ApiError('Failed to parse response JSON', response.status)
+  }
 }
 
 const BASE_URL = '/api/v0'
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
+  ignoreStatus?: number[]
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, ...init } = options
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T | null> {
+  const { params, ignoreStatus, ...init } = options
 
   let url = `${BASE_URL}${endpoint}`
   if (params) {
@@ -106,7 +121,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   const response = await fetch(url, config)
-  return handleResponse<T>(response)
+  return handleResponse<T>(response, ignoreStatus)
 }
 
 export const api = {

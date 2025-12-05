@@ -288,14 +288,16 @@ async def test_closed_sessions_after_closing_multiple(
     assert resp.status_code == 201
     s1 = UUID(resp.json()["session_id"])
     resp = await client.patch("/api/v0/session/close", json={"session_id": str(s1)})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # Create and close second session
     resp = await client.post("/api/v0/session", json=_make_create_payload())
     assert resp.status_code == 201
     s2 = UUID(resp.json()["session_id"])
     resp = await client.patch("/api/v0/session/close", json={"session_id": str(s2)})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # Fetch closed sessions list
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
@@ -469,8 +471,8 @@ async def test_close_session_rules(
             "session_id": str(session_id),
         },
     )
-    assert resp.status_code == 204
-    assert resp.content == b""
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
 
 @pytest.mark.asyncio
@@ -588,7 +590,8 @@ async def test_close_already_closed_session_returns_422(
 
     # First close succeeds
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # Second close should fail with 404
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
@@ -663,7 +666,8 @@ async def test_reopen_session_happy_path(
 
     # Close the session
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # After closing, the owner should have no open session
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
@@ -737,7 +741,8 @@ async def test_reopen_session_forbidden_when_not_owner(
 
     # Owner closes the session
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # Stranger attempts to re-open
     client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
@@ -1108,7 +1113,8 @@ async def test_leave_closed_session_returns_422(
     # Close the session as owner
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "closed"}
 
     # Participant attempts to leave after close -> expect 409 not participating
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
@@ -1367,7 +1373,8 @@ async def test_rejoin_closed_session_returns_422(
     # Close session
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     rc = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert rc.status_code == 204
+    assert rc.status_code == 200
+    assert rc.json() == {"status": "closed"}
     rejoin_payload = {"slot_id": rj.json()["slot_id"]}
 
     # Attempt to re-join closed session

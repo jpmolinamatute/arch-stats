@@ -109,6 +109,7 @@ describe('slotJoinForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'mock-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SlotJoinForm, {
@@ -180,6 +181,7 @@ describe('slotJoinForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'mock-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SlotJoinForm, {
@@ -254,6 +256,7 @@ describe('slotJoinForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'mock-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SlotJoinForm, {

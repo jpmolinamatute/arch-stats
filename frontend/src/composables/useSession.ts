@@ -92,45 +92,25 @@ export function useSession() {
       // Step 1: Check if the archer has an active slot (is participating)
       // This is the happy path for active users.
       let sessionId: string | null = null
-      try {
-        // We need to define FullSlotInfo type locally or import it, but for now we just need session_id.
-        // Since we can't easily import types inside the function without changing imports,
-        // and we don't want to add a dependency on useSlot types if possible,
-        // we'll cast the response to any or a minimal interface.
-        // Actually, let's rely on the fact that the response has session_id.
-        const slot = await api.get<{ session_id: string }>(
-          `/session/slot/archer/${archerId}`,
-        )
+      const slot = await api.get<{ session_id: string }>(
+        `/session/slot/archer/${archerId}`,
+        { ignoreStatus: [404] },
+      )
+
+      if (slot) {
         sessionId = slot.session_id
       }
-      catch (e) {
-        // If 404, it means no active slot. Proceed to check for owned session.
-        if (!(e instanceof ApiError && e.status === 404)) {
-          throw e
-        }
-      }
 
-      // Step 2: If no slot found, check if the archer owns an open session (Recovery State)
-      // This happens if they created a session but crashed/closed before joining a slot.
       if (!sessionId) {
-        try {
-          const idData = await api.get<SessionId>(
-            `/session/archer/${archerId}/open-session`,
-          )
+        const idData = await api.get<SessionId>(
+          `/session/archer/${archerId}/open-session`,
+          { ignoreStatus: [404] },
+        )
+        if (idData) {
           sessionId = idData.session_id || null
         }
-        catch (e) {
-          if (e instanceof ApiError && (e.status === 404 || e.status === 422)) {
-            // No owned session either.
-            sessionId = null
-          }
-          else {
-            throw e
-          }
-        }
       }
 
-      // If still no session ID, the user is not participating in any session.
       if (!sessionId) {
         currentSession.value = null
         clearSessionCache(archerId)
@@ -140,11 +120,23 @@ export function useSession() {
       // Step 3: Fetch full session details
       const session = await api.get<SessionRead>(`/session/${sessionId}`)
 
+      // Handle potential null if session fetch fails with ignored status (though we didn't ignore any here)
+      if (!session) {
+        throw new Error('Failed to fetch session details')
+      }
+
       currentSession.value = session
       setSessionCache(archerId, session)
       return session
     }
     catch (e) {
+      // If 404, it means no open session found - this is a valid state
+      if (e instanceof ApiError && e.status === 404) {
+        currentSession.value = null
+        clearSessionCache(archerId)
+        return null
+      }
+
       // Only set error for unexpected failures, not for "not participating"
       error.value = e instanceof Error ? e.message : 'Failed to check for open session'
       console.error('[useSession] Error checking for open session:', e)
@@ -164,6 +156,10 @@ export function useSession() {
     error.value = null
     try {
       const data = await api.post<SessionId>('/session', payload)
+
+      if (!data) {
+        throw new Error('No response from server')
+      }
 
       if (!data.session_id) {
         throw new Error('No session ID returned from server')

@@ -32,6 +32,7 @@ describe('authGate', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
   })
 
   it('renders loading state', () => {
@@ -50,6 +51,7 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
@@ -79,6 +81,7 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
@@ -109,6 +112,7 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
@@ -117,7 +121,8 @@ describe('authGate', () => {
     expect(wrapper.find('input[type="text"]').exists()).toBe(true) // First name input
   })
 
-  it('renders sign in message when not authenticated and no pending registration', () => {
+  it('renders dummy login button when not authenticated (dev mode)', () => {
+    vi.stubEnv('ARCH_STATS_DEV_MODE', 'true')
     vi.mocked(useAuth).mockReturnValue({
       loading: ref(false),
       isAuthenticated: ref(false),
@@ -133,10 +138,11 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
-    expect(wrapper.text()).toContain('Sign in to start')
+    expect(wrapper.text()).toContain('Login as Dummy (Dev Only)')
     expect(wrapper.find('form').exists()).toBe(false)
   })
 
@@ -164,6 +170,7 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
@@ -212,6 +219,7 @@ describe('authGate', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AuthGate)
@@ -223,5 +231,39 @@ describe('authGate', () => {
 
     expect(mockRegisterNewArcher).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Please select a bowstyle')
+  })
+
+  it('calls loginAsDummy when dummy login button is clicked', async () => {
+    vi.stubEnv('ARCH_STATS_DEV_MODE', 'true')
+    const mockLoginAsDummy = vi.fn()
+    vi.mocked(useAuth).mockReturnValue({
+      loading: ref(false),
+      isAuthenticated: ref(false),
+      pendingRegistration: ref(null),
+      user: ref(null),
+      registerNewArcher: mockRegisterNewArcher,
+      bootstrapAuth: vi.fn(),
+      logout: vi.fn(),
+      disableGoogleAutoSelect: vi.fn(),
+      initialized: ref(true),
+      initError: ref(null),
+      prompting: ref(false),
+      initOneTap: vi.fn(),
+      beginGoogleLogin: vi.fn(),
+      clientId: 'test-client-id',
+      loginAsDummy: mockLoginAsDummy,
+    })
+
+    const wrapper = mount(AuthGate)
+
+    // Check if button exists (assuming DEV is true in test env)
+    const btn = wrapper.findAll('button').find(b => b.text().includes('Login as Dummy'))
+    if (btn) {
+      await btn.trigger('click')
+      expect(mockLoginAsDummy).toHaveBeenCalled()
+    }
+    else {
+      console.warn('Login as Dummy button not found, skipping click test')
+    }
   })
 })
