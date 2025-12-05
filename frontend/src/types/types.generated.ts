@@ -70,6 +70,28 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v0/auth/dummy': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Dummy Login
+     * @description Login as a dummy archer (DEV MODE ONLY).
+     *
+     *     Creates the dummy archer if it doesn't exist, then logs them in.
+     */
+    post: operations['dummy_login_api_v0_auth_dummy_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v0/auth/google': {
     parameters: {
       query?: never
@@ -360,7 +382,7 @@ export interface paths {
      * Close Session
      * @description Close a session.
      *
-     *     Responses: 204 No Content, 404 Not Found, 422 Unprocessable Content.
+     *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
      */
     patch: operations['close_session_api_v0_session_close_patch']
     trace?: never
@@ -1501,6 +1523,26 @@ export interface operations {
       }
     }
   }
+  dummy_login_api_v0_auth_dummy_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AuthAuthenticated']
+        }
+      }
+    }
+  }
   google_one_tap_login_api_v0_auth_google_post: {
     parameters: {
       query?: never
@@ -1889,11 +1931,15 @@ export interface operations {
     }
     responses: {
       /** @description Successful Response */
-      204: {
+      200: {
         headers: {
           [name: string]: unknown
         }
-        content?: never
+        content: {
+          'application/json': {
+            [key: string]: string
+          }
+        }
       }
       /** @description Validation Error */
       422: {

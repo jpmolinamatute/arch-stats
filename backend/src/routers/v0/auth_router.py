@@ -1,6 +1,6 @@
 import base64
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from asyncpg import Pool
@@ -19,11 +19,14 @@ from core import (
 )
 from models import ArcherModel, AuthModel, DBNotFound
 from schema import (
+    ArcherCreate,
     ArcherFilter,
     AuthAuthenticated,
     AuthNeedsRegistration,
     AuthRegistrationRequest,
     AuthStatus,
+    BowStyleType,
+    GenderType,
     GoogleOneTapRequest,
     LogoutResponse,
 )
@@ -340,4 +343,74 @@ async def register(
         max_age=settings.arch_stats_jwt_ttl_minutes * 60,
     )
     response.status_code = status.HTTP_200_OK if existing else status.HTTP_201_CREATED
+    return result
+
+
+@router.post(
+    "/dummy",
+    response_model=AuthAuthenticated,
+    status_code=status.HTTP_201_CREATED,
+)
+async def dummy_login(
+    response: Response,
+    request: Request,
+    auth_deps: AuthDeps = Depends(get_deps),
+) -> AuthAuthenticated:
+    """Login as a dummy archer (DEV MODE ONLY).
+
+    Creates the dummy archer if it doesn't exist, then logs them in.
+    """
+    if not settings.arch_stats_dev_mode:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Endpoint only available in dev mode"
+        )
+
+    dummy_sub = "dummy_subject"
+    existing = await auth_deps.archers.get_by_google_subject(dummy_sub)
+    now = datetime.now(UTC)
+    user_agent = request.headers.get("user-agent")
+    ip = request.client.host if request.client else None
+
+    if existing is None:
+        # Create dummy archer
+        archer_id = await auth_deps.archers.insert_one(
+            ArcherCreate(
+                email="dummy@example.com",
+                first_name="Dummy",
+                last_name="Archer",
+                date_of_birth=date(2000, 1, 1),
+                gender=GenderType.UNSPECIFIED,
+                bowstyle=BowStyleType.RECURVE,
+                draw_weight=30.0,
+                google_picture_url="",
+                google_subject=dummy_sub,
+            )
+        )
+        where = ArcherFilter(archer_id=archer_id)
+        existing = await auth_deps.archers.get_one(where)
+
+    # Login
+    result = await login_existing_archer(
+        auth_deps=auth_deps,
+        user_info={
+            "sub": dummy_sub,
+            "email": "dummy@example.com",
+            "picture": "",
+        },
+        archer=existing,
+        now=now,
+        user_agent=user_agent,
+        ip=ip,
+    )
+
+    data = result.model_dump(exclude_unset=True, exclude_none=True)
+    response.set_cookie(
+        key="arch_stats_auth",
+        value=data["access_token"],
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+        path="/",
+        max_age=settings.arch_stats_jwt_ttl_minutes * 60,
+    )
     return result

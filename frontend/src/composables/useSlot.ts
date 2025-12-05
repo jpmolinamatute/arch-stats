@@ -78,6 +78,10 @@ export function useSlot() {
     try {
       const data = await api.post<SlotJoinResponse>('/session/slot', payload)
 
+      if (!data) {
+        throw new Error('No response from server')
+      }
+
       // After joining, try to populate state and cache quickly
       try {
         if (user.value?.archer_id) {
@@ -140,6 +144,10 @@ export function useSlot() {
       }
 
       const full = await api.get<FullSlotInfo>(`/session/slot/archer/${archerId}`)
+
+      if (!full) {
+        throw new Error('Failed to fetch slot details')
+      }
 
       currentSlot.value = full
       setSlotCache(archerId, full)

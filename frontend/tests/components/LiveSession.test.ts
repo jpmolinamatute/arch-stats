@@ -99,6 +99,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,
@@ -150,6 +151,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,
@@ -202,6 +204,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,
@@ -263,6 +266,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,
@@ -340,6 +344,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,
@@ -425,6 +430,7 @@ describe('liveSession', () => {
       initOneTap: vi.fn(),
       clientId: 'mock-client-id',
       beginGoogleLogin: vi.fn(),
+      loginAsDummy: vi.fn(),
     })
     vi.mocked(useSession).mockReturnValue({
       checkForOpenSession: mockCheckForOpenSession,

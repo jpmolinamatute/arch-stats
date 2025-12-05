@@ -2,9 +2,12 @@
 import type { components } from '@/types/types.generated'
 import { computed, ref } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { isEnvTrue } from '@/utils/env'
 
 defineProps<{ buttonTarget?: string }>()
-const { pendingRegistration, registerNewArcher, isAuthenticated, user, loading } = useAuth()
+const { pendingRegistration, registerNewArcher, isAuthenticated, user, loading, loginAsDummy } = useAuth()
+
+const isDev = isEnvTrue(import.meta.env.ARCH_STATS_DEV_MODE)
 
 const firstName = ref<string>('')
 const lastName = ref<string>('')
@@ -174,13 +177,24 @@ async function submitRegistration() {
         v-else
         class="space-y-2 p-6 bg-transparent rounded-lg border border-slate-800 text-slate-200 text-left"
       >
-        <p class="font-semibold text-sm">
-          Sign in to start
-        </p>
-        <p class="text-xs text-gray-600">
-          Google One Tap will appear automatically. After you continue, we'll ask for a
-          few details to finish creating your account.
-        </p>
+        <template v-if="isDev">
+          <button
+            class="w-full px-4 py-2 text-sm rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            @click="loginAsDummy"
+          >
+            Login as Dummy (Dev Only)
+          </button>
+        </template>
+
+        <template v-else>
+          <p class="font-semibold text-sm">
+            Sign in to start
+          </p>
+          <p class="text-xs text-gray-600">
+            Google One Tap will appear automatically. After you continue, we'll ask for a
+            few details to finish creating your account.
+          </p>
+        </template>
       </div>
     </template>
   </div>

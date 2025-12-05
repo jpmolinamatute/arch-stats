@@ -1,6 +1,7 @@
 import type { components, operations } from '@/types/types.generated'
 import { ref } from 'vue'
 import { api, ApiError } from '@/api/client'
+import { isEnvTrue } from '@/utils/env'
 
 interface UserSession {
   archer_id: string
@@ -52,8 +53,10 @@ interface PendingRegistration {
 const pendingRegistration = ref<PendingRegistration | null>(null)
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
+
 const CLIENT_ID = (import.meta.env as unknown as { VITE_GOOGLE_CLIENT_ID?: string })
   .VITE_GOOGLE_CLIENT_ID as string | undefined
+const DEV_MODE = isEnvTrue(import.meta.env.ARCH_STATS_DEV_MODE)
 
 async function loadScript(): Promise<void> {
   // Access Google API dynamically to avoid hard Window typing dependency
@@ -83,6 +86,10 @@ async function bootstrapAuth(): Promise<void> {
 
       const authData = await api.get<MeResponse>('/auth/me')
 
+      if (!authData) {
+        throw new Error('No auth data returned')
+      }
+
       user.value = {
         archer_id: authData.archer.archer_id,
         email: authData.archer.email,
@@ -93,7 +100,9 @@ async function bootstrapAuth(): Promise<void> {
       isAuthenticated.value = true
 
       // Initialize Google One Tap but don't prompt
-      await initOneTap(null)
+      if (!DEV_MODE) {
+        await initOneTap(null)
+      }
       return
     }
     catch (checkError) {
@@ -110,10 +119,12 @@ async function bootstrapAuth(): Promise<void> {
     }
 
     // Initialize Google One Tap
-    await initOneTap(null)
-    // Only prompt if not already authenticated
-    if (!isAuthenticated.value) {
-      promptOnce()
+    if (!DEV_MODE) {
+      await initOneTap(null)
+      // Only prompt if not already authenticated
+      if (!isAuthenticated.value) {
+        promptOnce()
+      }
     }
   }
   finally {
@@ -337,6 +348,35 @@ function disableGoogleAutoSelect(): void {
   }
 }
 
+async function loginAsDummy(): Promise<void> {
+  loading.value = true
+  try {
+    const data = await api.post<AuthLoginResponseBody>('/auth/dummy')
+
+    if (isAuthAuthenticated(data)) {
+      user.value = {
+        archer_id: data.archer.archer_id,
+        email: data.archer.email,
+        first_name: data.archer.first_name,
+        last_name: data.archer.last_name,
+        picture_url: data.archer.google_picture_url ?? null,
+      }
+      isAuthenticated.value = true
+      pendingRegistration.value = null
+    }
+    else {
+      throw new Error('Unexpected auth response shape')
+    }
+  }
+  catch (e) {
+    console.error('Dummy login error', e)
+    throw e
+  }
+  finally {
+    loading.value = false
+  }
+}
+
 export function useAuth() {
   return {
     isAuthenticated,
@@ -353,5 +393,6 @@ export function useAuth() {
     clientId: CLIENT_ID,
     logout,
     disableGoogleAutoSelect,
+    loginAsDummy,
   } as const
 }

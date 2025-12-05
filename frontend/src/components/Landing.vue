@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
+import { isEnvTrue } from '@/utils/env'
 
 const router = useRouter()
+const { loginAsDummy } = useAuth()
+const isDev = isEnvTrue(import.meta.env.ARCH_STATS_DEV_MODE)
 
-function goToApp() {
-  router.push('/app')
+async function handleLogin() {
+  if (isDev) {
+    await loginAsDummy()
+    router.push('/app')
+  }
+  else {
+    router.push('/app')
+  }
 }
 </script>
 
@@ -33,9 +43,9 @@ function goToApp() {
         <div class="space-y-6">
           <button
             class="px-8 py-4 text-lg font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 shadow-lg hover:shadow-xl"
-            @click="goToApp"
+            @click="handleLogin"
           >
-            Login
+            {{ isDev ? 'Login as Dummy (Dev Only)' : 'Login' }}
           </button>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 text-left">

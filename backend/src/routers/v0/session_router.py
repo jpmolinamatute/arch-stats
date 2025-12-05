@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from models import DBException, DBNotFound, SessionModel
 from routers.deps.auth import require_auth
@@ -161,19 +161,19 @@ async def re_open_session(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
 
 
-@router.patch("/close", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/close", response_model=dict[str, str], status_code=status.HTTP_200_OK)
 async def close_session(
     session: SessionId,
     session_model: SessionModel = Depends(get_session_model),
-) -> Response:
+) -> dict[str, str]:
     """
     Close a session.
 
-    Responses: 204 No Content, 404 Not Found, 422 Unprocessable Content.
+    Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
     """
     try:
         await session_model.close_session(session)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return {"status": "closed"}
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except ValueError as e:

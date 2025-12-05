@@ -62,6 +62,7 @@ describe('sessionForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SessionForm)
@@ -102,6 +103,7 @@ describe('sessionForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SessionForm)
@@ -145,6 +147,7 @@ describe('sessionForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SessionForm)
@@ -198,6 +201,7 @@ describe('sessionForm', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(SessionForm)

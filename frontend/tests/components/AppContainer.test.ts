@@ -52,6 +52,7 @@ describe('appContainer', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     mount(AppContainer)
@@ -74,6 +75,7 @@ describe('appContainer', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AppContainer)
@@ -104,6 +106,7 @@ describe('appContainer', () => {
       initOneTap: vi.fn(),
       beginGoogleLogin: vi.fn(),
       clientId: 'test-client-id',
+      loginAsDummy: vi.fn(),
     })
 
     const wrapper = mount(AppContainer)
