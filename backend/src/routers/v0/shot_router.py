@@ -28,7 +28,7 @@ async def create_shot(
 
             shot_id = await shot_model.insert_one(shots)
             result = ShotId(shot_id=shot_id)
-        elif isinstance(shots, list) and len(shots) > 0:
+        elif isinstance(shots, list) and 3 <= len(shots) <= 10:
             slot_ids = {shot.slot_id for shot in shots}
             if len(slot_ids) != 1:
                 raise HTTPException(
