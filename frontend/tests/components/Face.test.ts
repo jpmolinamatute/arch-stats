@@ -135,4 +135,38 @@ describe('face', () => {
 
         expect(wrapper.find('svg').exists()).toBe(false)
     })
+    it('updates SVG width when width prop changes', async () => {
+        const wrapper = mount(Face, {
+            props: {
+                face: mockFace,
+                shots: [],
+                width: 300,
+            },
+        })
+
+        const svg = wrapper.find('svg')
+        expect(svg.attributes('width')).toBe('300')
+
+        await wrapper.setProps({ width: 500 })
+        expect(svg.attributes('width')).toBe('500')
+    })
+
+    it('emits miss (score 0) when clicking background', async () => {
+        const wrapper = mount(Face, {
+            props: {
+                face: mockFace,
+                shots: [],
+            },
+        })
+
+        // Find the background rect
+        const rect = wrapper.find('rect')
+        await rect.trigger('click', { clientX: 5, clientY: 5 })
+
+        expect(wrapper.emitted('shot')).toBeTruthy()
+        expect(wrapper.emitted('shot')![0][0]).toEqual(expect.objectContaining({
+            score: 0,
+            color: 'white',
+        }))
+    })
 })
