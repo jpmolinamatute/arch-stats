@@ -333,6 +333,12 @@ async def test_create_multiple_shots_different_slots_fails(
             "y": 2.0,
             "score": 2,
         },
+        {
+            "slot_id": str(slot1_id),
+            "x": 3.0,
+            "y": 3.0,
+            "score": 3,
+        },
     ]
 
     # Act
@@ -355,6 +361,64 @@ async def test_create_shots_empty_list_fails(
 
     # Act
     resp = await client.post("/api/v0/shot", json=[])
+
+    # Assert
+    assert resp.json()["detail"] == "Invalid input"
+
+
+@pytest.mark.asyncio
+async def test_create_shots_fewer_than_three_fails(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot with a list of fewer than 3 shots should fail."""
+
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
+    )
+
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    # Prepare 2 shots (less than 3)
+    shots_payload = [
+        {"slot_id": str(slot_id), "x": 1.0, "y": 1.0, "score": 10},
+        {"slot_id": str(slot_id), "x": 2.0, "y": 2.0, "score": 9},
+    ]
+
+    # Act
+    resp = await client.post("/api/v0/shot", json=shots_payload)
+
+    # Assert
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid input"
+
+
+@pytest.mark.asyncio
+async def test_create_shots_more_than_ten_fails(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot with a list of more than 10 shots should fail."""
+
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
+    )
+
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    # Prepare 11 shots (more than 10)
+    shots_payload = []
+    for i in range(11):
+        shots_payload.append({"slot_id": str(slot_id), "x": float(i), "y": float(i), "score": 10})
+
+    # Act
+    resp = await client.post("/api/v0/shot", json=shots_payload)
 
     # Assert
     assert resp.status_code == 400
