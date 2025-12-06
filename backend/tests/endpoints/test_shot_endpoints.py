@@ -363,6 +363,7 @@ async def test_create_shots_empty_list_fails(
     resp = await client.post("/api/v0/shot", json=[])
 
     # Assert
+    assert resp.status_code == 400
     assert resp.json()["detail"] == "Invalid input"
 
 
