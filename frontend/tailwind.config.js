@@ -17,36 +17,36 @@
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
-  content: ['./index.html', './src/**/*.{vue,ts,tsx,js,jsx}'],
-  theme: {
-    extend: {
-      screens: {
-        p360: '360px',
-        p375: '375px',
-        p390: '390px',
-        p414: '414px',
-      },
-      colors: {
-        wa: {
-          reflex: '#00209F',
-          pink: '#E5239D',
-          yellow: '#FFC726',
-          green: '#12AD2B',
-          red: '#F42A41',
-          sky: '#00B5E6',
-          black: '#000000',
+    darkMode: 'class',
+    content: ['./index.html', './src/**/*.{vue,ts,tsx,js,jsx}'],
+    theme: {
+        extend: {
+            screens: {
+                p360: '360px',
+                p375: '375px',
+                p390: '390px',
+                p414: '414px',
+            },
+            colors: {
+                wa: {
+                    reflex: '#00209F',
+                    pink: '#E5239D',
+                    yellow: '#FFC726',
+                    green: '#12AD2B',
+                    red: '#F42A41',
+                    sky: '#00B5E6',
+                    black: '#000000',
+                },
+                // Semantic (mirrors WA usage guidance)
+                primary: '#00209F', // reflex blue
+                accent: '#E5239D', // pink
+                success: '#12AD2B', // green
+                warning: '#FFC726', // yellow
+                danger: '#F42A41', // red
+                info: '#00B5E6', // sky
+                neutral: '#000000', // black
+            },
         },
-        // Semantic (mirrors WA usage guidance)
-        primary: '#00209F', // reflex blue
-        accent: '#E5239D', // pink
-        success: '#12AD2B', // green
-        warning: '#FFC726', // yellow
-        danger: '#F42A41', // red
-        info: '#00B5E6', // sky
-        neutral: '#000000', // black
-      },
     },
-  },
-  plugins: [],
+    plugins: [],
 }

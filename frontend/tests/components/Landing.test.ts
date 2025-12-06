@@ -6,45 +6,45 @@ import Landing from '../../src/components/Landing.vue'
 // Mock useAuth
 const loginAsDummyMock = vi.fn()
 vi.mock('@/composables/useAuth', () => ({
-  useAuth: () => ({
-    loginAsDummy: loginAsDummyMock,
-  }),
+    useAuth: () => ({
+        loginAsDummy: loginAsDummyMock,
+    }),
 }))
 
 describe('landing Page', () => {
-  it('renders header and handles Dev login', async () => {
+    it('renders header and handles Dev login', async () => {
     // Mock env var
-    vi.stubEnv('ARCH_STATS_DEV_MODE', 'true')
+        vi.stubEnv('ARCH_STATS_DEV_MODE', 'true')
 
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [
-        {
-          path: '/',
-          name: 'landing',
-          component: Landing,
-        },
-      ],
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [
+                {
+                    path: '/',
+                    name: 'landing',
+                    component: Landing,
+                },
+            ],
+        })
+
+        router.push('/')
+        await router.isReady()
+
+        const wrapper = mount(Landing, {
+            global: {
+                plugins: [router],
+            },
+        })
+
+        expect(wrapper.text()).toContain('Arch Stats')
+
+        // Verify Dev Mode Button
+        const button = wrapper.find('button')
+        expect(button.exists()).toBe(true)
+        expect(button.text()).toBe('Login as Dummy (Dev Only)')
+
+        // Verify Click Action
+        await button.trigger('click')
+        expect(loginAsDummyMock).toHaveBeenCalled()
     })
-
-    router.push('/')
-    await router.isReady()
-
-    const wrapper = mount(Landing, {
-      global: {
-        plugins: [router],
-      },
-    })
-
-    expect(wrapper.text()).toContain('Arch Stats')
-
-    // Verify Dev Mode Button
-    const button = wrapper.find('button')
-    expect(button.exists()).toBe(true)
-    expect(button.text()).toBe('Login as Dummy (Dev Only)')
-
-    // Verify Click Action
-    await button.trigger('click')
-    expect(loginAsDummyMock).toHaveBeenCalled()
-  })
 })

@@ -16,77 +16,77 @@ const showSlotForm = ref(false)
 const createdSessionId = ref<string | null>(null)
 
 onMounted(async () => {
-  // Wait for user to be authenticated
-  if (!isAuthenticated.value || !user.value) {
-    checking.value = false
-    return
-  }
-
-  // Check if user has an open session
-  try {
-    const session = await checkForOpenSession(user.value.archer_id)
-    if (session) {
-      // Auto-redirect to live session if participating
-      await router.push('/app/live-session')
+    // Wait for user to be authenticated
+    if (!isAuthenticated.value || !user.value) {
+        checking.value = false
+        return
     }
-  }
-  catch (e) {
-    console.error('[SessionManager] Error checking for open session:', e)
-  }
-  finally {
-    checking.value = false
-  }
+
+    // Check if user has an open session
+    try {
+        const session = await checkForOpenSession(user.value.archer_id)
+        if (session) {
+            // Auto-redirect to live session if participating
+            await router.push('/app/live-session')
+        }
+    }
+    catch (e) {
+        console.error('[SessionManager] Error checking for open session:', e)
+    }
+    finally {
+        checking.value = false
+    }
 })
 
 function handleSessionCreated(sessionId: string) {
-  // Store the session ID and show slot assignment form
-  createdSessionId.value = sessionId
-  showSessionForm.value = false
-  showSlotForm.value = true
+    // Store the session ID and show slot assignment form
+    createdSessionId.value = sessionId
+    showSessionForm.value = false
+    showSlotForm.value = true
 }
 
 async function handleSlotAssigned() {
-  // Redirect to live session view after slot is assigned
-  await router.push('/app/live-session')
+    // Redirect to live session view after slot is assigned
+    await router.push('/app/live-session')
 }
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center gap-6">
-    <!-- Show slot assignment form after session is created (highest priority) -->
-    <div v-if="showSlotForm && createdSessionId && isAuthenticated">
-      <SlotJoinForm :session-id="createdSessionId" @slot-assigned="handleSlotAssigned" />
-    </div>
+    <div class="flex flex-col items-center justify-center gap-6">
+        <!-- Show slot assignment form after session is created (highest priority) -->
+        <div v-if="showSlotForm && createdSessionId && isAuthenticated">
+            <SlotJoinForm :session-id="createdSessionId" @slot-assigned="handleSlotAssigned" />
+        </div>
 
-    <!-- Show session creation button/form when authenticated and no open session -->
-    <div v-else-if="isAuthenticated && !checking">
-      <div v-if="!showSessionForm" class="text-center">
-        <button
-          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-          @click="showSessionForm = true"
-        >
-          Open Session
-        </button>
-      </div>
-      <SessionForm v-else @session-created="handleSessionCreated" />
-    </div>
+        <!-- Show session creation button/form when authenticated and no open session -->
+        <div v-else-if="isAuthenticated && !checking">
+            <div v-if="!showSessionForm" class="text-center">
+                <button
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    @click="showSessionForm = true"
+                >
+                    Open Session
+                </button>
+            </div>
+            <SessionForm v-else @session-created="handleSessionCreated" />
+        </div>
 
-    <!-- Loading state while checking for open session -->
-    <div v-else-if="checking" class="text-center">
-      <div class="animate-pulse space-y-4">
-        <div class="h-8 w-48 bg-slate-800 rounded mx-auto" />
-        <div class="h-32 w-96 bg-slate-800 rounded mx-auto" />
-      </div>
-      <p class="mt-4 text-sm text-slate-400">
-        Checking for active sessions...
-      </p>
-    </div>
+        <!-- Loading state while checking for open session -->
+        <div v-else-if="checking" class="text-center">
+            <div class="animate-pulse space-y-4">
+                <div class="h-8 w-48 bg-slate-800 rounded mx-auto" />
+                <div class="h-32 w-96 bg-slate-800 rounded mx-auto" />
+            </div>
+            <p class="mt-4 text-sm text-slate-400">
+                Checking for active sessions...
+            </p>
+        </div>
 
-    <!-- Unauthenticated message -->
-    <div v-else class="text-center text-slate-400">
-      <p class="text-sm">
-        Please sign in to manage sessions
-      </p>
+        <!-- Unauthenticated message -->
+        <div v-else class="text-center text-slate-400">
+            <p class="text-sm">
+                Please sign in to manage sessions
+            </p>
+        </div>
     </div>
-  </div>
 </template>
