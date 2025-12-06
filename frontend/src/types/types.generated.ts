@@ -4,1347 +4,1347 @@
  */
 
 export interface paths {
-  '/api/v0/archer/': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/archer/': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * List Archers
+         * @description List archers.
+         *
+         *     Returns all archers matching default filter.
+         *
+         *     Responses: 200 OK.
+         */
+        get: operations['list_archers_api_v0_archer__get']
+        put?: never
+        /**
+         * Create Archer
+         * @description Create a new archer.
+         *
+         *     Returns newly created archer id.
+         *
+         *     Responses: 201 Created.
+         */
+        post: operations['create_archer_api_v0_archer__post']
+        delete?: never
+        options?: never
+        head?: never
+        /**
+         * Update Archer
+         * @description Update archer fields matching filter.
+         *
+         *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
+         */
+        patch: operations['update_archer_api_v0_archer__patch']
+        trace?: never
     }
-    /**
-     * List Archers
-     * @description List archers.
-     *
-     *     Returns all archers matching default filter.
-     *
-     *     Responses: 200 OK.
-     */
-    get: operations['list_archers_api_v0_archer__get']
-    put?: never
-    /**
-     * Create Archer
-     * @description Create a new archer.
-     *
-     *     Returns newly created archer id.
-     *
-     *     Responses: 201 Created.
-     */
-    post: operations['create_archer_api_v0_archer__post']
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Update Archer
-     * @description Update archer fields matching filter.
-     *
-     *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
-     */
-    patch: operations['update_archer_api_v0_archer__patch']
-    trace?: never
-  }
-  '/api/v0/archer/{archer_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/archer/{archer_id}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Archer
+         * @description Get a single archer by id.
+         *
+         *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
+         */
+        get: operations['get_archer_api_v0_archer__archer_id__get']
+        put?: never
+        post?: never
+        /**
+         * Delete Archer
+         * @description Delete an archer by id.
+         *
+         *     Responses: 204 No Content, 404 Not Found, 422 Unprocessable Content.
+         */
+        delete: operations['delete_archer_api_v0_archer__archer_id__delete']
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Archer
-     * @description Get a single archer by id.
-     *
-     *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
-     */
-    get: operations['get_archer_api_v0_archer__archer_id__get']
-    put?: never
-    post?: never
-    /**
-     * Delete Archer
-     * @description Delete an archer by id.
-     *
-     *     Responses: 204 No Content, 404 Not Found, 422 Unprocessable Content.
-     */
-    delete: operations['delete_archer_api_v0_archer__archer_id__delete']
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/dummy': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/dummy': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Dummy Login
+         * @description Login as a dummy archer (DEV MODE ONLY).
+         *
+         *     Creates the dummy archer if it doesn't exist, then logs them in.
+         */
+        post: operations['dummy_login_api_v0_auth_dummy_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Dummy Login
-     * @description Login as a dummy archer (DEV MODE ONLY).
-     *
-     *     Creates the dummy archer if it doesn't exist, then logs them in.
-     */
-    post: operations['dummy_login_api_v0_auth_dummy_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/google': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/google': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Google One Tap Login
+         * @description Verify Google One Tap; start a session if user exists.
+         *
+         *     - Existing archer: create session, set `arch_stats_auth` HttpOnly cookie, return
+         *       AuthAuthenticated (201).
+         *     - Unknown subject: return AuthNeedsRegistration (200) with prefilled Google data.
+         *
+         *     Responses: 201 (authenticated), 200 (needs registration), 401 (invalid token), 400
+         *     (missing claims).
+         */
+        post: operations['google_one_tap_login_api_v0_auth_google_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Google One Tap Login
-     * @description Verify Google One Tap; start a session if user exists.
-     *
-     *     - Existing archer: create session, set `arch_stats_auth` HttpOnly cookie, return
-     *       AuthAuthenticated (201).
-     *     - Unknown subject: return AuthNeedsRegistration (200) with prefilled Google data.
-     *
-     *     Responses: 201 (authenticated), 200 (needs registration), 401 (invalid token), 400
-     *     (missing claims).
-     */
-    post: operations['google_one_tap_login_api_v0_auth_google_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/login': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/login': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Google One Tap Login
+         * @description Verify Google One Tap; start a session if user exists.
+         *
+         *     - Existing archer: create session, set `arch_stats_auth` HttpOnly cookie, return
+         *       AuthAuthenticated (201).
+         *     - Unknown subject: return AuthNeedsRegistration (200) with prefilled Google data.
+         *
+         *     Responses: 201 (authenticated), 200 (needs registration), 401 (invalid token), 400
+         *     (missing claims).
+         */
+        post: operations['google_one_tap_login_api_v0_auth_login_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Google One Tap Login
-     * @description Verify Google One Tap; start a session if user exists.
-     *
-     *     - Existing archer: create session, set `arch_stats_auth` HttpOnly cookie, return
-     *       AuthAuthenticated (201).
-     *     - Unknown subject: return AuthNeedsRegistration (200) with prefilled Google data.
-     *
-     *     Responses: 201 (authenticated), 200 (needs registration), 401 (invalid token), 400
-     *     (missing claims).
-     */
-    post: operations['google_one_tap_login_api_v0_auth_login_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/logout': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/logout': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Logout
+         * @description Log out: clear cookie and revoke session if present.
+         *
+         *     - Deletes the `arch_stats_auth` HttpOnly cookie.
+         *     - If a valid JWT is supplied, revokes the matching server-side session; otherwise ignored.
+         *     - Idempotent: always returns `LogoutResponse(success=True)`.
+         *
+         *     Responses: 200 OK.
+         */
+        post: operations['logout_api_v0_auth_logout_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Logout
-     * @description Log out: clear cookie and revoke session if present.
-     *
-     *     - Deletes the `arch_stats_auth` HttpOnly cookie.
-     *     - If a valid JWT is supplied, revokes the matching server-side session; otherwise ignored.
-     *     - Idempotent: always returns `LogoutResponse(success=True)`.
-     *
-     *     Responses: 200 OK.
-     */
-    post: operations['logout_api_v0_auth_logout_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/me': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/me': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Current User
+         * @description Get the currently authenticated archer from the JWT cookie.
+         *
+         *     Reads the `arch_stats_auth` cookie, decodes the JWT to extract the archer_id,
+         *     fetches the archer details, and returns an AuthAuthenticated response.
+         *
+         *     Responses: 200 OK (authenticated), 401 (no cookie or invalid token).
+         */
+        get: operations['get_current_user_api_v0_auth_me_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Current User
-     * @description Get the currently authenticated archer from the JWT cookie.
-     *
-     *     Reads the `arch_stats_auth` cookie, decodes the JWT to extract the archer_id,
-     *     fetches the archer details, and returns an AuthAuthenticated response.
-     *
-     *     Responses: 200 OK (authenticated), 401 (no cookie or invalid token).
-     */
-    get: operations['get_current_user_api_v0_auth_me_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/auth/register': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/auth/register': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Register
+         * @description Register a new archer (or log in if already exists).
+         *
+         *     - Verifies Google credential. If an archer with the subject exists, authenticate and set
+         *       `arch_stats_auth` cookie (200).
+         *     - Otherwise, validate names, create archer, authenticate, and set cookie (201).
+         *
+         *     Responses: 201 (created + authenticated), 200 (authenticated existing),
+         *     401 (invalid token), 400 (invalid Google info or missing names).
+         */
+        post: operations['register_api_v0_auth_register_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Register
-     * @description Register a new archer (or log in if already exists).
-     *
-     *     - Verifies Google credential. If an archer with the subject exists, authenticate and set
-     *       `arch_stats_auth` cookie (200).
-     *     - Otherwise, validate names, create archer, authenticate, and set cookie (201).
-     *
-     *     Responses: 201 (created + authenticated), 200 (authenticated existing),
-     *     401 (invalid token), 400 (invalid Google info or missing names).
-     */
-    post: operations['register_api_v0_auth_register_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/faces': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/faces': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** List Faces */
+        get: operations['list_faces_api_v0_faces_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /** List Faces */
-    get: operations['list_faces_api_v0_faces_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/faces/{face_type}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/faces/{face_type}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** Get Face */
+        get: operations['get_face_api_v0_faces__face_type__get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /** Get Face */
-    get: operations['get_face_api_v0_faces__face_type__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Create Session
+         * @description Create a session and initial slot assignment.
+         *
+         *     Responses: 201 Created, 422 Unprocessable Content.
+         */
+        post: operations['create_session_api_v0_session_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Create Session
-     * @description Create a session and initial slot assignment.
-     *
-     *     Responses: 201 Created, 422 Unprocessable Content.
-     */
-    post: operations['create_session_api_v0_session_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/{session}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/{session}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Session
+         * @description Get session details.
+         *
+         *     Responses: 200 OK, 404 Not Found.
+         */
+        get: operations['get_session_api_v0_session__session__get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Session
-     * @description Get session details.
-     *
-     *     Responses: 200 OK, 404 Not Found.
-     */
-    get: operations['get_session_api_v0_session__session__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/archer/{archer_id}/close-session': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/archer/{archer_id}/close-session': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Closed Session For Archer
+         * @description Get the closed session ID owned by the archer.
+         *     Responses: 200 OK
+         */
+        get: operations['get_closed_session_for_archer_api_v0_session_archer__archer_id__close_session_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Closed Session For Archer
-     * @description Get the closed session ID owned by the archer.
-     *     Responses: 200 OK
-     */
-    get: operations['get_closed_session_for_archer_api_v0_session_archer__archer_id__close_session_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/archer/{archer_id}/open-session': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/archer/{archer_id}/open-session': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Open Session For Archer
+         * @description Get the open session ID owned by the archer.
+         *     Responses: 200 OK
+         */
+        get: operations['get_open_session_for_archer_api_v0_session_archer__archer_id__open_session_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Open Session For Archer
-     * @description Get the open session ID owned by the archer.
-     *     Responses: 200 OK
-     */
-    get: operations['get_open_session_for_archer_api_v0_session_archer__archer_id__open_session_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/archer/{archer_id}/participating': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/archer/{archer_id}/participating': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Participating Session For Archer
+         * @description Get the open session ID of the open session an archer is currently participating in.
+         *     Responses: 200 OK, 422 Unprocessable Entity.
+         */
+        get: operations['get_participating_session_for_archer_api_v0_session_archer__archer_id__participating_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Participating Session For Archer
-     * @description Get the open session ID of the open session an archer is currently participating in.
-     *     Responses: 200 OK, 422 Unprocessable Entity.
-     */
-    get: operations['get_participating_session_for_archer_api_v0_session_archer__archer_id__participating_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/close': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/close': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        /**
+         * Close Session
+         * @description Close a session.
+         *
+         *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
+         */
+        patch: operations['close_session_api_v0_session_close_patch']
+        trace?: never
     }
-    get?: never
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Close Session
-     * @description Close a session.
-     *
-     *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
-     */
-    patch: operations['close_session_api_v0_session_close_patch']
-    trace?: never
-  }
-  '/api/v0/session/open': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/open': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get All Open Sessions
+         * @description List all open sessions.
+         *
+         *     Responses: 200 OK.
+         */
+        get: operations['get_all_open_sessions_api_v0_session_open_get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get All Open Sessions
-     * @description List all open sessions.
-     *
-     *     Responses: 200 OK.
-     */
-    get: operations['get_all_open_sessions_api_v0_session_open_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/re-open': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/re-open': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        /**
+         * Re Open Session
+         * @description Re-open a closed session.
+         *
+         *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
+         */
+        patch: operations['re_open_session_api_v0_session_re_open_patch']
+        trace?: never
     }
-    get?: never
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Re Open Session
-     * @description Re-open a closed session.
-     *
-     *     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
-     */
-    patch: operations['re_open_session_api_v0_session_re_open_patch']
-    trace?: never
-  }
-  '/api/v0/session/slot': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/slot': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * Join Session
+         * @description Join a session (assign archer to a slot).
+         *
+         *     Responses: 200 OK, 400 Bad Request.
+         */
+        post: operations['join_session_api_v0_session_slot_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /**
-     * Join Session
-     * @description Join a session (assign archer to a slot).
-     *
-     *     Responses: 200 OK, 400 Bad Request.
-     */
-    post: operations['join_session_api_v0_session_slot_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/slot/{slot}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/slot/{slot}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Slot
+         * @description Get active slot assignment details (open session, is_shooting = TRUE).
+         *
+         *     Responses: 200 OK, 404 Not Found.
+         */
+        get: operations['get_slot_api_v0_session_slot__slot__get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Slot
-     * @description Get active slot assignment details (open session, is_shooting = TRUE).
-     *
-     *     Responses: 200 OK, 404 Not Found.
-     */
-    get: operations['get_slot_api_v0_session_slot__slot__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/slot/archer/{archer_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/slot/archer/{archer_id}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * Get Archer Current Slot
+         * @description Get the archer's current active slot assignment (open session and is_shooting = TRUE).
+         *
+         *     Responses: 200 OK, 404 Not Found.
+         */
+        get: operations['get_archer_current_slot_api_v0_session_slot_archer__archer_id__get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /**
-     * Get Archer Current Slot
-     * @description Get the archer's current active slot assignment (open session and is_shooting = TRUE).
-     *
-     *     Responses: 200 OK, 404 Not Found.
-     */
-    get: operations['get_archer_current_slot_api_v0_session_slot_archer__archer_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/session/slot/leave/{slot_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/slot/leave/{slot_id}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        /**
+         * Leave Session
+         * @description Leave a session (stop archer's slot assignment).
+         *
+         *     Responses: 200 OK, 400 Bad Request.
+         */
+        patch: operations['leave_session_api_v0_session_slot_leave__slot_id__patch']
+        trace?: never
     }
-    get?: never
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Leave Session
-     * @description Leave a session (stop archer's slot assignment).
-     *
-     *     Responses: 200 OK, 400 Bad Request.
-     */
-    patch: operations['leave_session_api_v0_session_slot_leave__slot_id__patch']
-    trace?: never
-  }
-  '/api/v0/session/slot/re-join/{slot_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/session/slot/re-join/{slot_id}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        /**
+         * Re Join Session
+         * @description Re-join a session (reassign archer to a slot).
+         *
+         *     Responses: 200 OK, 400 Bad Request, 403 Forbidden, 422 Unprocessable Content.
+         */
+        patch: operations['re_join_session_api_v0_session_slot_re_join__slot_id__patch']
+        trace?: never
     }
-    get?: never
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Re Join Session
-     * @description Re-join a session (reassign archer to a slot).
-     *
-     *     Responses: 200 OK, 400 Bad Request, 403 Forbidden, 422 Unprocessable Content.
-     */
-    patch: operations['re_join_session_api_v0_session_slot_re_join__slot_id__patch']
-    trace?: never
-  }
-  '/api/v0/shot': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/shot': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /** Create Shot */
+        post: operations['create_shot_api_v0_shot_post']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    get?: never
-    put?: never
-    /** Create Shot */
-    post: operations['create_shot_api_v0_shot_post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v0/shot/by-slot/{slot_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
+    '/api/v0/shot/by-slot/{slot_id}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** Get Shots By Slot */
+        get: operations['get_shots_by_slot_api_v0_shot_by_slot__slot_id__get']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
     }
-    /** Get Shots By Slot */
-    get: operations['get_shots_by_slot_api_v0_shot_by_slot__slot_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
 }
 export type webhooks = Record<string, never>
 export interface components {
-  schemas: {
-    /** Archer Create */
-    ArcherCreate: {
-      /** @description bowstyle_type enum value */
-      bowstyle: components['schemas']['BowStyleType']
-      /**
-       * Club Id
-       * @description This is a placeholder for future use
-       */
-      club_id?: string | null
-      /**
-       * Date Of Birth
-       * Format: date
-       * @description Date of birth (YYYY-MM-DD) in UTC
-       */
-      date_of_birth: string
-      /**
-       * Draw Weight
-       * @description Draw weight in pounds (must be positive)
-       */
-      draw_weight: number
-      /**
-       * Email
-       * Format: email
-       * @description Unique email address of the archer
-       */
-      email: string
-      /**
-       * First Name
-       * @description Archer given name
-       */
-      first_name: string
-      /** @description gender_type enum value */
-      gender: components['schemas']['GenderType']
-      /**
-       * Google Picture Url
-       * @description Google profile picture URL (optional)
-       */
-      google_picture_url?: string | null
-      /**
-       * Google Subject
-       * @description Google account subject identifier (sub)
-       */
-      google_subject: string
-      /**
-       * Last Name
-       * @description Archer family name
-       */
-      last_name: string
+    schemas: {
+        /** Archer Create */
+        ArcherCreate: {
+            /** @description bowstyle_type enum value */
+            bowstyle: components['schemas']['BowStyleType']
+            /**
+             * Club Id
+             * @description This is a placeholder for future use
+             */
+            club_id?: string | null
+            /**
+             * Date Of Birth
+             * Format: date
+             * @description Date of birth (YYYY-MM-DD) in UTC
+             */
+            date_of_birth: string
+            /**
+             * Draw Weight
+             * @description Draw weight in pounds (must be positive)
+             */
+            draw_weight: number
+            /**
+             * Email
+             * Format: email
+             * @description Unique email address of the archer
+             */
+            email: string
+            /**
+             * First Name
+             * @description Archer given name
+             */
+            first_name: string
+            /** @description gender_type enum value */
+            gender: components['schemas']['GenderType']
+            /**
+             * Google Picture Url
+             * @description Google profile picture URL (optional)
+             */
+            google_picture_url?: string | null
+            /**
+             * Google Subject
+             * @description Google account subject identifier (sub)
+             */
+            google_subject: string
+            /**
+             * Last Name
+             * @description Archer family name
+             */
+            last_name: string
+        }
+        /** Archer Filter */
+        ArcherFilter: {
+            /**
+             * Archer Id
+             * @description A Universally Unique Identifier generated by the system
+             */
+            archer_id?: string | null
+            /** @description Filter by bowstyle */
+            bowstyle?: components['schemas']['BowStyleType'] | null
+            /**
+             * Club Id
+             * @description This is a placeholder for future use
+             */
+            club_id?: string | null
+            /**
+             * Created At
+             * @description Registration timestamp (UTC)
+             */
+            created_at?: string | null
+            /**
+             * Draw Weight
+             * @description Filter by draw weight in pounds
+             */
+            draw_weight?: number | null
+            /**
+             * First Name
+             * @description Updated given name
+             */
+            first_name?: string | null
+            /** @description Filter by gender */
+            gender?: components['schemas']['GenderType'] | null
+            /**
+             * Google Subject
+             * @description Filter by Google subject ID
+             */
+            google_subject?: string | null
+            /**
+             * Last Login At
+             * @description Last login timestamp (UTC)
+             */
+            last_login_at?: string | null
+            /**
+             * Last Name
+             * @description Updated family name
+             */
+            last_name?: string | null
+        }
+        /** Archer ID */
+        ArcherId: {
+            /**
+             * Archer Id
+             * Format: uuid
+             * @description A Universally Unique Identifier generated by the system
+             */
+            archer_id: string
+        }
+        /** Archer Read */
+        ArcherRead: {
+            /**
+             * Archer Id
+             * Format: uuid
+             * @description A Universally Unique Identifier generated by the system
+             */
+            archer_id: string
+            /** @description bowstyle_type enum value */
+            bowstyle: components['schemas']['BowStyleType']
+            /**
+             * Club Id
+             * @description This is a placeholder for future use
+             */
+            club_id?: string | null
+            /**
+             * Created At
+             * Format: date-time
+             * @description Registration timestamp (UTC)
+             */
+            created_at: string
+            /**
+             * Date Of Birth
+             * Format: date
+             * @description Date of birth (YYYY-MM-DD) in UTC
+             */
+            date_of_birth: string
+            /**
+             * Draw Weight
+             * @description Draw weight in pounds (must be positive)
+             */
+            draw_weight: number
+            /**
+             * Email
+             * Format: email
+             * @description Unique email address of the archer
+             */
+            email: string
+            /**
+             * First Name
+             * @description Archer given name
+             */
+            first_name: string
+            /** @description gender_type enum value */
+            gender: components['schemas']['GenderType']
+            /**
+             * Google Picture Url
+             * @description Google profile picture URL (optional)
+             */
+            google_picture_url?: string | null
+            /**
+             * Google Subject
+             * @description Google account subject identifier (sub)
+             */
+            google_subject: string
+            /**
+             * Last Login At
+             * Format: date-time
+             * @description Last login timestamp (UTC)
+             */
+            last_login_at: string
+            /**
+             * Last Name
+             * @description Archer family name
+             */
+            last_name: string
+        }
+        /** Archer Set */
+        ArcherSet: {
+            /** @description bowstyle_type enum value */
+            bowstyle?: components['schemas']['BowStyleType'] | null
+            /**
+             * Club Id
+             * @description This is a placeholder for future use
+             */
+            club_id?: string | null
+            /**
+             * Draw Weight
+             * @description Updated draw weight in pounds
+             */
+            draw_weight?: number | null
+            /**
+             * First Name
+             * @description Updated given name
+             */
+            first_name?: string | null
+            /** @description gender_type enum value */
+            gender?: components['schemas']['GenderType'] | null
+            /**
+             * Google Picture Url
+             * @description Updated Google profile picture URL
+             */
+            google_picture_url?: string | null
+            /**
+             * Last Login At
+             * @description Last login timestamp (UTC)
+             */
+            last_login_at?: string | null
+            /**
+             * Last Name
+             * @description Updated family name
+             */
+            last_name?: string | null
+        }
+        /** Archer Update */
+        ArcherUpdate: {
+            /** @description Fields to update on the selected archers */
+            data: components['schemas']['ArcherSet']
+            /** @description Filter criteria to select archers to update */
+            where: components['schemas']['ArcherFilter']
+        }
+        /** Auth Authenticated Response */
+        AuthAuthenticated: {
+            /**
+             * Access Token
+             * @description Bearer access token for API requests
+             */
+            access_token: string
+            /** @description Authenticated archer profile */
+            archer: components['schemas']['ArcherRead']
+            /**
+             * Expires At
+             * Format: date-time
+             * @description Access token expiry timestamp (UTC)
+             */
+            expires_at: string
+            /** @default authenticated */
+            status: components['schemas']['AuthStatus']
+        }
+        /** Auth Needs Registration Response */
+        AuthNeedsRegistration: {
+            /**
+             * Family Name
+             * @description Family name from Google (optional)
+             */
+            family_name?: string | null
+            /**
+             * Family Name Provided
+             * @description Whether Google provided a non-empty family_name
+             */
+            family_name_provided: boolean
+            /**
+             * Given Name
+             * @description Given name from Google (optional)
+             */
+            given_name?: string | null
+            /**
+             * Given Name Provided
+             * @description Whether Google provided a non-empty given_name
+             */
+            given_name_provided: boolean
+            /**
+             * Google Email
+             * Format: email
+             * @description Google account email
+             */
+            google_email: string
+            /**
+             * Google Subject
+             * @description Google account subject identifier (sub)
+             */
+            google_subject: string
+            /**
+             * Picture Url
+             * @description Google profile picture URL
+             */
+            picture_url?: string | null
+            /** @default needs_registration */
+            status: components['schemas']['AuthStatus']
+        }
+        /** Auth Registration Request */
+        AuthRegistrationRequest: {
+            /** @description bowstyle_type enum value */
+            bowstyle: components['schemas']['BowStyleType']
+            /**
+             * Club Id
+             * @description Club id
+             */
+            club_id?: string | null
+            /**
+             * Credential
+             * @description Google ID token from One Tap callback
+             */
+            credential: string
+            /**
+             * Date Of Birth
+             * Format: date
+             * @description Date of birth (YYYY-MM-DD) in UTC
+             */
+            date_of_birth: string
+            /**
+             * Draw Weight
+             * @description Draw weight in pounds (must be positive)
+             */
+            draw_weight: number
+            /**
+             * First Name
+             * @description Updated given name
+             */
+            first_name?: string | null
+            /** @description gender_type enum value */
+            gender: components['schemas']['GenderType']
+            /**
+             * Last Name
+             * @description Updated family name
+             */
+            last_name?: string | null
+        }
+        /**
+         * AuthStatus
+         * @enum {string}
+         */
+        AuthStatus: 'authenticated' | 'needs_registration'
+        /**
+         * BowStyleType
+         * @enum {string}
+         */
+        BowStyleType: 'recurve' | 'compound' | 'barebow' | 'longbow'
+        /** Face Schema */
+        Face: {
+            /**
+             * Face Name
+             * @description Name of the face
+             */
+            face_name: string
+            /** @description Unique identifier for the face */
+            face_type: components['schemas']['FaceType']
+            /**
+             * Render Cross
+             * @description Whether to render the cross in the center
+             * @default false
+             */
+            render_cross: boolean
+            /**
+             * Rings
+             * @description List of rings on the face
+             */
+            rings: components['schemas']['Ring'][]
+            /**
+             * Spots
+             * @description List of spots on the face
+             */
+            spots: components['schemas']['Spot'][]
+            /**
+             * Viewbox
+             * @description SVG viewBox size
+             */
+            viewBox: number
+        }
+        /** Face Minimal Schema */
+        FaceMinimal: {
+            /**
+             * Face Name
+             * @description Name of the face
+             */
+            face_name: string
+            /** @description Unique identifier for the face */
+            face_type: components['schemas']['FaceType']
+        }
+        /**
+         * FaceType
+         * @enum {string}
+         */
+        FaceType: 'wa_40cm_full' | 'wa_60cm_full' | 'wa_80cm_full' | 'wa_122cm_full' | 'wa_80cm_6rings' | 'wa_122cm_6rings' | 'wa_40cm_triple_vertical' | 'wa_60cm_triple_triangular' | 'none'
+        /** Full Slot Assignment Info */
+        FullSlotInfo: {
+            /**
+             * Archer Id
+             * Format: uuid
+             * @description ID of the archer assigned to this slot
+             */
+            archer_id: string
+            /** @description Archer bowstyle copied at join time */
+            bowstyle: components['schemas']['BowStyleType']
+            /**
+             * Club Id
+             * @description Archer current club at join time
+             */
+            club_id?: string | null
+            /**
+             * Created At
+             * Format: date-time
+             * @description Assignment timestamp (UTC)
+             */
+            created_at: string
+            /**
+             * Distance
+             * @description Target distance (meters 1-100)
+             */
+            distance: number
+            /**
+             * Draw Weight
+             * @description Archer draw weight copied at join time
+             */
+            draw_weight: number
+            /** @description Type of target face (e.g., '40cm', '80cm') */
+            face_type: components['schemas']['FaceType']
+            /**
+             * Is Shooting
+             * @description Whether the archer is currently shooting in this slot
+             */
+            is_shooting: boolean
+            /**
+             * Lane
+             * @description Lane number of the target
+             */
+            lane: number
+            /**
+             * Session Id
+             * Format: uuid
+             * @description ID of the session this assignment belongs to
+             */
+            session_id: string
+            /**
+             * Slot
+             * @description Slot code combining lane and letter (e.g., '1A')
+             */
+            slot: string
+            /**
+             * Slot Id
+             * Format: uuid
+             * @description Unique identifier for the slot assignment
+             */
+            slot_id: string
+            /** @description Slot letter assigned to the archer (A-D) */
+            slot_letter: components['schemas']['SlotLetterType']
+            /**
+             * Target Id
+             * Format: uuid
+             * @description ID of the target this slot is assigned to
+             */
+            target_id: string
+        }
+        /**
+         * GenderType
+         * @enum {string}
+         */
+        GenderType: 'male' | 'female' | 'non_binary' | 'other' | 'unspecified'
+        /** Google One Tap Request */
+        GoogleOneTapRequest: {
+            /**
+             * Credential
+             * @description Google ID token from One Tap callback
+             */
+            credential: string
+        }
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components['schemas']['ValidationError'][]
+        }
+        /** Logout Response */
+        LogoutResponse: {
+            /**
+             * Success
+             * @description Indicates if logout succeeded
+             */
+            success: boolean
+        }
+        /** Ring Schema */
+        Ring: {
+            /**
+             * Data Score
+             * @description e.g., 10, 9, 8, ...
+             */
+            data_score: number
+            /**
+             * Fill
+             * @description Color of the scoring zone
+             */
+            fill: string
+            /**
+             * R
+             * @description Radius of the scoring zone
+             */
+            r: number
+            /**
+             * Stroke
+             * @description Color of the outer line
+             */
+            stroke: string
+            /**
+             * Stroke Width
+             * @description Thickness of the outer line
+             */
+            stroke_width: number
+        }
+        /** Session Create */
+        SessionCreate: {
+            /**
+             * Is Indoor
+             * @description Wether the session is indoors or not
+             * @default false
+             */
+            is_indoor: boolean
+            /**
+             * Is Opened
+             * @description Wether the session is open or not
+             */
+            is_opened: boolean
+            /**
+             * Owner Archer Id
+             * Format: uuid
+             * @description Owner archer UUID
+             */
+            owner_archer_id: string
+            /**
+             * Session Location
+             * @description Session location label (e.g., range name)
+             */
+            session_location: string
+            /**
+             * Shot Per Round
+             * @description Number of shots per round for the current session format
+             * @default 6
+             */
+            shot_per_round: number
+        }
+        /** Session ID */
+        SessionId: {
+            /**
+             * Session Id
+             * @description Session identifier (UUID)
+             */
+            session_id?: string | null
+        }
+        /** Session Read */
+        SessionRead: {
+            /**
+             * Closed At
+             * @description Closing timestamp (UTC), if any
+             */
+            closed_at?: string | null
+            /**
+             * Created At
+             * Format: date-time
+             * @description Open timestamp (UTC)
+             */
+            created_at: string
+            /**
+             * Is Indoor
+             * @description Wether the session is indoors or not
+             * @default false
+             */
+            is_indoor: boolean
+            /**
+             * Is Opened
+             * @description Wether the session is open or not
+             */
+            is_opened: boolean
+            /**
+             * Owner Archer Id
+             * Format: uuid
+             * @description Owner archer UUID
+             */
+            owner_archer_id: string
+            /**
+             * Session Id
+             * Format: uuid
+             * @description Session identifier (UUID)
+             */
+            session_id: string
+            /**
+             * Session Location
+             * @description Session location label (e.g., range name)
+             */
+            session_location: string
+            /**
+             * Shot Per Round
+             * @description Number of shots per round for the current session format
+             * @default 6
+             */
+            shot_per_round: number
+        }
+        /** Shot Create */
+        ShotCreate: {
+            /**
+             * Arrow Id
+             * @description Optional arrow identifier (e.g., arrow number or code)
+             */
+            arrow_id?: string | null
+            /**
+             * Is X
+             * @description Indicates if the shot is an 'X' shot
+             * @default false
+             */
+            is_x: boolean
+            /**
+             * Score
+             * @description Shot score (0..10)
+             */
+            score?: number | null
+            /**
+             * Slot Id
+             * Format: uuid
+             * @description Slot identifier (UUID) this shot belongs to
+             */
+            slot_id: string
+            /**
+             * X
+             * @description X coordinate in millimeters
+             */
+            x?: number | null
+            /**
+             * Y
+             * @description Y coordinate in millimeters
+             */
+            y?: number | null
+        }
+        /** Shot ID */
+        ShotId: {
+            /**
+             * Shot Id
+             * Format: uuid
+             * @description Shot identifier (UUID)
+             */
+            shot_id: string
+        }
+        /** Shot Read */
+        ShotRead: {
+            /**
+             * Arrow Id
+             * @description Optional arrow identifier (e.g., arrow number or code)
+             */
+            arrow_id?: string | null
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation timestamp (UTC)
+             */
+            created_at: string
+            /**
+             * Is X
+             * @description Indicates if the shot is an 'X' shot
+             * @default false
+             */
+            is_x: boolean
+            /**
+             * Score
+             * @description Shot score (0..10)
+             */
+            score?: number | null
+            /**
+             * Shot Id
+             * Format: uuid
+             * @description Shot identifier (UUID)
+             */
+            shot_id: string
+            /**
+             * Slot Id
+             * Format: uuid
+             * @description Slot identifier (UUID) this shot belongs to
+             */
+            slot_id: string
+            /**
+             * X
+             * @description X coordinate in millimeters
+             */
+            x?: number | null
+            /**
+             * Y
+             * @description Y coordinate in millimeters
+             */
+            y?: number | null
+        }
+        /** Slot Assignment Request */
+        SlotJoinRequest: {
+            /**
+             * Archer Id
+             * Format: uuid
+             * @description ID of the archer to assign to the slot
+             */
+            archer_id: string
+            /** @description Archer bowstyle copied at join time */
+            bowstyle: components['schemas']['BowStyleType']
+            /**
+             * Club Id
+             * @description Archer current club at join time
+             */
+            club_id?: string | null
+            /**
+             * Distance
+             * @description Requested distance to shoot (meters 1-100)
+             */
+            distance: number
+            /**
+             * Draw Weight
+             * @description Archer draw weight copied at join time
+             */
+            draw_weight: number
+            /** @description Type of target face (e.g., '40cm', '80cm') */
+            face_type: components['schemas']['FaceType']
+            /**
+             * Is Shooting
+             * @description Set to True if archer is currently shooting, False otherwise
+             * @default true
+             */
+            is_shooting: boolean
+            /**
+             * Session Id
+             * Format: uuid
+             * @description ID of the session for the assignment
+             */
+            session_id: string
+        }
+        /** Slot Assignment Response */
+        SlotJoinResponse: {
+            /**
+             * Slot
+             * @description Slot assigned to the archer (1A, 3D, 4B)
+             */
+            slot: string
+            /**
+             * Slot Id
+             * Format: uuid
+             * @description ID of the slot assignment
+             */
+            slot_id: string
+        }
+        /**
+         * SlotLetterType
+         * @enum {string}
+         */
+        SlotLetterType: 'A' | 'B' | 'C' | 'D'
+        /**
+         * Spot Schema
+         * @description We use offset from center to allocate multiple spots on the same face in relation to
+         *     the canvas center. At the same time, x_offset and y_offset are the center of the spot.
+         */
+        Spot: {
+            /**
+             * Diameter
+             * @description in mm
+             */
+            diameter: number
+            /**
+             * X Offset
+             * @description in mm, offset from center
+             */
+            x_offset: number
+            /**
+             * Y Offset
+             * @description in mm, offset from center
+             */
+            y_offset: number
+        }
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[]
+            /** Message */
+            msg: string
+            /** Error Type */
+            type: string
+        }
     }
-    /** Archer Filter */
-    ArcherFilter: {
-      /**
-       * Archer Id
-       * @description A Universally Unique Identifier generated by the system
-       */
-      archer_id?: string | null
-      /** @description Filter by bowstyle */
-      bowstyle?: components['schemas']['BowStyleType'] | null
-      /**
-       * Club Id
-       * @description This is a placeholder for future use
-       */
-      club_id?: string | null
-      /**
-       * Created At
-       * @description Registration timestamp (UTC)
-       */
-      created_at?: string | null
-      /**
-       * Draw Weight
-       * @description Filter by draw weight in pounds
-       */
-      draw_weight?: number | null
-      /**
-       * First Name
-       * @description Updated given name
-       */
-      first_name?: string | null
-      /** @description Filter by gender */
-      gender?: components['schemas']['GenderType'] | null
-      /**
-       * Google Subject
-       * @description Filter by Google subject ID
-       */
-      google_subject?: string | null
-      /**
-       * Last Login At
-       * @description Last login timestamp (UTC)
-       */
-      last_login_at?: string | null
-      /**
-       * Last Name
-       * @description Updated family name
-       */
-      last_name?: string | null
-    }
-    /** Archer ID */
-    ArcherId: {
-      /**
-       * Archer Id
-       * Format: uuid
-       * @description A Universally Unique Identifier generated by the system
-       */
-      archer_id: string
-    }
-    /** Archer Read */
-    ArcherRead: {
-      /**
-       * Archer Id
-       * Format: uuid
-       * @description A Universally Unique Identifier generated by the system
-       */
-      archer_id: string
-      /** @description bowstyle_type enum value */
-      bowstyle: components['schemas']['BowStyleType']
-      /**
-       * Club Id
-       * @description This is a placeholder for future use
-       */
-      club_id?: string | null
-      /**
-       * Created At
-       * Format: date-time
-       * @description Registration timestamp (UTC)
-       */
-      created_at: string
-      /**
-       * Date Of Birth
-       * Format: date
-       * @description Date of birth (YYYY-MM-DD) in UTC
-       */
-      date_of_birth: string
-      /**
-       * Draw Weight
-       * @description Draw weight in pounds (must be positive)
-       */
-      draw_weight: number
-      /**
-       * Email
-       * Format: email
-       * @description Unique email address of the archer
-       */
-      email: string
-      /**
-       * First Name
-       * @description Archer given name
-       */
-      first_name: string
-      /** @description gender_type enum value */
-      gender: components['schemas']['GenderType']
-      /**
-       * Google Picture Url
-       * @description Google profile picture URL (optional)
-       */
-      google_picture_url?: string | null
-      /**
-       * Google Subject
-       * @description Google account subject identifier (sub)
-       */
-      google_subject: string
-      /**
-       * Last Login At
-       * Format: date-time
-       * @description Last login timestamp (UTC)
-       */
-      last_login_at: string
-      /**
-       * Last Name
-       * @description Archer family name
-       */
-      last_name: string
-    }
-    /** Archer Set */
-    ArcherSet: {
-      /** @description bowstyle_type enum value */
-      bowstyle?: components['schemas']['BowStyleType'] | null
-      /**
-       * Club Id
-       * @description This is a placeholder for future use
-       */
-      club_id?: string | null
-      /**
-       * Draw Weight
-       * @description Updated draw weight in pounds
-       */
-      draw_weight?: number | null
-      /**
-       * First Name
-       * @description Updated given name
-       */
-      first_name?: string | null
-      /** @description gender_type enum value */
-      gender?: components['schemas']['GenderType'] | null
-      /**
-       * Google Picture Url
-       * @description Updated Google profile picture URL
-       */
-      google_picture_url?: string | null
-      /**
-       * Last Login At
-       * @description Last login timestamp (UTC)
-       */
-      last_login_at?: string | null
-      /**
-       * Last Name
-       * @description Updated family name
-       */
-      last_name?: string | null
-    }
-    /** Archer Update */
-    ArcherUpdate: {
-      /** @description Fields to update on the selected archers */
-      data: components['schemas']['ArcherSet']
-      /** @description Filter criteria to select archers to update */
-      where: components['schemas']['ArcherFilter']
-    }
-    /** Auth Authenticated Response */
-    AuthAuthenticated: {
-      /**
-       * Access Token
-       * @description Bearer access token for API requests
-       */
-      access_token: string
-      /** @description Authenticated archer profile */
-      archer: components['schemas']['ArcherRead']
-      /**
-       * Expires At
-       * Format: date-time
-       * @description Access token expiry timestamp (UTC)
-       */
-      expires_at: string
-      /** @default authenticated */
-      status: components['schemas']['AuthStatus']
-    }
-    /** Auth Needs Registration Response */
-    AuthNeedsRegistration: {
-      /**
-       * Family Name
-       * @description Family name from Google (optional)
-       */
-      family_name?: string | null
-      /**
-       * Family Name Provided
-       * @description Whether Google provided a non-empty family_name
-       */
-      family_name_provided: boolean
-      /**
-       * Given Name
-       * @description Given name from Google (optional)
-       */
-      given_name?: string | null
-      /**
-       * Given Name Provided
-       * @description Whether Google provided a non-empty given_name
-       */
-      given_name_provided: boolean
-      /**
-       * Google Email
-       * Format: email
-       * @description Google account email
-       */
-      google_email: string
-      /**
-       * Google Subject
-       * @description Google account subject identifier (sub)
-       */
-      google_subject: string
-      /**
-       * Picture Url
-       * @description Google profile picture URL
-       */
-      picture_url?: string | null
-      /** @default needs_registration */
-      status: components['schemas']['AuthStatus']
-    }
-    /** Auth Registration Request */
-    AuthRegistrationRequest: {
-      /** @description bowstyle_type enum value */
-      bowstyle: components['schemas']['BowStyleType']
-      /**
-       * Club Id
-       * @description Club id
-       */
-      club_id?: string | null
-      /**
-       * Credential
-       * @description Google ID token from One Tap callback
-       */
-      credential: string
-      /**
-       * Date Of Birth
-       * Format: date
-       * @description Date of birth (YYYY-MM-DD) in UTC
-       */
-      date_of_birth: string
-      /**
-       * Draw Weight
-       * @description Draw weight in pounds (must be positive)
-       */
-      draw_weight: number
-      /**
-       * First Name
-       * @description Updated given name
-       */
-      first_name?: string | null
-      /** @description gender_type enum value */
-      gender: components['schemas']['GenderType']
-      /**
-       * Last Name
-       * @description Updated family name
-       */
-      last_name?: string | null
-    }
-    /**
-     * AuthStatus
-     * @enum {string}
-     */
-    AuthStatus: 'authenticated' | 'needs_registration'
-    /**
-     * BowStyleType
-     * @enum {string}
-     */
-    BowStyleType: 'recurve' | 'compound' | 'barebow' | 'longbow'
-    /** Face Schema */
-    Face: {
-      /**
-       * Face Name
-       * @description Name of the face
-       */
-      face_name: string
-      /** @description Unique identifier for the face */
-      face_type: components['schemas']['FaceType']
-      /**
-       * Render Cross
-       * @description Whether to render the cross in the center
-       * @default false
-       */
-      render_cross: boolean
-      /**
-       * Rings
-       * @description List of rings on the face
-       */
-      rings: components['schemas']['Ring'][]
-      /**
-       * Spots
-       * @description List of spots on the face
-       */
-      spots: components['schemas']['Spot'][]
-      /**
-       * Viewbox
-       * @description SVG viewBox size
-       */
-      viewBox: number
-    }
-    /** Face Minimal Schema */
-    FaceMinimal: {
-      /**
-       * Face Name
-       * @description Name of the face
-       */
-      face_name: string
-      /** @description Unique identifier for the face */
-      face_type: components['schemas']['FaceType']
-    }
-    /**
-     * FaceType
-     * @enum {string}
-     */
-    FaceType: 'wa_40cm_full' | 'wa_60cm_full' | 'wa_80cm_full' | 'wa_122cm_full' | 'wa_80cm_6rings' | 'wa_122cm_6rings' | 'wa_40cm_triple_vertical' | 'wa_60cm_triple_triangular' | 'none'
-    /** Full Slot Assignment Info */
-    FullSlotInfo: {
-      /**
-       * Archer Id
-       * Format: uuid
-       * @description ID of the archer assigned to this slot
-       */
-      archer_id: string
-      /** @description Archer bowstyle copied at join time */
-      bowstyle: components['schemas']['BowStyleType']
-      /**
-       * Club Id
-       * @description Archer current club at join time
-       */
-      club_id?: string | null
-      /**
-       * Created At
-       * Format: date-time
-       * @description Assignment timestamp (UTC)
-       */
-      created_at: string
-      /**
-       * Distance
-       * @description Target distance (meters 1-100)
-       */
-      distance: number
-      /**
-       * Draw Weight
-       * @description Archer draw weight copied at join time
-       */
-      draw_weight: number
-      /** @description Type of target face (e.g., '40cm', '80cm') */
-      face_type: components['schemas']['FaceType']
-      /**
-       * Is Shooting
-       * @description Whether the archer is currently shooting in this slot
-       */
-      is_shooting: boolean
-      /**
-       * Lane
-       * @description Lane number of the target
-       */
-      lane: number
-      /**
-       * Session Id
-       * Format: uuid
-       * @description ID of the session this assignment belongs to
-       */
-      session_id: string
-      /**
-       * Slot
-       * @description Slot code combining lane and letter (e.g., '1A')
-       */
-      slot: string
-      /**
-       * Slot Id
-       * Format: uuid
-       * @description Unique identifier for the slot assignment
-       */
-      slot_id: string
-      /** @description Slot letter assigned to the archer (A-D) */
-      slot_letter: components['schemas']['SlotLetterType']
-      /**
-       * Target Id
-       * Format: uuid
-       * @description ID of the target this slot is assigned to
-       */
-      target_id: string
-    }
-    /**
-     * GenderType
-     * @enum {string}
-     */
-    GenderType: 'male' | 'female' | 'non_binary' | 'other' | 'unspecified'
-    /** Google One Tap Request */
-    GoogleOneTapRequest: {
-      /**
-       * Credential
-       * @description Google ID token from One Tap callback
-       */
-      credential: string
-    }
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][]
-    }
-    /** Logout Response */
-    LogoutResponse: {
-      /**
-       * Success
-       * @description Indicates if logout succeeded
-       */
-      success: boolean
-    }
-    /** Ring Schema */
-    Ring: {
-      /**
-       * Data Score
-       * @description e.g., 10, 9, 8, ...
-       */
-      data_score: number
-      /**
-       * Fill
-       * @description Color of the scoring zone
-       */
-      fill: string
-      /**
-       * R
-       * @description Radius of the scoring zone
-       */
-      r: number
-      /**
-       * Stroke
-       * @description Color of the outer line
-       */
-      stroke: string
-      /**
-       * Stroke Width
-       * @description Thickness of the outer line
-       */
-      stroke_width: number
-    }
-    /** Session Create */
-    SessionCreate: {
-      /**
-       * Is Indoor
-       * @description Wether the session is indoors or not
-       * @default false
-       */
-      is_indoor: boolean
-      /**
-       * Is Opened
-       * @description Wether the session is open or not
-       */
-      is_opened: boolean
-      /**
-       * Owner Archer Id
-       * Format: uuid
-       * @description Owner archer UUID
-       */
-      owner_archer_id: string
-      /**
-       * Session Location
-       * @description Session location label (e.g., range name)
-       */
-      session_location: string
-      /**
-       * Shot Per Round
-       * @description Number of shots per round for the current session format
-       * @default 6
-       */
-      shot_per_round: number
-    }
-    /** Session ID */
-    SessionId: {
-      /**
-       * Session Id
-       * @description Session identifier (UUID)
-       */
-      session_id?: string | null
-    }
-    /** Session Read */
-    SessionRead: {
-      /**
-       * Closed At
-       * @description Closing timestamp (UTC), if any
-       */
-      closed_at?: string | null
-      /**
-       * Created At
-       * Format: date-time
-       * @description Open timestamp (UTC)
-       */
-      created_at: string
-      /**
-       * Is Indoor
-       * @description Wether the session is indoors or not
-       * @default false
-       */
-      is_indoor: boolean
-      /**
-       * Is Opened
-       * @description Wether the session is open or not
-       */
-      is_opened: boolean
-      /**
-       * Owner Archer Id
-       * Format: uuid
-       * @description Owner archer UUID
-       */
-      owner_archer_id: string
-      /**
-       * Session Id
-       * Format: uuid
-       * @description Session identifier (UUID)
-       */
-      session_id: string
-      /**
-       * Session Location
-       * @description Session location label (e.g., range name)
-       */
-      session_location: string
-      /**
-       * Shot Per Round
-       * @description Number of shots per round for the current session format
-       * @default 6
-       */
-      shot_per_round: number
-    }
-    /** Shot Create */
-    ShotCreate: {
-      /**
-       * Arrow Id
-       * @description Optional arrow identifier (e.g., arrow number or code)
-       */
-      arrow_id?: string | null
-      /**
-       * Is X
-       * @description Indicates if the shot is an 'X' shot
-       * @default false
-       */
-      is_x: boolean
-      /**
-       * Score
-       * @description Shot score (0..10)
-       */
-      score?: number | null
-      /**
-       * Slot Id
-       * Format: uuid
-       * @description Slot identifier (UUID) this shot belongs to
-       */
-      slot_id: string
-      /**
-       * X
-       * @description X coordinate in millimeters
-       */
-      x?: number | null
-      /**
-       * Y
-       * @description Y coordinate in millimeters
-       */
-      y?: number | null
-    }
-    /** Shot ID */
-    ShotId: {
-      /**
-       * Shot Id
-       * Format: uuid
-       * @description Shot identifier (UUID)
-       */
-      shot_id: string
-    }
-    /** Shot Read */
-    ShotRead: {
-      /**
-       * Arrow Id
-       * @description Optional arrow identifier (e.g., arrow number or code)
-       */
-      arrow_id?: string | null
-      /**
-       * Created At
-       * Format: date-time
-       * @description Creation timestamp (UTC)
-       */
-      created_at: string
-      /**
-       * Is X
-       * @description Indicates if the shot is an 'X' shot
-       * @default false
-       */
-      is_x: boolean
-      /**
-       * Score
-       * @description Shot score (0..10)
-       */
-      score?: number | null
-      /**
-       * Shot Id
-       * Format: uuid
-       * @description Shot identifier (UUID)
-       */
-      shot_id: string
-      /**
-       * Slot Id
-       * Format: uuid
-       * @description Slot identifier (UUID) this shot belongs to
-       */
-      slot_id: string
-      /**
-       * X
-       * @description X coordinate in millimeters
-       */
-      x?: number | null
-      /**
-       * Y
-       * @description Y coordinate in millimeters
-       */
-      y?: number | null
-    }
-    /** Slot Assignment Request */
-    SlotJoinRequest: {
-      /**
-       * Archer Id
-       * Format: uuid
-       * @description ID of the archer to assign to the slot
-       */
-      archer_id: string
-      /** @description Archer bowstyle copied at join time */
-      bowstyle: components['schemas']['BowStyleType']
-      /**
-       * Club Id
-       * @description Archer current club at join time
-       */
-      club_id?: string | null
-      /**
-       * Distance
-       * @description Requested distance to shoot (meters 1-100)
-       */
-      distance: number
-      /**
-       * Draw Weight
-       * @description Archer draw weight copied at join time
-       */
-      draw_weight: number
-      /** @description Type of target face (e.g., '40cm', '80cm') */
-      face_type: components['schemas']['FaceType']
-      /**
-       * Is Shooting
-       * @description Set to True if archer is currently shooting, False otherwise
-       * @default true
-       */
-      is_shooting: boolean
-      /**
-       * Session Id
-       * Format: uuid
-       * @description ID of the session for the assignment
-       */
-      session_id: string
-    }
-    /** Slot Assignment Response */
-    SlotJoinResponse: {
-      /**
-       * Slot
-       * @description Slot assigned to the archer (1A, 3D, 4B)
-       */
-      slot: string
-      /**
-       * Slot Id
-       * Format: uuid
-       * @description ID of the slot assignment
-       */
-      slot_id: string
-    }
-    /**
-     * SlotLetterType
-     * @enum {string}
-     */
-    SlotLetterType: 'A' | 'B' | 'C' | 'D'
-    /**
-     * Spot Schema
-     * @description We use offset from center to allocate multiple spots on the same face in relation to
-     *     the canvas center. At the same time, x_offset and y_offset are the center of the spot.
-     */
-    Spot: {
-      /**
-       * Diameter
-       * @description in mm
-       */
-      diameter: number
-      /**
-       * X Offset
-       * @description in mm, offset from center
-       */
-      x_offset: number
-      /**
-       * Y Offset
-       * @description in mm, offset from center
-       */
-      y_offset: number
-    }
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[]
-      /** Message */
-      msg: string
-      /** Error Type */
-      type: string
-    }
-  }
-  responses: never
-  parameters: never
-  requestBodies: never
-  headers: never
-  pathItems: never
+    responses: never
+    parameters: never
+    requestBodies: never
+    headers: never
+    pathItems: never
 }
 export type ArcherCreate = components['schemas']['ArcherCreate']
 export type ArcherFilter = components['schemas']['ArcherFilter']
@@ -1379,851 +1379,851 @@ export type Spot = components['schemas']['Spot']
 export type ValidationError = components['schemas']['ValidationError']
 export type $defs = Record<string, never>
 export interface operations {
-  list_archers_api_v0_archer__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ArcherRead'][]
-        }
-      }
-    }
-  }
-  create_archer_api_v0_archer__post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ArcherCreate']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ArcherId']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  update_archer_api_v0_archer__patch: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ArcherUpdate']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content?: never
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_archer_api_v0_archer__archer_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ArcherRead']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  delete_archer_api_v0_archer__archer_id__delete: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown
-        }
-        content?: never
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  dummy_login_api_v0_auth_dummy_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-    }
-  }
-  google_one_tap_login_api_v0_auth_google_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GoogleOneTapRequest']
-      }
-    }
-    responses: {
-      /** @description Archer was authenticated but needs registration */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthNeedsRegistration']
-        }
-      }
-      /** @description Archer authenticated successfully */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  google_one_tap_login_api_v0_auth_login_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GoogleOneTapRequest']
-      }
-    }
-    responses: {
-      /** @description Archer was authenticated but needs registration */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthNeedsRegistration']
-        }
-      }
-      /** @description Archer authenticated successfully */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  logout_api_v0_auth_logout_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['LogoutResponse']
-        }
-      }
-    }
-  }
-  get_current_user_api_v0_auth_me_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-    }
-  }
-  register_api_v0_auth_register_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AuthRegistrationRequest']
-      }
-    }
-    responses: {
-      /** @description User was already registered */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['AuthAuthenticated']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  list_faces_api_v0_faces_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['FaceMinimal'][]
-        }
-      }
-    }
-  }
-  get_face_api_v0_faces__face_type__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        face_type: components['schemas']['FaceType']
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Face']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  create_session_api_v0_session_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SessionCreate']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionId']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_session_api_v0_session__session__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        session: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionRead']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_closed_session_for_archer_api_v0_session_archer__archer_id__close_session_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionRead'][]
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_open_session_for_archer_api_v0_session_archer__archer_id__open_session_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionId']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_participating_session_for_archer_api_v0_session_archer__archer_id__participating_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionId']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  close_session_api_v0_session_close_patch: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SessionId']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': {
-            [key: string]: string
-          }
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_all_open_sessions_api_v0_session_open_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionRead'][]
-        }
-      }
-    }
-  }
-  re_open_session_api_v0_session_re_open_patch: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SessionId']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SessionId']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  join_session_api_v0_session_slot_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SlotJoinRequest']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SlotJoinResponse']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_slot_api_v0_session_slot__slot__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        slot: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['FullSlotInfo']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_archer_current_slot_api_v0_session_slot_archer__archer_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        archer_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['FullSlotInfo']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  leave_session_api_v0_session_slot_leave__slot_id__patch: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        slot_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': unknown
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  re_join_session_api_v0_session_slot_re_join__slot_id__patch: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        slot_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['SlotJoinResponse']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  create_shot_api_v0_shot_post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ShotCreate'] | components['schemas']['ShotCreate'][]
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ShotId'] | components['schemas']['ShotId'][]
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_shots_by_slot_api_v0_shot_by_slot__slot_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        slot_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ShotRead'][]
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
+    list_archers_api_v0_archer__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ArcherRead'][]
+                }
+            }
+        }
+    }
+    create_archer_api_v0_archer__post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ArcherCreate']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ArcherId']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    update_archer_api_v0_archer__patch: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ArcherUpdate']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content?: never
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_archer_api_v0_archer__archer_id__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ArcherRead']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    delete_archer_api_v0_archer__archer_id__delete: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content?: never
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    dummy_login_api_v0_auth_dummy_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+        }
+    }
+    google_one_tap_login_api_v0_auth_google_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['GoogleOneTapRequest']
+            }
+        }
+        responses: {
+            /** @description Archer was authenticated but needs registration */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthNeedsRegistration']
+                }
+            }
+            /** @description Archer authenticated successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    google_one_tap_login_api_v0_auth_login_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['GoogleOneTapRequest']
+            }
+        }
+        responses: {
+            /** @description Archer was authenticated but needs registration */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthNeedsRegistration']
+                }
+            }
+            /** @description Archer authenticated successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    logout_api_v0_auth_logout_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['LogoutResponse']
+                }
+            }
+        }
+    }
+    get_current_user_api_v0_auth_me_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+        }
+    }
+    register_api_v0_auth_register_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['AuthRegistrationRequest']
+            }
+        }
+        responses: {
+            /** @description User was already registered */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['AuthAuthenticated']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    list_faces_api_v0_faces_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['FaceMinimal'][]
+                }
+            }
+        }
+    }
+    get_face_api_v0_faces__face_type__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                face_type: components['schemas']['FaceType']
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['Face']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    create_session_api_v0_session_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['SessionCreate']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionId']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_session_api_v0_session__session__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                session: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionRead']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_closed_session_for_archer_api_v0_session_archer__archer_id__close_session_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionRead'][]
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_open_session_for_archer_api_v0_session_archer__archer_id__open_session_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionId']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_participating_session_for_archer_api_v0_session_archer__archer_id__participating_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionId']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    close_session_api_v0_session_close_patch: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['SessionId']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': {
+                        [key: string]: string
+                    }
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_all_open_sessions_api_v0_session_open_get: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionRead'][]
+                }
+            }
+        }
+    }
+    re_open_session_api_v0_session_re_open_patch: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['SessionId']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SessionId']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    join_session_api_v0_session_slot_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['SlotJoinRequest']
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SlotJoinResponse']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_slot_api_v0_session_slot__slot__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                slot: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['FullSlotInfo']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_archer_current_slot_api_v0_session_slot_archer__archer_id__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                archer_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['FullSlotInfo']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    leave_session_api_v0_session_slot_leave__slot_id__patch: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                slot_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': unknown
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    re_join_session_api_v0_session_slot_re_join__slot_id__patch: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                slot_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['SlotJoinResponse']
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    create_shot_api_v0_shot_post: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ShotCreate'] | components['schemas']['ShotCreate'][]
+            }
+        }
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ShotId'] | components['schemas']['ShotId'][]
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
+    }
+    get_shots_by_slot_api_v0_shot_by_slot__slot_id__get: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                slot_id: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ShotRead'][]
+                }
+            }
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HTTPValidationError']
+                }
+            }
+        }
     }
-  }
 }
