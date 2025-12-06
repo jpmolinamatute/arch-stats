@@ -28,7 +28,7 @@ create_pr() {
         labels_to_add+=("--label" "frontend")
     fi
     if echo "${changed_files}" | grep -q '^backend/'; then
-        labels_to_add+=("--label" "server")
+        labels_to_add+=("--label" "backend")
     fi
 
     if echo "${changed_files}" | grep -q '\.md$'; then
