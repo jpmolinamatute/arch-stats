@@ -53,6 +53,7 @@ from schema.slot_schema import (
     SlotUpdate,
 )
 from schema.target_schema import TargetCreate, TargetFilter, TargetRead, TargetSet, TargetUpdate
+from schema.websocket_schema import ShotCreatedMessage, WebSocketMessage
 
 
 __all__ = [
@@ -113,4 +114,6 @@ __all__ = [
     "TargetRead",
     "TargetSet",
     "TargetUpdate",
+    "WebSocketMessage",
+    "ShotCreatedMessage",
 ]
