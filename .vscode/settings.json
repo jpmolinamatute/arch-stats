@@ -63,6 +63,7 @@
         "levelname",
         "loglever",
         "Matute",
+        "maxfail",
         "metaclass",
         "minversion",
         "MODELTYPE",
