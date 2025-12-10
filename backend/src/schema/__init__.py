@@ -55,7 +55,6 @@ from schema.slot_schema import (
 from schema.target_schema import TargetCreate, TargetFilter, TargetRead, TargetSet, TargetUpdate
 from schema.websocket_schema import WebSocketMessage
 
-
 __all__ = [
     "ArcherCreate",
     "ArcherFilter",

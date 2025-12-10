@@ -5,7 +5,6 @@ from factories.shot_factory import create_shots
 from factories.slot_factory import create_slot_assignments
 from factories.target_factory import create_targets
 
-
 __all__ = [
     "create_archers",
     "create_sessions",

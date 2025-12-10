@@ -1,4 +1,5 @@
 import datetime
+from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -54,7 +55,7 @@ async def test_dummy_login_creates_new_archer(
         response = await client.post("/api/v0/auth/dummy")
 
         # Validation
-        assert response.status_code == 201
+        assert response.status_code == HTTPStatus.CREATED
         data = response.json()
         assert data["archer"]["email"] == "dummy@example.com"
         assert data["archer"]["first_name"] == "Dummy"
@@ -114,7 +115,7 @@ async def test_dummy_login_existing_archer(
     with patch.object(settings, "arch_stats_dev_mode", True):
         response = await client.post("/api/v0/auth/dummy")
 
-        assert response.status_code == 201
+        assert response.status_code == HTTPStatus.CREATED
         data = response.json()
         assert data["archer"]["archer_id"] == str(existing_id)
 
@@ -132,4 +133,4 @@ async def test_dummy_login_disabled_in_prod(
     """Test dummy login fails when dev mode is False."""
     with patch.object(settings, "arch_stats_dev_mode", False):
         response = await client.post("/api/v0/auth/dummy")
-        assert response.status_code == 404
+        assert response.status_code == HTTPStatus.NOT_FOUND

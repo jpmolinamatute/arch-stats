@@ -7,6 +7,7 @@ from the SQL text.
 """
 
 from string import Template
+from typing import Final
 
 
 class SQLStatementBuilder:
@@ -23,6 +24,8 @@ class SQLStatementBuilder:
     - Callers are responsible for consistent placeholder numbering across
       clauses and for binding values via prepared statements.
     """
+
+    BINARY_OP_PARTS: Final[int] = 2
 
     def __init__(self, table_name: str) -> None:
         """Initialize a builder for the given table name.
@@ -138,7 +141,7 @@ class SQLStatementBuilder:
                 continue
 
             parts = condition.split(operator)
-            if len(parts) != 2:
+            if len(parts) != self.BINARY_OP_PARTS:
                 return False
 
             column, value = parts

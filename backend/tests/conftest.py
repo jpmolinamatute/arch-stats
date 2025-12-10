@@ -16,12 +16,11 @@ from core import AuthDeps, DBPool, settings
 from models import ArcherModel, AuthModel
 from routers.v0.auth_router import get_deps
 
-
 # pylint: disable=redefined-outer-name
 
 
 @pytest_asyncio.fixture
-async def app() -> AsyncGenerator[FastAPI, None]:
+async def app() -> AsyncGenerator[FastAPI]:
     application = run()
     # Manually attach expected state for tests (avoid relying on lifespan hooks)
     application.state.logger = logging.getLogger("test")
@@ -33,7 +32,7 @@ async def app() -> AsyncGenerator[FastAPI, None]:
 
 
 @pytest_asyncio.fixture
-async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
@@ -43,7 +42,7 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest_asyncio.fixture
-async def db_pool(app: FastAPI) -> AsyncGenerator[Pool, None]:
+async def db_pool(app: FastAPI) -> AsyncGenerator[Pool]:
     # Reuse the pool attached to the app state to avoid lifecycle conflicts
     yield app.state.db_pool
 
@@ -59,7 +58,7 @@ async def _truncate_all(pool: Pool) -> None:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def truncate_db_after_test(db_pool: Pool) -> AsyncGenerator[None, None]:
+async def truncate_db_after_test(db_pool: Pool) -> AsyncGenerator[None]:
     yield
     await _truncate_all(db_pool)
 

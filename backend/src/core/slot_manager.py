@@ -34,8 +34,7 @@ class SlotManager:
             lane=lane,
         )
 
-    # pylint: disable=[too-many-arguments]
-    async def create_slotassignment(
+    async def create_slotassignment(  # noqa: PLR0913
         self,
         *,
         session_id: UUID,
@@ -90,7 +89,12 @@ class SlotManager:
             lane = available_targets[0].lane
             # Determine next free letter based on currently shooting assignments
             used_letters = await self.slot.get_assigned_letters(target_id)
-            for opt in [SlotLetterType.A, SlotLetterType.B, SlotLetterType.C, SlotLetterType.D]:
+            for opt in [
+                SlotLetterType.A,
+                SlotLetterType.B,
+                SlotLetterType.C,
+                SlotLetterType.D,
+            ]:
                 if opt not in used_letters:
                     letter = opt
                     break

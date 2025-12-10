@@ -6,7 +6,6 @@ from models.shot_model import ShotModel
 from models.slot_model import SlotModel
 from models.target_model import TargetModel
 
-
 __all__ = [
     "ArcherModel",
     "AuthModel",

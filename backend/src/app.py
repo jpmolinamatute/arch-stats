@@ -19,7 +19,7 @@ from routers.v0 import (
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Startup and shutdown logic for the app."""
 
     try:

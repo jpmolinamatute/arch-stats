@@ -1,6 +1,7 @@
 import base64
 import logging
 from datetime import UTC, date, datetime
+from typing import Annotated
 from uuid import UUID
 
 from asyncpg import Pool
@@ -30,7 +31,6 @@ from schema import (
     GoogleOneTapRequest,
     LogoutResponse,
 )
-
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -107,8 +107,8 @@ async def google_one_tap_login(
     payload: GoogleOneTapRequest,
     response: Response,
     request: Request,
-    archer_model: ArcherModel = Depends(get_archer_model),
-    auth_session_model: AuthModel = Depends(get_auth_model),
+    archer_model: Annotated[ArcherModel, Depends(get_archer_model)],
+    auth_session_model: Annotated[AuthModel, Depends(get_auth_model)],
 ) -> AuthNeedsRegistration | AuthAuthenticated:
     """Verify Google One Tap; start a session if user exists.
 
@@ -177,7 +177,7 @@ async def google_one_tap_login(
 )
 async def get_current_user(
     request: Request,
-    archer_model: ArcherModel = Depends(get_archer_model),
+    archer_model: Annotated[ArcherModel, Depends(get_archer_model)],
 ) -> AuthAuthenticated:
     """Get the currently authenticated archer from the JWT cookie.
 
@@ -189,21 +189,24 @@ async def get_current_user(
     token = request.cookies.get("arch_stats_auth")
     if not token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="No authentication cookie found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authentication cookie found",
         )
 
     try:
         archer_id_str = decode_token(token, "sub")
         if not isinstance(archer_id_str, str):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: missing subject"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing subject",
             )
 
         # Extract expiration timestamp from JWT
         exp_timestamp = decode_token(token, "exp")
         if not isinstance(exp_timestamp, (int, float)):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: missing expiration"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing expiration",
             )
 
         # Convert Unix timestamp to datetime
@@ -234,7 +237,8 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Authentication failed: {str(e)}"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication failed: {str(e)}",
         ) from e
 
 
@@ -245,7 +249,7 @@ async def get_current_user(
 async def logout(
     response: Response,
     request: Request,
-    auth_session_model: AuthModel = Depends(get_auth_model),
+    auth_session_model: Annotated[AuthModel, Depends(get_auth_model)],
 ) -> LogoutResponse:
     """Log out: clear cookie and revoke session if present.
 
@@ -284,7 +288,7 @@ async def register(
     payload: AuthRegistrationRequest,
     response: Response,
     request: Request,
-    auth_deps: AuthDeps = Depends(get_deps),
+    auth_deps: Annotated[AuthDeps, Depends(get_deps)],
 ) -> AuthAuthenticated:
     """Register a new archer (or log in if already exists).
 
@@ -354,7 +358,7 @@ async def register(
 async def dummy_login(
     response: Response,
     request: Request,
-    auth_deps: AuthDeps = Depends(get_deps),
+    auth_deps: Annotated[AuthDeps, Depends(get_deps)],
 ) -> AuthAuthenticated:
     """Login as a dummy archer (DEV MODE ONLY).
 
@@ -362,7 +366,8 @@ async def dummy_login(
     """
     if not settings.arch_stats_dev_mode:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Endpoint only available in dev mode"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Endpoint only available in dev mode",
         )
 
     dummy_sub = "dummy_subject"

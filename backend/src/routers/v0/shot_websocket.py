@@ -6,7 +6,6 @@ from models import ShotModel
 from routers.deps.models import get_shot_model
 from schema import WebSocketMessage
 
-
 router = APIRouter()
 
 

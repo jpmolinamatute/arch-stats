@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from asyncpg import Pool
@@ -83,10 +83,8 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         # Owner cannot be participating elsewhere
         if (await self.is_archer_participating(session_data.owner_archer_id)) is not None:
             raise ValueError(
-                (
-                    f"ERROR: archer '{session_data.owner_archer_id}' is already participating "
-                    "in an open session"
-                )
+                f"ERROR: archer '{session_data.owner_archer_id}' is already participating "
+                "in an open session"
             )
         return await self.insert_one(session_data)
 
@@ -104,7 +102,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         if await self.has_active_participants(session.session_id):
             raise ValueError("ERROR: cannot close session with active participants")
 
-        data = SessionSet(is_opened=False, closed_at=datetime.now(timezone.utc))
+        data = SessionSet(is_opened=False, closed_at=datetime.now(UTC))
         where = SessionFilter(session_id=session.session_id, is_opened=True)
         await self.update(data, where)
 

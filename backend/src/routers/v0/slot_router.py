@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -7,7 +8,6 @@ from models import DBException, DBNotFound, SlotModel
 from routers.deps.auth import require_auth
 from routers.deps.models import get_slot_manager, get_slot_model
 from schema import FullSlotInfo, SlotFilter, SlotJoinRequest, SlotJoinResponse
-
 
 router = APIRouter(prefix="/session", tags=["Slots"])
 
@@ -19,8 +19,8 @@ router = APIRouter(prefix="/session", tags=["Slots"])
 )
 async def get_archer_current_slot(
     archer_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    slot_model: SlotModel = Depends(get_slot_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
 ) -> FullSlotInfo:
     """
     Get the archer's current active slot assignment (open session and is_shooting = TRUE).
@@ -39,8 +39,8 @@ async def get_archer_current_slot(
 @router.get("/slot/{slot:uuid}", response_model=FullSlotInfo, status_code=status.HTTP_200_OK)
 async def get_slot(
     slot: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    slot_model: SlotModel = Depends(get_slot_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
 ) -> FullSlotInfo:
     """
     Get active slot assignment details (open session, is_shooting = TRUE).
@@ -63,7 +63,7 @@ async def get_slot(
 )
 async def join_session(
     payload: SlotJoinRequest,
-    slot_manager: SlotManager = Depends(get_slot_manager),
+    slot_manager: Annotated[SlotManager, Depends(get_slot_manager)],
 ) -> SlotJoinResponse:
     """
     Join a session (assign archer to a slot).
@@ -86,13 +86,15 @@ async def join_session(
 
 
 @router.patch(
-    "/slot/re-join/{slot_id:uuid}", response_model=SlotJoinResponse, status_code=status.HTTP_200_OK
+    "/slot/re-join/{slot_id:uuid}",
+    response_model=SlotJoinResponse,
+    status_code=status.HTTP_200_OK,
 )
 async def re_join_session(
     slot_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    slot_manager: SlotManager = Depends(get_slot_manager),
-    slot_model: SlotModel = Depends(get_slot_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    slot_manager: Annotated[SlotManager, Depends(get_slot_manager)],
+    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
 ) -> SlotJoinResponse:
     """
     Re-join a session (reassign archer to a slot).
@@ -129,9 +131,9 @@ async def re_join_session(
 @router.patch("/slot/leave/{slot_id:uuid}", status_code=status.HTTP_200_OK)
 async def leave_session(
     slot_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    slot_manager: SlotManager = Depends(get_slot_manager),
-    slot_model: SlotModel = Depends(get_slot_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    slot_manager: Annotated[SlotManager, Depends(get_slot_manager)],
+    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
 ) -> Response:
     """
     Leave a session (stop archer's slot assignment).
@@ -143,7 +145,8 @@ async def leave_session(
         slot_row = await slot_model.get_one(SlotFilter(slot_id=slot_id))
         if slot_row.archer_id != current_archer_id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="ERROR: user not allowed to leave"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="ERROR: user not allowed to leave",
             )
 
         # Delegate active-state and session-open checks to SlotManager

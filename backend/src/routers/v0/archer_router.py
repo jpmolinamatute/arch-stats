@@ -1,4 +1,5 @@
 import logging
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -7,13 +8,12 @@ from models import ArcherModel, DBNotFound
 from routers.deps.models import get_archer_model
 from schema import ArcherCreate, ArcherFilter, ArcherId, ArcherRead, ArcherUpdate
 
-
 router = APIRouter(prefix="/archer", tags=["Archers"])
 
 
 @router.get("/", response_model=list[ArcherRead])
 async def list_archers(
-    archer_model: ArcherModel = Depends(get_archer_model),
+    archer_model: Annotated[ArcherModel, Depends(get_archer_model)],
 ) -> list[ArcherRead]:
     """
     List archers.
@@ -30,7 +30,7 @@ async def list_archers(
 async def get_archer(
     archer_id: UUID,
     request: Request,
-    archer_model: ArcherModel = Depends(get_archer_model),
+    archer_model: Annotated[ArcherModel, Depends(get_archer_model)],
 ) -> ArcherRead:
     """
     Get a single archer by id.
@@ -55,7 +55,7 @@ async def get_archer(
 )
 async def create_archer(
     data: ArcherCreate,
-    archer_model: ArcherModel = Depends(get_archer_model),
+    archer_model: Annotated[ArcherModel, Depends(get_archer_model)],
 ) -> ArcherId:
     """
     Create a new archer.
@@ -74,7 +74,7 @@ async def create_archer(
     status_code=status.HTTP_200_OK,
 )
 async def update_archer(
-    data: ArcherUpdate, archer_model: ArcherModel = Depends(get_archer_model)
+    data: ArcherUpdate, archer_model: Annotated[ArcherModel, Depends(get_archer_model)]
 ) -> Response:
     """
     Update archer fields matching filter.
@@ -92,7 +92,7 @@ async def update_archer(
 
 @router.delete("/{archer_id:uuid}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def delete_archer(
-    archer_id: UUID, archer_model: ArcherModel = Depends(get_archer_model)
+    archer_id: UUID, archer_model: Annotated[ArcherModel, Depends(get_archer_model)]
 ) -> Response:
     """
     Delete an archer by id.

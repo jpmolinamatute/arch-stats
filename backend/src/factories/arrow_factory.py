@@ -24,7 +24,6 @@ from asyncpg import Pool
 
 from factories.archer_factory import create_archers
 
-
 # Typical ranges
 _LENGTH_RANGE_IN: Final[tuple[float, float]] = (26.0, 32.0)  # inches
 _WEIGHT_RANGE_GRAINS: Final[tuple[float, float]] = (250.0, 700.0)  # grains

@@ -27,7 +27,6 @@ from uuid import UUID
 
 from asyncpg import Pool
 
-
 # Basic scoring distribution: bias towards mid/high scores, allow some lows.
 # Indices 0..10 correspond to the actual score value.
 _SCORE_WEIGHTS: Final[list[int]] = [
@@ -45,6 +44,9 @@ _SCORE_WEIGHTS: Final[list[int]] = [
     34,
     21,
 ]
+
+PERFECT_SCORE: Final[int] = 10
+X_RING_PROBABILITY: Final[float] = 0.35
 
 
 def _random_score() -> int:
@@ -103,7 +105,7 @@ async def create_shots(
             x, y = _random_xy()
             score = _random_score()
             # Mark some 10s as inner-10 (X) for realism. Keep others FALSE.
-            is_x = bool(score == 10 and random.random() < 0.35)
+            is_x = bool(score == PERFECT_SCORE and random.random() < X_RING_PROBABILITY)
             arrow_id: UUID | None = None
             if arrow_ids:
                 arrow_id = random.choice(list(arrow_ids))

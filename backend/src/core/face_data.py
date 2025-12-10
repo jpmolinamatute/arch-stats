@@ -1,6 +1,5 @@
 from schema.face_schema import Face, FaceType, Ring, Spot
 
-
 face_data: list[Face] = [
     Face(
         face_type=FaceType.NONE,

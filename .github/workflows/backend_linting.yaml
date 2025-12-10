@@ -16,29 +16,29 @@ defaults:
     working-directory: backend
 
 jobs:
-  black:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
-      - name: Run black
+      - name: Run ruff check
         run: |
           source "${{ github.workspace }}/backend/.venv/bin/activate"
-          black --check --config ./pyproject.toml ./src
+          ruff check --no-cache --config "${{ github.workspace }}/backend/pyproject.toml" "${{ github.workspace }}/backend/src" "${{ github.workspace }}/backend/tests"
 
-  isort:
+  formatting:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
-      - name: Run isort
+      - name: Run ruff format
         run: |
           source "${{ github.workspace }}/backend/.venv/bin/activate"
-          isort --check-only --settings-file ./pyproject.toml ./src
+          ruff format --check --no-cache --config "${{ github.workspace }}/backend/pyproject.toml" "${{ github.workspace }}/backend/src" "${{ github.workspace }}/backend/tests"
 
   mypy:
     runs-on: ubuntu-latest
@@ -50,19 +50,7 @@ jobs:
       - name: Run mypy
         run: |
           source "${{ github.workspace }}/backend/.venv/bin/activate"
-          mypy --config-file ./pyproject.toml ./src
-
-  pylint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set uv & Install Dependencies
-        uses: ./.github/actions/uv-setup
-      - name: Run pylint
-        run: |
-          source "${{ github.workspace }}/backend/.venv/bin/activate"
-          pylint --rcfile ./pyproject.toml ./src
+          mypy --config-file "${{ github.workspace }}/backend/pyproject.toml" "${{ github.workspace }}/backend/src" "${{ github.workspace }}/backend/tests"
 
   tests:
     runs-on: ubuntu-latest
