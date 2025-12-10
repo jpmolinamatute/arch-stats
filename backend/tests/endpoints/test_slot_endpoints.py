@@ -1,6 +1,7 @@
 """Endpoint tests for slot-related endpoints (join/leave/re-join)."""
 
 from collections.abc import Callable
+from http import HTTPStatus
 from uuid import UUID
 
 import pytest
@@ -31,7 +32,7 @@ async def test_join_slot_requires_auth(client: AsyncClient) -> None:
 
     resp = await client.post("/api/v0/session/slot", json=payload)
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -44,14 +45,13 @@ async def test_leave_slot_requires_auth(client: AsyncClient) -> None:
     # Any UUID path with no auth should trigger 401 via auth dependency
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
 async def test_join_session_assigns_slot_and_marks_participating(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
@@ -63,7 +63,7 @@ async def test_join_session_assigns_slot_and_marks_participating(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = UUID(resp.json()["session_id"])
 
     # Participant joins via POST /session/slot
@@ -78,13 +78,13 @@ async def test_join_session_assigns_slot_and_marks_participating(
         "draw_weight": 30.0,
     }
     resp = await client.post("/api/v0/session/slot", json=join_payload)
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     data = resp.json()
     assert "slot" in data and data["slot"] == "1A"
     assert "slot_id" in data and isinstance(UUID(data["slot_id"]), UUID)
     # # Participant should now be participating
     resp = await client.get(f"/api/v0/session/archer/{participant_id}/participating")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert UUID(resp.json()["session_id"]) == session_id
 
 
@@ -92,7 +92,6 @@ async def test_join_session_assigns_slot_and_marks_participating(
 async def test_leave_session_clears_participation(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-
     owner_id, participant_id = await create_archers(db_pool, 2)
 
     # Owner creates session
@@ -104,7 +103,7 @@ async def test_leave_session_clears_participation(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = UUID(resp.json()["session_id"])
 
     # Participant joins
@@ -119,17 +118,17 @@ async def test_leave_session_clears_participation(
         "draw_weight": 30.0,
     }
     resp = await client.post("/api/v0/session/slot", json=join_payload)
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     # Participant leaves (use slot_id)
     slot_id = resp.json()["slot_id"]
     resp = await client.patch(f"/api/v0/session/slot/leave/{slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.content == b""
 
     # Participant should no longer be participating
     resp = await client.get(f"/api/v0/session/archer/{participant_id}/participating")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] is None
 
 
@@ -161,7 +160,7 @@ async def test_fifth_archer_joins_new_target_when_first_is_full(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # First 4 joiners should share the same target_id and occupy letters A-D
@@ -214,7 +213,7 @@ async def test_new_targets_created_for_different_distances(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Owner joins at 20m => lane 1, slot A
@@ -256,7 +255,7 @@ async def test_join_nonexistent_session_returns_422(
     }
 
     resp = await client.post("/api/v0/session/slot", json=payload)
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert resp.json()["detail"] == "ERROR: Session either doesn't exist or it was already closed"
 
 
@@ -284,7 +283,7 @@ async def test_join_session_validation_wrong_types(
     }
 
     resp = await client.post("/api/v0/session/slot", json=bad_payload)
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     detail = resp.json().get("detail", [])
     locs = [tuple(err.get("loc", ())) for err in detail]
     assert ("body", "session_id") in locs
@@ -320,7 +319,7 @@ async def test_join_session_validation_missing_fields(
     }
 
     resp = await client.post("/api/v0/session/slot", json=bad_payload)
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     detail = resp.json().get("detail", [])
     locs = [tuple(err.get("loc", ())) for err in detail]
     assert ("body", "session_id") in locs
@@ -352,7 +351,7 @@ async def test_cannot_join_second_open_session(
             "is_opened": True,
         },
     )
-    assert r1.status_code == 201
+    assert r1.status_code == HTTPStatus.CREATED
     s1 = UUID(r1.json()["session_id"])
 
     # Participant joins S1
@@ -369,7 +368,7 @@ async def test_cannot_join_second_open_session(
             "is_opened": True,
         },
     )
-    assert r2.status_code == 201
+    assert r2.status_code == HTTPStatus.CREATED
     s2 = r2.json()["session_id"]
 
     # Participant attempts to join S2 -> should fail with 409
@@ -387,7 +386,7 @@ async def test_cannot_join_second_open_session(
         },
     )
 
-    assert resp.status_code == 409
+    assert resp.status_code == HTTPStatus.CONFLICT
     assert resp.json()["detail"] == "ERROR: archer already participating in an open session"
 
 
@@ -413,7 +412,7 @@ async def test_cannot_join_same_session_twice(
             "is_opened": True,
         },
     )
-    assert r.status_code == 201
+    assert r.status_code == HTTPStatus.CREATED
     s = r.json()["session_id"]
 
     # Participant joins S successfully
@@ -430,7 +429,7 @@ async def test_cannot_join_same_session_twice(
             "draw_weight": 30.0,
         },
     )
-    assert first.status_code == 200
+    assert first.status_code == HTTPStatus.OK
 
     # Participant attempts to join S again -> should fail with 409 and specific message
     second = await client.post(
@@ -445,7 +444,7 @@ async def test_cannot_join_same_session_twice(
             "draw_weight": 30.0,
         },
     )
-    assert second.status_code == 409
+    assert second.status_code == HTTPStatus.CONFLICT
     assert second.json()["detail"] == "ERROR: archer already joined this session"
 
 
@@ -460,7 +459,7 @@ async def test_leave_nonexistent_slot_returns_409(
     client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
 
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
-    assert resp.status_code == 409
+    assert resp.status_code == HTTPStatus.CONFLICT
     assert resp.json()["detail"] == "ERROR: archer is not participating in this session"
 
 
@@ -481,7 +480,7 @@ async def test_leave_closed_session_returns_422(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Participant joins and capture slot id
@@ -491,18 +490,18 @@ async def test_leave_closed_session_returns_422(
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     leave_slot_id = j["slot_id"]
     resp = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     # Close the session as owner
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # Participant attempts to leave after close -> expect 409 not participating
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
-    assert resp.status_code == 409
+    assert resp.status_code == HTTPStatus.CONFLICT
     assert resp.json()["detail"] == "ERROR: archer is not participating in this session"
 
 
@@ -525,12 +524,12 @@ async def test_leave_open_session_not_participating_returns_400(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
 
     # Stranger (not participating) attempts to leave (bogus slot id)
     client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch("/api/v0/session/slot/leave/00000000-0000-0000-0000-000000000001")
-    assert resp.status_code == 409
+    assert resp.status_code == HTTPStatus.CONFLICT
     assert resp.json()["detail"] == "ERROR: archer is not participating in this session"
 
 
@@ -546,7 +545,7 @@ async def test_leave_session_validation_bad_uuid(
 
     resp = await client.patch("/api/v0/session/slot/leave/not-a-uuid")
     # Starlette's UUID path converter does not match invalid UUIDs -> route 404
-    assert resp.status_code == 404
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.asyncio
@@ -560,7 +559,7 @@ async def test_leave_session_validation_wrong_types(
 
     resp = await client.patch("/api/v0/session/slot/leave/123")
     # Non-UUID path won't match route, expect 404
-    assert resp.status_code == 404
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.asyncio
@@ -589,7 +588,7 @@ async def test_rejoin_session_happy_path(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Participant joins
@@ -604,24 +603,24 @@ async def test_rejoin_session_happy_path(
         "draw_weight": 30.0,
     }
     resp = await client.post("/api/v0/session/slot", json=join_payload)
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     first = resp.json()
     assert "slot" in first
 
     # Participant leaves using slot id
     joined_slot_id = first["slot_id"]
     resp = await client.patch(f"/api/v0/session/slot/leave/{joined_slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     # Re-join via new endpoint (only slot_id is required now)
     resp = await client.patch(f"/api/v0/session/slot/re-join/{first['slot_id']}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     rejoined = resp.json()
     assert rejoined["slot"] == first["slot"]
 
     # Participating should now show this session again
     resp = await client.get(f"/api/v0/session/archer/{participant_id}/participating")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] == session_id
 
 
@@ -638,7 +637,7 @@ async def test_rejoin_nonexistent_session_returns_422(
     resp = await client.patch(
         "/api/v0/session/slot/re-join/00000000-0000-0000-0000-000000000001",
     )
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert (
         resp.json()["detail"]
         == "ERROR: the archer is either not allowed to re-join or they are already in"
@@ -671,7 +670,7 @@ async def test_rejoin_as_another_archer_returns_403(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Archer A joins
@@ -686,17 +685,17 @@ async def test_rejoin_as_another_archer_returns_403(
         "draw_weight": 30.0,
     }
     resp = await client.post("/api/v0/session/slot", json=join_payload)
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     joined_slot_id = resp.json()["slot_id"]
 
     # Archer A leaves
     resp = await client.patch(f"/api/v0/session/slot/leave/{joined_slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     # Archer B attempts to re-join for Archer A -> must be forbidden
     client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.patch(f"/api/v0/session/slot/re-join/{joined_slot_id}")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "ERROR: user not allowed to re-join"
 
 
@@ -710,7 +709,7 @@ async def test_rejoin_requires_auth(client: AsyncClient) -> None:
     resp = await client.patch(
         "/api/v0/session/slot/re-join/00000000-0000-0000-0000-000000000001",
     )
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
 
 
@@ -733,7 +732,7 @@ async def test_rejoin_closed_session_returns_422(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Participant joins then leaves
@@ -748,22 +747,22 @@ async def test_rejoin_closed_session_returns_422(
         "draw_weight": 30.0,
     }
     rj = await client.post("/api/v0/session/slot", json=join_payload)
-    assert rj.status_code == 200
+    assert rj.status_code == HTTPStatus.OK
     joined_slot_id = rj.json()["slot_id"]
     rl = await client.patch(f"/api/v0/session/slot/leave/{joined_slot_id}")
-    assert rl.status_code == 200
+    assert rl.status_code == HTTPStatus.OK
 
     # Close session
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
     rc = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert rc.status_code == 200
+    assert rc.status_code == HTTPStatus.OK
     assert rc.json() == {"status": "closed"}
     rejoin_payload = {"slot_id": rj.json()["slot_id"]}
 
     # Attempt to re-join closed session
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/re-join/{rejoin_payload['slot_id']}")
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert resp.json()["detail"] == "ERROR: The session doesn't exist or it was already closed"
 
 
@@ -786,7 +785,7 @@ async def test_rejoin_without_leaving_returns_422(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Participant joins
@@ -801,11 +800,11 @@ async def test_rejoin_without_leaving_returns_422(
         "draw_weight": 30.0,
     }
     jr = await client.post("/api/v0/session/slot", json=join_payload)
-    assert jr.status_code == 200
+    assert jr.status_code == HTTPStatus.OK
     rejoin_payload = {"slot_id": jr.json()["slot_id"]}
     # Attempt to re-join without leaving
     resp = await client.patch(f"/api/v0/session/slot/re-join/{rejoin_payload['slot_id']}")
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert (
         resp.json()["detail"]
         == "ERROR: the archer is either not allowed to re-join or they are already in"
@@ -831,7 +830,7 @@ async def test_letter_reuse_after_leave(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = UUID(resp.json()["session_id"])
 
     # a1 joins -> 1A, a2 joins -> 1B
@@ -843,7 +842,7 @@ async def test_letter_reuse_after_leave(
     # a1 leaves -> free 'A'
     client.cookies.set("arch_stats_auth", jwt_for(a1), path="/")
     r = await client.patch(f"/api/v0/session/slot/leave/{j1['slot_id']}")
-    assert r.status_code == 200
+    assert r.status_code == HTTPStatus.OK
 
     # a3 joins -> should reuse '1A'
     j3 = await join_session(client, session_id, a3, jwt_for, 30)
@@ -872,7 +871,7 @@ async def test_leave_same_session_twice_returns_400(
             "is_opened": True,
         },
     )
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Participant joins and capture slot id
@@ -882,11 +881,11 @@ async def test_leave_same_session_twice_returns_400(
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     leave_slot_id = j["slot_id"]
     r1 = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
-    assert r1.status_code == 200
+    assert r1.status_code == HTTPStatus.OK
 
     # Second leave -> 409
     r2 = await client.patch(f"/api/v0/session/slot/leave/{leave_slot_id}")
-    assert r2.status_code == 409
+    assert r2.status_code == HTTPStatus.CONFLICT
     assert r2.json()["detail"] == "ERROR: archer is not participating in this session"
 
 
@@ -919,7 +918,7 @@ async def test_leave_session_forbidden_when_not_self(
             "is_opened": True,
         },
     )
-    assert c.status_code == 201
+    assert c.status_code == HTTPStatus.CREATED
     session_id = c.json()["session_id"]
 
     # Participant joins and capture slot id
@@ -928,5 +927,5 @@ async def test_leave_session_forbidden_when_not_self(
     # Stranger attempts to leave on behalf of participant -> 403 using participant's slot_id
     client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch(f"/api/v0/session/slot/leave/{pj['slot_id']}")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "ERROR: user not allowed to leave"

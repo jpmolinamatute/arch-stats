@@ -1,15 +1,4 @@
 {
-    "black-formatter.cwd": "${workspaceFolder}/backend",
-    "black-formatter.args": [
-        "--config",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "black-formatter.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "black-formatter.path": [
-        "${workspaceFolder}/backend/.venv/bin/black"
-    ],
     "cSpell.words": [
         "abstractproperty",
         "actix",
@@ -63,6 +52,7 @@
         "levelname",
         "loglever",
         "Matute",
+        "maxfail",
         "metaclass",
         "minversion",
         "MODELTYPE",
@@ -206,16 +196,6 @@
         "source.fixAll.eslint": "explicit",
         "source.fixAll.markdownlint": "explicit"
     },
-    "isort.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "isort.path": [
-        "${workspaceFolder}/backend/.venv/bin/isort"
-    ],
-    "isort.args": [
-        "--settings-file",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
     "markdownlint.config": {
         "MD003": {
             "style": "atx"
@@ -248,25 +228,6 @@
         "${workspaceFolder}/backend/.venv/bin/mypy"
     ],
     "mypy-type-checker.ignorePatterns": [
-        "**/ignore/",
-        "**/.venv/",
-        "**/__pycache__/",
-        "**/.mypy_cache/",
-        "**/.pytest_cache/"
-    ],
-    // Don't add ${workspaceFolder}/
-    "pylint.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "pylint.cwd": "${workspaceFolder}/backend",
-    "pylint.path": [
-        "${workspaceFolder}/backend/.venv/bin/pylint"
-    ],
-    "pylint.args": [
-        "--rcfile",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "pylint.ignorePatterns": [
         "**/ignore/",
         "**/.venv/",
         "**/__pycache__/",
@@ -311,6 +272,14 @@
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
+    "ruff.configuration": "${workspaceFolder}/backend/pyproject.toml",
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "ruff.path": [
+        "${workspaceFolder}/backend/.venv/bin/ruff"
+    ],
     "[markdown]": {
         "editor.unicodeHighlight.nonBasicASCII": true,
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
@@ -335,6 +304,14 @@
         "editor.suggest.insertMode": "replace",
         "editor.insertSpaces": true,
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
     },
     "workbench.externalBrowser": "/opt/google/chrome/chrome",
     "workbench.editor.restoreViewState": false,

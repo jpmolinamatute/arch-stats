@@ -11,6 +11,7 @@ Covers:
 """
 
 from collections.abc import Callable
+from http import HTTPStatus
 from typing import Any
 from uuid import UUID
 
@@ -32,7 +33,7 @@ async def test_close_session_requires_auth(client: AsyncClient) -> None:
     payload = {"session_id": "00000000-0000-0000-0000-000000000000"}
     resp = await client.patch("/api/v0/session/close", json=payload)
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -53,7 +54,7 @@ async def test_create_session_requires_auth(client: AsyncClient, db_pool: Pool) 
     }
     resp = await client.post("/api/v0/session", json=payload)
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -65,7 +66,7 @@ async def test_open_sessions_list_requires_auth(client: AsyncClient) -> None:
 
     resp = await client.get("/api/v0/session/open")
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -81,7 +82,7 @@ async def test_participating_requires_auth(client: AsyncClient, db_pool: Pool) -
     resp = await client.get(f"/api/v0/session/archer/{archer_id}/participating")
 
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -98,7 +99,7 @@ async def test_open_session_requires_auth(client: AsyncClient, db_pool: Pool) ->
 
     # When auth is enforced in the router/dependency, this should be 401
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -115,14 +116,13 @@ async def test_closed_sessions_list_requires_auth(client: AsyncClient, db_pool: 
 
     # When auth is enforced in the router/dependency, this should be 401
     assert resp.json()["detail"] == "User is not authorized to use this endpoint"
-    assert resp.status_code == 401
+    assert resp.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.asyncio
 async def test_open_session_lifecycle(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-
     # Seed one owner archer
     [owner_id] = await create_archers(db_pool, 1)
 
@@ -133,7 +133,7 @@ async def test_open_session_lifecycle(
 
     # Initially: no open session for owner (router returns 200 with null)
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] is None
 
     # Create a session via POST /session
@@ -144,17 +144,17 @@ async def test_open_session_lifecycle(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = UUID(resp.json()["session_id"])
 
     # Now owner should have an open session
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert UUID(resp.json()["session_id"]) == session_id
 
     # There should be one open session in the list
     resp = await client.get("/api/v0/session/open")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     sessions = resp.json()
     assert len(sessions) == 1
     assert UUID(sessions[0]["session_id"]) == session_id
@@ -180,7 +180,7 @@ async def test_closed_sessions_forbidden_when_not_self(
     client.cookies.set("arch_stats_auth", jwt_for(other_id), path="/")
 
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "Forbidden"
 
 
@@ -194,7 +194,7 @@ async def test_closed_sessions_empty_initially(
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     data = resp.json()
     assert isinstance(data, list)
     assert data == []
@@ -222,23 +222,23 @@ async def test_closed_sessions_after_closing_multiple(
 
     # Create and close first session
     resp = await client.post("/api/v0/session", json=_make_create_payload())
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     s1 = UUID(resp.json()["session_id"])
     resp = await client.patch("/api/v0/session/close", json={"session_id": str(s1)})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # Create and close second session
     resp = await client.post("/api/v0/session", json=_make_create_payload())
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     s2 = UUID(resp.json()["session_id"])
     resp = await client.patch("/api/v0/session/close", json={"session_id": str(s2)})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # Fetch closed sessions list
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/close-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     items = resp.json()
     assert isinstance(items, list)
     ids = {UUID(it["session_id"]) for it in items}
@@ -251,13 +251,12 @@ async def test_closed_sessions_after_closing_multiple(
 async def test_participant_not_participating_initially(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-
     _, participant_id = await create_archers(db_pool, 2)
 
     # Authenticate as participant and check participating state
     client.cookies.set("arch_stats_auth", jwt_for(participant_id), path="/")
     resp = await client.get(f"/api/v0/session/archer/{participant_id}/participating")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] is None
 
 
@@ -265,7 +264,6 @@ async def test_participant_not_participating_initially(
 async def test_close_session_rules(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-
     owner_id, p1 = await create_archers(db_pool, 2)
     owner_token = jwt_for(owner_id)
     client.cookies.set("arch_stats_auth", owner_token, path="/")
@@ -276,7 +274,7 @@ async def test_close_session_rules(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = UUID(resp.json()["session_id"])
 
     # Join participant so closing should fail until they leave
@@ -292,7 +290,7 @@ async def test_close_session_rules(
     participant_token = jwt_for(p1)
     client.cookies.set("arch_stats_auth", participant_token, path="/")
     resp = await client.post("/api/v0/session/slot", json=join_payload)
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     initial_slot_id = resp.json()["slot_id"]
 
     # Attempt to close should be blocked by SessionModel (participants still shooting)
@@ -305,13 +303,13 @@ async def test_close_session_rules(
     )
     # Either a 422 with specific error
     assert resp.json()["detail"] == "ERROR: cannot close session with active participants"
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # Participant leaves (switch to participant auth)
     client.cookies.set("arch_stats_auth", participant_token, path="/")
     # leave using the slot id from the initial join
     resp = await client.patch(f"/api/v0/session/slot/leave/{initial_slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     # Now owner can close
     # Now owner can close (switch to owner auth)
@@ -322,7 +320,7 @@ async def test_close_session_rules(
             "session_id": str(session_id),
         },
     )
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
 
@@ -350,11 +348,11 @@ async def test_create_second_session_fails_with_422(
 
     # First creation succeeds
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
 
     # Second creation must fail
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 409
+    assert resp.status_code == HTTPStatus.CONFLICT
     assert resp.json()["detail"] == "Archer already have an opened session"
 
 
@@ -378,7 +376,7 @@ async def test_create_session_validation_missing_fields(
     }
 
     resp = await client.post("/api/v0/session", json=bad_payload)
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     detail = resp.json().get("detail", [])
     locs = [tuple(err.get("loc", ())) for err in detail]
@@ -408,7 +406,7 @@ async def test_create_session_validation_wrong_types(
     }
 
     resp = await client.post("/api/v0/session", json=bad_payload)
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     detail = resp.json().get("detail", [])
     locs = [tuple(err.get("loc", ())) for err in detail]
@@ -436,17 +434,17 @@ async def test_close_already_closed_session_returns_422(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # First close succeeds
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # Second close should fail with 404
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 404
+    assert resp.status_code == HTTPStatus.NOT_FOUND
     print(resp.json()["detail"])
     assert resp.json()["detail"] == "ERROR: Session either doesn't exist or it was already closed"
 
@@ -461,7 +459,7 @@ async def test_close_session_missing_session_id_returns_400(
     client.cookies.set("arch_stats_auth", jwt_for(owner_id), path="/")
 
     resp = await client.patch("/api/v0/session/close", json={})
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "ERROR: session_id wasn't provided"
 
 
@@ -476,7 +474,7 @@ async def test_close_session_invalid_session_id_type_returns_422(
 
     # Provide an invalid UUID string to trigger body validation
     resp = await client.patch("/api/v0/session/close", json={"session_id": "not-a-uuid"})
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     detail = resp.json().get("detail", [])
     locs = [tuple(err.get("loc", ())) for err in detail]
     assert ("body", "session_id") in locs
@@ -507,37 +505,37 @@ async def test_reopen_session_happy_path(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Verify it's open for the owner
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] == session_id
 
     # Close the session
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # After closing, the owner should have no open session
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] is None
 
     # Re-open the session
     resp = await client.patch("/api/v0/session/re-open", json={"session_id": session_id})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] == session_id
 
     # Owner should now report this session as open again
     resp = await client.get(f"/api/v0/session/archer/{owner_id}/open-session")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json()["session_id"] == session_id
 
     # And it should appear in the list of open sessions
     resp = await client.get("/api/v0/session/open")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     sessions = resp.json()
     assert any(s.get("session_id") == session_id for s in sessions)
 
@@ -560,12 +558,12 @@ async def test_reopen_already_open_session_returns_422(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Attempt to re-open an already open session
     resp = await client.patch("/api/v0/session/re-open", json={"session_id": session_id})
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert resp.json()["detail"] == "ERROR: Session either doesn't exist or it was already open"
 
 
@@ -587,18 +585,18 @@ async def test_reopen_session_forbidden_when_not_owner(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=create_payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     session_id = resp.json()["session_id"]
 
     # Owner closes the session
     resp = await client.patch("/api/v0/session/close", json={"session_id": session_id})
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == {"status": "closed"}
 
     # Stranger attempts to re-open
     client.cookies.set("arch_stats_auth", jwt_for(stranger_id), path="/")
     resp = await client.patch("/api/v0/session/re-open", json={"session_id": session_id})
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "Archer is not allow to re-open this session"
 
 
@@ -611,7 +609,7 @@ async def test_open_session_for_archer_forbidden_when_not_self(
     archer_a, archer_b = await create_archers(db_pool, 2)
     client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.get(f"/api/v0/session/archer/{archer_a}/open-session")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "Forbidden"
 
 
@@ -624,7 +622,7 @@ async def test_participating_forbidden_when_not_self(
     archer_a, archer_b = await create_archers(db_pool, 2)
     client.cookies.set("arch_stats_auth", jwt_for(archer_b), path="/")
     resp = await client.get(f"/api/v0/session/archer/{archer_a}/participating")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "Forbidden"
 
 
@@ -641,7 +639,7 @@ async def test_reopen_nonexistent_session_returns_422(
         "/api/v0/session/re-open",
         json={"session_id": "00000000-0000-0000-0000-000000000000"},
     )
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert resp.json()["detail"] == "ERROR: Session either doesn't exist or it was already open"
 
 
@@ -654,7 +652,7 @@ async def test_open_sessions_list_empty_returns_empty(
     [archer_id] = await create_archers(db_pool, 1)
     client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
     resp = await client.get("/api/v0/session/open")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.json() == []
 
 
@@ -680,5 +678,5 @@ async def test_create_session_forbidden_when_not_self(
         "is_opened": True,
     }
     resp = await client.post("/api/v0/session", json=payload)
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "ERROR: user not allowed to open a session for another archer"

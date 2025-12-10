@@ -18,6 +18,7 @@ This reduces duplication and makes the factory easier to use in tests/seeders.
 """
 
 import random
+from typing import Final
 from uuid import UUID, uuid4
 
 from asyncpg import Pool
@@ -28,10 +29,11 @@ from factories.session_factory import create_sessions
 from factories.target_factory import create_targets
 from schema import BowStyleType, FaceType, SlotLetterType
 
-
 _BOWSTYLE = [style.value for style in BowStyleType]
 _SLOT_LETTERS = [letter.value for letter in SlotLetterType]
 _FACE_TYPES = [face.value for face in FaceType]
+
+CLUB_ID_ASSIGNMENT_PROBABILITY: Final[float] = 0.7
 
 
 async def get_archers(pool: Pool, qty: int, archer_ids: list[UUID] | None) -> list[UUID]:
@@ -108,7 +110,7 @@ async def create_slot_assignments(
             draw_weight = round(random.uniform(10.0, 60.0), 1)  # 10.0–60.0 kg
             # club_id is optional, randomly assign None or a fake UUID
             club_id = None
-            if random.random() < 0.7:
+            if random.random() < CLUB_ID_ASSIGNMENT_PROBABILITY:
                 # 70% chance to assign a club_id (simulate real data)
                 club_id = uuid4()
 

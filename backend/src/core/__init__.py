@@ -15,7 +15,6 @@ from core.logger import get_logger
 from core.settings import settings
 from core.slot_manager import SlotManager, SlotManagerError
 
-
 __all__ = [
     "AuthDeps",
     "authenticate_archer",

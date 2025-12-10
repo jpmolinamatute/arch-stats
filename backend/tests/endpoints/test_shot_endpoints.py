@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from http import HTTPStatus
 from typing import Any
 from uuid import UUID
 
@@ -11,9 +12,22 @@ from factories.session_factory import create_sessions
 from factories.slot_factory import create_slot_assignments
 from factories.target_factory import create_targets
 
+MIN_SCORE = 0
+MAX_SCORE = 10
+INVALID_SCORE_LOW = -1
+INVALID_SCORE_HIGH = 11
+SHOT_BATCH_SIZE = 6
+TARGET_X_Y = 5.0
+TARGET_SCORE = 5
+TEST_SCORE = 9
+
 
 async def _create_shot_for_test(
-    client: AsyncClient, jwt_for: Callable[[UUID], str], slot_id: UUID, archer_id: UUID, value: int
+    client: AsyncClient,
+    jwt_for: Callable[[UUID], str],
+    slot_id: UUID,
+    archer_id: UUID,
+    value: int,
 ) -> Any:
     client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
     payload = {
@@ -24,7 +38,7 @@ async def _create_shot_for_test(
         "arrow_id": None,
     }
     r = await client.post("/api/v0/shot", json=payload)
-    assert r.status_code == 201
+    assert r.status_code == HTTPStatus.CREATED
     return r.json()
 
 
@@ -37,7 +51,7 @@ async def _verify_returned_shots(
 ) -> None:
     client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
     resp = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     data = resp.json()
     assert len(data) == len(expected_shots)
     got_ids = {UUID(s["shot_id"]) for s in data}
@@ -89,7 +103,7 @@ async def test_get_shots_by_slot_returns_only_expected(
     # Test: archer1 forbidden from accessing archer2's slot
     client.cookies.set("arch_stats_auth", jwt_for(archer1_id), path="/")
     resp = await client.get(f"/api/v0/shot/by-slot/{slot2_id}")
-    assert resp.status_code == 403
+    assert resp.status_code == HTTPStatus.FORBIDDEN
     assert resp.json()["detail"] == "Forbidden"
 
 
@@ -121,23 +135,23 @@ async def test_create_shot_happy_path_from_schema(
         "slot_id": str(slot_id),
         "x": 1.23,
         "y": -4.56,
-        "score": 9,
+        "score": TEST_SCORE,
         # "is_x": omitted (defaults to False)
         # "arrow_id": omitted (allowed)
     }
     resp = await client.post("/api/v0/shot", json=payload)
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     shot_id = UUID(resp.json()["shot_id"])  # ensure a valid UUID
 
     # Verify via GET that row exists with expected values and defaults
     resp_get = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
-    assert resp_get.status_code == 200
+    assert resp_get.status_code == HTTPStatus.OK
     items = resp_get.json()
     found = next((s for s in items if UUID(s["shot_id"]) == shot_id), None)
     assert found is not None
     assert found["x"] == pytest.approx(1.23)
     assert found["y"] == pytest.approx(-4.56)
-    assert found["score"] == 9
+    assert found["score"] == TEST_SCORE
     assert found["is_x"] is False
     assert found["arrow_id"] is None
 
@@ -164,10 +178,10 @@ async def test_create_shot_rejects_score_out_of_range(
             "slot_id": str(slot_id),
             "x": 0.0,
             "y": 0.0,
-            "score": -1,
+            "score": INVALID_SCORE_LOW,
         },
     )
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # score > 10
     resp = await client.post(
@@ -176,10 +190,10 @@ async def test_create_shot_rejects_score_out_of_range(
             "slot_id": str(slot_id),
             "x": 0.0,
             "y": 0.0,
-            "score": 11,
+            "score": INVALID_SCORE_HIGH,
         },
     )
-    assert resp.status_code == 422
+    assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # boundaries 0 and 10 allowed
     ok0 = await client.post(
@@ -188,10 +202,10 @@ async def test_create_shot_rejects_score_out_of_range(
             "slot_id": str(slot_id),
             "x": 0.0,
             "y": 0.0,
-            "score": 0,
+            "score": MIN_SCORE,
         },
     )
-    assert ok0.status_code == 201
+    assert ok0.status_code == HTTPStatus.CREATED
 
     ok10 = await client.post(
         "/api/v0/shot",
@@ -199,10 +213,10 @@ async def test_create_shot_rejects_score_out_of_range(
             "slot_id": str(slot_id),
             "x": 0.5,
             "y": 0.5,
-            "score": 10,
+            "score": MAX_SCORE,
         },
     )
-    assert ok10.status_code == 201
+    assert ok10.status_code == HTTPStatus.CREATED
 
 
 @pytest.mark.asyncio
@@ -222,26 +236,26 @@ async def test_create_shot_rejects_incomplete_coordinates_set(
 
     # Only x provided
     r1 = await client.post("/api/v0/shot", json={"slot_id": str(slot_id), "x": 0.1})
-    assert r1.status_code == 422
+    assert r1.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # x and y provided, missing score
     r2 = await client.post("/api/v0/shot", json={"slot_id": str(slot_id), "x": 0.1, "y": 0.2})
-    assert r2.status_code == 422
+    assert r2.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # Only score provided
     r3 = await client.post("/api/v0/shot", json={"slot_id": str(slot_id), "score": 5})
-    assert r3.status_code == 422
+    assert r3.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     # Valid: all None (omit all three)
     r4 = await client.post("/api/v0/shot", json={"slot_id": str(slot_id)})
-    assert r4.status_code == 201
+    assert r4.status_code == HTTPStatus.CREATED
 
     # Valid: all present
     r5 = await client.post(
         "/api/v0/shot",
         json={"slot_id": str(slot_id), "x": -0.3, "y": 1.1, "score": 7},
     )
-    assert r5.status_code == 201
+    assert r5.status_code == HTTPStatus.CREATED
 
 
 @pytest.mark.asyncio
@@ -262,7 +276,7 @@ async def test_create_multiple_shots_success(
 
     # Prepare 6 shots
     shots_payload = []
-    for i in range(6):
+    for i in range(SHOT_BATCH_SIZE):
         shots_payload.append(
             {
                 "slot_id": str(slot_id),
@@ -276,25 +290,25 @@ async def test_create_multiple_shots_success(
     resp = await client.post("/api/v0/shot", json=shots_payload)
 
     # Assert
-    assert resp.status_code == 201
+    assert resp.status_code == HTTPStatus.CREATED
     data = resp.json()
     assert isinstance(data, list)
-    assert len(data) == 6
+    assert len(data) == SHOT_BATCH_SIZE
     # Verify they are all valid UUIDs
     created_ids = [UUID(item["shot_id"]) for item in data]
-    assert len(set(created_ids)) == 6
+    assert len(set(created_ids)) == SHOT_BATCH_SIZE
 
     # Verify persistence
     resp_get = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
-    assert resp_get.status_code == 200
+    assert resp_get.status_code == HTTPStatus.OK
     fetched_shots = resp_get.json()
-    assert len(fetched_shots) == 6
+    assert len(fetched_shots) == SHOT_BATCH_SIZE
 
     # Verify content of one of them (e.g. score 5)
-    shot_5 = next((s for s in fetched_shots if s["score"] == 5), None)
+    shot_5 = next((s for s in fetched_shots if s["score"] == TARGET_SCORE), None)
     assert shot_5 is not None
-    assert shot_5["x"] == 5.0
-    assert shot_5["y"] == 5.0
+    assert shot_5["x"] == TARGET_X_Y
+    assert shot_5["y"] == TARGET_X_Y
 
 
 @pytest.mark.asyncio
@@ -345,7 +359,7 @@ async def test_create_multiple_shots_different_slots_fails(
     resp = await client.post("/api/v0/shot", json=shots_payload)
 
     # Assert
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "All shots must belong to the same slot"
 
 
@@ -363,7 +377,7 @@ async def test_create_shots_empty_list_fails(
     resp = await client.post("/api/v0/shot", json=[])
 
     # Assert
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "Invalid input"
 
 
@@ -393,7 +407,7 @@ async def test_create_shots_fewer_than_three_fails(
     resp = await client.post("/api/v0/shot", json=shots_payload)
 
     # Assert
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "Invalid input"
 
 
@@ -422,5 +436,5 @@ async def test_create_shots_more_than_ten_fails(
     resp = await client.post("/api/v0/shot", json=shots_payload)
 
     # Assert
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "Invalid input"

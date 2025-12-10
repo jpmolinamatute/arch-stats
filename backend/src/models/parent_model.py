@@ -2,7 +2,7 @@ import logging
 from abc import ABC
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol
 from uuid import UUID
 
 from asyncpg import Pool, Record
@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from core.logger import get_logger
 from models.sql_statement_builder import SQLStatementBuilder
 
-
 type SimpleValues = str | float | bool | int
 type Values = SimpleValues | UUID | datetime | bytes | None | Sequence[int] | Sequence[float]
 type ValuesTuple = Sequence[Values]
@@ -22,12 +21,6 @@ type ValuesTuple = Sequence[Values]
 
 class HasId(Protocol):
     def get_id(self) -> UUID: ...
-
-
-CREATETYPE = TypeVar("CREATETYPE", bound=BaseModel)
-SETTYPE = TypeVar("SETTYPE", bound=BaseModel)
-READTYPE = TypeVar("READTYPE", bound=HasId)
-FILTERTYPE = TypeVar("FILTERTYPE", bound=BaseModel)
 
 
 class DBException(Exception):
@@ -38,7 +31,12 @@ class DBNotFound(Exception):
     pass
 
 
-class ParentModel(Generic[CREATETYPE, SETTYPE, READTYPE, FILTERTYPE], ABC):
+class ParentModel[
+    CREATETYPE: BaseModel,
+    SETTYPE: BaseModel,
+    READTYPE: HasId,
+    FILTERTYPE: BaseModel,
+](ABC):
     """Abstract base for asyncpg-backed CRUD models.
 
     Implements shared helpers for parameterized SQL execution and common CRUD

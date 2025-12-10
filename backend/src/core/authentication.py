@@ -95,7 +95,9 @@ def decode_token(token: str, attr_name: str) -> str | int | float | None:
         jwt.ExpiredSignatureError: If the token has expired.
     """
     decoded = jwt.decode(
-        token, settings.arch_stats_jwt_secret, algorithms=[settings.arch_stats_jwt_algorithm]
+        token,
+        settings.arch_stats_jwt_secret,
+        algorithms=[settings.arch_stats_jwt_algorithm],
     )
     value: str | int | float | None = decoded.get(attr_name, None)
     return value
@@ -138,7 +140,9 @@ def build_jwt(archer_id: UUID, sid_b64: str, issued_at: datetime, expires_at: da
         "typ": "access",
     }
     return jwt.encode(
-        payload, settings.arch_stats_jwt_secret, algorithm=settings.arch_stats_jwt_algorithm
+        payload,
+        settings.arch_stats_jwt_secret,
+        algorithm=settings.arch_stats_jwt_algorithm,
     )
 
 
@@ -182,7 +186,9 @@ async def update_archer_last_login(
     await archers.update(data, where)
 
 
-def build_needs_registration_response(user_info: GoogleUserData) -> AuthNeedsRegistration:
+def build_needs_registration_response(
+    user_info: GoogleUserData,
+) -> AuthNeedsRegistration:
     """Compose the AuthNeedsRegistration payload from Google claims."""
 
     given = user_info.get("given_name", None)
@@ -220,7 +226,7 @@ async def authenticate_archer(
     return AuthAuthenticated(access_token=jwt_token, expires_at=expires_at, archer=archer)
 
 
-async def login_existing_archer(
+async def login_existing_archer(  # noqa: PLR0913
     *,
     auth_deps: AuthDeps,
     user_info: GoogleUserData,
@@ -240,7 +246,7 @@ async def login_existing_archer(
     )
 
 
-async def register_archer(
+async def register_archer(  # noqa: PLR0913
     *,
     auth_deps: AuthDeps,
     payload: AuthRegistrationRequest,

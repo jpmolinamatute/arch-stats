@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from http import HTTPStatus
 from typing import Any
 from uuid import UUID
 
@@ -23,10 +24,10 @@ async def join_session(
         "draw_weight": 30.0,
     }
     r = await client.post("/api/v0/session/slot", json=payload)
-    assert r.status_code == 200
+    assert r.status_code == HTTPStatus.OK
     join_data = r.json()
     # Augment with target_id by querying current slot info
     cs = await client.get(f"/api/v0/session/slot/archer/{archer_id}")
-    assert cs.status_code == 200
+    assert cs.status_code == HTTPStatus.OK
     join_data["target_id"] = cs.json()["target_id"]
     return join_data

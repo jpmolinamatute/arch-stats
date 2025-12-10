@@ -38,8 +38,7 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
             )
             await self.execute("REFRESH MATERIALIZED VIEW open_participants;")
 
-    # pylint: disable=[too-many-arguments]
-    async def create_one(
+    async def create_one(  # noqa: PLR0913
         self,
         *,
         session_id: UUID,
@@ -51,7 +50,6 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
         draw_weight: float,
         club_id: UUID | None,
     ) -> UUID:
-
         new_slotassignment = SlotCreate(
             session_id=session_id,
             target_id=target_id,

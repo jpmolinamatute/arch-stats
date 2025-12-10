@@ -1,13 +1,11 @@
 import logging
 import sys
+from functools import lru_cache
 from logging import Formatter, Handler, StreamHandler
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 from core.settings import settings
-
-
-GLOBAL_LOGGER: logging.Logger | None = None
 
 
 def create_file_handler(formatter: Formatter, log_level: logging._Level) -> Handler:
@@ -53,21 +51,21 @@ def create_stream_handler(formatter: Formatter, log_level: logging._Level) -> Ha
     return console_handler
 
 
+@lru_cache
 def get_logger() -> logging.Logger:
-    global GLOBAL_LOGGER  # pylint: disable=global-statement
     log_level = logging.DEBUG if settings.arch_stats_dev_mode else logging.INFO
 
-    if GLOBAL_LOGGER is None:
-        logging.basicConfig(force=True, level=logging.DEBUG)
-        GLOBAL_LOGGER = logging.getLogger(__name__)
+    logging.basicConfig(force=True, level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
-        GLOBAL_LOGGER.setLevel(log_level)
-        formatter = Formatter(
-            "%(asctime)s|%(pathname)s:%(lineno)d|%(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        file_handler = create_file_handler(formatter, log_level)
-        console_handler = create_stream_handler(formatter, log_level)
-        GLOBAL_LOGGER.addHandler(file_handler)
-        GLOBAL_LOGGER.addHandler(console_handler)
-    return GLOBAL_LOGGER
+    logger.setLevel(log_level)
+    formatter = Formatter(
+        "%(asctime)s|%(pathname)s:%(lineno)d|%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    file_handler = create_file_handler(formatter, log_level)
+    console_handler = create_stream_handler(formatter, log_level)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger

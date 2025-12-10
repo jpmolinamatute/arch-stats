@@ -3,7 +3,6 @@ from fastapi import APIRouter, HTTPException, status
 from core import face_data
 from schema import Face, FaceMinimal, FaceType
 
-
 router = APIRouter(prefix="/faces", tags=["Faces"])
 
 

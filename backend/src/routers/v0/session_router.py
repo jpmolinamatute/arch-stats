@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,7 +7,6 @@ from models import DBException, DBNotFound, SessionModel
 from routers.deps.auth import require_auth
 from routers.deps.models import get_session_model
 from schema import SessionCreate, SessionFilter, SessionId, SessionRead
-
 
 router = APIRouter(prefix="/session", tags=["Sessions"])
 
@@ -18,8 +18,8 @@ router = APIRouter(prefix="/session", tags=["Sessions"])
 )
 async def get_open_session_for_archer(
     archer_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    session_model: SessionModel = Depends(get_session_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> SessionId:
     """
     Get the open session ID owned by the archer.
@@ -39,8 +39,8 @@ async def get_open_session_for_archer(
 )
 async def get_closed_session_for_archer(
     archer_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    session_model: SessionModel = Depends(get_session_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> list[SessionRead]:
     """
     Get the closed session ID owned by the archer.
@@ -59,8 +59,8 @@ async def get_closed_session_for_archer(
 )
 async def get_participating_session_for_archer(
     archer_id: UUID,
-    current_archer_id: UUID = Depends(require_auth),
-    session_model: SessionModel = Depends(get_session_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> SessionId:
     """
     Get the open session ID of the open session an archer is currently participating in.
@@ -76,7 +76,7 @@ async def get_participating_session_for_archer(
 
 @router.get("/open", response_model=list[SessionRead], status_code=status.HTTP_200_OK)
 async def get_all_open_sessions(
-    session_model: SessionModel = Depends(get_session_model),
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> list[SessionRead]:
     """
     List all open sessions.
@@ -93,8 +93,8 @@ async def get_all_open_sessions(
 @router.post("", response_model=SessionId, status_code=status.HTTP_201_CREATED)
 async def create_session(
     session_data: SessionCreate,
-    current_archer_id: UUID = Depends(require_auth),
-    session_model: SessionModel = Depends(get_session_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> SessionId:
     """
     Create a session and initial slot assignment.
@@ -122,7 +122,7 @@ async def create_session(
 @router.get("/{session:uuid}", response_model=SessionRead, status_code=status.HTTP_200_OK)
 async def get_session(
     session: UUID,
-    session_model: SessionModel = Depends(get_session_model),
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> SessionRead:
     """
     Get session details.
@@ -138,8 +138,8 @@ async def get_session(
 @router.patch("/re-open", response_model=SessionId, status_code=status.HTTP_200_OK)
 async def re_open_session(
     session: SessionId,
-    current_archer_id: UUID = Depends(require_auth),
-    session_model: SessionModel = Depends(get_session_model),
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> SessionId:
     """
     Re-open a closed session.
@@ -164,7 +164,7 @@ async def re_open_session(
 @router.patch("/close", response_model=dict[str, str], status_code=status.HTTP_200_OK)
 async def close_session(
     session: SessionId,
-    session_model: SessionModel = Depends(get_session_model),
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> dict[str, str]:
     """
     Close a session.

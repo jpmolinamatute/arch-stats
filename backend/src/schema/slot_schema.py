@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from schema.enums import BowStyleType, SlotLetterType
 from schema.face_schema import FaceType
 
-
 # SlotCreate and SlotJoinRequest are involved in the creation of a row in the
 # slots table. However, since the client is going to "Request" for a slot availability,
 # the client doesn't know the target_id nor the slot. In contrast, SlotCreate doesn't care

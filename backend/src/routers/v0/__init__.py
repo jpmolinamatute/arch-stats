@@ -5,7 +5,6 @@ from routers.v0.session_router import router as session_router
 from routers.v0.shot_router import router as shot_router
 from routers.v0.slot_router import router as slot_router
 
-
 __all__ = [
     "auth_router",
     "archer_router",

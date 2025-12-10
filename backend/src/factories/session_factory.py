@@ -14,7 +14,6 @@ from asyncpg import Connection, Pool
 from asyncpg.pool import PoolConnectionProxy
 from faker import Faker
 
-
 fake = Faker()
 
 

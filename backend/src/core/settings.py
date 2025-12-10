@@ -9,7 +9,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from schema import JWTAlgorithm
 
-
 _ENV_FILE = Path(__file__).resolve().parent / ".env"
 _ENV_FILE_STR = str(_ENV_FILE) if _ENV_FILE.exists() else None
 
@@ -127,7 +126,7 @@ class Settings(BaseSettings):
         )
 
     @model_validator(mode="after")
-    def validate_postgres_connection(self) -> "Settings":
+    def validate_postgres_connection(self) -> Settings:
         """Validate PostgreSQL connection configuration.
 
         In production (arch_stats_dev_mode=False), postgres_socket_dir MUST be provided

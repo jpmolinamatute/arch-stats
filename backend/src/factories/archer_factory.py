@@ -12,7 +12,6 @@ from asyncpg import Pool
 
 from schema import BowStyleType, GenderType
 
-
 _BOWSTYLE = [style.value for style in BowStyleType]
 _GENDERS = [gender.value for gender in GenderType]
 

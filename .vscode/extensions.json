@@ -5,14 +5,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "foxundermoon.shell-format",
-        "github.copilot-chat",
-        "github.copilot",
-        "github.vscode-github-actions",
-        "ms-python.black-formatter",
         "ms-python.debugpy",
-        "ms-python.isort",
         "ms-python.mypy-type-checker",
-        "ms-python.pylint",
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-python.vscode-python-envs",
@@ -22,5 +16,6 @@
         "timonwong.shellcheck",
         "vitest.explorer",
         "dorzey.vscode-sqlfluff",
+        "charliermarsh.ruff",
     ]
 }
