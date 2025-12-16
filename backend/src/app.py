@@ -15,6 +15,7 @@ from routers.v0 import (
     session_router,
     shot_router,
     slot_router,
+    websocket,
 )
 
 
@@ -74,6 +75,7 @@ def run() -> FastAPI:
     app.include_router(slot_router, prefix=f"/api/{mayor_version}")
     app.include_router(shot_router, prefix=f"/api/{mayor_version}")
     app.include_router(faces_router, prefix=f"/api/{mayor_version}")
+    app.include_router(websocket, prefix=f"/api/{mayor_version}")
 
     @app.api_route(
         "/api/{path:path}",

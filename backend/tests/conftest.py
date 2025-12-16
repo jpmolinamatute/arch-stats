@@ -16,8 +16,6 @@ from core import AuthDeps, DBPool, settings
 from models import ArcherModel, AuthModel
 from routers.v0.auth_router import get_deps
 
-# pylint: disable=redefined-outer-name
-
 
 @pytest_asyncio.fixture
 async def app() -> AsyncGenerator[FastAPI]:

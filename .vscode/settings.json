@@ -234,6 +234,22 @@
         "**/.mypy_cache/",
         "**/.pytest_cache/"
     ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "--config-file=./pyproject.toml"
+    ],
+    "python.testing.cwd": "${workspaceFolder}/backend",
+    "python.testing.pytestPath": ".venv/bin/pytest",
+    "python.testing.unittestEnabled": false,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python-envs.defaultPackageManager": "uv",
+    "python-envs.defaultEnvManager": "uv",
+    "python.terminal.activateEnvironment": false,
+    "python.languageServer": "Pylance",
+    "python.analysis.typeEvaluation.deprecateTypingAliases": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.autoFormatStrings": true,
     "python.analysis.exclude": [
         "**/ignore/",
         "**/.git/",
@@ -249,14 +265,6 @@
         "reportCallIssue": "none"
     },
     "python.analysis.typeCheckingMode": "standard",
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "--config-file=${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "python.testing.cwd": "${workspaceFolder}/backend",
-    "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
-    "python.testing.unittestEnabled": false,
-    "python.analysis.typeEvaluation.deprecateTypingAliases": true,
     "shellcheck.customArgs": [
         "--shell=bash",
         "--color=never",
@@ -316,9 +324,5 @@
     "workbench.externalBrowser": "/opt/google/chrome/chrome",
     "workbench.editor.restoreViewState": false,
     "terminal.integrated.tabs.title": "${process}:${task}",
-    "eslint.useESLintClass": true,
-    "python.terminal.activateEnvInCurrentTerminal": false,
-    "python-envs.defaultPackageManager": "",
-    "python.terminal.activateEnvironment": false,
-    "python-envs.defaultEnvManager": ""
+    "eslint.useESLintClass": true
 }

@@ -310,7 +310,6 @@ class SQLStatementBuilder:
             function_name=function_name, placeholders=placeholders
         )
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def build_select_view(
         self,
         view_name: str,

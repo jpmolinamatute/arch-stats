@@ -32,7 +32,7 @@ class DBPool:
 
         if cls._pool is not None:
             # We are ignoring a false positive, cls._get_lock() always returns a asyncio.Lock
-            async with cls._get_lock():  # pylint: disable=not-async-context-manager
+            async with cls._get_lock():
                 await cls._pool.close()
                 cls._pool = None
 
@@ -43,7 +43,7 @@ class DBPool:
         if cls._pool is None:
             max_inactive_connection_lifetime = settings.postgres_max_inactive_connection_lifetime
             # We are ignoring a false positive, cls._get_lock() always returns a asyncio.Lock
-            async with cls._get_lock():  # pylint: disable=not-async-context-manager
+            async with cls._get_lock():
                 cls._pool = await create_pool(
                     user=settings.postgres_user,
                     database=settings.postgres_db,

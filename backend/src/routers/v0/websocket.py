@@ -9,7 +9,7 @@ from schema import WebSocketMessage
 router = APIRouter()
 
 
-@router.websocket("/ws/shot/by-slot/{slot_id:uuid}")
+@router.websocket("/ws/{slot_id:uuid}")
 async def websocket_shot(
     websocket: WebSocket,
     slot_id: UUID,

@@ -24,7 +24,7 @@ async def require_auth(request: Request) -> UUID:
                 detail="User is not authorized to use this endpoint",
             )
         return UUID(sub)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized to use this endpoint",

@@ -13,7 +13,7 @@ from schema import ArcherRead, BowStyleType, GenderType
 @pytest.mark.asyncio
 async def test_dummy_login_creates_new_archer(
     client: AsyncClient,
-    setup_auth_deps: None,  # pylint: disable=unused-argument
+    setup_auth_deps: None,
     mock_archers: AsyncMock,
     mock_sessions: AsyncMock,
 ) -> None:
@@ -79,7 +79,7 @@ async def test_dummy_login_creates_new_archer(
 @pytest.mark.asyncio
 async def test_dummy_login_existing_archer(
     client: AsyncClient,
-    setup_auth_deps: None,  # pylint: disable=unused-argument
+    setup_auth_deps: None,
     mock_archers: AsyncMock,
     mock_sessions: AsyncMock,
 ) -> None:
@@ -128,7 +128,7 @@ async def test_dummy_login_existing_archer(
 @pytest.mark.asyncio
 async def test_dummy_login_disabled_in_prod(
     client: AsyncClient,
-    setup_auth_deps: None,  # pylint: disable=unused-argument
+    setup_auth_deps: None,
 ) -> None:
     """Test dummy login fails when dev mode is False."""
     with patch.object(settings, "arch_stats_dev_mode", False):
