@@ -4,6 +4,7 @@ from routers.v0.faces_router import router as faces_router
 from routers.v0.session_router import router as session_router
 from routers.v0.shot_router import router as shot_router
 from routers.v0.slot_router import router as slot_router
+from routers.v0.websocket import router as websocket
 
 __all__ = [
     "auth_router",
@@ -12,4 +13,5 @@ __all__ = [
     "slot_router",
     "shot_router",
     "faces_router",
+    "websocket",
 ]

@@ -136,7 +136,6 @@ async def test_leave_session_clears_participation(
 async def test_fifth_archer_joins_new_target_when_first_is_full(
     client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
 ) -> None:
-    # pylint: disable=too-many-locals
     """When 4 archers occupy a target at the same distance, the next archer must be
     allocated to a new target (new target_id and next lane starting at 2).
 
