@@ -18,7 +18,14 @@ from schema.auth_schema import (
     GoogleOneTapRequest,
     LogoutResponse,
 )
-from schema.enums import AuthStatus, BowStyleType, GenderType, JWTAlgorithm, SlotLetterType
+from schema.enums import (
+    AuthStatus,
+    BowStyleType,
+    GenderType,
+    JWTAlgorithm,
+    SlotLetterType,
+    WSContentType,
+)
 from schema.face_schema import Face, FaceMinimal, FaceType, Ring, Spot
 from schema.session_schema import (
     SessionCreate,
@@ -114,4 +121,5 @@ __all__ = [
     "TargetSet",
     "TargetUpdate",
     "WebSocketMessage",
+    "WSContentType",
 ]

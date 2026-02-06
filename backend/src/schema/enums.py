@@ -1,12 +1,12 @@
-import enum
+from enum import StrEnum
 
 
-class AuthStatus(str, enum.Enum):
+class AuthStatus(StrEnum):
     AUTHENTICATED = "authenticated"
     NEEDS_REGISTRATION = "needs_registration"
 
 
-class GenderType(str, enum.Enum):
+class GenderType(StrEnum):
     MALE = "male"
     FEMALE = "female"
     NON_BINARY = "non_binary"
@@ -14,21 +14,21 @@ class GenderType(str, enum.Enum):
     UNSPECIFIED = "unspecified"
 
 
-class BowStyleType(str, enum.Enum):
+class BowStyleType(StrEnum):
     RECURVE = "recurve"
     COMPOUND = "compound"
     BAREBOW = "barebow"
     LONGBOW = "longbow"
 
 
-class SlotLetterType(str, enum.Enum):
+class SlotLetterType(StrEnum):
     A = "A"
     B = "B"
     C = "C"
     D = "D"
 
 
-class JWTAlgorithm(str, enum.Enum):
+class JWTAlgorithm(StrEnum):
     """Supported JWT signing algorithms.
 
     HS256, HS384, HS512: HMAC with SHA-256/384/512 (symmetric, secret-based)
@@ -45,3 +45,22 @@ class JWTAlgorithm(str, enum.Enum):
     ES256 = "ES256"
     ES384 = "ES384"
     ES512 = "ES512"
+
+
+class WSContentType(StrEnum):
+    SHOT_CREATED = "shot.created"
+    SHOT_DELETED = "shot.deleted"
+    ARROW_CREATED = "arrow.created"
+    ARROW_DELETED = "arrow.deleted"
+
+
+class FaceType(StrEnum):
+    WA_40_FULL = "wa_40cm_full"
+    WA_60_FULL = "wa_60cm_full"
+    WA_80_FULL = "wa_80cm_full"
+    WA_122_FULL = "wa_122cm_full"
+    WA_80_6RINGS = "wa_80cm_6rings"
+    WA_122_6RINGS = "wa_122cm_6rings"
+    WA_40_TRIPLE_VERTICAL = "wa_40cm_triple_vertical"
+    WA_60_TRIPLE_TRIANGULAR = "wa_60cm_triple_triangular"
+    NONE = "none"

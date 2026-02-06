@@ -1,18 +1,6 @@
-from enum import Enum
-
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class FaceType(str, Enum):
-    WA_40_FULL = "wa_40cm_full"
-    WA_60_FULL = "wa_60cm_full"
-    WA_80_FULL = "wa_80cm_full"
-    WA_122_FULL = "wa_122cm_full"
-    WA_80_6RINGS = "wa_80cm_6rings"
-    WA_122_6RINGS = "wa_122cm_6rings"
-    WA_40_TRIPLE_VERTICAL = "wa_40cm_triple_vertical"
-    WA_60_TRIPLE_TRIANGULAR = "wa_60cm_triple_triangular"
-    NONE = "none"
+from schema.enums import FaceType
 
 
 class Spot(BaseModel):
