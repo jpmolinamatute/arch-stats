@@ -138,9 +138,7 @@ class SQLStatementBuilder:
         # Iterate longest operators first to avoid partial matches.
         # Example: avoid matching "IS" inside "IS NOT DISTINCT FROM".
 
-        sorted_operators = cast(
-            list[str], sorted(allowed_operators, key=len, reverse=True)
-        )
+        sorted_operators = cast(list[str], sorted(allowed_operators, key=len, reverse=True))
 
         for operator in sorted_operators:
             if operator not in condition:

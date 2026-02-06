@@ -236,7 +236,7 @@ class ParentModel[
         try:
             affected = int(result.split()[-1])
             affected
-        except (IndexError, ValueError):
+        except IndexError, ValueError:
             affected = 0  # default to 0 if parsing fails
         return affected
 
