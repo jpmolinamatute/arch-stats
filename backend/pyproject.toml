@@ -10,73 +10,51 @@ authors = [
 requires-python = "==3.14.*"
 dependencies = [
     "asyncpg>=0.30.0",
-    "fastapi==0.121.2",
-    "google-auth==2.43.0",
+    "fastapi==0.128.0",
+    "google-auth>=2.47.0",
     "httpx>=0.28.1",
     "passlib[bcrypt]>=1.7.4",
-    "pydantic[email]==2.12.4",
+    "pydantic[email]==2.12.5",
     "pydantic-core==2.41.5",
     "pydantic-settings==2.12.0",
     "pyjwt>=2.10.1",
     "requests>=2.32.5",
-    "uvicorn[standard]==0.38.0",
+    "uvicorn[standard]==0.40.0",
     "uvloop==0.22.1",
+    "starlette>=0.49.3",
 ]
 [dependency-groups]
 dev = [
     "asyncpg-stubs>=0.30.2",
-    "faker==38.0.0",
-    "mypy==1.18.2",
+    "faker>=40.1.2",
     "pytest-asyncio==1.3.0",
-    "pytest==9.0.1",
-    "ruff>=0.14.8",
+    "pytest>=9.0.2",
+    "ruff>=0.15.0",
+    "ty>=0.0.15",
 ]
 
 [tool.uv]
 python-preference = "only-managed"
 required-version = ">=0.7.17"
 
-[tool.mypy]
-strict = true
-python_version = "3.14"
-plugins = ["pydantic.mypy"]
-sqlite_cache = true
-show_column_numbers = true
-show_error_codes = true
-follow_imports = "silent"
-warn_unreachable = true
-exclude = "(__pycache__|.mypy_cache|.pytest_cache|.venv)/"
-# Treat only configured roots as package bases and resolve imports from ./src
-explicit_package_bases = true
-mypy_path = ["./src"]
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_untyped_fields = true
-
 [tool.ruff]
+required-version = ">=0.14.8"
 lint.extend-select = ["PTH", "FAST", "I", "PL", "UP"]
 lint.fixable = ["ALL"]
 lint.unfixable = []
+lint.typing-extensions = true
+src = ["src", "tests"]
 exclude = [
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".venv",
-    ".git",
-    ".vscode",
-    ".github",
+    "**/__pycache__/",
+    ".pytest_cache/",
+    ".venv/"
 ]
-include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+include = ["src/**/*.py", "tests/**/*.py"]
 line-length = 100
-target-version = "py314"
+format.quote-style = "double"
+format.indent-style = "space"
+format.line-ending = "lf"
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -88,6 +66,9 @@ filterwarnings = [
     # See: https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings
     "ignore:Core Pydantic V1 functionality isn't compatible with Python 3\\.14 or greater\\.:UserWarning:fastapi\\._compat\\.v1",
 ]
+
+[tool.ty.environment]
+python-platform = "linux"
 
 [tool.sqlfluff.core]
 dialect = "postgres"

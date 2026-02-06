@@ -1,186 +1,4 @@
 {
-    "cSpell.words": [
-        "abstractproperty",
-        "actix",
-        "addopts",
-        "archstats",
-        "Archy",
-        "argparse",
-        "arrowspage",
-        "asdict",
-        "ASGI",
-        "asyncio",
-        "authd",
-        "autouse",
-        "backpressure",
-        "booleaness",
-        "bowstyle",
-        "bpython",
-        "chrono",
-        "citext",
-        "classmethod",
-        "conftest",
-        "consts",
-        "contextlib",
-        "contextmanager",
-        "CREATETYPE",
-        "Cython",
-        "cythonize",
-        "Datagram",
-        "dbname",
-        "Dockerized",
-        "docstrings",
-        "Docstrings",
-        "drivername",
-        "Eeuo",
-        "esac",
-        "executemany",
-        "fetchrow",
-        "FETCHTYPE",
-        "fetchval",
-        "FILTERTYPE",
-        "FIXIT",
-        "frontend",
-        "getopts",
-        "healthcheck",
-        "httpx",
-        "inlinevar",
-        "ixin",
-        "jsonable",
-        "keepalive",
-        "landingpage",
-        "levelname",
-        "loglever",
-        "Matute",
-        "maxfail",
-        "metaclass",
-        "minversion",
-        "MODELTYPE",
-        "msvs",
-        "mvdan",
-        "mymodule",
-        "mypackage",
-        "neato",
-        "nosec",
-        "nthreads",
-        "ondelete",
-        "OPTARG",
-        "OPTIND",
-        "optparse",
-        "overgeneral",
-        "PGDATABASE",
-        "PGHOST",
-        "PGPORT",
-        "PGSQL",
-        "PGUSER",
-        "pipefail",
-        "poolclass",
-        "Pydantic",
-        "pygtk",
-        "READTYPE",
-        "realpath",
-        "RFID",
-        "rgxs",
-        "rmax",
-        "runuser",
-        "scopedstyle",
-        "sessionspage",
-        "SETTYPE",
-        "setuptools",
-        "shotspage",
-        "slotassignment",
-        "submodel",
-        "targetspage",
-        "testarrow",
-        "testdb",
-        "testpaths",
-        "tgname",
-        "Timestamping",
-        "tungstenite",
-        "typealias",
-        "typevar",
-        "typname",
-        "untar",
-        "Uvicorn",
-        "uvloop",
-        "VARCHAR",
-        "virtualenv",
-        "Vite",
-        "zipball"
-    ],
-    "cSpell.ignoreWords": [
-        "Gollum",
-        "HANDGRENADE",
-        "LANCELOTS",
-        "Numpy",
-        "PGPASSWORD",
-        "Persei",
-        "Pyink",
-        "Smalltable",
-        "WSGI",
-        "absl",
-        "adict",
-        "afile",
-        "alist",
-        "asyncpg",
-        "atten",
-        "bridgekeeper",
-        "changeme",
-        "cpufreq",
-        "crbug",
-        "dataclasses",
-        "dunder",
-        "endline",
-        "finalizers",
-        "fontsize",
-        "getattr",
-        "getenv",
-        "golomb",
-        "hgwells",
-        "imag",
-        "kwargs",
-        "labeljust",
-        "labelloc",
-        "matplotlib",
-        "metaclasses",
-        "mmap",
-        "myproject",
-        "nein",
-        "numpy",
-        "nyet",
-        "onesie",
-        "otherproject",
-        "pathnames",
-        "pgcrypto",
-        "pydoc",
-        "pylintrc",
-        "pyplot",
-        "pytype",
-        "questlib",
-        "readlines",
-        "reparenting",
-        "scifi",
-        "serde",
-        "signum",
-        "smalltable",
-        "staticmethod",
-        "textwrap",
-        "unittested",
-        "urlopen",
-        "uuidgen",
-        "virtualenvs",
-        "wscat",
-        "yourusername"
-    ],
-    "debug.javascript.terminalOptions": {
-        "resolveSourceMapLocations": [
-            "${workspaceFolder}/frontend/**",
-            "!${workspaceFolder}/frontend/node_modules/**",
-            "${workspaceFolder}/frontend/node_modules/.vite-temp/**"
-        ]
-    },
-    "editor.formatOnSave": true,
-    "editor.tabSize": 4,
     "eslint.enable": true,
     "eslint.validate": [
         "javascript",
@@ -191,127 +9,63 @@
         "./frontend"
     ],
     "eslint.format.enable": true,
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.fixAll.eslint": "explicit",
-        "source.fixAll.markdownlint": "explicit"
-    },
-    "markdownlint.config": {
-        "MD003": {
-            "style": "atx"
-        },
-        "MD030": {
-            "ul_single": 1,
-            "ol_single": 1,
-            "ul_multi": 1,
-            "ol_multi": 1
-        },
-        "MD007": {
-            "indent": 4
-        },
-        "MD013": {
-            "line_length": 100
-        },
-        "no-hard-tabs": true
-    },
-    "markdown.preview.scrollEditorWithPreview": false,
-    "markdown.preview.scrollPreviewWithEditor": false,
-    "mypy-type-checker.args": [
-        "--config-file",
-        "${workspaceFolder}/backend/pyproject.toml"
-    ],
-    "mypy-type-checker.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
-    "mypy-type-checker.cwd": "${workspaceFolder}/backend",
-    "mypy-type-checker.path": [
-        "${workspaceFolder}/backend/.venv/bin/mypy"
-    ],
-    "mypy-type-checker.ignorePatterns": [
-        "**/ignore/",
-        "**/.venv/",
-        "**/__pycache__/",
-        "**/.mypy_cache/",
-        "**/.pytest_cache/"
-    ],
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "--config-file=./pyproject.toml"
+        "--config-file=${workspaceFolder}/backend/pyproject.toml"
     ],
     "python.testing.cwd": "${workspaceFolder}/backend",
-    "python.testing.pytestPath": ".venv/bin/pytest",
+    "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
     "python.testing.unittestEnabled": false,
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "python-envs.defaultPackageManager": "uv",
-    "python-envs.defaultEnvManager": "uv",
-    "python.terminal.activateEnvironment": false,
-    "python.languageServer": "Pylance",
-    "python.analysis.typeEvaluation.deprecateTypingAliases": true,
-    "python.analysis.inlayHints.variableTypes": true,
-    "python.analysis.inlayHints.functionReturnTypes": true,
-    "python.analysis.autoFormatStrings": true,
-    "python.analysis.exclude": [
-        "**/ignore/",
-        "**/.git/",
-        "**/.venv/",
-        "**/__pycache__/",
-        "**/.mypy_cache/",
-        "**/.pytest_cache/"
-    ],
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/backend/src"
-    ],
-    "python.analysis.diagnosticSeverityOverrides": {
-        "reportCallIssue": "none"
+    "python.useEnvironmentsExtension": false,
+    "python.terminal.activateEnvironment": true,
+    "python.languageServer": "None",
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format",
+        "editor.formatOnSave": true
     },
-    "python.analysis.typeCheckingMode": "standard",
+    "shellcheck.enable": true,
+    "shellcheck.executablePath": "/usr/bin/shellcheck",
+    "shellcheck.run": "onSave",
     "shellcheck.customArgs": [
         "--shell=bash",
         "--color=never",
         "--external-sources"
     ],
     "shellformat.path": "/usr/bin/shfmt",
-    "shellformat.flag": "-i 4 -w",
+    "shellformat.flag": "-i 4 -s -ci -w",
     "sqlfluff.dialect": "postgres",
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/backend/src"
+        "PYTHONPATH": "./backend/src"
     },
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
-    "ruff.configuration": "${workspaceFolder}/backend/pyproject.toml",
+    "ruff.configuration": "./backend/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
     "ruff.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
+        "./backend/.venv/bin/python"
     ],
     "ruff.path": [
-        "${workspaceFolder}/backend/.venv/bin/ruff"
+        "./backend/.venv/bin/ruff"
     ],
-    "[markdown]": {
-        "editor.unicodeHighlight.nonBasicASCII": true,
-        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-    },
-    "[javascript]": {
-        "editor.insertSpaces": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
-    "[vue]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[shellscript]": {
-        "editor.defaultFormatter": "foxundermoon.shell-format"
-    },
-    "[html]": {
-        "editor.suggest.insertMode": "replace",
-        "editor.insertSpaces": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    "ty.importStrategy": "fromEnvironment",
+    "ty.diagnosticMode": "openFilesOnly",
+    "ty.disableLanguageServices": false,
+    "ty.interpreter": [
+        "${workspaceFolder}/backend/.venv/bin/python"
+    ],
+    "ty.path": [
+        "${workspaceFolder}/backend/.venv/bin/ty"
+    ],
+    "ty.configuration": {
+        "environment": {
+            "root": [
+                "backend/src"
+            ]
+        }
     },
     "[python]": {
         "editor.formatOnSave": true,
@@ -320,9 +74,5 @@
             "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         }
-    },
-    "workbench.externalBrowser": "/opt/google/chrome/chrome",
-    "workbench.editor.restoreViewState": false,
-    "terminal.integrated.tabs.title": "${process}:${task}",
-    "eslint.useESLintClass": true
+    }
 }

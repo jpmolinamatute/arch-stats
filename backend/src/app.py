@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from core import DBPool, get_logger, settings
@@ -55,17 +54,8 @@ def run() -> FastAPI:
             {"name": "Slots", "description": "Operations about slot assignments"},
             {"name": "Shots", "description": "Operations about shots domain"},
             {"name": "Faces", "description": "Operations about target faces domain"},
+            {"name": "Websocket", "description": "Websocket endpoints"},
         ],
-    )
-
-    # origin = "http://localhost:5173" if dev_mode else "https://arch-stats.com"
-    origin = "http://localhost:5173" if dev_mode else "http://127.0.0.1:8000"
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[origin],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
     )
 
     # Routers
@@ -99,8 +89,6 @@ def run() -> FastAPI:
 
     return app
 
-
-MY_APP = run()
 
 if __name__ == "__main__":
     run()

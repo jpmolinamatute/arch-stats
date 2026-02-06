@@ -112,7 +112,7 @@ class LiveStat(BaseModel):
 
 
 class Stats(BaseModel):
-    shot: ShotScore = Field(..., description="The latest shot score info")
+    shots: list[ShotScore] = Field(..., description="List of latest shot score info")
     stats: LiveStat = Field(..., description="Aggregated live statistics")
 
     model_config = ConfigDict(title="Stats", extra="forbid")

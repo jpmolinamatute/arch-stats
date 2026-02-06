@@ -1,17 +1,3 @@
-"""Authentication core utilities and services.
-
-This module centralizes auth-related logic so FastAPI routers remain thin and
-focused on HTTP concerns (dependency injection, cookie handling, response
-envelopes). All functions here are pure or DB-bound and do not manipulate HTTP
-objects directly.
-
-Rules:
-- Keep functions fully typed and framework-agnostic.
-- Accept primitives (strings, datetimes) instead of Request/Response.
-- Return domain models or simple primitives that routers can translate into
-  HTTP responses and cookies.
-"""
-
 import asyncio
 import base64
 import hashlib
@@ -112,7 +98,7 @@ async def verify_google_id_token(credential: str) -> GoogleUserData:
     Raises ValueError when verification fails.
     """
     try:
-        req = google_auth_requests.Request()  # type: ignore[no-untyped-call]
+        req = google_auth_requests.Request()
         verified = await asyncio.to_thread(
             id_token.verify_oauth2_token,
             credential,

@@ -8,14 +8,14 @@ ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 usage() {
     cat <<'EOF'
-Usage: scripts/linting.bash [--lint-backend] [--lint-frontend] [--lint-scripts]
+Usage: scripts/linting.bash [--backend] [--frontend] [--scripts]
 
 When one or more flags are provided, only the selected checks run and staged file detection is skipped.
 
 Options:
-    --lint-backend   Run Python format/lint/type/tests for backend
-    --lint-frontend  Run JS/TS lint/format/tests for frontend
-    --lint-scripts   Run shellcheck and shfmt over scripts/*.bash
+    --backend   Run Python format/lint/type/tests for backend
+    --frontend  Run JS/TS lint/format/tests for frontend
+    --scripts   Run shellcheck and shfmt over scripts/*.bash
     -h, --help       Show this help and exit
 EOF
 }
@@ -26,22 +26,20 @@ run_python_tests() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
     start_docker
     log_info "running python tests..."
-    pytest --config-file "${pyproject_path}"
+    uv run pytest --config-file "${pyproject_path}"
     stop_docker
 }
 
 run_python_checks() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
     cd "${ROOT_DIR}/backend"
-    export PYTHONPATH="${ROOT_DIR}/backend/src"
-    # shellcheck source=../backend/.venv/bin/activate
-    source "${ROOT_DIR}/backend/.venv/bin/activate"
+
+    log_info "Running Ty..."
+    uv run ty check
     log_info "Running ruff check --fix..."
-    ruff check --fix --config "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
-    log_info "Running mypy..."
-    mypy --config-file "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    uv run ruff check --fix --config "${pyproject_path}"
     log_info "Running ruff format..."
-    ruff format --config "${pyproject_path}" "${ROOT_DIR}/backend/src" "${ROOT_DIR}/backend/tests"
+    uv run ruff format --config "${pyproject_path}"
     run_python_tests
     cd -
 }
@@ -92,13 +90,13 @@ main() {
     if [[ $# -gt 0 ]]; then
         while [[ $# -gt 0 ]]; do
             case "$1" in
-            --lint-backend)
+            --backend)
                 needs_backend=true
                 ;;
-            --lint-frontend)
+            --frontend)
                 needs_frontend=true
                 ;;
-            --lint-scripts)
+            --scripts)
                 needs_scripts=true
                 ;;
             -h | --help)

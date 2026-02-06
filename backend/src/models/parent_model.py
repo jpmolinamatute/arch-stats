@@ -235,7 +235,8 @@ class ParentModel[
         # result is a string like 'UPDATE 1' or 'DELETE 0' or 'INSERT 1'
         try:
             affected = int(result.split()[-1])
-        except (IndexError, ValueError):
+            affected
+        except IndexError, ValueError:
             affected = 0  # default to 0 if parsing fails
         return affected
 

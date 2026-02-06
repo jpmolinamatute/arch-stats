@@ -86,15 +86,17 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
             """
 
             payload_str = payload if isinstance(payload, str) else str(payload)
-
             parsed = json.loads(payload_str)
-            # Check for required keys if payload is a JSON object
-            missing_keys = [k for k in ("shot_id", "score") if k not in parsed]
-            if missing_keys:
-                raise ValueError(f"Invalid payload structure: missing keys {missing_keys}")
+            shot_scores: list[ShotScore] = []
+            for item in parsed:
+                missing_keys = [k for k in ("shot_id", "score") if k not in item]
+                if missing_keys:
+                    raise ValueError(f"Invalid payload item: missing keys {missing_keys}")
+
+                shot_scores.append(ShotScore(shot_id=UUID(item["shot_id"]), score=item["score"]))
 
             stats = Stats(
-                shot=ShotScore(shot_id=UUID(parsed["shot_id"]), score=parsed["score"]),
+                shots=shot_scores,
                 stats=await self.get_live_stat(slot_id),
             )
             await queue.put(stats)

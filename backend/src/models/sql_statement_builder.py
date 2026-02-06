@@ -7,7 +7,7 @@ from the SQL text.
 """
 
 from string import Template
-from typing import Final
+from typing import Final, cast
 
 
 class SQLStatementBuilder:
@@ -124,11 +124,12 @@ class SQLStatementBuilder:
             "IS NOT DISTINCT FROM",
             "IS DISTINCT FROM",
             "IS NOT",
+            "NOT IN",
+            "LIKE",
             "IS",
             "<=",
             ">=",
             "<>",
-            "LIKE",
             "IN",
             "=",
             "<",
@@ -136,7 +137,10 @@ class SQLStatementBuilder:
         }
         # Iterate longest operators first to avoid partial matches.
         # Example: avoid matching "IS" inside "IS NOT DISTINCT FROM".
-        for operator in sorted(allowed_operators, key=len, reverse=True):
+
+        sorted_operators = cast(list[str], sorted(allowed_operators, key=len, reverse=True))
+
+        for operator in sorted_operators:
             if operator not in condition:
                 continue
 

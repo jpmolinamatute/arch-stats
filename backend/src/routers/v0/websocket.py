@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from models import ShotModel
 from routers.deps.models import get_shot_model
-from schema import WebSocketMessage
+from schema import WebSocketMessage, WSContentType
 
-router = APIRouter()
+router = APIRouter(prefix="/ws")
 
 
-@router.websocket("/ws/{slot_id:uuid}")
+@router.websocket("/{slot_id:uuid}")
 async def websocket_shot(
     websocket: WebSocket,
     slot_id: UUID,
@@ -24,7 +24,7 @@ async def websocket_shot(
     await websocket.accept()
     try:
         async for payload in shot_model.listen_for_shots(slot_id):
-            message = WebSocketMessage(data_content=payload)
+            message = WebSocketMessage(content=payload, content_type=WSContentType.SHOT_CREATED)
             await websocket.send_json(message.model_dump(mode="json"))
     except WebSocketDisconnect:
         # Client disconnected; the generator will be cancelled and listener removed
