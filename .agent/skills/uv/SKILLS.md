@@ -52,7 +52,7 @@ uv run ruff format --config ./pyproject.toml
 
 ## Type Checking
 
-we use ty
+we use ty for type annotation checking
 
 ```bash
 cd ./backend

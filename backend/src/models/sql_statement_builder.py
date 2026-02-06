@@ -7,7 +7,7 @@ from the SQL text.
 """
 
 from string import Template
-from typing import Final
+from typing import Final, cast
 
 
 class SQLStatementBuilder:
@@ -137,7 +137,10 @@ class SQLStatementBuilder:
         }
         # Iterate longest operators first to avoid partial matches.
         # Example: avoid matching "IS" inside "IS NOT DISTINCT FROM".
-        sorted_operators = sorted(allowed_operators, key=lambda x: len(x), reverse=True)  # noqa: PLW0108
+
+        sorted_operators = cast(
+            list[str], sorted(allowed_operators, key=len, reverse=True)
+        )
 
         for operator in sorted_operators:
             if operator not in condition:
