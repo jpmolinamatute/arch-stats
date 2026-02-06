@@ -1,8 +1,12 @@
+---
+trigger: always_on
+---
+
 # Arch-Stats – AI Coding Agent Guide
 
-Audience: AI coding agents (Copilot, etc.)  
+Audience: AI coding agents
 Repo: https://github.com/jpmolinamatute/arch-stats  
-Last updated: 2025-12-11
+Last updated: 2026-02-06
 
 ## Big Picture
 
@@ -96,8 +100,8 @@ export async function getOpenSession(): Promise<Session | null> {
 
 ## References
 
-- Backend rules: `.github/instructions/backend.instructions.md`
-- Frontend rules: `.github/instructions/frontend.instructions.md`
+- Backend rules: `.agent/rules/google_standards_python.md`
+- Frontend rules: `.agent/rules/google_standards_typescript.md`
 - Top-level docs: `backend/README.md`, `frontend/README.md`, `scripts/README.md`
 
 When unsure: prefer smallest changes, mirror existing patterns, and keep strict typing/validation. Open a PR with clarification notes instead of speculative refactors.
