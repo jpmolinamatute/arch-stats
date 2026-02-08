@@ -46,10 +46,10 @@
     "ruff.configuration": "./backend/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
     "ruff.interpreter": [
-        "./backend/.venv/bin/python"
+        "${workspaceFolder}/backend/.venv/bin/python"
     ],
     "ruff.path": [
-        "./backend/.venv/bin/ruff"
+        "${workspaceFolder}/backend/.venv/bin/ruff"
     ],
     "ty.importStrategy": "fromEnvironment",
     "ty.diagnosticMode": "openFilesOnly",

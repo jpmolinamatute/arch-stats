@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, status
+from starlette.requests import HTTPConnection
 
 from core import decode_token
 
 
-async def require_auth(request: Request) -> UUID:
+async def require_auth(request: HTTPConnection) -> UUID:
     """Validate JWT from auth cookie and return authenticated archer id.
 
     Raises 401 if the cookie is missing or invalid.

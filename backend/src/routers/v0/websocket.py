@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from models import ShotModel
-from routers.deps.models import get_shot_model
+from routers.deps.models import get_shot_model_ws
 from schema import WebSocketMessage, WSContentType
 
 router = APIRouter(prefix="/ws")
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/ws")
 async def websocket_shot(
     websocket: WebSocket,
     slot_id: UUID,
-    shot_model: ShotModel = Depends(get_shot_model),
+    shot_model: ShotModel = Depends(get_shot_model_ws),
 ) -> None:
     """WebSocket endpoint streaming shot notifications for a slot.
 

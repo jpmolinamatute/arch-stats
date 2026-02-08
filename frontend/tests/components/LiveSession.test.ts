@@ -17,7 +17,8 @@ import { useSlot } from '@/composables/useSlot'
 
 type SessionRead = components['schemas']['SessionRead']
 type SlotRead = components['schemas']['FullSlotInfo']
-interface UserSession {
+interface UserSession
+{
     archer_id: string
     email: string
     first_name?: string | null
@@ -39,6 +40,9 @@ vi.mock('@/composables/useSlot', () => ({
 vi.mock('@/composables/useShot', () => ({
     useShot: vi.fn().mockReturnValue({
         createShot: vi.fn(),
+        fetchShots: vi.fn(),
+        subscribeToShots: vi.fn(),
+        shots: { value: [], __v_isRef: true },
         loading: { value: false, __v_isRef: true },
         error: { value: null, __v_isRef: true },
     }),
@@ -92,6 +96,12 @@ vi.mock('@/components/widgets/MiniTable.vue', () => ({
         template: '<div data-testid="mini-table"></div>',
         props: ['shots', 'face', 'maxShots'],
         emits: ['delete', 'clear', 'confirm'],
+    },
+}))
+vi.mock('@/components/widgets/ShotsTable.vue', () => ({
+    default: {
+        template: '<div data-testid="shots-table"></div>',
+        props: ['shots'],
     },
 }))
 
@@ -507,6 +517,9 @@ describe('liveSession', () => {
         const mockCreateShot = vi.fn()
         vi.mocked(useShot).mockReturnValue({
             createShot: mockCreateShot,
+            fetchShots: vi.fn(),
+            subscribeToShots: vi.fn(),
+            shots: ref([]),
             loading: ref(false),
             error: ref(null),
         })
@@ -536,7 +549,7 @@ describe('liveSession', () => {
         expect(face.exists()).toBe(true)
 
         // Simulate shot event
-        ;(face as any).vm.$emit('shot', { score: 9, x: 100, y: 100, is_x: true })
+        ; (face as any).vm.$emit('shot', { score: 9, x: 100, y: 100, is_x: true })
 
         // Should NOT call API yet
         expect(mockCreateShot).not.toHaveBeenCalled()
@@ -545,9 +558,8 @@ describe('liveSession', () => {
         const miniTable = wrapper.findComponent(MiniTable)
         expect(miniTable.exists()).toBe(true)
 
-        ;(miniTable as any).vm.$emit('confirm')
+        ; (miniTable as any).vm.$emit('confirm')
 
-        // API should be called with array
         expect(mockCreateShot).toHaveBeenCalledWith([
             {
                 slot_id: 'slot_1',
@@ -557,5 +569,131 @@ describe('liveSession', () => {
                 is_x: true,
             },
         ])
+    })
+
+    it('toggles between Target and Shots view', async () => {
+        vi.mocked(useAuth).mockReturnValue({
+            bootstrapAuth: mockBootstrapAuth,
+            isAuthenticated: ref(true),
+            loading: ref(false),
+            pendingRegistration: ref(null),
+            user: ref<UserSession>({
+                first_name: 'John',
+                last_name: 'Doe',
+                archer_id: 'archer_1',
+                email: 'john@example.com',
+                is_admin: false,
+            }),
+            logout: vi.fn(),
+            disableGoogleAutoSelect: vi.fn(),
+            registerNewArcher: vi.fn(),
+            initialized: ref(true),
+            initError: ref(null),
+            prompting: ref(false),
+            initOneTap: vi.fn(),
+            clientId: 'mock-client-id',
+            beginGoogleLogin: vi.fn(),
+            loginAsDummy: vi.fn(),
+        })
+        vi.mocked(useSession).mockReturnValue({
+            checkForOpenSession: mockCheckForOpenSession,
+            currentSession: ref<SessionRead>({
+                session_id: 'sess_1',
+                session_location: 'Range A',
+                owner_archer_id: 'archer_1',
+                is_indoor: true,
+                is_opened: true,
+                shot_per_round: 3,
+                created_at: '2023-01-01',
+            }),
+            loading: ref(false),
+            error: ref(null),
+            createSession: vi.fn(),
+            closeSession: vi.fn(),
+            hasOpenSession: computed(() => true),
+            clearSessionCache: vi.fn(),
+        })
+        vi.mocked(useSlot).mockReturnValue({
+            currentSlot: ref<SlotRead>({
+                slot_id: 'slot_1',
+                face_type: 'wa_40cm_full',
+                session_id: 'sess_1',
+                target_id: 'target_1',
+                archer_id: 'archer_1',
+                is_shooting: true,
+                bowstyle: 'recurve',
+                draw_weight: 40,
+                distance: 18,
+                created_at: '2023-01-01',
+                slot_letter: 'A',
+                lane: 1,
+                slot: '1A',
+            }),
+            getSlot: mockGetSlot,
+            getSlotCached: mockGetSlotCached,
+            loading: ref(false),
+            error: ref(null),
+            joinSession: vi.fn(),
+            leaveSession: vi.fn(),
+            clearSlotCache: vi.fn(),
+        })
+
+        // Mock useShot
+        vi.mocked(useShot).mockReturnValue({
+            createShot: vi.fn(),
+            fetchShots: vi.fn(),
+            subscribeToShots: vi.fn(),
+            shots: ref([]),
+            loading: ref(false),
+            error: ref(null),
+        })
+
+        // Mock useFaces
+        vi.mocked(useFaces).mockReturnValue({
+            fetchFace: vi.fn().mockResolvedValue({
+                face_type: 'wa_40cm_full',
+                viewBox: 100,
+                rings: [],
+            }),
+            loading: ref(false),
+            error: ref(null),
+            faces: ref([]),
+            listFaces: vi.fn(),
+            face: ref(null),
+            createFace: vi.fn(),
+            updateFace: vi.fn(),
+            deleteFace: vi.fn(),
+        })
+
+        const wrapper = mount(LiveSession)
+        await new Promise(resolve => setTimeout(resolve, 0))
+        await new Promise(resolve => setTimeout(resolve, 0))
+
+        // Default: Target view visible
+        expect(wrapper.find('[data-testid="target-view"]').isVisible()).toBe(true)
+        expect(wrapper.find('[data-testid="shots-view"]').isVisible()).toBe(false)
+
+        // Find toggle button
+        const shotsButton = wrapper.find('[data-testid="view-shots-btn"]')
+
+        expect(shotsButton.exists()).toBe(true)
+        expect(shotsButton.classes()).toContain('text-slate-400')
+
+        // Click Shots button
+        await shotsButton.trigger('click')
+
+        // Force update
+        await wrapper.vm.$nextTick()
+
+        // Check if state updated by checking button class
+        expect(shotsButton.classes()).toContain('bg-indigo-600')
+
+        // Now Target should be hidden (v-show=false)
+        // Using style check because isVisible can be flaky in some JSDOM setups with v-show
+        expect(wrapper.find('[data-testid="target-view"]').attributes('style')).toContain('display: none')
+
+        // ShotsTable should be visible
+        const shotsViewStyle = wrapper.find('[data-testid="shots-view"]').attributes('style')
+        expect(shotsViewStyle).not.toContain('display: none')
     })
 })

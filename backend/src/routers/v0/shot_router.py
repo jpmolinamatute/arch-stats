@@ -3,9 +3,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from models import DBNotFound, ShotModel, SlotModel
+from models import DBNotFound, SessionModel, ShotModel, SlotModel
 from routers.deps.auth import require_auth
-from routers.deps.models import get_shot_model, get_slot_model
+from routers.deps.models import get_session_model, get_shot_model, get_slot_model
 from schema import ShotCreate, ShotFilter, ShotId, ShotRead, SlotFilter
 
 router = APIRouter(prefix="/shot", tags=["Shots"])
@@ -20,6 +20,7 @@ async def create_shot(
     current_archer_id: Annotated[UUID, Depends(require_auth)],
     shot_model: Annotated[ShotModel, Depends(get_shot_model)],
     slot_model: Annotated[SlotModel, Depends(get_slot_model)],
+    session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> ShotId | list[ShotId]:
     try:
         result: ShotId | list[ShotId]
@@ -28,6 +29,13 @@ async def create_shot(
             slot = await slot_model.get_one(SlotFilter(slot_id=shots.slot_id))
             if slot.archer_id != current_archer_id:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+            # Verify session is open
+            if not await session_model.does_open_session_exist(slot.session_id):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Cannot add shots to a closed session",
+                )
 
             shot_id = await shot_model.insert_one(shots)
             result = ShotId(shot_id=shot_id)
@@ -43,6 +51,13 @@ async def create_shot(
             slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
             if slot.archer_id != current_archer_id:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+            # Verify session is open
+            if not await session_model.does_open_session_exist(slot.session_id):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Cannot add shots to a closed session",
+                )
 
             shot_ids = await shot_model.insert_many(shots)
             result = [ShotId(shot_id=shot_id) for shot_id in shot_ids]

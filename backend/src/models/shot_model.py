@@ -69,9 +69,9 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
         """
 
         channel_name = f"{self.name}_insert_{slot_id}"
-        queue: asyncio.Queue[Stats] = asyncio.Queue()
+        queue: asyncio.Queue[list[ShotScore]] = asyncio.Queue()
 
-        async def _listener(
+        def _listener(
             _: Connection | PoolConnectionProxy,
             __: int,
             ___: str,
@@ -91,21 +91,29 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
             for item in parsed:
                 missing_keys = [k for k in ("shot_id", "score") if k not in item]
                 if missing_keys:
+                    # Log error but don't crash listener?
+                    # Or just queue nothing?
+                    # Raising ValueError here might crash the listener callback mechanism
+                    # but asyncpg just logs it usually.
+                    # Let's keep strict for now.
                     raise ValueError(f"Invalid payload item: missing keys {missing_keys}")
 
                 shot_scores.append(ShotScore(shot_id=UUID(item["shot_id"]), score=item["score"]))
 
-            stats = Stats(
-                shots=shot_scores,
-                stats=await self.get_live_stat(slot_id),
-            )
-            await queue.put(stats)
+            queue.put_nowait(shot_scores)
 
         async with self.db_pool.acquire() as conn:
             await conn.add_listener(channel_name, _listener)
             try:
                 while True:
-                    item: Stats = await queue.get()
-                    yield item
+                    shot_scores = await queue.get()
+                    # Now we are in the main loop, we can safely await async calls
+                    current_stats = await self.get_live_stat(slot_id)
+
+                    stats = Stats(
+                        shots=shot_scores,
+                        stats=current_stats,
+                    )
+                    yield stats
             finally:
                 await conn.remove_listener(channel_name, _listener)

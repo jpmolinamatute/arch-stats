@@ -1,7 +1,7 @@
 import logging
 
 from asyncpg import Pool
-from fastapi import Request
+from fastapi import Request, WebSocket
 
 from core import SlotManager
 from models import ArcherModel, SessionModel, ShotModel, SlotModel
@@ -41,6 +41,15 @@ async def get_shot_model(request: Request) -> ShotModel:
     logger: logging.Logger = request.app.state.logger
     logger.debug("Getting ShotModel")
     db_pool: Pool = request.app.state.db_pool
+    return ShotModel(db_pool)
+
+
+async def get_shot_model_ws(websocket: WebSocket) -> ShotModel:
+    """Dependency provider returning a `ShotModel` bound to the pool (WebSocket variant)."""
+    await require_auth(websocket)
+    logger: logging.Logger = websocket.app.state.logger
+    logger.debug("Getting ShotModel (WS)")
+    db_pool: Pool = websocket.app.state.db_pool
     return ShotModel(db_pool)
 
 

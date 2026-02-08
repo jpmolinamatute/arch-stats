@@ -92,20 +92,6 @@
                 },
                 "problemMatcher": [],
                 "detail": "Start Vite dev server for frontend"
-            },
-            {
-                "label": "Start Archy bot",
-                "type": "shell",
-                "command": "${workspaceFolder}/scripts/start_archy_bot.bash",
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "close": false,
-                    "focus": false,
-                    "panel": "dedicated"
-                },
-                "problemMatcher": [],
-                "detail": "This bot emulate an archer shooting arrows"
             }
         ]
     }
