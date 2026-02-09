@@ -1,4 +1,5 @@
 ---
+name: run-frontend-tests
 trigger: glob
 description: Use this rule whenever the user asks to run tests or verify frontend code integrity.
 globs: frontend/**/*

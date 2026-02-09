@@ -1,4 +1,5 @@
 ---
+name: run-type-generation
 trigger: glob
 description: CRITICAL. Use this rule whenever backend models change or when "generating types" for the frontend.
 globs: frontend/**/*
@@ -15,5 +16,5 @@ Follow this logic exactly:
 3. **Execution Logic:**
    * **If Backend is Running:** Execute `npm run generate:types`.
    * **If Backend is NOT Running:** Execute the fallback script: `./scripts/generate_fe_types.bash`.
-4. **Verification:** Confirm that the generated type files have been updated in the frontend
-   source tree.
+4. **Verification:** Confirm that the generated type files have been updated in the
+   frontend source tree.
