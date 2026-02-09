@@ -16,7 +16,7 @@ We use ty for type annotation checking. There are two ways to run type annotatio
    uv run ty check
    ```
 
-2. Via script, this will also run formatting, lint and tests:
+2. Via script (run from project root), this will also run formatting, lint and tests:
 
    ```bash
    ./scripts/linting.bash --backend

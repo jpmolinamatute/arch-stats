@@ -14,5 +14,6 @@ description: Starts or stops the Docker Compose infrastructure (Postgres 17).
 
 ## Verification
 
-- Run `docker ps` to ensure the database container is healthy before starting the Backend
-  or Frontend servers.
+- Run `docker compose -f ./docker/docker-compose.yaml ps --all` from the root directory
+to ensure the database container is healthy before starting the Backend or Frontend
+servers.

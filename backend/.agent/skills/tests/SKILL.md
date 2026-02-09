@@ -20,7 +20,7 @@ There are two ways to run tests check:
    docker compose -f ./docker/docker-compose.yaml down  # this will stop the PostgreSQL Database
    ```
   
-2. Via script, this will also run formatting, lint and type annotation check:
+2. Via script (run from project root), this will also run formatting, lint and type annotation check:
 
    ```bash
    ./scripts/linting.bash --backend

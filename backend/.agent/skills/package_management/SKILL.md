@@ -1,4 +1,5 @@
 ---
+name: package-management
 trigger: glob
 description: When installing/uninstalling/update python packages
 globs: backend/**/*.py
@@ -25,4 +26,11 @@ cd ./backend
 uv remove <package_name>
 # or
 uv remove --dev <package_name>
+```
+
+## Updating dependencies
+
+```bash
+cd ./backend
+uv sync --upgrade
 ```

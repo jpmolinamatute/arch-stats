@@ -17,7 +17,7 @@ There are two ways to run linting
    uv run ruff check --fix --config ./pyproject.toml
    ```
 
-2. Via script, this will also run formatting, type annotation check and tests:
+2. Via script (run from project root), this will also run formatting, type annotation check and tests:
 
    ```bash
    ./scripts/linting.bash --backend
