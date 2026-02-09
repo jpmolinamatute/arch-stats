@@ -1,5 +1,5 @@
 ---
-name: python-tests
+name: backend-tests
 trigger: glob
 description: Always run pytest in Python files
 globs: backend/**/*.py

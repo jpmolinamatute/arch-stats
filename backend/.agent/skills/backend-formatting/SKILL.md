@@ -1,5 +1,5 @@
 ---
-name: python-formatting
+name: backend-formatting
 trigger: glob
 description: Always run Ruff to Format Python files
 globs: backend/**/*.py

@@ -1,5 +1,5 @@
 ---
-name: python-scripts
+name: backend-scripts
 trigger: glob
 description: When running python scripts
 globs: backend/**/*.py

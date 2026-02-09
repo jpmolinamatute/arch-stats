@@ -1,5 +1,5 @@
 ---
-name: run-type-generation
+name: frontend-type-generation
 trigger: glob
 description: CRITICAL. Use this rule whenever backend models change or when "generating types" for the frontend.
 globs: frontend/**/*

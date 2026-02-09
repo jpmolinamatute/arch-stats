@@ -1,5 +1,5 @@
 ---
-name: package-management
+name: backend-package-management
 trigger: glob
 description: When installing/uninstalling/update python packages
 globs: backend/**/*.py

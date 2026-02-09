@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: backend/**/*.py
+globs: frontend/**/*
 ---
 
 # New Code
@@ -18,4 +18,4 @@ When suggesting new code follow this rules:
 
 ## Feedback
 
-* Explain what
+* Explain what was done and why was done

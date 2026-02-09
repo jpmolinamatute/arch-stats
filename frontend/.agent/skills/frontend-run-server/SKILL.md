@@ -1,5 +1,5 @@
 ---
-name: run-frontend-server
+name: frontend-run-server
 description: Use this to start the Vite development server for the Vue 3 frontend.
 ---
 

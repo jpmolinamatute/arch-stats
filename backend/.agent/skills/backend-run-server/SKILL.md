@@ -1,5 +1,5 @@
 ---
-name: run-server
+name: backend-run-server
 description: Starts the FastAPI backend server using the dedicated VS Code task and bash script.
 ---
 

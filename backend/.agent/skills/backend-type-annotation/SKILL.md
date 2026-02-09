@@ -1,5 +1,5 @@
 ---
-name: python-type-annotation
+name: backend-type-annotation
 trigger: glob
 description: Always run Ty to check type annotation in Python files
 globs: backend/**/*.py

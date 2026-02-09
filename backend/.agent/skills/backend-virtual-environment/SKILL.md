@@ -1,6 +1,6 @@
 ---
 trigger: glob
-name: python-virtual-environment
+name: backend-virtual-environment
 description: Activate the python virtual environment in the backend directory.
 globs: backend/**/*.py
 ---

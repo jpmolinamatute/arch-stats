@@ -1,5 +1,5 @@
 ---
-name: python-linting
+name: backend-linting
 trigger: glob
 description: Always run Ruff to lint python files
 globs: backend/**/*.py
