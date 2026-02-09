@@ -114,7 +114,7 @@ async def create_session(
     except ValueError as e:
         msg = str(e)
         # Conflict when owner already has an open session
-        if msg == "Archer already have an opened session":
+        if msg == "Archer already has an opened session":
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
 
@@ -159,7 +159,7 @@ async def re_open_session(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     except ValueError as e:
         msg = str(e)
-        if msg == "Archer already have an opened session":
+        if msg == "Archer already has an opened session":
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
 

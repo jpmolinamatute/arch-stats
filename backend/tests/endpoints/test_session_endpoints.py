@@ -353,7 +353,7 @@ async def test_create_second_session_fails_with_422(
     # Second creation must fail
     resp = await client.post("/api/v0/session", json=payload)
     assert resp.status_code == HTTPStatus.CONFLICT
-    assert resp.json()["detail"] == "Archer already have an opened session"
+    assert resp.json()["detail"] == "Archer already has an opened session"
 
 
 @pytest.mark.asyncio

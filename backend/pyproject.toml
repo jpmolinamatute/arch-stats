@@ -43,7 +43,7 @@ lint.extend-select = ["PTH", "FAST", "I", "PL", "UP"]
 lint.fixable = ["ALL"]
 lint.unfixable = []
 lint.typing-extensions = true
-src = ["src", "tests"]
+src = ["./src/", "./tests/"]
 exclude = [
     "**/__pycache__/",
     ".pytest_cache/",

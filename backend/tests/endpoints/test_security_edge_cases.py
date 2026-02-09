@@ -86,7 +86,7 @@ async def test_reopen_session_blocked_if_already_open(
     resp = await client.patch("/api/v0/session/re-open", json={"session_id": session_a_id})
 
     assert resp.status_code == HTTPStatus.CONFLICT  # Or 422
-    assert "already have an opened session" in resp.json()["detail"]
+    assert "already has an opened session" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio

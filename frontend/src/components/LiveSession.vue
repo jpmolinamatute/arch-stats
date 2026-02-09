@@ -86,6 +86,15 @@ watch(() => currentSlot.value?.face_type, async (newFaceId) => {
     }
 }, { immediate: true })
 
+async function setupShotSubscription(slotId: string) {
+    await fetchShots(slotId)
+    if (wsSocket) {
+        wsSocket.close()
+        wsSocket = null
+    }
+    wsSocket = subscribeToShots(slotId)
+}
+
 onMounted(async () => {
     try {
     // First, ensure auth is bootstrapped
@@ -118,8 +127,7 @@ onMounted(async () => {
 
                 // Initialize Shot Logic (History + WS)
                 if (slot && slot.slot_id) {
-                    await fetchShots(slot.slot_id)
-                    wsSocket = subscribeToShots(slot.slot_id)
+                    await setupShotSubscription(slot.slot_id)
                 }
             }
             catch {
@@ -187,10 +195,7 @@ async function handleSlotAssigned() {
 
             if (slot && slot.slot_id) {
                 // Initialize shot logic for newly assigned slot
-                await fetchShots(slot.slot_id)
-                if (wsSocket)
-                    wsSocket.close()
-                wsSocket = subscribeToShots(slot.slot_id)
+                await setupShotSubscription(slot.slot_id)
             }
         }
         catch (e) {
@@ -252,10 +257,7 @@ async function handleConfirmRound() {
                     currentSlot.value = refreshedSlot
 
                     // Re-connnect WS
-                    if (wsSocket)
-                        wsSocket.close()
-                    wsSocket = subscribeToShots(refreshedSlot.slot_id)
-                    await fetchShots(refreshedSlot.slot_id)
+                    await setupShotSubscription(refreshedSlot.slot_id)
 
                     // Retry submission with new slot_id
                     const newPayload = draftShots.value.map(s => ({

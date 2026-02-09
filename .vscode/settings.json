@@ -43,8 +43,9 @@
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
-    "ruff.configuration": "./backend/pyproject.toml",
+    "ruff.configuration": "${workspaceFolder}/backend/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
+    "ruff.configurationPreference": "filesystemFirst",
     "ruff.interpreter": [
         "${workspaceFolder}/backend/.venv/bin/python"
     ],
@@ -63,7 +64,8 @@
     "ty.configuration": {
         "environment": {
             "root": [
-                "backend/src"
+                "backend/src",
+                "backend/tests"
             ]
         }
     },
@@ -74,5 +76,8 @@
             "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         }
-    }
+    },
+    "cSpell.words": [
+        "notabool"
+    ]
 }

@@ -79,7 +79,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         # Owner cannot already have an open session
         if (await self.archer_open_session(session_data.owner_archer_id)) is not None:
             # Align with API contract used by endpoint tests
-            raise ValueError("Archer already have an opened session")
+            raise ValueError("Archer already has an opened session")
         # Owner cannot be participating elsewhere
         if (await self.is_archer_participating(session_data.owner_archer_id)) is not None:
             raise ValueError(
@@ -141,6 +141,6 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
 
         # Check if archer already has an open session
         if (await self.archer_open_session(archer_id)) is not None:
-            raise ValueError("Archer already have an opened session")
+            raise ValueError("Archer already has an opened session")
         set_sql = SessionSet(is_opened=True, closed_at=None)
         await self.update(set_sql, where)

@@ -1,5 +1,4 @@
 ---
-name: python-package-management
 trigger: glob
 description: When installing/uninstalling/update python packages
 globs: backend/**/*.py
@@ -7,7 +6,7 @@ globs: backend/**/*.py
 
 # Python Package Management
 
-we use uv to install, uninstall and update python packages. We also use ./backend/pyproject.toml
+We use uv to install, uninstall and update python packages. We also use ./backend/pyproject.toml
 to configure uv.
 
 ## Installing dependencies
