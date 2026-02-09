@@ -1,6 +1,7 @@
 ---
+name: new-backend-code
 trigger: glob
-globs: frontend/**/*
+globs: backend/**/*.py
 ---
 
 # New Code
