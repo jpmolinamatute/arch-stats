@@ -135,6 +135,4 @@ jobs:
           ARCH_STATS_JWT_TTL_MINUTES: "60"
           ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
           PYTHONPATH: "${{ github.workspace }}/backend/src"
-        run: |
-          source ./.venv/bin/activate
-          pytest --maxfail=1 --disable-warnings -q
+        run: uv run pytest --maxfail=1 --disable-warnings -q

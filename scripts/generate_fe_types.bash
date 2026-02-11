@@ -7,7 +7,7 @@ OPENAPI_JSON="${ROOT_DIR}/openapi.json"
 
 backend() {
     cd "${ROOT_DIR}/backend"
-    export PYTHONPATH="${ROOT_DIR}/backend/src"
+    export PYTHONPATH="${ROOT_DIR}/backend:${ROOT_DIR}/backend/src"
     uv run ./tools/generate_openapi.py "${OPENAPI_JSON}"
     cd "${ROOT_DIR}"
 }

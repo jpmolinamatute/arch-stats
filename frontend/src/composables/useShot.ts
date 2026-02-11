@@ -8,7 +8,7 @@ type ShotRead = components['schemas']['ShotRead']
 interface WebSocketMessage
 {
     content: any
-    content_type: 'shot_created' | string
+    content_type: 'shot.created' | string
 }
 
 const loading = ref(false)
@@ -101,7 +101,7 @@ export function useShot() {
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data) as WebSocketMessage
-                // We expect content_type == 'shot_created' and content to be Stats object
+                // We expect content_type == 'shot.created' and content to be Stats object
                 // The backend sends:
                 // message = WebSocketMessage(content=payload, content_type=WSContentType.SHOT_CREATED)
                 // payload is 'Stats' object which has 'shots': list[ShotScore], 'stats': LiveStat
@@ -130,7 +130,7 @@ export function useShot() {
                 // Let's re-fetch for now to ensure we have full data (x, y).
                 // In the future, we should improve the backend notification payload.
 
-                if (data.content_type === 'shot_created') {
+                if (data.content_type === 'shot.created') {
                     void fetchShots(slotId)
                 }
             }

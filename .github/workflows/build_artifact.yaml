@@ -85,12 +85,7 @@ jobs:
           ARCH_STATS_JWT_ALGORITHM: "HS256"
           ARCH_STATS_JWT_TTL_MINUTES: "60"
           PYTHONPATH: "${{ github.workspace }}/backend/src"
-        run: |
-          source "${GITHUB_WORKSPACE}/backend/.venv/bin/activate"
-          uv run "${GITHUB_WORKSPACE}/scripts/generate_openapi.py"
-      - name: Generate TypeScript types
-        working-directory: ./frontend
-        run: npx openapi-typescript "${GITHUB_WORKSPACE}/openapi.json" --export-type --immutable --output "${GITHUB_WORKSPACE}/frontend/src/types/types.generated.ts"
+        run: "${GITHUB_WORKSPACE}/scripts/generate_fe_types.bash"
       - name: Build FE bundle
         working-directory: ./frontend
         run: npm run build

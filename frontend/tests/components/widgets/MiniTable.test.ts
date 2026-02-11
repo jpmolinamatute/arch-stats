@@ -117,4 +117,73 @@ describe('miniTable', () => {
         await confirmBtn.trigger('click')
         expect(wrapper.emitted('confirm')).toBeTruthy()
     })
+
+    it('renders "M" for score 0', () => {
+        const wrapper = mount(MiniTable, {
+            props: {
+                shots: [{ score: 0, x: 0, y: 0, is_x: false, color: 'white' }],
+                maxShots,
+            },
+        })
+        const buttons = wrapper.findAll('button.shadow-sm')
+        expect(buttons[0].text()).toBe('M')
+    })
+
+    it('applies correct text color for contrast', () => {
+        const wrapper = mount(MiniTable, {
+            props: {
+                shots: [
+                    { score: 10, x: 0, y: 0, is_x: false, color: '#000000' }, // Black background
+                    { score: 9, x: 0, y: 0, is_x: false, color: '#FFFFFF' }, // White background
+                ],
+                maxShots,
+            },
+        })
+        const buttons = wrapper.findAll('button.shadow-sm')
+
+        // Black background -> White text
+        expect(buttons[0].attributes('style')).toContain('color: rgb(255, 255, 255)')
+        // White background -> Black text
+        expect(buttons[1].attributes('style')).toContain('color: rgb(0, 0, 0)')
+    })
+
+    it('visual truncation: adheres to maxShots even if more shots provided', () => {
+        const extraShots = Array.from({ length: 10 }, () => ({
+            score: 10,
+            x: 0,
+            y: 0,
+            is_x: false,
+            color: 'yellow',
+        }))
+        const wrapper = mount(MiniTable, {
+            props: {
+                shots: extraShots,
+                maxShots: 5,
+            },
+        })
+
+        const buttons = wrapper.findAll('button.shadow-sm')
+        expect(buttons.length).toBe(5) // Should only render 5 buttons
+    })
+
+    it('renders minimal structure when maxShots is 0', () => {
+        const wrapper = mount(MiniTable, {
+            props: {
+                shots: [],
+                maxShots: 0,
+            },
+        })
+
+        // Header row
+        const headerRow = wrapper.findAll('.grid').at(0)
+        // Only the empty column for actions header should exist
+        expect(headerRow?.findAll('div').length).toBe(1)
+        expect(headerRow?.text()).toBe('')
+
+        // Slots row
+        const slotsRow = wrapper.findAll('.grid').at(1)
+        // Should have 0 slot divs + 1 actions div
+        expect(slotsRow?.element.children.length).toBe(1)
+        expect(slotsRow?.find('.flex.flex-row.gap-1').exists()).toBe(true)
+    })
 })

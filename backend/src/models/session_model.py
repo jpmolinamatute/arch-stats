@@ -110,6 +110,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
 
         data = SessionSet(is_opened=False, closed_at=datetime.now(UTC))
         await self.update(data, where)
+        await self.refresh_open_participants()
 
     async def has_active_participants(self, session_id: UUID) -> bool:
         """Return True if there are active participants in the given session.
@@ -144,3 +145,15 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
             raise ValueError("Archer already has an opened session")
         set_sql = SessionSet(is_opened=True, closed_at=None)
         await self.update(set_sql, where)
+        await self.refresh_open_participants()
+
+    async def refresh_open_participants(self) -> None:
+        """Refresh the materialized view that backs open participants lists."""
+        try:
+            await self.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants;")
+        except Exception as exc:  # DBException or asyncpg errors
+            self.logger.debug(
+                "Concurrent refresh failed for open_participants, falling back. Reason: %s",
+                exc,
+            )
+            await self.execute("REFRESH MATERIALIZED VIEW open_participants;")

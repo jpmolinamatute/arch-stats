@@ -116,13 +116,13 @@ Common commands for development:
 | Command | Description |
 | :--- | :--- |
 | `./scripts/start_uvicorn.bash` | Start the FastAPI development server with hot reload. |
-| `./scripts/linting.bash --lint-backend` | Run all linters (black, isort, mypy, pylint). |
+| `./scripts/linting.bash --backend` | Run all linters (black, isort, ty, pylint). |
 | `pytest` | Run the test suite (requires active venv). |
 | `docker compose ... up` | Start PostgreSQL and run migrations. |
 
 Additional useful scripts:
 
-- `./scripts/generate_openapi.py`: Regenerate `openapi.json` from the running backend.
+- `./tools/generate_openapi.py`: Regenerate `openapi.json` from the running backend.
 - `./scripts/create_pr.bash`: Open a pre-filled PR on GitHub.
 
 ## Git Hooks & Safety Net
@@ -196,7 +196,7 @@ When adding a new feature or endpoint:
 2. Implement a small async DB accessor in `backend/src/models/` using `asyncpg`.
 3. Expose via a router in `backend/src/routers/` that accepts and returns Pydantic models.
 4. Regenerate OpenAPI and frontend types (see "Frontend integration" below).
-5. Add tests in `backend/tests/` (models and endpoints). Run `./scripts/linting.bash --lint-backend`.
+5. Add tests in `backend/tests/` (models and endpoints). Run `./scripts/linting.bash --backend`.
 
 ### Style Guidelines
 
@@ -216,7 +216,7 @@ When adding a new feature or endpoint:
 Run the full linting suite for the backend:
 
 ```bash
-./scripts/linting.bash --lint-backend
+./scripts/linting.bash --backend
 ```
 
 This runs **isort**, **black**, **mypy**, and **pylint**. Fix issues before opening a PR.
@@ -271,7 +271,7 @@ async def get_archer(
 All code must pass the strict linting suite:
 
 ```bash
-./scripts/linting.bash --lint-backend
+./scripts/linting.bash --backend
 ```
 
 This runs **isort**, **black**, **mypy**, and **pylint**.
@@ -288,12 +288,13 @@ This allows the entire application to be deployed as a single service.
 
 ## Troubleshooting
 
-- If `uv sync` fails, verify your Python version matches `backend/.python-version` and that `uv` is installed.
+- If `uv sync` fails, verify your Python version matches `backend/.python-version` and
+  that `uv` is installed.
 - If the API cannot connect to Postgres, ensure Docker is running and the
-    compose stack is up. Use `docker compose -f ./docker/docker-compose.yaml logs`
-    to inspect services.
+  compose stack is up. Use `docker compose -f ./docker/docker-compose.yaml logs`
+  to inspect services.
 - If types in the frontend are out of date, run `npm run generate:types`
-    after the backend starts so OpenAPI is available.
+  after the backend starts so OpenAPI is available.
 - For port conflicts, check if another service is using `8000` or the Postgres port defined in `docker/docker-compose.yaml`.
 
 ## References

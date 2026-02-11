@@ -31,8 +31,11 @@ const groupedRounds = computed<RoundData[]>(() => {
     let roundIndex = 1
 
     for (const shot of sorted) {
+        if (shot.score === null || shot.score === undefined)
+            throw new Error(`Shot ${shot.shot_id} is missing a score.`)
+
         currentRoundShots.push(shot)
-        currentRoundTotal += (shot.score ?? 0)
+        currentRoundTotal += shot.score
 
         // If round is full, push it
         if (currentRoundShots.length === props.shotPerRound) {
@@ -64,21 +67,32 @@ const groupedRounds = computed<RoundData[]>(() => {
     }
 
     // Return newest rounds first for display
-    return rounds.reverse()
+    return rounds
 })
 
-function getScoreColor(score: number | null): string {
-    if (score === null)
-        return 'text-slate-500'
-    if (score >= 9)
-        return 'text-yellow-400'
-    if (score >= 7)
-        return 'text-red-400'
-    if (score >= 5)
-        return 'text-blue-400'
-    if (score >= 3)
-        return 'text-black bg-white/10 px-1 rounded' // Black on dark theme needs background
-    return 'text-white'
+function getScoreStyle(score: number): { backgroundColor: string, color: string } {
+    let style = { backgroundColor: '#FFFFFF', color: '#000000' } // Default (White/Miss/1/2)
+
+    switch (score) {
+        case 10:
+        case 9:
+            style = { backgroundColor: '#FFE552', color: '#000000' } // Yellow
+            break
+        case 8:
+        case 7:
+            style = { backgroundColor: '#F65058', color: '#000000' } // Red
+            break
+        case 6:
+        case 5:
+            style = { backgroundColor: '#00B4E4', color: '#000000' } // Blue
+            break
+        case 4:
+        case 3:
+            style = { backgroundColor: '#000000', color: '#FFFFFF' } // Black
+            break
+    }
+
+    return style
 }
 </script>
 
@@ -124,7 +138,7 @@ function getScoreColor(score: number | null): string {
                         class="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors"
                     >
                         <!-- Round Number -->
-                        <td class="px-2 py-3 text-center text-slate-600 font-mono text-xs">
+                        <td class="px-2 py-3 text-center text-lg text-white bg-slate-800/50">
                             {{ round.roundNumber }}
                         </td>
 
@@ -132,21 +146,25 @@ function getScoreColor(score: number | null): string {
                         <td
                             v-for="(shot, index) in round.shots"
                             :key="index"
-                            class="px-2 py-3 text-center font-bold text-lg"
+                            class="px-2 py-1 text-center font-bold text-xl"
                         >
-                            <span v-if="shot" :class="getScoreColor(shot.score ?? 0)">
-                                {{ shot.is_x ? 'X' : shot.score }}
-                            </span>
+                            <div
+                                v-if="shot"
+                                class="w-10 h-10 flex items-center justify-center rounded mx-auto text-xl shadow-sm border border-black/10"
+                                :style="getScoreStyle(shot.score!)"
+                            >
+                                {{ shot.is_x ? 'X' : (shot.score === 0 ? 'M' : shot.score) }}
+                            </div>
                             <span v-else class="text-slate-700">-</span>
                         </td>
 
                         <!-- Round Total -->
-                        <td class="px-4 py-3 text-center font-mono text-slate-300 bg-slate-800/30">
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/50">
                             {{ round.total }}
                         </td>
 
                         <!-- Cumulative Total -->
-                        <td class="px-4 py-3 text-center font-bold text-lg text-white bg-slate-800/50">
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/50">
                             {{ round.cumulative }}
                         </td>
                     </tr>
