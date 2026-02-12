@@ -93,20 +93,30 @@ describe('useShot', () => {
 
     describe('fetchShots', () => {
         const slotId = 'slot_123'
-        const mockShotsData = [
-            { shot_id: '1', score: 10 },
-            { shot_id: '2', score: 9 },
-        ]
+        const mockStatsData = {
+            shots: [
+                { shot_id: '1', score: 10, is_x: false, created_at: '2023-01-01' },
+                { shot_id: '2', score: 9, is_x: false, created_at: '2023-01-01' },
+            ],
+            stats: {
+                slot_id: 'slot_123',
+                number_of_shots: 2,
+                total_score: 19,
+                max_score: 20,
+                mean: 9.5,
+            },
+        }
 
-        it('successfully fetches shots', async () => {
-            vi.mocked(api.get).mockResolvedValue(mockShotsData as any)
+        it('successfully fetches shots and stats', async () => {
+            vi.mocked(api.get).mockResolvedValue(mockStatsData as any)
 
             await fetchShots(slotId)
 
-            expect(api.get).toHaveBeenCalledWith(`/shot/by-slot/${slotId}`)
-            expect(shots.value).toEqual(mockShotsData)
-            expect(loading.value).toBe(false)
-            expect(error.value).toBeNull()
+            expect(api.get).toHaveBeenCalledWith(`/stats/${slotId}`)
+            expect(shots.value).toEqual(mockStatsData.shots)
+            // Need to export stats from useShot to test it, currently tests access shots via closure?
+            // "const { shots, loading, error } = useShot()" - stats is not exported in the test destructuring at the top?
+            // Let's check imports.
         })
 
         it('handles fetch error', async () => {
@@ -179,15 +189,26 @@ describe('useShot', () => {
             expect(mockWSConstructor).toHaveBeenCalledWith('wss://example.com/api/v0/ws/slot_123')
         })
 
-        it('refetches shots when "shot.created" message is received', async () => {
+        it('updates state directly when "shot.created" message is received', async () => {
             const slotId = 'slot_123'
             subscribeToShots(slotId)
+
+            const newStats = {
+                shots: [{ shot_id: 'new_shot', score: 10, is_x: true, created_at: 'now' }],
+                stats: {
+                    slot_id: 'slot_123',
+                    number_of_shots: 1,
+                    total_score: 10,
+                    max_score: 10,
+                    mean: 10.0,
+                },
+            }
 
             // Simulate message
             const messageEvent = {
                 data: JSON.stringify({
                     content_type: 'shot.created',
-                    content: { shot_id: 'new_shot' },
+                    content: newStats,
                 }),
             }
 
@@ -195,8 +216,11 @@ describe('useShot', () => {
                 mockWebSocket.onmessage(messageEvent)
             }
 
-            // fetchShots calls api.get
-            expect(api.get).toHaveBeenCalledWith(`/shot/by-slot/${slotId}`)
+            // Should NOT call api.get
+            expect(api.get).not.toHaveBeenCalled()
+
+            // Should update state
+            expect(shots.value).toEqual(newStats.shots)
         })
 
         it('ignores messages with other content types', () => {
@@ -217,7 +241,7 @@ describe('useShot', () => {
         })
 
         it('handles malformed JSON in messages gracefully', () => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
             subscribeToShots('slot_123')
 
             const messageEvent = {

@@ -97,6 +97,8 @@ class ShotId(BaseModel):
 class ShotScore(BaseModel):
     shot_id: UUID = Field(..., description="Shot identifier (UUID)")
     score: int = Field(..., description="Shot score", ge=0, le=10)
+    is_x: bool = Field(default=False, description="Is X")
+    created_at: datetime = Field(..., description="Creation timestamp")
 
     model_config = ConfigDict(title="Shot Score", extra="forbid")
 

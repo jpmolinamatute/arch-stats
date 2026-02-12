@@ -64,6 +64,7 @@
     "ty.configuration": {
         "environment": {
             "root": [
+                "backend/",
                 "backend/src",
                 "backend/tests"
             ]

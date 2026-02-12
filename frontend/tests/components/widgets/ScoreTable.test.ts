@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import ShotsTable from '@/components/widgets/ShotsTable.vue'
+import ScoreTable from '@/components/widgets/ScoreTable.vue'
 
-describe('shotsTable', () => {
+describe('scoreTable', () => {
     const createShot = (id: string, score: number, createdAt: string, isX = false) => ({
         shot_id: id,
         slot_id: 'slot_1',
@@ -30,7 +30,7 @@ describe('shotsTable', () => {
     ] // Note: Sorted by time here for clarity, component sorts internally
 
     it('renders correct columns based on shotPerRound', () => {
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots: [],
                 shotPerRound: 3,
@@ -46,7 +46,7 @@ describe('shotsTable', () => {
     })
 
     it('groups shots into rounds correctly', () => {
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots: mockShots,
                 shotPerRound: 3,
@@ -80,7 +80,7 @@ describe('shotsTable', () => {
     })
 
     it('handles empty shots list', () => {
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots: [],
                 shotPerRound: 6,
@@ -90,7 +90,7 @@ describe('shotsTable', () => {
     })
 
     it('renders "M" for score 0', () => {
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots: [createShot('1', 0, '2023-01-01T10:00:00Z')],
                 shotPerRound: 6,
@@ -101,7 +101,7 @@ describe('shotsTable', () => {
     })
 
     it('renders "X" for is_x shot', () => {
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots: [createShot('1', 10, '2023-01-01T10:00:00Z', true)],
                 shotPerRound: 6,
@@ -126,7 +126,7 @@ describe('shotsTable', () => {
             createShot('11', 0, '2023-01-01T10:10:00Z'), // White (Miss)
         ]
 
-        const wrapper = mount(ShotsTable, {
+        const wrapper = mount(ScoreTable, {
             props: {
                 shots,
                 shotPerRound: 12, // Ensure all in one round for easy indexing

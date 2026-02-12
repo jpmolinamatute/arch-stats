@@ -45,6 +45,7 @@ vi.mock('@/composables/useShot', () => ({
         shots: { value: [], __v_isRef: true },
         loading: { value: false, __v_isRef: true },
         error: { value: null, __v_isRef: true },
+        stats: { value: null, __v_isRef: true },
     }),
 }))
 vi.mock('@/composables/useFaces', () => ({
@@ -98,10 +99,16 @@ vi.mock('@/components/widgets/MiniTable.vue', () => ({
         emits: ['delete', 'clear', 'confirm'],
     },
 }))
-vi.mock('@/components/widgets/ShotsTable.vue', () => ({
+vi.mock('@/components/widgets/ScoreTable.vue', () => ({
     default: {
-        template: '<div data-testid="shots-table"></div>',
+        template: '<div data-testid="score-table"></div>',
         props: ['shots'],
+    },
+}))
+vi.mock('@/components/widgets/StatsTable.vue', () => ({
+    default: {
+        template: '<div data-testid="stats-table"></div>',
+        props: ['stats'],
     },
 }))
 
@@ -522,6 +529,7 @@ describe('liveSession', () => {
             shots: ref([]),
             loading: ref(false),
             error: ref(null),
+            stats: ref(null),
         })
 
         // Mock useFaces
@@ -646,6 +654,7 @@ describe('liveSession', () => {
             shots: ref([]),
             loading: ref(false),
             error: ref(null),
+            stats: ref(null),
         })
 
         // Mock useFaces

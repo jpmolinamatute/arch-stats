@@ -7,7 +7,8 @@ import SlotJoinForm from '@/components/forms/SlotJoinForm.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import ConfirmModal from '@/components/widgets/ConfirmModal.vue'
 import MiniTable from '@/components/widgets/MiniTable.vue'
-import ShotsTable from '@/components/widgets/ShotsTable.vue'
+import ScoreTable from '@/components/widgets/ScoreTable.vue'
+import StatsTable from '@/components/widgets/StatsTable.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useFaces } from '@/composables/useFaces'
 import { useSession } from '@/composables/useSession'
@@ -20,8 +21,10 @@ const router = useRouter()
 const { user, isAuthenticated, bootstrapAuth } = useAuth()
 const { currentSession, closeSession, loading, checkForOpenSession } = useSession()
 const { currentSlot, getSlot, getSlotCached } = useSlot()
-const { createShot, fetchShots, subscribeToShots, shots: historyShots, loading: shotLoading } = useShot()
+const { createShot, fetchShots, subscribeToShots, shots: historyShots, stats: currentStats, loading: shotLoading } = useShot()
 const { fetchFace } = useFaces()
+
+const xCount = computed(() => historyShots.value.filter(s => s.is_x).length)
 
 const showCloseModal = ref(false)
 const initializing = ref(true)
@@ -395,9 +398,13 @@ async function handleConfirmRound() {
 
                     <!-- Shots List View -->
                     <div v-show="!showTarget" class="max-w-3xl mx-auto" data-testid="shots-view">
-                        <ShotsTable
+                        <ScoreTable
                             :shots="historyShots"
                             :shot-per-round="currentSession?.shot_per_round ?? 6"
+                        />
+                        <StatsTable
+                            :stats="currentStats"
+                            :x-count="xCount"
                         />
                     </div>
                 </div>

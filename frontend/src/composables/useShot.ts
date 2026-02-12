@@ -3,17 +3,21 @@ import { ref } from 'vue'
 import { api, ApiError } from '@/api/client'
 
 type ShotCreate = components['schemas']['ShotCreate']
-type ShotRead = components['schemas']['ShotRead']
-// Manual definition since WS schema is not in OpenAPI
+type ShotScore = components['schemas']['ShotScore']
+type Stats = components['schemas']['Stats']
+type LiveStat = components['schemas']['LiveStat']
+
+// Manual definition since WS schema is not in OpenAPI client types fully
 interface WebSocketMessage
 {
-    content: any
+    content: Stats
     content_type: 'shot.created' | string
 }
 
 const loading = ref(false)
 const error = ref<string | null>(null)
-const shots = ref<ShotRead[]>([])
+const shots = ref<ShotScore[]>([])
+const stats = ref<LiveStat | null>(null)
 
 export function useShot() {
     /**
@@ -63,11 +67,14 @@ export function useShot() {
     async function fetchShots(slotId: string) {
         loading.value = true
         error.value = null
-        shots.value = [] // Clear previous shots to avoid stale data flash
+        shots.value = []
+        stats.value = null
         try {
-            const data = await api.get<ShotRead[]>(`/shot/by-slot/${slotId}`)
+            // Updated to use the new stats endpoint which returns both shots and stats
+            const data = await api.get<Stats>(`/stats/${slotId}`)
             if (data) {
-                shots.value = data
+                shots.value = data.shots
+                stats.value = data.stats
             }
         }
         catch (e) {
@@ -81,15 +88,7 @@ export function useShot() {
 
     function subscribeToShots(slotId: string): WebSocket {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const host = window.location.host // includes port if present
-        // If running in dev mode with separate servers, this might need adjustment,
-        // but typically vite proxies /api calls. The websocket endpoint is /api/v0/ws/{slot_id}
-        // However, standard fetch proxying doesn't always apply to WS.
-        // Let's assume the /api prefix is proxied or we use the backend URL directly.
-        // For local dev typically backend is 8000, frontend 5173.
-
-        // We can use a relative URL if the dev server proxies WS, which Vite does if configured.
-        // Let's try relative path first, if that fails we might need an env var.
+        const host = window.location.host
         const wsUrl = `${protocol}//${host}/api/v0/ws/${slotId}`
 
         const socket = new WebSocket(wsUrl)
@@ -101,37 +100,11 @@ export function useShot() {
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data) as WebSocketMessage
-                // We expect content_type == 'shot.created' and content to be Stats object
-                // The backend sends:
-                // message = WebSocketMessage(content=payload, content_type=WSContentType.SHOT_CREATED)
-                // payload is 'Stats' object which has 'shots': list[ShotScore], 'stats': LiveStat
 
-                // Wait, checking backend ShotModel.listen_for_shots:
-                // It yields 'Stats' object.
-                // WebSocket sends WebSocketMessage where content is logic-less "object".
-
-                // We need to fetch the full shot details?
-                // The notification payload only has shot_id and score (ShotScore).
-                // It does NOT have x, y, is_x, etc.
-                //
-                // Strategy: When we get a notification, we can either:
-                // 1. Trust the score and append a "partial" shot (missing x/y).
-                // 2. Re-fetch the list of shots (safe, easy).
-                // 3. Update the implementation to send full shot data in notification.
-
-                // Given the instructions to "come up with a plan" and I didn't spot this earlier:
-                // The payload has shot_id and score.
-                // Displaying "Score" in history is fine. But "Coords" will be missing.
-                //
-                // OPTION 2 is safest for consistency: Re-fetch shots.
-                // Optimized: Fetch only the new shots? Backend doesn't support "get shot by id" easily yet?
-                // Actually, re-fetching the list isn't too expensive for a single session.
-
-                // Let's re-fetch for now to ensure we have full data (x, y).
-                // In the future, we should improve the backend notification payload.
-
-                if (data.content_type === 'shot.created') {
-                    void fetchShots(slotId)
+                if (data.content_type === 'shot.created' && data.content) {
+                    // Update state directly from WS payload
+                    shots.value = data.content.shots
+                    stats.value = data.content.stats
                 }
             }
             catch (e) {
@@ -152,6 +125,7 @@ export function useShot() {
 
     return {
         shots,
+        stats,
         loading,
         error,
         createShot,

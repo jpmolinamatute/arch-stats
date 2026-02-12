@@ -56,6 +56,18 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
 
         return result
 
+    async def get_scores(self, slot_id: UUID) -> list[ShotScore]:
+        """Retrieve all scores for a given slot."""
+        where = ShotFilter(slot_id=slot_id)
+        query, params = self.build_select_sql_stm(
+            where=where,
+            columns=["shot_id", "score", "is_x", "created_at"],
+            limit=0,
+            is_desc=False,
+        )
+        rows = await self.fetch((query, params))
+        return [ShotScore(**dict(row)) for row in rows]
+
     async def listen_for_shots(self, slot_id: UUID) -> AsyncIterator[Stats]:
         """Yield shot notifications for a specific slot.
 
@@ -86,32 +98,50 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
             """
 
             payload_str = payload if isinstance(payload, str) else str(payload)
-            parsed = json.loads(payload_str)
+            try:
+                parsed = json.loads(payload_str)
+            except json.JSONDecodeError:
+                self.logger.warning("Invalid JSON payload received: %s", payload_str)
+                return
+
+            raw_items = []
+            if isinstance(parsed, list):
+                raw_items = parsed
+            elif isinstance(parsed, dict):
+                raw_items = [parsed]
+
             shot_scores: list[ShotScore] = []
-            for item in parsed:
-                missing_keys = [k for k in ("shot_id", "score") if k not in item]
-                if missing_keys:
-                    # Log error but don't crash listener?
-                    # Or just queue nothing?
-                    # Raising ValueError here might crash the listener callback mechanism
-                    # but asyncpg just logs it usually.
-                    # Let's keep strict for now.
-                    raise ValueError(f"Invalid payload item: missing keys {missing_keys}")
+            for item in raw_items:
+                try:
+                    # We first validate against ShotRead to ensure we have a valid shot record
+                    # payload usually comes from the DB table row.
+                    shot_read = ShotRead(**item)
+                    if shot_read.score is not None:
+                        shot_scores.append(
+                            ShotScore(
+                                shot_id=shot_read.shot_id,
+                                score=shot_read.score,
+                                is_x=shot_read.is_x,
+                                created_at=shot_read.created_at,
+                            )
+                        )
+                except Exception:
+                    # Skip invalid items
+                    continue
 
-                shot_scores.append(ShotScore(shot_id=UUID(item["shot_id"]), score=item["score"]))
-
-            queue.put_nowait(shot_scores)
+            if shot_scores:
+                queue.put_nowait(shot_scores)
 
         async with self.db_pool.acquire() as conn:
             await conn.add_listener(channel_name, _listener)
             try:
                 while True:
-                    shot_scores = await queue.get()
+                    shots_score = await queue.get()
                     # Now we are in the main loop, we can safely await async calls
                     current_stats = await self.get_live_stat(slot_id)
 
                     stats = Stats(
-                        shots=shot_scores,
+                        shots=shots_score,
                         stats=current_stats,
                     )
                     yield stats

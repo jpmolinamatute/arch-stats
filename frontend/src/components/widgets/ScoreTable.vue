@@ -2,10 +2,10 @@
 import type { components } from '@/types/types.generated'
 import { computed } from 'vue'
 
-type ShotRead = components['schemas']['ShotRead']
+type ShotScore = components['schemas']['ShotScore']
 
 const props = withDefaults(defineProps<{
-    shots: ShotRead[]
+    shots: ShotScore[]
     shotPerRound?: number
 }>(), {
     shotPerRound: 6,
@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
 
 interface RoundData {
     roundNumber: number
-    shots: (ShotRead | null)[]
+    shots: (ShotScore | null)[]
     total: number
     cumulative: number
 }
@@ -25,7 +25,7 @@ const groupedRounds = computed<RoundData[]>(() => {
     })
 
     const rounds: RoundData[] = []
-    let currentRoundShots: (ShotRead | null)[] = []
+    let currentRoundShots: (ShotScore | null)[] = []
     let currentRoundTotal = 0
     let runningCumulative = 0
     let roundIndex = 1
