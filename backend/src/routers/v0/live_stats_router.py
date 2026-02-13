@@ -3,32 +3,26 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 
-from models import DBNotFound, ShotModel
-from routers.deps.models import get_shot_model, get_shot_model_ws
-from schema import Stats, WebSocketMessage, WSContentType
+from models import DBNotFound, LiveStatsModel
+from routers.deps.models import get_live_stats_model
+from schema import WebSocketMessage, WSContentType
+from schema.live_stats_schema import LiveStat
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
 
 
-@router.get("/{slot_id:uuid}", response_model=Stats, status_code=status.HTTP_200_OK)
+@router.get("/{slot_id:uuid}", response_model=LiveStat, status_code=status.HTTP_200_OK)
 async def get_stats(
     slot_id: UUID,
-    shot_model: Annotated[ShotModel, Depends(get_shot_model)],
-) -> Stats:
+    live_stats_model: Annotated[LiveStatsModel, Depends(get_live_stats_model)],
+) -> LiveStat:
     """
     Get live statistics and shots for a slot.
     """
     try:
-        # 1. Get live stats
-        live_stat = await shot_model.get_live_stat(slot_id)
-
-        # 2. Get all shots for the slot to build the list of ShotScore
-        # We use get_scores to retrieve only shot_id and score
-        shots_scores = await shot_model.get_scores(slot_id)
-
-        # 3. Return Stats
-        return Stats(shots=shots_scores, stats=live_stat)
-
+        live_stat = await live_stats_model.get_live_stat(slot_id)
+        shots_scores = await live_stats_model.get_scores(slot_id)
+        return LiveStat(shots=shots_scores, stats=live_stat)
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except Exception as e:
@@ -39,7 +33,7 @@ async def get_stats(
 async def websocket_stats(
     websocket: WebSocket,
     slot_id: UUID,
-    shot_model: ShotModel = Depends(get_shot_model_ws),
+    live_stats_model: Annotated[LiveStatsModel, Depends(get_live_stats_model)],
 ) -> None:
     """WebSocket endpoint streaming shot notifications for a slot.
 
@@ -49,7 +43,7 @@ async def websocket_stats(
 
     await websocket.accept()
     try:
-        async for payload in shot_model.listen_for_shots(slot_id):
+        async for payload in live_stats_model.listen_for_shots(slot_id):
             message = WebSocketMessage(content=payload, content_type=WSContentType.SHOT_CREATED)
             await websocket.send_json(message.model_dump(mode="json"))
     except WebSocketDisconnect:

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { components } from '@/types/types.generated'
 
-type LiveStat = components['schemas']['LiveStat']
+type Stats = components['schemas']['Stats']
 
 defineProps<{
-    stats: LiveStat | null
+    stats: Stats | null
     xCount: number
 }>()
 </script>

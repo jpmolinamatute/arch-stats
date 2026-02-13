@@ -11,10 +11,10 @@ from routers.v0 import (
     archer_router,
     auth_router,
     faces_router,
+    live_stats_router,
     session_router,
     shot_router,
     slot_router,
-    stats_router,
 )
 
 
@@ -65,7 +65,7 @@ def run() -> FastAPI:
     app.include_router(slot_router, prefix=f"/api/{mayor_version}")
     app.include_router(shot_router, prefix=f"/api/{mayor_version}")
     app.include_router(faces_router, prefix=f"/api/{mayor_version}")
-    app.include_router(stats_router, prefix=f"/api/{mayor_version}")
+    app.include_router(live_stats_router, prefix=f"/api/{mayor_version}")
 
     @app.api_route(
         "/api/{path:path}",

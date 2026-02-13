@@ -10,14 +10,14 @@ type LiveStat = components['schemas']['LiveStat']
 // Manual definition since WS schema is not in OpenAPI client types fully
 interface WebSocketMessage
 {
-    content: Stats
+    content: LiveStat
     content_type: 'shot.created' | string
 }
 
 const loading = ref(false)
 const error = ref<string | null>(null)
 const shots = ref<ShotScore[]>([])
-const stats = ref<LiveStat | null>(null)
+const stats = ref<Stats | null>(null)
 
 export function useShot() {
     /**
@@ -71,7 +71,7 @@ export function useShot() {
         stats.value = null
         try {
             // Updated to use the new stats endpoint which returns both shots and stats
-            const data = await api.get<Stats>(`/stats/${slotId}`)
+            const data = await api.get<LiveStat>(`/stats/${slotId}`)
             if (data) {
                 shots.value = data.shots
                 stats.value = data.stats

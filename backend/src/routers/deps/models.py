@@ -4,7 +4,7 @@ from asyncpg import Pool
 from fastapi import Request, WebSocket
 
 from core import SlotManager
-from models import ArcherModel, SessionModel, ShotModel, SlotModel
+from models import ArcherModel, LiveStatsModel, SessionModel, ShotModel, SlotModel
 from routers.deps.auth import require_auth
 
 
@@ -42,6 +42,18 @@ async def get_shot_model(request: Request) -> ShotModel:
     logger.debug("Getting ShotModel")
     db_pool: Pool = request.app.state.db_pool
     return ShotModel(db_pool)
+
+
+async def get_live_stats_model(request: Request) -> LiveStatsModel:
+    """Dependency provider returning a `LiveStatsModel` bound to the pool.
+
+    Enforces authentication as a side effect, mirroring existing behavior.
+    """
+    await require_auth(request)
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting LiveStatsModel")
+    db_pool: Pool = request.app.state.db_pool
+    return LiveStatsModel(db_pool)
 
 
 async def get_shot_model_ws(websocket: WebSocket) -> ShotModel:
