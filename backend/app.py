@@ -79,7 +79,7 @@ def run() -> FastAPI:
     app.mount(
         "",
         StaticFiles(
-            directory=current_file_path.joinpath("frontend"),
+            directory=current_file_path.joinpath("src/frontend"),
             html=True,
             check_dir=True,
             follow_symlink=True,
