@@ -34,7 +34,7 @@ From the project root directory:
    docker compose -f ./docker/docker-compose.yaml down -v
    ```
 
-## Verification
+### Verification
 
 - Make sure the arch-stats container started successfully before starting the Backend or
    Frontend servers:
@@ -47,3 +47,15 @@ From the project root directory:
 
     - arch-stats-db-1 is healthy
     - arch-stats-migrations-1 exited successfully (exit code 0)
+
+### Logs
+
+- **To View Logs:** Run the Docker Compose command:
+
+   ```bash
+   docker compose -f ./docker/docker-compose.yaml logs
+   # or
+   docker compose -f ./docker/docker-compose.yaml logs db
+   # or
+   docker compose -f ./docker/docker-compose.yaml logs migrations
+   ```
