@@ -172,7 +172,7 @@ describe('useShot', () => {
 
             subscribeToShots('slot_123')
 
-            expect(mockWSConstructor).toHaveBeenCalledWith('ws://localhost:5173/api/v0/ws/slot_123')
+            expect(mockWSConstructor).toHaveBeenCalledWith('ws://localhost:5173/api/v0/stats/ws/slot_123')
         })
 
         it('uses wss when protocol is https', () => {
@@ -186,7 +186,7 @@ describe('useShot', () => {
 
             subscribeToShots('slot_123')
 
-            expect(mockWSConstructor).toHaveBeenCalledWith('wss://example.com/api/v0/ws/slot_123')
+            expect(mockWSConstructor).toHaveBeenCalledWith('wss://example.com/api/v0/stats/ws/slot_123')
         })
 
         it('updates state directly when "shot.created" message is received', async () => {
@@ -204,6 +204,9 @@ describe('useShot', () => {
                 },
             }
 
+            // Set initial state
+            shots.value = [{ shot_id: 'old_shot', score: 8, is_x: false, created_at: 'old' }]
+
             // Simulate message
             const messageEvent = {
                 data: JSON.stringify({
@@ -219,8 +222,12 @@ describe('useShot', () => {
             // Should NOT call api.get
             expect(api.get).not.toHaveBeenCalled()
 
-            // Should update state
-            expect(shots.value).toEqual(newStats.shots)
+            // Should update state (append)
+            expect(shots.value).toHaveLength(2)
+            expect(shots.value).toEqual([
+                { shot_id: 'old_shot', score: 8, is_x: false, created_at: 'old' },
+                ...newStats.shots,
+            ])
         })
 
         it('ignores messages with other content types', () => {

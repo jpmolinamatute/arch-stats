@@ -65,6 +65,15 @@ async def get_shot_model_ws(websocket: WebSocket) -> ShotModel:
     return ShotModel(db_pool)
 
 
+async def get_live_stats_model_ws(websocket: WebSocket) -> LiveStatsModel:
+    """Dependency provider returning a `LiveStatsModel` bound to the pool (WebSocket variant)."""
+    await require_auth(websocket)
+    logger: logging.Logger = websocket.app.state.logger
+    logger.debug("Getting LiveStatsModel (WS)")
+    db_pool: Pool = websocket.app.state.db_pool
+    return LiveStatsModel(db_pool)
+
+
 async def get_archer_model(request: Request) -> ArcherModel:
     logger: logging.Logger = request.app.state.logger
     logger.debug("Getting ArcherModel")

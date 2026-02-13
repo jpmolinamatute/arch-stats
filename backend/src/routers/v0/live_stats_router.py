@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 
 from models import DBNotFound, LiveStatsModel
-from routers.deps.models import get_live_stats_model
+from routers.deps.models import get_live_stats_model, get_live_stats_model_ws
 from schema import WebSocketMessage, WSContentType
 from schema.live_stats_schema import LiveStat
 
@@ -33,7 +33,7 @@ async def get_stats(
 async def websocket_stats(
     websocket: WebSocket,
     slot_id: UUID,
-    live_stats_model: Annotated[LiveStatsModel, Depends(get_live_stats_model)],
+    live_stats_model: Annotated[LiveStatsModel, Depends(get_live_stats_model_ws)],
 ) -> None:
     """WebSocket endpoint streaming shot notifications for a slot.
 

@@ -6,9 +6,9 @@ import Face from '@/components/Face.vue'
 import SlotJoinForm from '@/components/forms/SlotJoinForm.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import ConfirmModal from '@/components/widgets/ConfirmModal.vue'
+import LiveScore from '@/components/widgets/LiveScore.vue'
+import LiveStatsTable from '@/components/widgets/LiveStatsTable.vue'
 import MiniTable from '@/components/widgets/MiniTable.vue'
-import ScoreTable from '@/components/widgets/ScoreTable.vue'
-import StatsTable from '@/components/widgets/StatsTable.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useFaces } from '@/composables/useFaces'
 import { useSession } from '@/composables/useSession'
@@ -398,11 +398,11 @@ async function handleConfirmRound() {
 
                     <!-- Shots List View -->
                     <div v-show="!showTarget" class="max-w-3xl mx-auto" data-testid="shots-view">
-                        <ScoreTable
+                        <LiveScore
                             :shots="historyShots"
                             :shot-per-round="currentSession?.shot_per_round ?? 6"
                         />
-                        <StatsTable
+                        <LiveStatsTable
                             :stats="currentStats"
                             :x-count="xCount"
                         />

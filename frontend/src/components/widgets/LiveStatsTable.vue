@@ -12,7 +12,7 @@ defineProps<{
 <template>
     <div class="w-full flex flex-col gap-4 mt-6">
         <h3 class="text-lg font-semibold text-slate-200">
-            Stats Table
+            Live Stats
         </h3>
 
         <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/50">

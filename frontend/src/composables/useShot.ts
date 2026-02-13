@@ -89,7 +89,7 @@ export function useShot() {
     function subscribeToShots(slotId: string): WebSocket {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const host = window.location.host
-        const wsUrl = `${protocol}//${host}/api/v0/ws/${slotId}`
+        const wsUrl = `${protocol}//${host}/api/v0/stats/ws/${slotId}`
 
         const socket = new WebSocket(wsUrl)
 
@@ -103,7 +103,13 @@ export function useShot() {
 
                 if (data.content_type === 'shot.created' && data.content) {
                     // Update state directly from WS payload
-                    shots.value = data.content.shots
+
+                    const newShots = data.content.shots
+                    // Avoid duplicates
+                    const existingIds = new Set(shots.value.map(s => s.shot_id))
+                    const uniqueNewShots = newShots.filter(s => !existingIds.has(s.shot_id))
+
+                    shots.value = [...shots.value, ...uniqueNewShots]
                     stats.value = data.content.stats
                 }
             }

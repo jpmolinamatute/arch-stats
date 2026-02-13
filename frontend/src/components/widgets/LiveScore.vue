@@ -99,7 +99,7 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
 <template>
     <div class="w-full flex flex-col gap-4">
         <h3 class="text-lg font-semibold text-slate-200">
-            Session History
+            Live Score
         </h3>
 
         <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/50">
