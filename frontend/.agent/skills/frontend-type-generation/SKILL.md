@@ -1,8 +1,6 @@
 ---
 name: frontend-type-generation
-trigger: glob
-description: CRITICAL. Use this rule whenever backend models change or when "generating types" for the frontend.
-globs: frontend/**/*
+description: CRITICAL. How to keep frontend data types in sync with the backend, ensuring type safety and reducing bugs.
 ---
 
 # Frontend Type Generation & Sync
@@ -14,7 +12,8 @@ Follow this logic exactly:
 2. **Connectivity Check:** Check if the backend server is currently active by running:
    `pgrep -af uvicorn`
 3. **Execution Logic:**
-   * **If Backend is Running:** Execute `npm run generate:types`.
-   * **If Backend is NOT Running:** Execute the fallback script: `./scripts/generate_fe_types.bash`.
-4. **Verification:** Confirm that the generated type files have been updated in the
-   frontend source tree.
+    - **If Backend is Running:** Execute `npm run generate:types`.
+    - **If Backend is NOT Running:** Execute the fallback script: `../scripts/generate_fe_types.bash`.
+4. **Verification:** Confirm that the generated type files have been updated in ./frontend/src/types/types.generated.ts.
+5. **Application:** Ensure that the new types are being used in the frontend codebase to
+   maintain type safety and reduce bugs.

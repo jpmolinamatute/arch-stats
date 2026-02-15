@@ -73,7 +73,7 @@ export function useShot() {
             // Updated to use the new stats endpoint which returns both shots and stats
             const data = await api.get<LiveStat>(`/stats/${slotId}`)
             if (data) {
-                shots.value = data.shots
+                shots.value = data.scores
                 stats.value = data.stats
             }
         }
@@ -104,7 +104,7 @@ export function useShot() {
                 if (data.content_type === 'shot.created' && data.content) {
                     // Update state directly from WS payload
 
-                    const newShots = data.content.shots
+                    const newShots = data.content.scores
                     // Avoid duplicates
                     const existingIds = new Set(shots.value.map(s => s.shot_id))
                     const uniqueNewShots = newShots.filter(s => !existingIds.has(s.shot_id))

@@ -1,13 +1,12 @@
 ---
-trigger: glob
 name: backend-virtual-environment
 description: Activate the python virtual environment in the backend directory.
-globs: backend/**/*.py
 ---
 
 # Activate Python Virtual Environment
 
-Always activate the python virtual environment before running any python command.
+Most task can be done via uv, but in certain cases you may want to run python commands
+directly, in that case you need to activate the python virtual environment first.
 
 ```bash
 cd ./backend

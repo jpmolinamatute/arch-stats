@@ -6,7 +6,7 @@ description: Starts the FastAPI backend server using the dedicated VS Code task 
 # Skill: Run Backend Server
 
 This skill automates the execution of the FastAPI development server while ensuring all
-environmental non-negotiables are met.
+environmental non-negotiable are met.
 
 ## Prerequisites
 

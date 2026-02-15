@@ -5,15 +5,14 @@ from uuid import UUID
 
 from asyncpg import Connection, Pool
 from asyncpg.pool import PoolConnectionProxy
-from pydantic import ValidationError
 
 from models.parent_model import DBNotFound, ParentModel
-from schema import LiveStat, ShotFilter, ShotRead, ShotScore, Stats
+from schema import LiveStat, ShotFilter, ShotScore, Stats
 
 
 class LiveStatsModel(ParentModel):
     def __init__(self, db_pool: Pool) -> None:
-        super().__init__("shot", db_pool, ShotRead)
+        super().__init__("shot", db_pool, ShotScore)
 
     async def get_live_stat(self, slot_id: UUID) -> Stats:
         """Retrieve live statistics for shots in a given slot.
@@ -55,7 +54,7 @@ class LiveStatsModel(ParentModel):
 
         return result
 
-    async def get_scores(self, slot_id: UUID) -> list[ShotScore]:
+    async def get_all_scores(self, slot_id: UUID) -> list[ShotScore]:
         """Retrieve all scores for a given slot."""
         where = ShotFilter(slot_id=slot_id)
         query, params = self.build_select_sql_stm(
@@ -103,39 +102,37 @@ class LiveStatsModel(ParentModel):
                 self.logger.warning("Invalid JSON payload received: %s", payload_str)
                 return
 
-            raw_items = []
             if isinstance(parsed, list):
-                raw_items = parsed
-            elif isinstance(parsed, dict):
-                raw_items = [parsed]
-
-            shot_scores: list[ShotScore] = []
-            for item in raw_items:
-                try:
-                    shot_scores.append(
-                        ShotScore(
-                            shot_id=item["shot_id"],
-                            score=0 if item["score"] is None else item["score"],
-                            is_x=item["is_x"],
-                            created_at=item["created_at"],
-                        )
+                shots = [
+                    ShotScore(
+                        shot_id=item["shot_id"],
+                        score=item["score"],
+                        is_x=item["is_x"],
+                        created_at=item["created_at"],
                     )
-                except (ValidationError, KeyError, TypeError) as e:
-                    self.logger.error("Invalid shot payload received from DB: %s", item)
-                    raise ValueError("Invalid shot payload received from DB") from e
+                    for item in parsed
+                ]
+            elif isinstance(parsed, dict):
+                shots = [
+                    ShotScore(
+                        shot_id=parsed["shot_id"],
+                        score=parsed["score"],
+                        is_x=parsed["is_x"],
+                        created_at=parsed["created_at"],
+                    )
+                ]
 
-            if shot_scores:
-                queue.put_nowait(shot_scores)
+            queue.put_nowait(shots)
 
         async with self.db_pool.acquire() as conn:
             await conn.add_listener(channel_name, _listener)
             try:
                 while True:
-                    shots_score = await queue.get()
+                    scores: list[ShotScore] = await queue.get()
                     # Now we are in the main loop, we can safely await async calls
                     current_stats = await self.get_live_stat(slot_id)
                     stats = LiveStat(
-                        shots=shots_score,
+                        scores=scores,
                         stats=current_stats,
                     )
                     yield stats

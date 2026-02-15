@@ -1,8 +1,6 @@
 ---
 name: backend-scripts
-trigger: glob
-description: When running python scripts
-globs: backend/**/*.py
+description: How to use uv to run python scripts
 ---
 
 # Python Scripts

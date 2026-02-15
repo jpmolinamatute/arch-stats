@@ -1,8 +1,6 @@
 ---
 name: frontend-tests
-trigger: glob
-description: Use this rule whenever the user asks to run tests or verify frontend code integrity.
-globs: frontend/**/*
+description: How to run frontend tests and verify code integrity.
 ---
 
 # Frontend Testing Standards

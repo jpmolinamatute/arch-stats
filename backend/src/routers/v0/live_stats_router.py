@@ -21,8 +21,8 @@ async def get_stats(
     """
     try:
         live_stat = await live_stats_model.get_live_stat(slot_id)
-        shots_scores = await live_stats_model.get_scores(slot_id)
-        return LiveStat(shots=shots_scores, stats=live_stat)
+        scores = await live_stats_model.get_all_scores(slot_id)
+        return LiveStat(scores=scores, stats=live_stat)
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except Exception as e:

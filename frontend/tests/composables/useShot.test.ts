@@ -94,7 +94,7 @@ describe('useShot', () => {
     describe('fetchShots', () => {
         const slotId = 'slot_123'
         const mockStatsData = {
-            shots: [
+            scores: [
                 { shot_id: '1', score: 10, is_x: false, created_at: '2023-01-01' },
                 { shot_id: '2', score: 9, is_x: false, created_at: '2023-01-01' },
             ],
@@ -113,7 +113,7 @@ describe('useShot', () => {
             await fetchShots(slotId)
 
             expect(api.get).toHaveBeenCalledWith(`/stats/${slotId}`)
-            expect(shots.value).toEqual(mockStatsData.shots)
+            expect(shots.value).toEqual(mockStatsData.scores)
             // Need to export stats from useShot to test it, currently tests access shots via closure?
             // "const { shots, loading, error } = useShot()" - stats is not exported in the test destructuring at the top?
             // Let's check imports.
@@ -194,7 +194,7 @@ describe('useShot', () => {
             subscribeToShots(slotId)
 
             const newStats = {
-                shots: [{ shot_id: 'new_shot', score: 10, is_x: true, created_at: 'now' }],
+                scores: [{ shot_id: 'new_shot', score: 10, is_x: true, created_at: 'now' }],
                 stats: {
                     slot_id: 'slot_123',
                     number_of_shots: 1,
@@ -226,7 +226,7 @@ describe('useShot', () => {
             expect(shots.value).toHaveLength(2)
             expect(shots.value).toEqual([
                 { shot_id: 'old_shot', score: 8, is_x: false, created_at: 'old' },
-                ...newStats.shots,
+                ...newStats.scores,
             ])
         })
 

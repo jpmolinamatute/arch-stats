@@ -80,16 +80,16 @@ async def test_get_stats_returns_correct_data(
     assert resp.status_code == HTTPStatus.OK
     data = resp.json()
 
-    # Check 'shots' list
-    shots = data["shots"]
+    # Check 'scores' list
+    scores = data["scores"]
     expected_count = 2
-    assert len(shots) == expected_count
+    assert len(scores) == expected_count
     # Sort by score or specific ID to verify? The order might be creation time DB default.
-    scores = sorted([s["score"] for s in shots])
-    assert scores == [score1, score2]
+    sorted_score_values = sorted([s["score"] for s in scores])
+    assert sorted_score_values == [score1, score2]
 
     # Verify structure of first shot
-    first_shot = shots[0]
+    first_shot = scores[0]
     assert "shot_id" in first_shot
     assert "score" in first_shot
     assert "is_x" in first_shot
@@ -127,7 +127,7 @@ async def test_get_stats_empty_slot(
     assert resp.status_code == HTTPStatus.OK
     data = resp.json()
 
-    assert data["shots"] == []
+    assert data["scores"] == []
     stats = data["stats"]
     assert stats["number_of_shots"] == 0
     assert stats["total_score"] == 0

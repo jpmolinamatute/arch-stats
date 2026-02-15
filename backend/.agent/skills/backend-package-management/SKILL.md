@@ -1,16 +1,14 @@
 ---
 name: backend-package-management
-trigger: glob
-description: When installing/uninstalling/update python packages
-globs: backend/**/*.py
+description: How to use uv to install/uninstall/update python packages
 ---
 
 # Python Package Management
 
-We use uv to install, uninstall and update python packages. We also use ./backend/pyproject.toml
-to configure uv.
+We use uv to install, uninstall and update python packages. We also use
+./backend/pyproject.toml to configure uv.
 
-## Installing dependencies
+## Install dependencies
 
 ```bash
 cd ./backend
@@ -19,7 +17,7 @@ uv add <package_name>
 uv add --dev <package_name>
 ```
 
-## Removing dependencies
+## Uninstall dependencies
 
 ```bash
 cd ./backend
@@ -28,7 +26,7 @@ uv remove <package_name>
 uv remove --dev <package_name>
 ```
 
-## Updating dependencies
+## Update dependencies
 
 ```bash
 cd ./backend
