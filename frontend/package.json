@@ -9,7 +9,7 @@
         "preview": "vite preview",
         "lint": "eslint --fix .",
         "clear:vite_cache": "rm -rf ./node_modules/.vite",
-        "generate:types": "openapi-typescript http://localhost:8001/api/openapi.json --export-type --output src/types/types.generated.ts",
+        "generate:types": "../scripts/generate_fe_types.bash",
         "test": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest run",
         "test:watch": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest",
         "test:coverage": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest run --coverage",
