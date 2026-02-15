@@ -33,7 +33,7 @@ main() {
     # shellcheck source=../.env
     source "${ENV_FILE}"
 
-    if ! curl --silent --fail --head "${openapi_source}" > /dev/null 2>&1; then
+    if ! curl --silent --fail --head "${openapi_source}" >/dev/null 2>&1; then
         openapi_source="${ROOT_DIR}/openapi.json"
         openapi_via_script "${openapi_source}"
     fi
