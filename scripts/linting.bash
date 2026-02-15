@@ -44,16 +44,6 @@ run_python_checks() {
     cd -
 }
 
-run_generate_types() {
-    echo "Generating OpenAPI spec"
-    cd "${ROOT_DIR}/backend"
-    export PYTHONPATH="${ROOT_DIR}/backend/src"
-    uv run "${ROOT_DIR}/scripts/generate_openapi.py"
-    cd "${ROOT_DIR}/frontend"
-    log_info "Generating TypeScript types from OpenAPI spec"
-    npx openapi-typescript "${ROOT_DIR}/openapi.json" --export-type --alphabetize --root-types --root-types-no-schema-prefix --output "${ROOT_DIR}/frontend/src/types/types.generated.ts"
-}
-
 build_frontend() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
@@ -65,7 +55,7 @@ build_frontend() {
 }
 
 run_frontend_checks() {
-    run_generate_types
+    "${ROOT_DIR}/scripts/generate_fe_types.bash"
     cd "${ROOT_DIR}/frontend"
     log_info "Running JS/TS linter and formatter"
     npm run lint

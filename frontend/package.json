@@ -9,10 +9,11 @@
         "preview": "vite preview",
         "lint": "eslint --fix .",
         "clear:vite_cache": "rm -rf ./node_modules/.vite",
-        "generate:types": "openapi-typescript http://localhost:8000/api/openapi.json --export-type --immutable --output src/types/types.generated.ts",
+        "generate:types": "openapi-typescript http://localhost:8001/api/openapi.json --export-type --output src/types/types.generated.ts",
         "test": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest run",
         "test:watch": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest",
-        "test:coverage": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest run --coverage"
+        "test:coverage": "NODE_OPTIONS='--localstorage-file=./.vitest-localstorage' vitest run --coverage",
+        "type-check": "vue-tsc --noEmit"
     },
     "dependencies": {
         "vue": "^3.5.24",
@@ -27,6 +28,7 @@
         "@vue/test-utils": "^2.4.6",
         "@vue/tsconfig": "^0.8.1",
         "autoprefixer": "^10.4.22",
+        "baseline-browser-mapping": "^2.9.19",
         "eslint": "^9.39.1",
         "jsdom": "^27.2.0",
         "openapi-typescript": "^7.10.1",

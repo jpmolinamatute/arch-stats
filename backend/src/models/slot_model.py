@@ -149,5 +149,11 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
             limit=1,
             is_desc=False,
         )
-        row = await self.fetchrow((sql, params))
+        try:
+            row = await self.fetchrow((sql, params))
+        except DBNotFound:
+            # The view might be stale, try to refresh it
+            await self.refresh_open_participants()
+            row = await self.fetchrow((sql, params))
+
         return FullSlotInfo(**row)

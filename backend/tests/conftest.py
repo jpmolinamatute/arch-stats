@@ -7,11 +7,11 @@ from uuid import UUID
 import jwt
 import pytest
 import pytest_asyncio
+from app import run
 from asyncpg import Pool
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from app import run
 from core import AuthDeps, DBPool, settings
 from models import ArcherModel, AuthModel
 from routers.v0.auth_router import get_deps

@@ -10,17 +10,18 @@ services:
     env_file:
       - ./.env
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     networks:
       - arch-stats
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGPORT=${POSTGRES_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test:
         - CMD-SHELL
-        - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+        - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -p $$POSTGRES_PORT
       interval: 5s
       timeout: 3s
       retries: 5

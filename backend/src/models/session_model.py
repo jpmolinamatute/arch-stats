@@ -79,7 +79,7 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         # Owner cannot already have an open session
         if (await self.archer_open_session(session_data.owner_archer_id)) is not None:
             # Align with API contract used by endpoint tests
-            raise ValueError("Archer already have an opened session")
+            raise ValueError("Archer already has an opened session")
         # Owner cannot be participating elsewhere
         if (await self.is_archer_participating(session_data.owner_archer_id)) is not None:
             raise ValueError(
@@ -88,23 +88,29 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
             )
         return await self.insert_one(session_data)
 
-    async def close_session(self, session: SessionId) -> None:
+    async def close_session(self, session: SessionId, archer_id: UUID) -> None:
         """Close session after ensuring no other participants are actively shooting."""
 
         if session.session_id is None:
             raise ValueError("ERROR: session_id wasn't provided")
 
-        exist = await self.does_open_session_exist(session.session_id)
-        if not exist:
-            raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
+        where = SessionFilter(session_id=session.session_id, is_opened=True)
+        try:
+            row = await self.get_one(where)
+        except DBNotFound as e:
+            # Re-raise with specific message for consistency
+            raise DBNotFound("ERROR: Session either doesn't exist or it was already closed") from e
+
+        if row.owner_archer_id != archer_id:
+            raise DBException("Forbidden")
 
         # Ensure there are no active participants shooting in this session
         if await self.has_active_participants(session.session_id):
             raise ValueError("ERROR: cannot close session with active participants")
 
         data = SessionSet(is_opened=False, closed_at=datetime.now(UTC))
-        where = SessionFilter(session_id=session.session_id, is_opened=True)
         await self.update(data, where)
+        await self.refresh_open_participants()
 
     async def has_active_participants(self, session_id: UUID) -> bool:
         """Return True if there are active participants in the given session.
@@ -133,5 +139,21 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
         row = await self.get_one(where)
         if row.owner_archer_id != archer_id:
             raise DBException("Archer is not allow to re-open this session")
+
+        # Check if archer already has an open session
+        if (await self.archer_open_session(archer_id)) is not None:
+            raise ValueError("Archer already has an opened session")
         set_sql = SessionSet(is_opened=True, closed_at=None)
         await self.update(set_sql, where)
+        await self.refresh_open_participants()
+
+    async def refresh_open_participants(self) -> None:
+        """Refresh the materialized view that backs open participants lists."""
+        try:
+            await self.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants;")
+        except Exception as exc:  # DBException or asyncpg errors
+            self.logger.debug(
+                "Concurrent refresh failed for open_participants, falling back. Reason: %s",
+                exc,
+            )
+            await self.execute("REFRESH MATERIALIZED VIEW open_participants;")

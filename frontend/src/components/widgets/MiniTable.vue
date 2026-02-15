@@ -11,7 +11,7 @@ const emit = defineEmits<{
 }>()
 
 function getShotTextColor(shot: { score: number, color: string }): string {
-    return shot.color === '#FFFFFF' ? '#000000' : '#FFFFFF'
+    return shot.color === '#000000' ? '#FFFFFF' : '#000000'
 }
 </script>
 
@@ -55,7 +55,7 @@ function getShotTextColor(shot: { score: number, color: string }): string {
                     :title="`Score: ${shots[i - 1]?.score}`"
                     @click="emit('delete', i - 1)"
                 >
-                    {{ shots[i - 1]?.is_x ? 'X' : shots[i - 1]?.score }}
+                    {{ shots[i - 1]?.is_x ? 'X' : (shots[i - 1]?.score === 0 ? 'M' : shots[i - 1]?.score) }}
                 </button>
                 <div
                     v-else

@@ -1,10 +1,10 @@
 from routers.v0.archer_router import router as archer_router
 from routers.v0.auth_router import router as auth_router
 from routers.v0.faces_router import router as faces_router
+from routers.v0.live_stats_router import router as live_stats_router
 from routers.v0.session_router import router as session_router
 from routers.v0.shot_router import router as shot_router
 from routers.v0.slot_router import router as slot_router
-from routers.v0.websocket import router as websocket
 
 __all__ = [
     "auth_router",
@@ -13,5 +13,5 @@ __all__ = [
     "slot_router",
     "shot_router",
     "faces_router",
-    "websocket",
+    "live_stats_router",
 ]

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from schema.enums import WSContentType
-from schema.shot_schema import Stats
+from schema.live_stats_schema import LiveStat
 
 
 class WebSocketMessage(BaseModel):
@@ -12,5 +12,5 @@ class WebSocketMessage(BaseModel):
         description="Timestamp of the event",
     )
     content_type: WSContentType = Field(WSContentType.SHOT_CREATED)
-    content: Stats
+    content: LiveStat
     model_config = ConfigDict(populate_by_name=True, extra="forbid")

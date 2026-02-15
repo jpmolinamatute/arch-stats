@@ -27,6 +27,7 @@ from schema.enums import (
     WSContentType,
 )
 from schema.face_schema import Face, FaceMinimal, FaceType, Ring, Spot
+from schema.live_stats_schema import LiveStat, ShotScore, Stats
 from schema.session_schema import (
     SessionCreate,
     SessionFilter,
@@ -36,15 +37,12 @@ from schema.session_schema import (
     SessionUpdate,
 )
 from schema.shot_schema import (
-    LiveStat,
     ShotCreate,
     ShotFilter,
     ShotId,
     ShotRead,
-    ShotScore,
     ShotSet,
     ShotUpdate,
-    Stats,
 )
 from schema.slot_schema import (
     FullSlotInfo,

@@ -114,7 +114,7 @@ async def create_session(
     except ValueError as e:
         msg = str(e)
         # Conflict when owner already has an open session
-        if msg == "Archer already have an opened session":
+        if msg == "Archer already has an opened session":
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg) from e
 
@@ -158,12 +158,16 @@ async def re_open_session(
     except DBException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     except ValueError as e:
+        msg = str(e)
+        if msg == "Archer already has an opened session":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
 
 
 @router.patch("/close", response_model=dict[str, str], status_code=status.HTTP_200_OK)
 async def close_session(
     session: SessionId,
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
     session_model: Annotated[SessionModel, Depends(get_session_model)],
 ) -> dict[str, str]:
     """
@@ -172,10 +176,12 @@ async def close_session(
     Responses: 200 OK, 404 Not Found, 422 Unprocessable Content.
     """
     try:
-        await session_model.close_session(session)
+        await session_model.close_session(session, current_archer_id)
         return {"status": "closed"}
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     except ValueError as e:
         msg = str(e)
         if msg == "ERROR: session_id wasn't provided":

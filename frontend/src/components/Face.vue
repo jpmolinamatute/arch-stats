@@ -132,29 +132,16 @@ onUnmounted(() => {
                     :data-score="ring.data_score"
                 />
                 <text
-                    v-if="!(face.render_cross && index === face.rings.length - 1)"
-                    :x="face.viewBox / 2 + (ring.r + (face.rings?.[index + 1]?.r ?? 0)) / 2"
-                    :y="face.viewBox / 2"
-                    dy="0.35em"
-                    :fill="ring.fill"
-                    :stroke="ring.stroke"
-                    stroke-width="0.5"
-                    font-size="16"
-                    text-anchor="middle"
-                    style="pointer-events: none"
-                >
-                    {{ ring.data_score }}
-                </text>
-                <text
                     v-if="face.render_cross && index === face.rings.length - 1"
                     :x="face.viewBox / 2"
                     :y="face.viewBox / 2"
-                    font-size="30"
+                    dominant-baseline="central"
+                    font-size="16"
                     text-anchor="middle"
                     fill="#000000"
                     style="pointer-events: none"
                 >
-                    +
+                    X
                 </text>
             </g>
             <!-- Visual feedback for shots -->
