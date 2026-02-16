@@ -7,7 +7,7 @@ globs: frontend/**/*
 
 ## Coding
 
-When suggesting new code follow this rules:
+When suggesting new code follow these rules:
 
 * Validate code against the latest documentation from the Context7 MCP.
 * Functions and methods must be properly type annotated (avoid "any" or "unknown" types at any cost).
@@ -20,4 +20,4 @@ When suggesting new code follow this rules:
 
 ## Feedback
 
-* Explain what was done and why was done
+* Explain what was done and why it was done

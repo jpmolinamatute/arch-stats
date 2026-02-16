@@ -63,7 +63,7 @@
                 "detail": "Stop, remove containers and delete associated volumes"
             },
             {
-                "label": "Start Uvicorn Dev Server",
+                "label": "Start Uvicorn Server",
                 "type": "shell",
                 "command": "${workspaceFolder}/scripts/start_uvicorn.bash",
                 "problemMatcher": [],
@@ -74,10 +74,10 @@
                     "focus": false,
                     "panel": "dedicated"
                 },
-                "detail": "Start FastAPI dev server with Uvicorn in backend/server"
+                "detail": "Start FastAPI server with Uvicorn in backend/server"
             },
             {
-                "label": "Start Vite Frontend",
+                "label": "Start Vite Server",
                 "type": "npm",
                 "script": "dev",
                 "options": {
@@ -91,7 +91,7 @@
                     "panel": "dedicated"
                 },
                 "problemMatcher": [],
-                "detail": "Start Vite dev server for frontend"
+                "detail": "Start Vite server with proxy to backend"
             }
         ]
     }

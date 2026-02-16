@@ -10,7 +10,7 @@ This skill automates launching the frontend development environment.
 ## Execution Steps
 
 1. **Change Directory:** Navigate to the `./frontend/` directory.
-2. **Execute Task:** Run the VS Code task: `"Start Vite Frontend"`.
+2. **Execute Task:** Run the VS Code task: `"Start Vite Server"`.
    - *Note:* This task executes `npm run dev` within the `./frontend` context.
 3. **Fallback:** If the task runner is unavailable, run manually:
 

@@ -7,12 +7,12 @@
     {
         "key": "ctrl+shift+2",
         "command": "workbench.action.tasks.runTask",
-        "args": "Start Uvicorn Dev Server"
+        "args": "Start Uvicorn Server"
     },
     {
         "key": "ctrl+shift+3",
         "command": "workbench.action.tasks.runTask",
-        "args": "Start Vite Frontend"
+        "args": "Start Vite Server"
     },
     {
         "key": "ctrl+shift+4",

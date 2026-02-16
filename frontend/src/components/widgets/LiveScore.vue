@@ -102,11 +102,11 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
             Live Score
         </h3>
 
-        <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/50">
+        <div class="overflow-hidden overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/50">
             <table class="w-full text-sm text-left text-slate-400">
                 <thead class="text-xs uppercase bg-slate-800 text-slate-300">
                     <tr>
-                        <th scope="col" class="px-2 py-3 text-center text-slate-500 w-10">
+                        <th scope="col" class="px-1 py-2 md:px-2 md:py-3 text-center text-slate-500 w-8 md:w-10">
                             #
                         </th>
                         <!-- Dynamic Columns 1..N -->
@@ -114,14 +114,14 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
                             v-for="n in shotPerRound"
                             :key="n"
                             scope="col"
-                            class="px-2 py-3 text-center w-12"
+                            class="px-1 py-2 md:px-2 md:py-3 text-center w-8 md:w-12"
                         >
                             {{ n }}
                         </th>
-                        <th scope="col" class="px-4 py-3 text-center w-20 bg-slate-800/80">
+                        <th scope="col" class="px-2 py-2 md:px-4 md:py-3 text-center w-14 md:w-20 bg-slate-800/80">
                             Total
                         </th>
-                        <th scope="col" class="px-4 py-3 text-center w-20 font-bold text-slate-100 bg-slate-800">
+                        <th scope="col" class="px-2 py-2 md:px-4 md:py-3 text-center w-14 md:w-20 font-bold text-slate-100 bg-slate-800">
                             Sum
                         </th>
                     </tr>
@@ -138,7 +138,7 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
                         class="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors"
                     >
                         <!-- Round Number -->
-                        <td class="px-2 py-3 text-center text-lg text-white bg-slate-800/50">
+                        <td class="px-1 py-2 md:px-2 md:py-3 text-center text-base md:text-lg text-white bg-slate-800/50">
                             {{ round.roundNumber }}
                         </td>
 
@@ -146,11 +146,11 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
                         <td
                             v-for="(shot, index) in round.shots"
                             :key="index"
-                            class="px-2 py-1 text-center font-bold text-xl"
+                            class="px-1 py-1 md:px-2 text-center font-bold text-lg md:text-xl"
                         >
                             <div
                                 v-if="shot"
-                                class="w-10 h-10 flex items-center justify-center rounded mx-auto text-xl shadow-sm border border-black/10"
+                                class="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded mx-auto text-lg md:text-xl shadow-sm border border-black/10"
                                 :style="getScoreStyle(shot.score!)"
                             >
                                 {{ shot.is_x ? 'X' : (shot.score === 0 ? 'M' : shot.score) }}
@@ -159,12 +159,12 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
                         </td>
 
                         <!-- Round Total -->
-                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/50">
+                        <td class="px-2 py-2 md:px-4 md:py-3 text-center text-base md:text-lg text-white bg-slate-800/50">
                             {{ round.total }}
                         </td>
 
                         <!-- Cumulative Total -->
-                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/50">
+                        <td class="px-2 py-2 md:px-4 md:py-3 text-center text-base md:text-lg text-white bg-slate-800/50">
                             {{ round.cumulative }}
                         </td>
                     </tr>

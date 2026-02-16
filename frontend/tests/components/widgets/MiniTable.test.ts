@@ -30,8 +30,8 @@ describe('miniTable', () => {
         // div.grid (row 2)
         //   div (slot 1) ... div (slot 6)
         //   div (actions)
-        // So direct children of the second grid div should be maxShots + 1
-        expect(slotsRow?.element.children.length).toBe(maxShots + 1)
+        // So direct children of the second grid div should be maxShots + 2 (slots + clear btn + confirm btn)
+        expect(slotsRow?.element.children.length).toBe(maxShots + 2)
     })
 
     it('renders shots with correct values and styles', () => {
@@ -182,8 +182,8 @@ describe('miniTable', () => {
 
         // Slots row
         const slotsRow = wrapper.findAll('.grid').at(1)
-        // Should have 0 slot divs + 1 actions div
-        expect(slotsRow?.element.children.length).toBe(1)
-        expect(slotsRow?.find('.flex.flex-row.gap-1').exists()).toBe(true)
+        // Should have 0 slot divs + 2 actions divs
+        expect(slotsRow?.element.children.length).toBe(2)
+        expect(slotsRow?.find('button[title="Clear field"]').exists()).toBe(true)
     })
 })
