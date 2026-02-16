@@ -96,7 +96,7 @@ describe('liveScore', () => {
                 shotPerRound: 6,
             },
         })
-        const cell = wrapper.find('td div.w-10')
+        const cell = wrapper.find('td div.w-7')
         expect(cell.text()).toBe('M')
     })
 
@@ -107,7 +107,7 @@ describe('liveScore', () => {
                 shotPerRound: 6,
             },
         })
-        const cell = wrapper.find('td div.w-10')
+        const cell = wrapper.find('td div.w-7')
         expect(cell.text()).toBe('X')
     })
 
@@ -133,7 +133,7 @@ describe('liveScore', () => {
             },
         })
 
-        const cells = wrapper.findAll('td div.w-10')
+        const cells = wrapper.findAll('td div.w-7')
 
         const checkStyle = (index: number, bg: string, color: string) => {
             const style = cells[index].attributes('style')

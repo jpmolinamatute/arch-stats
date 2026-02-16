@@ -104,8 +104,8 @@ If you are using this repository in VS Code, the workspace defines helpful tasks
 
 - Start database: Run task `Start Docker Compose`.
 - Stop database: Run task `Stop Docker Compose` (or `Stop & Remove Volumes`).
-- Start backend API: Run task `Start Uvicorn Dev Server`.
-- Start frontend (in separate terminal): Run task `Start Vite Frontend`.
+- Start backend API: Run task `Start Uvicorn Server`.
+- Start frontend (in separate terminal): Run task `Start Vite Server`.
 
 These match the manual commands shown above.
 

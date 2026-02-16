@@ -307,7 +307,7 @@ async function handleConfirmRound() {
         </main>
 
         <!-- Main content once initialized -->
-        <main v-else class="flex-1 p-6">
+        <main v-else class="flex-1 p-2 md:p-6">
             <div class="max-w-6xl mx-auto">
                 <div class="mb-6 flex items-center justify-between">
                     <div>

@@ -7,7 +7,7 @@ globs: backend/**/*.py
 
 ## Coding
 
-When suggesting new code follow this rules:
+When suggesting new code follow these rules:
 
 * Validate code against the latest documentation from the Context7 MCP.
 * Functions and methods must be properly type annotated (avoid "Any" types at any cost).
@@ -25,4 +25,4 @@ and backend-scripts skills.
 
 ## Feedback
 
-* Explain what was done and why was done
+* Explain what was done and why it was done

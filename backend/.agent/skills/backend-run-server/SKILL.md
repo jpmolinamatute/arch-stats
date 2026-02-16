@@ -20,7 +20,7 @@ Before starting the server, you must verify the following:
 
 To launch the server, use the integrated VS Code task runner:
 
-1. **Trigger Task:** Execute the VS Code task labeled `"Start Uvicorn Dev Server"`.
+1. **Trigger Task:** Execute the VS Code task labeled `"Start Uvicorn Server"`.
 2. **Manual Fallback:** If the task runner is unavailable, execute the canonical script
    directly from the project root:
 

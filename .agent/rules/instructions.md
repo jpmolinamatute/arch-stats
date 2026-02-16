@@ -37,7 +37,7 @@ Last updated: 2026-02-13
 ## Core Workflows
 
 - Start services (Docker + API + FE):
-    - VS Code tasks: Start Docker Compose, Start Uvicorn Dev Server, Start Vite Frontend.
+    - VS Code tasks: Start Docker Compose, Start Uvicorn Server, Start Vite Server.
     - Or run manually:
 
     ```bash

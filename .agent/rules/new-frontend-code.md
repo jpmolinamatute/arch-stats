@@ -7,12 +7,13 @@ globs: frontend/**/*
 
 ## Coding
 
-When suggesting new code follow this rules:
+When suggesting new code follow these rules:
 
 * Validate code against the latest documentation from the Context7 MCP.
 * Functions and methods must be properly type annotated (avoid "any" or "unknown" types at any cost).
    Use types from frontend/src/types/types.generated.ts.
 * Code must pass linting and be properly formatted. Use frontend-linting skill.
+* Code must pass type checking. Use frontend-type-checking skill.
 * Always write tests for new code, write success and fail path tests and  All tests must pass.
   Use frontend-tests skill.
 * Always generate types in order to keep backend and frontend in sync.
@@ -20,4 +21,4 @@ When suggesting new code follow this rules:
 
 ## Feedback
 
-* Explain what was done and why was done
+* Explain what was done and why it was done

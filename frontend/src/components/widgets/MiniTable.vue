@@ -16,11 +16,11 @@ function getShotTextColor(shot: { score: number, color: string }): string {
 </script>
 
 <template>
-    <div class="w-fit mx-auto mb-4 bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+    <div class="w-fit mx-auto mb-4 bg-slate-900/50 rounded-lg p-1 border border-slate-800">
         <!-- Row 1: Numbers -->
         <div
-            class="grid gap-2 mb-2 text-center"
-            :style="{ gridTemplateColumns: `repeat(${maxShots + 1}, minmax(3.5rem, 1fr))` }"
+            class="grid gap-1 mb-2 text-center"
+            :style="{ gridTemplateColumns: `repeat(${maxShots + 2}, minmax(0, 1fr))` }"
         >
             <div
                 v-for="i in maxShots"
@@ -35,18 +35,19 @@ function getShotTextColor(shot: { score: number, color: string }): string {
 
         <!-- Row 2: Shots + Actions -->
         <div
-            class="grid gap-2 h-14"
-            :style="{ gridTemplateColumns: `repeat(${maxShots + 1}, minmax(3.5rem, 1fr))` }"
+            class="grid gap-1"
+            :style="{ gridTemplateColumns: `repeat(${maxShots + 2}, minmax(0, 1fr))` }"
         >
             <!-- Shot Slots -->
             <div
                 v-for="i in maxShots"
                 :key="`slot-${i}`"
-                class="relative"
+                class="relative min-w-0 overflow-hidden w-full"
+                style="aspect-ratio: 1 / 1;"
             >
                 <button
                     v-if="shots[i - 1]"
-                    class="w-full h-full rounded flex items-center justify-center font-bold text-xl shadow-sm transition-transform hover:scale-105 active:scale-95 border border-black/10"
+                    class="w-full h-full rounded flex items-center justify-center font-bold text-lg leading-none shadow-sm transition-transform hover:scale-105 active:scale-95 border border-black/10 !p-0"
                     :style="{
                         backgroundColor: shots[i - 1]?.color,
                         backgroundImage: 'none',
@@ -64,17 +65,19 @@ function getShotTextColor(shot: { score: number, color: string }): string {
             </div>
 
             <!-- Action Buttons (Clear/Confirm) -->
-            <div class="flex flex-row gap-1">
+            <div class="relative min-w-0 overflow-hidden w-full" style="aspect-ratio: 1 / 1;">
                 <button
-                    class="flex-1 text-[10px] uppercase font-bold tracking-wider rounded border border-red-900/50 bg-red-900/20 text-red-400 hover:bg-red-900/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    class="w-full h-full min-w-0 text-[9px] !p-0 uppercase font-bold rounded border border-red-900/50 bg-red-900/20 text-red-400 hover:bg-red-900/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center leading-none"
                     title="Clear field"
                     :disabled="shots.length === 0"
                     @click="emit('clear')"
                 >
                     CLR
                 </button>
+            </div>
+            <div class="relative min-w-0 overflow-hidden w-full" style="aspect-ratio: 1 / 1;">
                 <button
-                    class="flex-1 text-[10px] uppercase font-bold tracking-wider rounded border border-emerald-900/50 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    class="w-full h-full min-w-0 text-[9px] !p-0 uppercase font-bold rounded border border-emerald-900/50 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center leading-none"
                     title="Confirm round"
                     :disabled="shots.length < maxShots"
                     @click="emit('confirm')"

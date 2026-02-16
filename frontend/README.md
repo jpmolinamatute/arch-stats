@@ -81,8 +81,8 @@ Follow these steps to get from zero to "Hello World":
 
 If you use VS Code, the workspace defines helpful tasks:
 
-- Start frontend dev server: Run task `Start Vite Frontend`.
-- Start backend API: Run task `Start Uvicorn Dev Server`.
+- Start frontend dev server: Run task `Start Vite Server`.
+- Start backend API: Run task `Start Uvicorn Server`.
 - Start/stop database: Run tasks `Start Docker Compose` and
   `Stop Docker Compose` (or `Stop & Remove Volumes`).
 
