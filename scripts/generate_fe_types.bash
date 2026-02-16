@@ -26,13 +26,12 @@ frontend() {
 
 main() {
     local openapi_source
-    if [[ ! -f "${ENV_FILE}" ]]; then
-        echo "Error: .env file not found at ${ENV_FILE}." >&2
-        exit 1
+    if [[ -f "${ENV_FILE}" ]]; then
+        # shellcheck source=../.env
+        source "${ENV_FILE}"
     fi
-    # shellcheck source=../.env
-    source "${ENV_FILE}"
-    openapi_source="http://localhost:${ARCH_STATS_SERVER_PORT}/api/openapi.json"
+
+    openapi_source="http://localhost:${ARCH_STATS_SERVER_PORT:-8000}/api/openapi.json"
     if ! curl --silent --fail --head "${openapi_source}" >/dev/null 2>&1; then
         openapi_source="${ROOT_DIR}/openapi.json"
         openapi_via_script "${openapi_source}"
