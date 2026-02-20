@@ -1,12 +1,15 @@
 import datetime
+from collections.abc import Callable
 from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
+from asyncpg import Pool
 from httpx import AsyncClient
 
 from core import settings
+from factories.archer_factory import create_archers
 from schema import ArcherRead, BowStyleType, GenderType
 
 
@@ -134,3 +137,62 @@ async def test_dummy_login_disabled_in_prod(
     with patch.object(settings, "arch_stats_dev_mode", False):
         response = await client.post("/api/v0/auth/dummy")
         assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_get_me_unauthenticated(client: AsyncClient) -> None:
+    response = await client.get("/api/v0/auth/me")
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+async def test_get_me_authenticated(
+    client: AsyncClient,
+    jwt_for: Callable[[UUID], str],
+    db_pool: Pool,
+) -> None:
+
+    (archer_id,) = await create_archers(db_pool, 1)
+    token = jwt_for(archer_id)
+    client.cookies.set("arch_stats_auth", token)
+    response = await client.get("/api/v0/auth/me")
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data["archer"]["archer_id"] == str(archer_id)
+
+
+@pytest.mark.asyncio
+async def test_logout(
+    client: AsyncClient,
+    jwt_for: Callable[[UUID], str],
+    db_pool: Pool,
+) -> None:
+    (archer_id,) = await create_archers(db_pool, 1)
+    token = jwt_for(archer_id)
+    client.cookies.set("arch_stats_auth", token)
+    response = await client.post("/api/v0/auth/logout")
+    assert response.status_code == HTTPStatus.OK
+    set_cookie_header = response.headers.get("set-cookie", "")
+    assert "arch_stats_auth" in set_cookie_header
+
+
+@pytest.mark.asyncio
+async def test_google_one_tap_login_invalid_credential(client: AsyncClient) -> None:
+    payload = {"credential": "invalid_jwt_token"}
+    response = await client.post("/api/v0/auth/google", json=payload)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+async def test_register_invalid_credential(client: AsyncClient, setup_auth_deps: None) -> None:
+    payload = {
+        "credential": "invalid_jwt_token",
+        "first_name": "New",
+        "last_name": "Archer",
+        "date_of_birth": "1990-01-01",
+        "gender": GenderType.UNSPECIFIED.value,
+        "bowstyle": BowStyleType.RECURVE.value,
+        "draw_weight": 30.0,
+    }
+    response = await client.post("/api/v0/auth/register", json=payload)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED

@@ -1,17 +1,11 @@
+import type { UserSession } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import AuthGate from '@/components/auth/AuthGate.vue'
+
 import { useAuth } from '@/composables/useAuth'
 
-interface UserSession {
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean
-}
 interface ArcherRegistration {
     credential: string
     google_email: string
@@ -69,7 +63,6 @@ describe('authGate', () => {
                 last_name: 'Doe',
                 archer_id: '123',
                 email: 'jane@example.com',
-                is_admin: false,
             }),
             registerNewArcher: mockRegisterNewArcher,
             bootstrapAuth: vi.fn(),

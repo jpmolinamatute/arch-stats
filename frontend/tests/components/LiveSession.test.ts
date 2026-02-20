@@ -1,3 +1,4 @@
+import type { UserSession } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -5,27 +6,18 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Face from '@/components/Face.vue'
 import LiveSession from '@/components/LiveSession.vue'
-import ConfirmModal from '@/components/widgets/ConfirmModal.vue'
 
+import ConfirmModal from '@/components/widgets/ConfirmModal.vue'
 import MiniTable from '@/components/widgets/MiniTable.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useFaces } from '@/composables/useFaces'
 import { useSession } from '@/composables/useSession'
-import { useShot } from '@/composables/useShot'
 
+import { useShot } from '@/composables/useShot'
 import { useSlot } from '@/composables/useSlot'
 
 type SessionRead = components['schemas']['SessionRead']
 type SlotRead = components['schemas']['FullSlotInfo']
-interface UserSession
-{
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean
-}
 
 // Mock composables
 vi.mock('@/composables/useAuth', () => ({
@@ -124,7 +116,12 @@ describe('liveSession', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        localStorage.clear()
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn(),
+            setItem: vi.fn(),
+            removeItem: vi.fn(),
+            clear: vi.fn(),
+        })
         vi.mocked(useRouter).mockReturnValue({ push: mockRouterPush } as unknown as ReturnType<
             typeof useRouter
         >)
@@ -187,7 +184,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
@@ -230,6 +226,7 @@ describe('liveSession', () => {
     })
 
     it('renders SlotJoinForm if session exists but no slot', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
         vi.mocked(useAuth).mockReturnValue({
             bootstrapAuth: mockBootstrapAuth,
             isAuthenticated: ref(true),
@@ -240,7 +237,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
@@ -289,6 +285,7 @@ describe('liveSession', () => {
 
         expect(wrapper.find('[data-testid="slot-join-form"]').exists()).toBe(true)
         expect(wrapper.find('[data-testid="face"]').exists()).toBe(false)
+        consoleSpy.mockRestore()
     })
 
     it('renders Face if slot exists', async () => {
@@ -302,7 +299,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
@@ -380,7 +376,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
@@ -466,7 +461,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
@@ -594,7 +588,6 @@ describe('liveSession', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),

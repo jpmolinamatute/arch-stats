@@ -438,3 +438,51 @@ async def test_create_shots_more_than_ten_fails(
     # Assert
     assert resp.status_code == HTTPStatus.BAD_REQUEST
     assert resp.json()["detail"] == "Invalid input"
+
+
+@pytest.mark.asyncio
+async def test_count_by_slot_returns_zero_for_empty_slot(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    # 1. Setup
+    (owner_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[owner_id], target_id=target_id, session_id=session_id
+    )
+
+    # 2. Call count
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id))
+    response = await client.get(f"/api/v0/shot/count-by-slot/{slot_id}")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == 0
+
+
+@pytest.mark.asyncio
+async def test_count_by_slot_returns_correct_count_for_multiple_shots(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    # 1. Setup
+    (owner_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[owner_id], target_id=target_id, session_id=session_id
+    )
+
+    # 2. Add shots
+    shots = [
+        {"slot_id": str(slot_id), "x": 5.0, "y": 5.0, "score": 10},
+        {"slot_id": str(slot_id), "x": 5.0, "y": 5.0, "score": 9},
+        {"slot_id": str(slot_id), "x": 5.0, "y": 5.0, "score": 8},
+    ]
+    client.cookies.set("arch_stats_auth", jwt_for(owner_id))
+    await client.post("/api/v0/shot", json=shots)
+
+    # 3. Call count
+    response = await client.get(f"/api/v0/shot/count-by-slot/{slot_id}")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == len(shots)
