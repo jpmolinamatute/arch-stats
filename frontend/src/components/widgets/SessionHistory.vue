@@ -75,7 +75,7 @@ function getScoreColor(score: number | null): string {
                         </td>
                         <td class="px-4 py-3 text-center font-bold text-lg">
                             <span :class="getScoreColor(shot.score ?? null)">
-                                {{ shot.score ?? '-' }}
+                                {{ shot.score === 0 ? 'M' : (shot.score ?? '-') }}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center font-bold">

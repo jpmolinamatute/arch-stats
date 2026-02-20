@@ -135,6 +135,7 @@ describe('useShot', () => {
         })
 
         it('handles fetch error', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
             vi.mocked(api.get).mockRejectedValue(new Error('Fetch failed'))
 
             await fetchShots(slotId)
@@ -142,6 +143,8 @@ describe('useShot', () => {
             expect(shots.value).toEqual([])
             expect(error.value).toBe('Fetch failed')
             expect(loading.value).toBe(false)
+
+            consoleSpy.mockRestore()
         })
     })
 

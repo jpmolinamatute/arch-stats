@@ -226,6 +226,7 @@ describe('liveSession', () => {
     })
 
     it('renders SlotJoinForm if session exists but no slot', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
         vi.mocked(useAuth).mockReturnValue({
             bootstrapAuth: mockBootstrapAuth,
             isAuthenticated: ref(true),
@@ -284,6 +285,7 @@ describe('liveSession', () => {
 
         expect(wrapper.find('[data-testid="slot-join-form"]').exists()).toBe(true)
         expect(wrapper.find('[data-testid="face"]').exists()).toBe(false)
+        consoleSpy.mockRestore()
     })
 
     it('renders Face if slot exists', async () => {

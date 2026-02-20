@@ -13,7 +13,8 @@ vi.mock('@/composables/useAuth', () => ({
 
 describe('landing Page', () => {
     it('renders header and handles Dev login', async () => {
-    // Mock env var
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { })
+        // Mock env var
         vi.stubEnv('ARCH_STATS_DEV_MODE', 'true')
 
         const router = createRouter({
@@ -46,5 +47,7 @@ describe('landing Page', () => {
         // Verify Click Action
         await button.trigger('click')
         expect(loginAsDummyMock).toHaveBeenCalled()
+
+        consoleSpy.mockRestore()
     })
 })

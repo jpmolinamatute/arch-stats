@@ -3,8 +3,7 @@ import { ref } from 'vue'
 import { api, ApiError } from '@/api/client'
 import { isEnvTrue } from '@/utils/env'
 
-export interface UserSession
-{
+export interface UserSession {
     archer_id: string
     email: string
     first_name?: string | null
@@ -42,8 +41,7 @@ const initialized = ref(false)
 const initError = ref<string | null>(null)
 // Prevent multiple concurrent FedCM prompt() calls
 const prompting = ref(false)
-interface PendingRegistration
-{
+interface PendingRegistration {
     credential: string // keep last id token
     google_email: string
     google_subject: string
