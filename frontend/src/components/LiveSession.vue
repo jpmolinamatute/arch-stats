@@ -143,7 +143,8 @@ onMounted(async () => {
                     await setupShotSubscription(slot.slot_id)
                 }
             }
-            catch {
+            catch (e) {
+                console.error('[LiveSession] catch triggered:', e)
                 currentSlot.value = null
             }
         }

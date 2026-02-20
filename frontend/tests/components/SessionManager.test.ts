@@ -1,22 +1,15 @@
+import type { UserSession } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SessionManager from '@/components/SessionManager.vue'
-import { useAuth } from '@/composables/useAuth'
 
+import { useAuth } from '@/composables/useAuth'
 import { useSession } from '@/composables/useSession'
 
 type SessionRead = components['schemas']['SessionRead']
-interface UserSession {
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean // Added based on usage in tests
-}
 
 // Mock composables
 vi.mock('@/composables/useAuth', () => ({
@@ -62,7 +55,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -105,7 +97,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -162,7 +153,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -203,7 +193,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -246,7 +235,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -311,7 +299,6 @@ describe('sessionManager', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
                 picture_url: null,
             }),
             isAuthenticated: ref(true),

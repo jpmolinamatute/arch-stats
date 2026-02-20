@@ -1,3 +1,4 @@
+import type { UserSession } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,21 +7,12 @@ import { useRouter } from 'vue-router'
 import SlotJoinForm from '@/components/forms/SlotJoinForm.vue'
 import { useArcher } from '@/composables/useArcher'
 import { useAuth } from '@/composables/useAuth'
-import { useFaces } from '@/composables/useFaces'
 
+import { useFaces } from '@/composables/useFaces'
 import { useSlot } from '@/composables/useSlot'
 
 type ArcherRead = components['schemas']['ArcherRead']
 type FaceMinimal = components['schemas']['FaceMinimal']
-interface UserSession
-{
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean
-}
 
 // Mock composables
 vi.mock('@/composables/useSlot', () => ({
@@ -95,7 +87,6 @@ describe('slotJoinForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -199,7 +190,6 @@ describe('slotJoinForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -274,7 +264,6 @@ describe('slotJoinForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),

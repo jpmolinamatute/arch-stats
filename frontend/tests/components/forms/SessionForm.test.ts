@@ -1,20 +1,12 @@
 import type { ComputedRef } from 'vue'
+import type { UserSession } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import SessionForm from '@/components/forms/SessionForm.vue'
 import { useAuth } from '@/composables/useAuth'
-import { useSession } from '@/composables/useSession'
 
-interface UserSession
-{
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean
-}
+import { useSession } from '@/composables/useSession'
 
 // Mock composables
 vi.mock('@/composables/useSession', () => ({
@@ -48,7 +40,6 @@ describe('sessionForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -84,7 +75,7 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({ first_name: 'John', last_name: 'Doe', archer_id: 'archer_1', email: 'john@example.com', is_admin: false }),
+            user: ref<UserSession>({ first_name: 'John', last_name: 'Doe', archer_id: 'archer_1', email: 'john@example.com' }),
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
@@ -129,7 +120,6 @@ describe('sessionForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -173,7 +163,6 @@ describe('sessionForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -227,7 +216,6 @@ describe('sessionForm', () => {
                 last_name: 'Doe',
                 archer_id: 'archer_1',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             isAuthenticated: ref(true),
             loading: ref(false),

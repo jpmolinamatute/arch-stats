@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { api, ApiError } from '@/api/client'
 import { isEnvTrue } from '@/utils/env'
 
-interface UserSession {
+export interface UserSession
+{
     archer_id: string
     email: string
     first_name?: string | null
@@ -41,7 +42,8 @@ const initialized = ref(false)
 const initError = ref<string | null>(null)
 // Prevent multiple concurrent FedCM prompt() calls
 const prompting = ref(false)
-interface PendingRegistration {
+interface PendingRegistration
+{
     credential: string // keep last id token
     google_email: string
     google_subject: string
@@ -215,7 +217,7 @@ async function beginGoogleLogin(idToken?: string): Promise<void> {
     }
     loading.value = true
     try {
-    // OpenAPI: returns union of AuthAuthenticated | AuthNeedsRegistration
+        // OpenAPI: returns union of AuthAuthenticated | AuthNeedsRegistration
         const data = await api.post<AuthLoginResponseBody>('/auth/google', { credential: idToken })
 
         if (isAuthAuthenticated(data)) {
@@ -270,7 +272,7 @@ async function registerNewArcher(input: {
         throw new Error('No pending registration')
     loading.value = true
     try {
-    // Use generated type; draw_weight is now part of the registration request
+        // Use generated type; draw_weight is now part of the registration request
         type RegistrationPayload = components['schemas']['AuthRegistrationRequest']
         const payload: RegistrationPayload = {
             credential: pendingRegistration.value.credential,
@@ -301,7 +303,7 @@ async function registerNewArcher(input: {
         isAuthenticated.value = true
         pendingRegistration.value = null
 
-    // draw_weight persisted during registration; no follow-up PATCH required
+        // draw_weight persisted during registration; no follow-up PATCH required
     }
     finally {
         loading.value = false
@@ -337,14 +339,14 @@ async function logout(): Promise<void> {
 
 function disableGoogleAutoSelect(): void {
     try {
-    // Use dynamic access to avoid TS complaints in our narrowed type
+        // Use dynamic access to avoid TS complaints in our narrowed type
         const maybeApi: unknown = (window as unknown as { google?: unknown })?.google
         const accounts = (maybeApi as { accounts?: unknown })?.accounts
         const idApi = (accounts as { id?: unknown })?.id as { disableAutoSelect?: () => void }
         idApi?.disableAutoSelect?.()
     }
     catch {
-    /* noop */
+        /* noop */
     }
 }
 

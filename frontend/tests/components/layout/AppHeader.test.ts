@@ -1,17 +1,10 @@
+import type { UserSession } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
-import { useAuth } from '@/composables/useAuth'
 
-interface UserSession {
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-    is_admin?: boolean
-}
+import { useAuth } from '@/composables/useAuth'
 
 // Mock useAuth
 vi.mock('@/composables/useAuth', () => ({
@@ -57,7 +50,6 @@ describe('appHeader', () => {
                 last_name: 'Doe',
                 archer_id: '123',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: mockLogout,
             disableGoogleAutoSelect: mockDisableGoogleAutoSelect,
@@ -113,7 +105,6 @@ describe('appHeader', () => {
                 last_name: 'Doe',
                 archer_id: '123',
                 email: 'john@example.com',
-                is_admin: false,
             }),
             logout: mockLogout,
             disableGoogleAutoSelect: mockDisableGoogleAutoSelect,
