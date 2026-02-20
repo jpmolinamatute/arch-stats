@@ -6,7 +6,8 @@ import SessionForm from '@/components/forms/SessionForm.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useSession } from '@/composables/useSession'
 
-interface UserSession {
+interface UserSession
+{
     archer_id: string
     email: string
     first_name?: string | null
@@ -69,6 +70,46 @@ describe('sessionForm', () => {
         expect(wrapper.find('input[type="text"]').exists()).toBe(true) // Location
         expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true) // Indoor
         expect(wrapper.find('input[type="number"]').exists()).toBe(true) // Shots per round
+    })
+
+    it('disables form fields and button when creating session', async () => {
+        vi.mocked(useSession).mockReturnValue({
+            createSession: mockCreateSession,
+            loading: ref(true),
+            error: ref(null),
+            currentSession: ref(null),
+            checkForOpenSession: vi.fn(),
+            closeSession: vi.fn(),
+            hasOpenSession: computed(() => false) as unknown as ComputedRef<boolean>,
+            clearSessionCache: vi.fn(),
+        })
+        vi.mocked(useAuth).mockReturnValue({
+            user: ref<UserSession>({ first_name: 'John', last_name: 'Doe', archer_id: 'archer_1', email: 'john@example.com', is_admin: false }),
+            isAuthenticated: ref(true),
+            loading: ref(false),
+            pendingRegistration: ref(null),
+            bootstrapAuth: vi.fn(),
+            logout: vi.fn(),
+            disableGoogleAutoSelect: vi.fn(),
+            registerNewArcher: vi.fn(),
+            initialized: ref(true),
+            initError: ref(null),
+            prompting: ref(false),
+            initOneTap: vi.fn(),
+            beginGoogleLogin: vi.fn(),
+            clientId: 'm',
+            loginAsDummy: vi.fn(),
+        })
+
+        const wrapper = mount(SessionForm)
+
+        expect(wrapper.find('input[type="text"]').attributes('disabled')).toBeDefined()
+        expect(wrapper.find('input[type="checkbox"]').attributes('disabled')).toBeDefined()
+        expect(wrapper.find('input[type="number"]').attributes('disabled')).toBeDefined()
+
+        const button = wrapper.find('button[type="submit"]')
+        expect(button.attributes('disabled')).toBeDefined()
+        expect(button.text()).toBe('Creating...')
     })
 
     it('shows validation error if location is empty', async () => {
@@ -206,7 +247,7 @@ describe('sessionForm', () => {
 
         const wrapper = mount(SessionForm)
 
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
         await wrapper.find('input[type="text"]').setValue('Range A')
         await wrapper.find('form').trigger('submit')

@@ -74,8 +74,8 @@ function getScoreColor(score: number | null): string {
                             {{ formatDate(shot.created_at) }}
                         </td>
                         <td class="px-4 py-3 text-center font-bold text-lg">
-                            <span :class="getScoreColor(shot.score ?? 0)">
-                                {{ shot.score }}
+                            <span :class="getScoreColor(shot.score ?? null)">
+                                {{ shot.score ?? '-' }}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center font-bold">

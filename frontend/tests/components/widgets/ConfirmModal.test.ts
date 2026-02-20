@@ -22,6 +22,17 @@ describe('confirmModal', () => {
         expect(wrapper.text()).toContain('Test Message')
     })
 
+    it('has standard accessibility attributes when shown', () => {
+        const wrapper = mount(ConfirmModal, {
+            props: { show: true },
+            global: { stubs: { Teleport: true, Transition: true } },
+        })
+
+        const dialog = wrapper.find('div[role="dialog"]')
+        expect(dialog.exists()).toBe(true)
+        expect(dialog.attributes('aria-modal')).toBe('true')
+    })
+
     it('does not render when show is false', () => {
         const wrapper = mount(ConfirmModal, {
             props: {
