@@ -41,8 +41,10 @@ vi.mock('@/composables/useShot', () => ({
     useShot: vi.fn().mockReturnValue({
         createShot: vi.fn(),
         fetchShots: vi.fn(),
+        fetchShotCount: vi.fn(),
         subscribeToShots: vi.fn(),
         shots: { value: [], __v_isRef: true },
+        shotCount: { value: 0, __v_isRef: true },
         loading: { value: false, __v_isRef: true },
         error: { value: null, __v_isRef: true },
         stats: { value: null, __v_isRef: true },
@@ -525,8 +527,10 @@ describe('liveSession', () => {
         vi.mocked(useShot).mockReturnValue({
             createShot: mockCreateShot,
             fetchShots: vi.fn(),
+            fetchShotCount: vi.fn(),
             subscribeToShots: vi.fn(),
             shots: ref([]),
+            shotCount: ref(0),
             loading: ref(false),
             error: ref(null),
             stats: ref(null),
@@ -650,8 +654,10 @@ describe('liveSession', () => {
         vi.mocked(useShot).mockReturnValue({
             createShot: vi.fn(),
             fetchShots: vi.fn(),
+            fetchShotCount: vi.fn(),
             subscribeToShots: vi.fn(),
             shots: ref([]),
+            shotCount: ref(0),
             loading: ref(false),
             error: ref(null),
             stats: ref(null),

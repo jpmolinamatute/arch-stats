@@ -106,7 +106,7 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
             <table class="w-full text-sm text-left text-slate-400">
                 <thead class="text-xs uppercase bg-slate-800 text-slate-300">
                     <tr>
-                        <th scope="col" class="px-1 py-2 md:px-2 md:py-3 text-center text-slate-500 w-8 md:w-10">
+                        <th scope="col" class="px-1 py-2 md:px-2 md:py-3 text-center w-8 md:w-10">
                             #
                         </th>
                         <!-- Dynamic Columns 1..N -->
@@ -121,7 +121,7 @@ function getScoreStyle(score: number): { backgroundColor: string, color: string 
                         <th scope="col" class="px-2 py-2 md:px-4 md:py-3 text-center w-14 md:w-20 bg-slate-800/80">
                             Total
                         </th>
-                        <th scope="col" class="px-2 py-2 md:px-4 md:py-3 text-center w-14 md:w-20 font-bold text-slate-100 bg-slate-800">
+                        <th scope="col" class="px-2 py-2 md:px-4 md:py-3 text-center w-14 md:w-20 bg-slate-800">
                             Sum
                         </th>
                     </tr>

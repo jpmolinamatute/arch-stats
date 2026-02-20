@@ -9,6 +9,7 @@ import ConfirmModal from '@/components/widgets/ConfirmModal.vue'
 import LiveScore from '@/components/widgets/LiveScore.vue'
 import LiveStatsTable from '@/components/widgets/LiveStatsTable.vue'
 import MiniTable from '@/components/widgets/MiniTable.vue'
+import NoFaceSession from '@/components/widgets/NoFaceSession.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useFaces } from '@/composables/useFaces'
 import { useSession } from '@/composables/useSession'
@@ -21,10 +22,14 @@ const router = useRouter()
 const { user, isAuthenticated, bootstrapAuth } = useAuth()
 const { currentSession, closeSession, loading, checkForOpenSession } = useSession()
 const { currentSlot, getSlot, getSlotCached } = useSlot()
-const { createShot, fetchShots, subscribeToShots, shots: historyShots, stats: currentStats, loading: shotLoading } = useShot()
+const { createShot, fetchShots, fetchShotCount, subscribeToShots, shots: historyShots, shotCount, stats: currentStats, loading: shotLoading } = useShot()
 const { fetchFace } = useFaces()
 
-const xCount = computed(() => historyShots.value.filter(s => s.is_x).length)
+const scoredShots = computed(() => {
+    return historyShots.value.filter(s => s.score != null)
+})
+
+const xCount = computed(() => scoredShots.value.filter(s => s.is_x).length)
 
 const showCloseModal = ref(false)
 const initializing = ref(true)
@@ -90,6 +95,11 @@ watch(() => currentSlot.value?.face_type, async (newFaceId) => {
 }, { immediate: true })
 
 async function setupShotSubscription(slotId: string) {
+    if (currentSlot.value?.face_type === 'none') {
+        await fetchShotCount(slotId)
+        return
+    }
+
     await fetchShots(slotId)
     if (wsSocket) {
         wsSocket.close()
@@ -184,8 +194,7 @@ async function confirmClose() {
         // Show error to user with a proper error modal or toast in the future
         const errorMessage
             = e instanceof Error ? e.message : 'Failed to close session. Please try again.'
-        // eslint-disable-next-line no-alert
-        alert(errorMessage)
+        console.error(errorMessage)
     }
 }
 
@@ -281,10 +290,33 @@ async function handleConfirmRound() {
             }
 
             // If recovery fails, session/slot invalid
-            // eslint-disable-next-line no-alert
-            alert('Session appears to be invalid or expired. Please start a new session.')
+            console.error('Session appears to be invalid or expired. Please start a new session.')
             await router.push('/app')
         }
+    }
+}
+
+const isNoTarget = computed(() => currentSlot.value?.face_type === 'none')
+
+async function handleAddShots(count: number) {
+    if (!currentSlot.value?.slot_id)
+        return
+
+    try {
+        const shotsPayload = Array.from({ length: count }, () => ({
+            slot_id: currentSlot.value!.slot_id,
+            score: null,
+            x: null,
+            y: null,
+            is_x: false,
+        }))
+
+        await createShot(shotsPayload)
+        // Post-and-Fetch strategy: Update UI from DB
+        await fetchShotCount(currentSlot.value.slot_id)
+    }
+    catch (e) {
+        console.error('Failed to add shots:', e)
     }
 }
 </script>
@@ -340,72 +372,84 @@ async function handleConfirmRound() {
 
                 <!-- Show Live Session details only if slot is assigned -->
                 <div v-else-if="currentSlot">
-                    <!-- View Switcher -->
-                    <div class="flex justify-center mb-6">
-                        <div class="bg-slate-800 p-1 rounded-lg inline-flex">
-                            <button
-                                data-testid="view-target-btn"
-                                class="px-4 py-2 text-sm rounded-md transition-colors duration-200"
-                                :class="showTarget ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
-                                @click="showTarget = true"
-                            >
-                                Target
-                            </button>
-                            <button
-                                data-testid="view-shots-btn"
-                                class="px-4 py-2 text-sm rounded-md transition-colors duration-200"
-                                :class="!showTarget ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
-                                @click="showTarget = false"
-                            >
-                                Shots
-                            </button>
-                        </div>
+                    <!-- No Target Face View -->
+                    <div v-if="isNoTarget" class="max-w-3xl mx-auto">
+                        <NoFaceSession
+                            :total-shots="shotCount"
+                            :loading="shotLoading"
+                            @add-shots="handleAddShots"
+                        />
                     </div>
 
-                    <!-- Target View -->
-                    <div v-show="showTarget" class="max-w-3xl mx-auto" data-testid="target-view">
-                        <div class="p-6 md:p-8 rounded-lg border border-slate-800 bg-slate-900/50 text-center text-slate-400">
-                            <h2 class="text-xl font-semibold text-slate-200 mb-3">
-                                Session Active
-                            </h2>
-                            <p class="text-sm mb-6">
-                                Tap the target face to record a shot.
-                            </p>
-
-                            <div class="w-full flex flex-col items-center">
-                                <MiniTable
-                                    :shots="draftShots"
-                                    :face="face"
-                                    :max-shots="currentSession?.shot_per_round ?? 6"
-                                    @delete="handleDraftDelete"
-                                    @clear="handleDraftClear"
-                                    @confirm="handleConfirmRound"
-                                />
-
-                                <p v-if="shotLoading" class="mb-2 text-xs text-emerald-400 animate-pulse">
-                                    Saving round...
-                                </p>
-
-                                <Face
-                                    v-if="currentSlot.face_type && currentSlot.face_type !== 'none'"
-                                    :face="face"
-                                    :shots="draftShots"
-                                    @shot="handleShotDraft"
-                                />
+                    <!-- Regular Target/Shots View -->
+                    <div v-else>
+                        <!-- View Switcher -->
+                        <div class="flex justify-center mb-6">
+                            <div class="bg-slate-800 p-1 rounded-lg inline-flex">
+                                <button
+                                    data-testid="view-target-btn"
+                                    class="px-4 py-2 text-sm rounded-md transition-colors duration-200"
+                                    :class="showTarget ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+                                    @click="showTarget = true"
+                                >
+                                    Target
+                                </button>
+                                <button
+                                    data-testid="view-shots-btn"
+                                    class="px-4 py-2 text-sm rounded-md transition-colors duration-200"
+                                    :class="!showTarget ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+                                    @click="showTarget = false"
+                                >
+                                    Shots
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Shots List View -->
-                    <div v-show="!showTarget" class="max-w-3xl mx-auto" data-testid="shots-view">
-                        <LiveScore
-                            :shots="historyShots"
-                            :shot-per-round="currentSession?.shot_per_round ?? 6"
-                        />
-                        <LiveStatsTable
-                            :stats="currentStats"
-                            :x-count="xCount"
-                        />
+                        <!-- Target View -->
+                        <div v-show="showTarget" class="max-w-3xl mx-auto" data-testid="target-view">
+                            <div class="p-6 md:p-8 rounded-lg border border-slate-800 bg-slate-900/50 text-center text-slate-400">
+                                <h2 class="text-xl font-semibold text-slate-200 mb-3">
+                                    Session Active
+                                </h2>
+                                <p class="text-sm mb-6">
+                                    Tap the target face to record a shot.
+                                </p>
+
+                                <div class="w-full flex flex-col items-center">
+                                    <MiniTable
+                                        :shots="draftShots"
+                                        :face="face"
+                                        :max-shots="currentSession?.shot_per_round ?? 6"
+                                        @delete="handleDraftDelete"
+                                        @clear="handleDraftClear"
+                                        @confirm="handleConfirmRound"
+                                    />
+
+                                    <p v-if="shotLoading" class="mb-2 text-xs text-emerald-400 animate-pulse">
+                                        Saving round...
+                                    </p>
+
+                                    <Face
+                                        v-if="currentSlot.face_type && currentSlot.face_type !== 'none'"
+                                        :face="face"
+                                        :shots="draftShots"
+                                        @shot="handleShotDraft"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shots List View -->
+                        <div v-show="!showTarget" class="max-w-3xl mx-auto" data-testid="shots-view">
+                            <LiveScore
+                                :shots="scoredShots"
+                                :shot-per-round="currentSession?.shot_per_round ?? 6"
+                            />
+                            <LiveStatsTable
+                                :stats="currentStats"
+                                :x-count="xCount"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
