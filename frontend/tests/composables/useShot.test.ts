@@ -50,13 +50,28 @@ describe('useShot', () => {
             expect(error.value).toBeNull()
         })
 
-        it('handles array of shots creation', async () => {
-            const mockResponse = [{ shot_id: 'shot_1' }, { shot_id: 'shot_2' }]
+        it('handles batch array of shots creation (>= 3)', async () => {
+            const mockResponse = [{ shot_id: 'shot_1' }, { shot_id: 'shot_2' }, { shot_id: 'shot_3' }]
             vi.mocked(api.createShot).mockResolvedValue(mockResponse as any)
+
+            const result = await createShot([mockShotCreate, mockShotCreate, mockShotCreate])
+
+            expect(result).toEqual(['shot_1', 'shot_2', 'shot_3'])
+            expect(api.createShot).toHaveBeenCalledWith([mockShotCreate, mockShotCreate, mockShotCreate])
+            expect(loading.value).toBe(false)
+        })
+
+        it('handles small array of shots creation (< 3) individually', async () => {
+            const mockResponse1 = { shot_id: 'shot_1' }
+            const mockResponse2 = { shot_id: 'shot_2' }
+            vi.mocked(api.createShot)
+                .mockResolvedValueOnce(mockResponse1 as any)
+                .mockResolvedValueOnce(mockResponse2 as any)
 
             const result = await createShot([mockShotCreate, mockShotCreate])
 
             expect(result).toEqual(['shot_1', 'shot_2'])
+            expect(api.createShot).toHaveBeenCalledTimes(2)
             expect(loading.value).toBe(false)
         })
 

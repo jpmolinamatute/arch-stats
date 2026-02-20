@@ -85,3 +85,21 @@ async def get_shots_by_slot(
         return shots
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.get("/count-by-slot/{slot_id:uuid}", response_model=int)
+async def get_shots_count_by_slot(
+    slot_id: UUID,
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
+    shot_model: Annotated[ShotModel, Depends(get_shot_model)],
+    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
+) -> int:
+    try:
+        # Verify that the slot belongs to the archer
+        slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
+        if slot.archer_id != current_archer_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+        return await shot_model.count_by_slot(slot_id)
+    except DBNotFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e

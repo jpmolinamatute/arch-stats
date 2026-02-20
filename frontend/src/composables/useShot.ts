@@ -28,20 +28,67 @@ export function useShot() {
      */
     async function createShot(
         payload: ShotCreate | ShotCreate[],
-        // opts?: { signal?: AbortSignal }, // Signal not supported in api.createShot yet, removing for now
     ): Promise<string | string[]> {
         loading.value = true
         error.value = null
-        try {
-            const data = await api.createShot(payload)
 
-            if (!data)
-                throw new Error('No response from server')
+        // Recursive helper to process shots in valid batches
+        async function processBatch(shots: ShotCreate[]): Promise<string[]> {
+            const results: string[] = []
 
-            if (Array.isArray(data)) {
-                return data.map(s => s.shot_id)
+            // Base case: empty
+            if (shots.length === 0)
+                return []
+
+            // Case 1: Less than 3 shots
+            // Backend requires min 3 for batch, so send these individually
+            if (shots.length < 3) {
+                for (const shot of shots) {
+                    const result = await api.createShot(shot)
+                    if (result && !Array.isArray(result)) {
+                        results.push(result.shot_id)
+                    }
+                }
+                return results
             }
-            return data.shot_id
+
+            // Case 2: 3 to 10 shots (Valid batch size)
+            if (shots.length <= 10) {
+                const result = await api.createShot(shots)
+                if (Array.isArray(result)) {
+                    return result.map(s => s.shot_id)
+                }
+                // Fallback if single ID returned (shouldn't happen for array input but type safe)
+                return result ? [result.shot_id] : []
+            }
+
+            // Case 3: More than 10 shots
+            // Split into a batch of 10 and process the rest recursively
+            const chunk = shots.slice(0, 10)
+            const remainder = shots.slice(10)
+
+            const chunkResult = await api.createShot(chunk)
+            if (Array.isArray(chunkResult)) {
+                results.push(...chunkResult.map(s => s.shot_id))
+            }
+
+            const remainderResult = await processBatch(remainder)
+            results.push(...remainderResult)
+
+            return results
+        }
+
+        try {
+            // Handle single shot input
+            if (!Array.isArray(payload)) {
+                const data = await api.createShot(payload)
+                if (!data)
+                    throw new Error('No response from server')
+                return Array.isArray(data) ? data.map(s => s.shot_id) : data.shot_id
+            }
+
+            // Handle array input with batching logic
+            return await processBatch(payload)
         }
         catch (e) {
             if (e instanceof ApiError) {
@@ -129,13 +176,35 @@ export function useShot() {
         return socket
     }
 
+    const shotCount = ref<number>(0)
+
+    async function fetchShotCount(slotId: string) {
+        loading.value = true
+        error.value = null
+        try {
+            const data = await api.get<number>(`/shot/count-by-slot/${slotId}`)
+            if (typeof data === 'number') {
+                shotCount.value = data
+            }
+        }
+        catch (e) {
+            error.value = e instanceof Error ? e.message : 'Failed to fetch shot count'
+            console.error(e)
+        }
+        finally {
+            loading.value = false
+        }
+    }
+
     return {
         shots,
+        shotCount,
         stats,
         loading,
         error,
         createShot,
         fetchShots,
+        fetchShotCount,
         subscribeToShots,
     } as const
 }

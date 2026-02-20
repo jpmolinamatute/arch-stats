@@ -64,7 +64,15 @@ class LiveStatsModel(ParentModel):
             is_desc=False,
         )
         rows = await self.fetch((query, params))
-        return [ShotScore(**dict(row)) for row in rows]
+        return [
+            ShotScore(
+                shot_id=row["shot_id"],
+                score=row["score"],
+                is_x=row["is_x"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
 
     async def listen_for_shots(self, slot_id: UUID) -> AsyncIterator[LiveStat]:
         """Yield shot notifications for a specific slot.

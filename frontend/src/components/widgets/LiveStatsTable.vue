@@ -20,19 +20,19 @@ defineProps<{
                 <thead class="text-xs uppercase bg-slate-800 text-slate-300">
                     <tr>
                         <th scope="col" class="px-4 py-3 text-center">
-                            Mean
+                            # Shots
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-center">
+                            Score
                         </th>
                         <th scope="col" class="px-4 py-3 text-center">
                             Max Score
                         </th>
                         <th scope="col" class="px-4 py-3 text-center">
-                            # Shots
+                            Mean
                         </th>
                         <th scope="col" class="px-4 py-3 text-center">
                             X
-                        </th>
-                        <th scope="col" class="px-4 py-3 text-center font-bold text-slate-100 bg-slate-800">
-                            Total
                         </th>
                     </tr>
                 </thead>
@@ -46,29 +46,29 @@ defineProps<{
                         v-else
                         class="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors"
                     >
-                        <!-- Mean -->
-                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/50">
-                            {{ stats.mean.toFixed(2) }}
-                        </td>
-
-                        <!-- Max Score -->
-                        <td class="px-4 py-3 text-center text-lg text-white">
-                            {{ stats.max_score }}
-                        </td>
-
                         <!-- Number of Shots -->
-                        <td class="px-4 py-3 text-center text-lg text-white">
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/20">
                             {{ stats.number_of_shots }}
                         </td>
 
-                        <!-- X Count -->
-                        <td class="px-4 py-3 text-center text-lg text-white text-yellow-500">
-                            {{ xCount }}
+                        <!-- Total Score -->
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/20">
+                            {{ stats.total_score }}
                         </td>
 
-                        <!-- Total Score -->
-                        <td class="px-4 py-3 text-center text-xl font-bold text-emerald-400 bg-slate-800/50">
-                            {{ stats.total_score }}
+                        <!-- Max Score -->
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/20">
+                            {{ stats.max_score }}
+                        </td>
+
+                        <!-- Mean -->
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/20">
+                            {{ stats.mean.toFixed(2) }}
+                        </td>
+
+                        <!-- X Count -->
+                        <td class="px-4 py-3 text-center text-lg text-white bg-slate-800/20">
+                            {{ xCount }}
                         </td>
                     </tr>
                 </tbody>

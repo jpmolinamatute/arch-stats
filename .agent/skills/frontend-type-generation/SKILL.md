@@ -17,3 +17,5 @@ Follow this logic exactly:
    `./frontend/src/types/types.generated.ts`.
 4. **Application:** Ensure that the new types are being used in the frontend codebase to
    maintain type safety and reduce bugs.
+5. **Constraints:**
+   - Do NOT modify `./frontend/src/types/types.generated.ts` file directly.
