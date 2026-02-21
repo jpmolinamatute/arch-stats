@@ -1,9 +1,6 @@
 # Arch Stats
 
-![Backend Status](https://github.com/jpmolinamatute/arch-stats/actions/workflows/backend_linting.yaml/badge.svg)
-![Frontend Status](https://github.com/jpmolinamatute/arch-stats/actions/workflows/frontend_linting.yaml/badge.svg)
-![Scripts Status](https://github.com/jpmolinamatute/arch-stats/actions/workflows/bash_linting.yaml/badge.svg)
-![Build Status](https://github.com/jpmolinamatute/arch-stats/actions/workflows/build_artifact.yaml/badge.svg)
+[![Build Artifact](https://github.com/jpmolinamatute/arch-stats/actions/workflows/build_artifact.yaml/badge.svg?branch=main&event=push)](https://github.com/jpmolinamatute/arch-stats/actions/workflows/build_artifact.yaml)
 
 ## Project Structure
 
