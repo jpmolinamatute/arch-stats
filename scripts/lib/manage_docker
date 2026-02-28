@@ -9,7 +9,7 @@ is_docker_running() {
 
 start_docker() {
     if is_docker_running; then
-        echo "Docker was already running. Nothing to do here"
+        echo "Docker compose was already running. Nothing to do here"
     else
         echo "Starting docker compose"
         docker compose -f "${COMPOSE_FILE}" up --detach --build
