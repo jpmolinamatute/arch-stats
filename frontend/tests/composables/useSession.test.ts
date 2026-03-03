@@ -42,7 +42,6 @@ describe('useSession', () => {
             session_location: 'Range',
             is_indoor: true,
             is_opened: true,
-            shot_per_round: 3,
             created_at: '2023-01-01',
             closed_at: null,
         }
@@ -52,7 +51,7 @@ describe('useSession', () => {
         // Mock Step 3: Fetch session
         vi.mocked(api.get).mockResolvedValueOnce(mockSession)
 
-        const result = await checkForOpenSession('archer_1')
+        const result = await checkForOpenSession('archer_1', true)
 
         expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1', { ignoreStatus: [404] })
         expect(result).toEqual(mockSession)
@@ -68,7 +67,6 @@ describe('useSession', () => {
             session_location: 'Range',
             is_indoor: true,
             is_opened: true,
-            shot_per_round: 3,
             created_at: '2023-01-01',
             closed_at: null,
         }
@@ -80,7 +78,7 @@ describe('useSession', () => {
         // Mock Step 3: Fetch session
         vi.mocked(api.get).mockResolvedValueOnce(mockSession)
 
-        const result = await checkForOpenSession('archer_1')
+        const result = await checkForOpenSession('archer_1', true)
 
         expect(api.get).toHaveBeenCalledWith('/session/slot/archer/archer_1', { ignoreStatus: [404] })
         expect(api.get).toHaveBeenCalledWith('/session/archer/archer_1/open-session', { ignoreStatus: [404] })
@@ -96,7 +94,7 @@ describe('useSession', () => {
         // Mock Step 2: Owned session NOT found (null)
         vi.mocked(api.get).mockResolvedValueOnce(null)
 
-        const result = await checkForOpenSession('archer_1')
+        const result = await checkForOpenSession('archer_1', true)
 
         expect(result).toBeNull()
         expect(currentSession.value).toBeNull()
@@ -111,7 +109,7 @@ describe('useSession', () => {
         // Mock Step 3: Fetch session fails with 404
         vi.mocked(api.get).mockRejectedValueOnce(new ApiError('Not Found', 404))
 
-        const result = await checkForOpenSession('archer_1')
+        const result = await checkForOpenSession('archer_1', true)
 
         expect(result).toBeNull()
         expect(currentSession.value).toBeNull()
@@ -127,7 +125,6 @@ describe('useSession', () => {
             session_location: 'Range',
             is_indoor: true,
             is_opened: true,
-            shot_per_round: 3,
         }
 
         vi.mocked(api.post).mockResolvedValue({ session_id: 'sess_new' })

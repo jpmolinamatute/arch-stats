@@ -35,6 +35,7 @@ const faceType = ref<FaceType>('none')
 const bowstyle = ref<BowStyleType>('recurve')
 const drawWeight = ref<number>(25)
 const distance = ref<number>(18)
+const shotPerRound = ref<number>(6)
 const formError = ref<string | null>(null)
 
 // Face options from API
@@ -101,6 +102,11 @@ async function handleSubmit() {
         return
     }
 
+    if (faceType.value !== 'none' && (shotPerRound.value < 3 || shotPerRound.value > 10)) {
+        formError.value = 'Shots per round must be between 3 and 10'
+        return
+    }
+
     if (drawWeight.value <= 0) {
         formError.value = 'Draw weight must be positive'
         return
@@ -116,6 +122,7 @@ async function handleSubmit() {
             draw_weight: drawWeight.value,
             distance: distance.value,
             club_id: null,
+            shot_per_round: faceType.value === 'none' ? null : shotPerRound.value,
         })
 
         // Fetch the full slot details and store in session state (ensure fresh)
@@ -231,6 +238,23 @@ async function handleSubmit() {
                         :disabled="slotLoading"
                     >
                     <span class="text-xs text-slate-500 mt-1 block">Distance: 1-100 meters</span>
+                </label>
+
+                <!-- Shots per Round (conditionally shown) -->
+                <label v-if="faceType !== 'none'" class="block text-left text-xs text-slate-300 mt-4">
+                    Shots per Round
+                    <input
+                        v-model.number="shotPerRound"
+                        type="number"
+                        min="3"
+                        max="10"
+                        step="1"
+                        placeholder="e.g., 6"
+                        class="mt-1 w-full border border-slate-700 p-2 rounded bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        :disabled="slotLoading"
+                    >
+                    <span class="text-xs text-slate-500 mt-1 block">Typical: 3 or 6 arrows per round</span>
                 </label>
 
                 <div class="flex gap-3">

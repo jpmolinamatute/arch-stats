@@ -45,6 +45,7 @@ class SlotManager:
         bowstyle: BowStyleType,
         draw_weight: float,
         club_id: UUID | None,
+        shot_per_round: int | None,
     ) -> UUID:
         new_slot_id = await self.slot.create_one(
             session_id=session_id,
@@ -55,6 +56,7 @@ class SlotManager:
             bowstyle=bowstyle,
             draw_weight=draw_weight,
             club_id=club_id,
+            shot_per_round=shot_per_round,
         )
         await self.slot.refresh_open_participants()
         return new_slot_id
@@ -116,6 +118,7 @@ class SlotManager:
             bowstyle=req_data.bowstyle,
             draw_weight=req_data.draw_weight,
             club_id=req_data.club_id,
+            shot_per_round=req_data.shot_per_round,
         )
         return SlotJoinResponse(slot_id=slot_id, slot=f"{lane}{letter.value}")
 

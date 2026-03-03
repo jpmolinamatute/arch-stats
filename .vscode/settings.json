@@ -36,6 +36,8 @@
     "shellformat.path": "/usr/bin/shfmt",
     "shellformat.flag": "-i 4 -s -ci -w",
     "sqlfluff.dialect": "postgres",
+    "sqlfluff.executablePath": "/usr/bin/sqlfluff",
+    "sqlfluff.shell": true,
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "./backend/src"
     },

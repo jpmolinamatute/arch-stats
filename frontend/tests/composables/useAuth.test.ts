@@ -67,7 +67,7 @@ describe('useAuth', () => {
             email: 'test@example.com',
             first_name: 'Test',
             last_name: 'User',
-            picture_url: 'http://example.com/pic.jpg',
+            google_picture_url: 'http://example.com/pic.jpg',
         })
     })
 
@@ -88,7 +88,7 @@ describe('useAuth', () => {
 
         // Set initial state
         isAuthenticated.value = true
-        user.value = { archer_id: '1', email: 'a@b.c' }
+        user.value = { archer_id: '1', email: 'a@b.c' } as components['schemas']['ArcherRead']
 
         await logout()
 

@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
+
+from schema.base import BaseUpdateValidation
 
 
 class SessionCreate(BaseModel):
@@ -13,12 +13,6 @@ class SessionCreate(BaseModel):
     )
     is_indoor: bool = Field(default=False, description="Wether the session is indoors or not")
     is_opened: bool = Field(..., description="Wether the session is open or not")
-    shot_per_round: int = Field(
-        default=6,
-        ge=3,
-        le=10,
-        description="Number of shots per round for the current session format",
-    )
     model_config = ConfigDict(title="Session Create", extra="forbid", populate_by_name=True)
 
 
@@ -29,12 +23,6 @@ class SessionSet(BaseModel):
     )
     is_opened: bool | None = Field(default=None, description="Open/close session toggle")
     is_indoor: bool | None = Field(default=None, description="Set indoor flag")
-    shot_per_round: int | None = Field(
-        default=None,
-        ge=3,
-        le=10,
-        description="Number of shots per round for the current session format",
-    )
     model_config = ConfigDict(title="Session Set", extra="forbid")
 
 
@@ -46,12 +34,6 @@ class SessionFilter(BaseModel):
         description="Open timestamp (UTC)",
     )
     closed_at: datetime | None = Field(default=None, description="Closing timestamp (UTC)")
-    shot_per_round: int | None = Field(
-        default=None,
-        ge=3,
-        le=10,
-        description="Number of shots per round for the current session format",
-    )
     session_location: str | None = Field(
         default=None,
         min_length=1,
@@ -64,27 +46,12 @@ class SessionFilter(BaseModel):
     model_config = ConfigDict(title="Session Filter", extra="forbid", populate_by_name=True)
 
 
-class SessionUpdate(BaseModel):
+class SessionUpdate(BaseUpdateValidation):
+    _id_field_name = "session_id"
     where: SessionFilter = Field(..., description="Filter criteria to select sessions to update")
     data: SessionSet = Field(..., description="Fields to update on the selected sessions")
 
     model_config = ConfigDict(title="Session Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: SessionSet) -> SessionSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: SessionFilter) -> SessionFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.session_id is None:
-            raise ValueError("where.session_id must be provided")
-        return v
 
 
 class SessionRead(SessionCreate):

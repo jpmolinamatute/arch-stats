@@ -49,6 +49,7 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
         bowstyle: BowStyleType,
         draw_weight: float,
         club_id: UUID | None,
+        shot_per_round: int | None,
     ) -> UUID:
         new_slotassignment = SlotCreate(
             session_id=session_id,
@@ -60,6 +61,7 @@ class SlotModel(ParentModel[SlotCreate, SlotSet, SlotRead, SlotFilter]):
             bowstyle=bowstyle,
             draw_weight=draw_weight,
             club_id=club_id,
+            shot_per_round=shot_per_round,
         )
         slot_id = await self.insert_one(new_slotassignment)
         # await self.listen_for_shots(slot_id)

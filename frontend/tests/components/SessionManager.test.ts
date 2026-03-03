@@ -1,9 +1,10 @@
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import SessionManager from '@/components/SessionManager.vue'
 
 import { useAuth } from '@/composables/useAuth'
@@ -50,11 +51,8 @@ describe('sessionManager', () => {
 
     it('checks for open session on mount', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -92,11 +90,8 @@ describe('sessionManager', () => {
 
     it('redirects to live session if session exists', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -120,7 +115,6 @@ describe('sessionManager', () => {
                 owner_archer_id: 'archer_1',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             currentSession: ref<SessionRead>({
@@ -129,7 +123,6 @@ describe('sessionManager', () => {
                 owner_archer_id: 'archer_1',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             loading: ref(false),
@@ -148,11 +141,8 @@ describe('sessionManager', () => {
 
     it('renders open session button if no session exists', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -188,11 +178,8 @@ describe('sessionManager', () => {
 
     it('shows session form when open session button is clicked', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -230,11 +217,8 @@ describe('sessionManager', () => {
 
     it('shows slot join form when session is created', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -289,17 +273,13 @@ describe('sessionManager', () => {
 
     it('redirects when slot is assigned', async () => {
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                // Actually, UserSession defined in test does NOT have status.
+            user: ref<ArcherRead>({
+                // Actually, ArcherRead defined in test does NOT have status.
                 // But the previous mock had it.
                 // Let's check if 'status' is used in tests.
                 // The test checks 'isAuthenticated' ref.
                 // So I will just use the flat structure.
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-                picture_url: null,
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),

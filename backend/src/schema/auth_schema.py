@@ -1,9 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from schema.archer_schema import ArcherDemographics, ArcherNamesOptional, ArcherRead
+from schema.base import BaseUpdateValidation
 from schema.enums import AuthStatus
 
 
@@ -29,27 +30,12 @@ class AuthSet(BaseModel):
     revoked_at: datetime | None = Field(default=None, description="Revocation timestamp (UTC)")
 
 
-class AuthUpdate(BaseModel):
+class AuthUpdate(BaseUpdateValidation):
+    _id_field_name = "session_token_hash"
     where: AuthFilter = Field(..., description="Filter criteria to select Auth Sessions to update")
     data: AuthSet = Field(..., description="Fields to update on the selected Auth Session")
 
     model_config = ConfigDict(title="Auth Session Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: AuthSet) -> AuthSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: AuthFilter) -> AuthFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.session_token_hash is None:
-            raise ValueError("where.session_token_hash must be provided")
-        return v
 
 
 class AuthRead(AuthCreate):

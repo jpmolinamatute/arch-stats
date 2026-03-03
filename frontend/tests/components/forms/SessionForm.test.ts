@@ -1,8 +1,9 @@
 import type { ComputedRef } from 'vue'
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import SessionForm from '@/components/forms/SessionForm.vue'
 import { useAuth } from '@/composables/useAuth'
 
@@ -35,11 +36,8 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -60,7 +58,6 @@ describe('sessionForm', () => {
         const wrapper = mount(SessionForm)
         expect(wrapper.find('input[type="text"]').exists()).toBe(true) // Location
         expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true) // Indoor
-        expect(wrapper.find('input[type="number"]').exists()).toBe(true) // Shots per round
     })
 
     it('disables form fields and button when creating session', async () => {
@@ -75,7 +72,7 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({ first_name: 'John', last_name: 'Doe', archer_id: 'archer_1', email: 'john@example.com' }),
+            user: ref<ArcherRead>(createMockArcher()),
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
@@ -96,7 +93,6 @@ describe('sessionForm', () => {
 
         expect(wrapper.find('input[type="text"]').attributes('disabled')).toBeDefined()
         expect(wrapper.find('input[type="checkbox"]').attributes('disabled')).toBeDefined()
-        expect(wrapper.find('input[type="number"]').attributes('disabled')).toBeDefined()
 
         const button = wrapper.find('button[type="submit"]')
         expect(button.attributes('disabled')).toBeDefined()
@@ -115,11 +111,8 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -158,11 +151,8 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -184,7 +174,6 @@ describe('sessionForm', () => {
 
         await wrapper.find('input[type="text"]').setValue('Range A')
         await wrapper.find('input[type="checkbox"]').setValue(true) // Indoor
-        await wrapper.find('input[type="number"]').setValue(3) // Shots per round
 
         await wrapper.find('form').trigger('submit')
 
@@ -193,7 +182,6 @@ describe('sessionForm', () => {
             session_location: 'Range A',
             is_indoor: true,
             is_opened: true,
-            shot_per_round: 3,
         })
         expect(wrapper.emitted('sessionCreated')).toBeTruthy()
         expect(wrapper.emitted('sessionCreated')?.[0]).toEqual(['sess_123'])
@@ -211,11 +199,8 @@ describe('sessionForm', () => {
             clearSessionCache: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
