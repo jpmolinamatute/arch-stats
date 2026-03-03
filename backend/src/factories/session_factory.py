@@ -40,7 +40,6 @@ async def _insert_sessions(
         owner = archer_ids[i] if i < open_session else archer_ids[i % len(archer_ids)]
         session_location = fake.city()
         is_indoor = random.choice([True, False])
-        shot_per_round = random.choice([3, 4, 5, 6])
         is_opened = i < open_session
         result = await conn.fetchrow(
             """
@@ -48,16 +47,14 @@ async def _insert_sessions(
                 owner_archer_id,
                 session_location,
                 is_indoor,
-                shot_per_round,
                 is_opened
             )
-            VALUES ($1, $2, $3, $4, $5)
+            VALUES ($1, $2, $3, $4)
             RETURNING session_id
             """,
             owner,
             session_location,
             is_indoor,
-            shot_per_round,
             is_opened,
         )
         if result is not None and "session_id" in result:

@@ -24,6 +24,12 @@ class SlotCommons(BaseModel):
     bowstyle: BowStyleType = Field(..., description="Archer bowstyle copied at join time")
     draw_weight: float = Field(..., description="Archer draw weight copied at join time")
     club_id: UUID | None = Field(default=None, description="Archer current club at join time")
+    shot_per_round: int | None = Field(
+        default=None,
+        ge=3,
+        le=10,
+        description="Number of shots per round for the current session format",
+    )
 
 
 class SlotCreate(SlotCommons):
@@ -92,6 +98,12 @@ class SlotRead(BaseModel):
         ..., description="Archer draw weight copied at join time", gt=0, le=200
     )
     club_id: UUID | None = Field(default=None, description="Archer current club at join time")
+    shot_per_round: int | None = Field(
+        default=None,
+        ge=3,
+        le=10,
+        description="Number of shots per round for the current session format",
+    )
 
     model_config = ConfigDict(title="Slot Assignment Read", extra="forbid", populate_by_name=False)
 
@@ -108,6 +120,12 @@ class SlotSet(BaseModel):
     )
     slot_letter: SlotLetterType | None = Field(
         None, description="Update the slot letter assignment (A-D)"
+    )
+    shot_per_round: int | None = Field(
+        default=None,
+        ge=3,
+        le=10,
+        description="Number of shots per round for the current session format",
     )
 
     model_config = ConfigDict(title="Slot Assignment Set", extra="forbid")
@@ -129,6 +147,12 @@ class SlotFilter(BaseModel):
     created_at: datetime | None = Field(
         default=None,
         description="Assignment timestamp (UTC)",
+    )
+    shot_per_round: int | None = Field(
+        default=None,
+        ge=3,
+        le=10,
+        description="Number of shots per round for the current session format",
     )
     model_config = ConfigDict(title="Slot Assignment Filter", extra="forbid")
 
@@ -177,5 +201,11 @@ class FullSlotInfo(BaseModel):
         ..., description="Archer draw weight copied at join time", gt=0, le=200
     )
     club_id: UUID | None = Field(default=None, description="Archer current club at join time")
+    shot_per_round: int | None = Field(
+        default=None,
+        ge=3,
+        le=10,
+        description="Number of shots per round for the current session format",
+    )
 
     model_config = ConfigDict(title="Full Slot Assignment Info", extra="forbid")

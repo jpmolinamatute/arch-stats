@@ -114,13 +114,15 @@ async def create_slot_assignments(
                 # 70% chance to assign a club_id (simulate real data)
                 club_id = uuid4()
 
+            shot_per_round = random.choice([None, 3, 4, 5, 6])
+
             rec = await conn.fetchrow(
                 """
                 INSERT INTO slot (
                     archer_id, target_id, session_id, face_type, slot_letter, is_shooting,
-                    bowstyle, draw_weight, club_id
+                    bowstyle, draw_weight, club_id, shot_per_round
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING slot_id
                 """,
                 archer_id,
@@ -132,6 +134,7 @@ async def create_slot_assignments(
                 bowstyle,
                 draw_weight,
                 club_id,
+                shot_per_round,
             )
             if rec is None or "slot_id" not in rec:
                 raise RuntimeError(
