@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from schema.base import BaseUpdateValidation
+
 
 class ShotBase(BaseModel):
     slot_id: UUID = Field(..., description="Slot identifier (UUID) this shot belongs to")
@@ -63,7 +65,8 @@ class ShotFilter(BaseModel):
     model_config = ConfigDict(title="Shot Filter", extra="forbid", populate_by_name=True)
 
 
-class ShotUpdate(BaseModel):
+class ShotUpdate(BaseUpdateValidation):
+    _id_field_name = "shot_id"
     where: ShotFilter = Field(..., description="Filter criteria to select shots to update")
     data: ShotSet = Field(..., description="Fields to update on the selected shots")
 

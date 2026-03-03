@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
+
+from schema.base import BaseUpdateValidation
 
 
 class SessionCreate(BaseModel):
@@ -46,27 +48,12 @@ class SessionFilter(BaseModel):
     model_config = ConfigDict(title="Session Filter", extra="forbid", populate_by_name=True)
 
 
-class SessionUpdate(BaseModel):
+class SessionUpdate(BaseUpdateValidation):
+    _id_field_name = "session_id"
     where: SessionFilter = Field(..., description="Filter criteria to select sessions to update")
     data: SessionSet = Field(..., description="Fields to update on the selected sessions")
 
     model_config = ConfigDict(title="Session Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: SessionSet) -> SessionSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: SessionFilter) -> SessionFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.session_id is None:
-            raise ValueError("where.session_id must be provided")
-        return v
 
 
 class SessionRead(SessionCreate):

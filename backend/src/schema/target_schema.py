@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
+
+from schema.base import BaseUpdateValidation
 
 
 class TargetRead(BaseModel):
@@ -50,24 +52,9 @@ class TargetFilter(BaseModel):
     model_config = ConfigDict(title="Target Filter", extra="forbid")
 
 
-class TargetUpdate(BaseModel):
+class TargetUpdate(BaseUpdateValidation):
+    _id_field_name = "target_id"
     where: TargetFilter = Field(..., description="Filter criteria to select targets to update")
     data: TargetSet = Field(..., description="Fields to update on the selected targets")
 
     model_config = ConfigDict(title="Target Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: TargetSet) -> TargetSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: TargetFilter) -> TargetFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.target_id is None:
-            raise ValueError("where.target_id must be provided")
-        return v

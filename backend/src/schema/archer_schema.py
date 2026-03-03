@@ -3,19 +3,24 @@ from __future__ import annotations
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from schema.base import BaseUpdateValidation
 from schema.enums import BowStyleType, GenderType
 
 
-class ArcherDemographics(BaseModel):
-    date_of_birth: date = Field(..., description="Date of birth (YYYY-MM-DD) in UTC")
-    gender: GenderType = Field(description="gender_type enum value")
+class ArcherProfileBase(BaseModel):
     bowstyle: BowStyleType = Field(description="bowstyle_type enum value")
     draw_weight: float = Field(
         ..., description="Draw weight in pounds (must be positive)", gt=0, le=200
     )
     club_id: UUID | None = Field(default=None, description="Club id")
+    model_config = ConfigDict(title="Archer Profile Base", extra="forbid")
+
+
+class ArcherDemographics(ArcherProfileBase):
+    date_of_birth: date = Field(..., description="Date of birth (YYYY-MM-DD) in UTC")
+    gender: GenderType = Field(description="gender_type enum value")
     model_config = ConfigDict(title="Archer Demographics", extra="forbid")
 
 
@@ -87,27 +92,12 @@ class ArcherFilter(BaseModel):
     model_config = ConfigDict(title="Archer Filter", extra="forbid", populate_by_name=True)
 
 
-class ArcherUpdate(BaseModel):
+class ArcherUpdate(BaseUpdateValidation):
+    _id_field_name = "archer_id"
     where: ArcherFilter = Field(..., description="Filter criteria to select archers to update")
     data: ArcherSet = Field(..., description="Fields to update on the selected archers")
 
     model_config = ConfigDict(title="Archer Update", extra="forbid")
-
-    @field_validator("data")
-    @classmethod
-    def _validate_data_not_empty(cls, v: ArcherSet) -> ArcherSet:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("data must set at least one field")
-        return v
-
-    @field_validator("where")
-    @classmethod
-    def _validate_where_has_id(cls, v: ArcherFilter) -> ArcherFilter:
-        if len(v.model_fields_set) == 0:
-            raise ValueError("where must set at least one field")
-        elif v.archer_id is None:
-            raise ValueError("where.archer_id must be provided")
-        return v
 
 
 class ArcherRead(ArcherBase):
