@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime
 from uuid import UUID
 
@@ -8,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from schema.base import BaseUpdateValidation
 
 
-class ShotBase(BaseModel):
+class ShotCreate(BaseModel):
     slot_id: UUID = Field(..., description="Slot identifier (UUID) this shot belongs to")
     x: float | None = Field(default=None, description="X coordinate in millimeters")
     y: float | None = Field(default=None, description="Y coordinate in millimeters")
@@ -23,10 +21,10 @@ class ShotBase(BaseModel):
         default=None, description="Optional arrow identifier (e.g., arrow number or code)"
     )
 
-    model_config = ConfigDict(title="Shot Base", extra="forbid")
+    model_config = ConfigDict(title="Shot Create", extra="forbid", populate_by_name=True)
 
     @model_validator(mode="after")
-    def _validate_all_or_none(self) -> ShotBase:
+    def _validate_all_or_none(self) -> ShotCreate:
         """Enforce that all three values (x, y, score) are either all NULL or all present."""
 
         if not (
@@ -35,10 +33,6 @@ class ShotBase(BaseModel):
         ):
             raise ValueError("x, y, and score must all be provided together or all be None")
         return self
-
-
-class ShotCreate(ShotBase):
-    model_config = ConfigDict(title="Shot Create", extra="forbid", populate_by_name=True)
 
 
 class ShotSet(BaseModel):
@@ -73,7 +67,7 @@ class ShotUpdate(BaseUpdateValidation):
     model_config = ConfigDict(title="Shot Update", extra="forbid")
 
 
-class ShotRead(ShotBase):
+class ShotRead(ShotCreate):
     shot_id: UUID = Field(
         ...,
         description="Shot identifier (UUID)",

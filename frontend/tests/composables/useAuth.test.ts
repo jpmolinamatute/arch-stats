@@ -88,7 +88,7 @@ describe('useAuth', () => {
 
         // Set initial state
         isAuthenticated.value = true
-        user.value = { archer_id: '1', email: 'a@b.c' } as any
+        user.value = { archer_id: '1', email: 'a@b.c' } as components['schemas']['ArcherRead']
 
         await logout()
 
