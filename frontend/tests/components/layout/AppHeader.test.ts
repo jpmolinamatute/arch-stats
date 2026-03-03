@@ -1,7 +1,8 @@
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import AppHeader from '@/components/layout/AppHeader.vue'
 
 import { useAuth } from '@/composables/useAuth'
@@ -45,11 +46,8 @@ describe('appHeader', () => {
     it('renders user info and logout button when authenticated', async () => {
         vi.mocked(useAuth).mockReturnValue({
             isAuthenticated: ref(true),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: '123',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             logout: mockLogout,
             disableGoogleAutoSelect: mockDisableGoogleAutoSelect,
@@ -100,11 +98,8 @@ describe('appHeader', () => {
     it('calls disableGoogleAutoSelect on mount if authenticated', () => {
         vi.mocked(useAuth).mockReturnValue({
             isAuthenticated: ref(true),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: '123',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             logout: mockLogout,
             disableGoogleAutoSelect: mockDisableGoogleAutoSelect,

@@ -3,13 +3,7 @@ import { ref } from 'vue'
 import { api, ApiError } from '@/api/client'
 import { isEnvTrue } from '@/utils/env'
 
-export interface UserSession {
-    archer_id: string
-    email: string
-    first_name?: string | null
-    last_name?: string | null
-    picture_url?: string | null
-}
+export type ArcherRead = components['schemas']['ArcherRead']
 
 // Backend /api/v0/auth/google response shape (OpenAPI generated)
 type AuthLoginResponseBody
@@ -35,13 +29,14 @@ function isAuthNeedsRegistration(v: unknown): v is components['schemas']['AuthNe
 }
 
 const isAuthenticated = ref(false)
-const user = ref<UserSession | null>(null)
+const user = ref<ArcherRead | null>(null)
 const loading = ref(true)
 const initialized = ref(false)
 const initError = ref<string | null>(null)
 // Prevent multiple concurrent FedCM prompt() calls
 const prompting = ref(false)
-interface PendingRegistration {
+interface PendingRegistration
+{
     credential: string // keep last id token
     google_email: string
     google_subject: string
@@ -90,13 +85,7 @@ async function bootstrapAuth(): Promise<void> {
                 throw new Error('No auth data returned')
             }
 
-            user.value = {
-                archer_id: authData.archer.archer_id,
-                email: authData.archer.email,
-                first_name: authData.archer.first_name ?? null,
-                last_name: authData.archer.last_name ?? null,
-                picture_url: authData.archer.google_picture_url ?? null,
-            }
+            user.value = authData.archer
             isAuthenticated.value = true
 
             // Initialize Google One Tap but don't prompt
@@ -219,13 +208,7 @@ async function beginGoogleLogin(idToken?: string): Promise<void> {
         const data = await api.post<AuthLoginResponseBody>('/auth/google', { credential: idToken })
 
         if (isAuthAuthenticated(data)) {
-            user.value = {
-                archer_id: data.archer.archer_id,
-                email: data.archer.email,
-                first_name: data.archer.first_name,
-                last_name: data.archer.last_name,
-                picture_url: data.archer.google_picture_url ?? null,
-            }
+            user.value = data.archer
             isAuthenticated.value = true
             // Cookie is set by backend; no local storage hints needed
             pendingRegistration.value = null
@@ -291,13 +274,7 @@ async function registerNewArcher(input: {
         if (!isAuthAuthenticated(data)) {
             throw new Error('Unexpected registration response')
         }
-        user.value = {
-            archer_id: data.archer.archer_id,
-            email: data.archer.email,
-            first_name: data.archer.first_name,
-            last_name: data.archer.last_name,
-            picture_url: data.archer.google_picture_url ?? null,
-        }
+        user.value = data.archer
         isAuthenticated.value = true
         pendingRegistration.value = null
 
@@ -354,13 +331,7 @@ async function loginAsDummy(): Promise<void> {
         const data = await api.post<AuthLoginResponseBody>('/auth/dummy')
 
         if (isAuthAuthenticated(data)) {
-            user.value = {
-                archer_id: data.archer.archer_id,
-                email: data.archer.email,
-                first_name: data.archer.first_name,
-                last_name: data.archer.last_name,
-                picture_url: data.archer.google_picture_url ?? null,
-            }
+            user.value = data.archer
             isAuthenticated.value = true
             pendingRegistration.value = null
         }

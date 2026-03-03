@@ -6,6 +6,7 @@ describe('liveScore', () => {
     const createShot = (id: string, score: number, createdAt: string, isX = false) => ({
         shot_id: id,
         slot_id: 'slot_1',
+        archer_id: 'archer_1',
         score,
         is_x: isX,
         x: 0,

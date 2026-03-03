@@ -221,7 +221,7 @@ function handleShotDraft(payload: { score: number, x: number, y: number, is_x: b
     if (!currentSlot.value)
         return
 
-    const limit = currentSession.value?.shot_per_round ?? 6
+    const limit = currentSlot.value?.shot_per_round ?? 6
     if (draftShots.value.length >= limit)
         return
     draftShots.value.push(payload)
@@ -420,7 +420,7 @@ async function handleAddShots(count: number) {
                                     <MiniTable
                                         :shots="draftShots"
                                         :face="face"
-                                        :max-shots="currentSession?.shot_per_round ?? 6"
+                                        :max-shots="currentSlot?.shot_per_round ?? 6"
                                         @delete="handleDraftDelete"
                                         @clear="handleDraftClear"
                                         @confirm="handleConfirmRound"
@@ -444,7 +444,7 @@ async function handleAddShots(count: number) {
                         <div v-show="!showTarget" class="max-w-3xl mx-auto" data-testid="shots-view">
                             <LiveScore
                                 :shots="scoredShots"
-                                :shot-per-round="currentSession?.shot_per_round ?? 6"
+                                :shot-per-round="currentSlot?.shot_per_round ?? 6"
                             />
                             <LiveStatsTable
                                 :stats="currentStats"

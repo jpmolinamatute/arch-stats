@@ -1,9 +1,10 @@
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import SlotJoinForm from '@/components/forms/SlotJoinForm.vue'
 import { useArcher } from '@/composables/useArcher'
 import { useAuth } from '@/composables/useAuth'
@@ -11,7 +12,6 @@ import { useAuth } from '@/composables/useAuth'
 import { useFaces } from '@/composables/useFaces'
 import { useSlot } from '@/composables/useSlot'
 
-type ArcherRead = components['schemas']['ArcherRead']
 type FaceMinimal = components['schemas']['FaceMinimal']
 
 // Mock composables
@@ -59,10 +59,7 @@ describe('slotJoinForm', () => {
         })
         vi.mocked(useArcher).mockReturnValue({
             getArcher: mockGetArcher.mockResolvedValue({
-                bowstyle: 'recurve',
-                draw_weight: 30,
-                first_name: 'John',
-                last_name: 'Doe',
+                ...createMockArcher(),
                 date_of_birth: '1990-01-01',
                 gender: 'male',
                 created_at: '2023-01-01',
@@ -82,11 +79,8 @@ describe('slotJoinForm', () => {
             deleteFace: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -162,10 +156,7 @@ describe('slotJoinForm', () => {
         })
         vi.mocked(useArcher).mockReturnValue({
             getArcher: mockGetArcher.mockResolvedValue({
-                bowstyle: 'recurve',
-                draw_weight: 30,
-                first_name: 'John',
-                last_name: 'Doe',
+                ...createMockArcher(),
                 date_of_birth: '1990-01-01',
                 gender: 'male',
                 created_at: '2023-01-01',
@@ -185,11 +176,8 @@ describe('slotJoinForm', () => {
             deleteFace: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -236,10 +224,7 @@ describe('slotJoinForm', () => {
         })
         vi.mocked(useArcher).mockReturnValue({
             getArcher: mockGetArcher.mockResolvedValue({
-                bowstyle: 'recurve',
-                draw_weight: 30,
-                first_name: 'John',
-                last_name: 'Doe',
+                ...createMockArcher(),
                 date_of_birth: '1990-01-01',
                 gender: 'male',
                 created_at: '2023-01-01',
@@ -259,11 +244,8 @@ describe('slotJoinForm', () => {
             deleteFace: vi.fn(),
         })
         vi.mocked(useAuth).mockReturnValue({
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             isAuthenticated: ref(true),
             loading: ref(false),
@@ -301,11 +283,12 @@ describe('slotJoinForm', () => {
             archer_id: 'archer_1',
             session_id: 'sess_1',
             face_type: 'wa_40cm_full',
-            is_shooting: true,
             bowstyle: 'recurve',
             draw_weight: 30,
+            is_shooting: true,
             distance: 18,
             club_id: null,
+            shot_per_round: 6,
         })
         expect(mockGetSlot).toHaveBeenCalled()
         expect(wrapper.emitted('slotAssigned')).toBeTruthy()

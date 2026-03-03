@@ -1,9 +1,10 @@
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import type { components } from '@/types/types.generated'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import Face from '@/components/Face.vue'
 import LiveSession from '@/components/LiveSession.vue'
 
@@ -179,12 +180,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -232,12 +228,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -253,11 +244,10 @@ describe('liveSession', () => {
             checkForOpenSession: mockCheckForOpenSession,
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
-                session_location: 'Range A',
                 owner_archer_id: 'archer_1',
+                session_location: 'Range A',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             loading: ref(false),
@@ -294,12 +284,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -315,11 +300,10 @@ describe('liveSession', () => {
             checkForOpenSession: mockCheckForOpenSession,
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
-                session_location: 'Range A',
                 owner_archer_id: 'archer_1',
+                session_location: 'Range A',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             loading: ref(false),
@@ -332,10 +316,10 @@ describe('liveSession', () => {
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({
                 slot_id: 'slot_1',
+                archer_id: 'archer_1',
                 face_type: 'wa_40cm_full',
                 session_id: 'sess_1',
                 target_id: 'target_1',
-                archer_id: 'archer_1',
                 is_shooting: true,
                 bowstyle: 'recurve',
                 draw_weight: 40,
@@ -371,12 +355,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -392,11 +371,10 @@ describe('liveSession', () => {
             checkForOpenSession: mockCheckForOpenSession,
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
-                session_location: 'Range A',
                 owner_archer_id: 'archer_1',
+                session_location: 'Range A',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             closeSession: mockCloseSession,
@@ -409,10 +387,10 @@ describe('liveSession', () => {
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({
                 slot_id: 'slot_1',
+                archer_id: 'archer_1',
                 face_type: 'wa_40cm_full',
                 session_id: 'sess_1',
                 target_id: 'target_1',
-                archer_id: 'archer_1',
                 is_shooting: true,
                 bowstyle: 'recurve',
                 draw_weight: 40,
@@ -456,12 +434,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -477,11 +450,10 @@ describe('liveSession', () => {
             checkForOpenSession: mockCheckForOpenSession,
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
-                session_location: 'Range A',
                 owner_archer_id: 'archer_1',
+                session_location: 'Range A',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             loading: ref(false),
@@ -494,10 +466,10 @@ describe('liveSession', () => {
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({
                 slot_id: 'slot_1',
+                archer_id: 'archer_1',
                 face_type: 'wa_40cm_full',
                 session_id: 'sess_1',
                 target_id: 'target_1',
-                archer_id: 'archer_1',
                 is_shooting: true,
                 bowstyle: 'recurve',
                 draw_weight: 40,
@@ -583,12 +555,7 @@ describe('liveSession', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
-            }),
+            user: ref<ArcherRead>(createMockArcher()),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
             registerNewArcher: vi.fn(),
@@ -604,11 +571,10 @@ describe('liveSession', () => {
             checkForOpenSession: mockCheckForOpenSession,
             currentSession: ref<SessionRead>({
                 session_id: 'sess_1',
-                session_location: 'Range A',
                 owner_archer_id: 'archer_1',
+                session_location: 'Range A',
                 is_indoor: true,
                 is_opened: true,
-                shot_per_round: 3,
                 created_at: '2023-01-01',
             }),
             loading: ref(false),
@@ -621,10 +587,10 @@ describe('liveSession', () => {
         vi.mocked(useSlot).mockReturnValue({
             currentSlot: ref<SlotRead>({
                 slot_id: 'slot_1',
+                archer_id: 'archer_1',
                 face_type: 'wa_40cm_full',
                 session_id: 'sess_1',
                 target_id: 'target_1',
-                archer_id: 'archer_1',
                 is_shooting: true,
                 bowstyle: 'recurve',
                 draw_weight: 40,

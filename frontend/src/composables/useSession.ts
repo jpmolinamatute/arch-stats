@@ -10,6 +10,7 @@ type SessionId = components['schemas']['SessionId']
 const currentSession = ref<SessionRead | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const lastCheckedArcherId = ref<string | null>(null)
 
 export function useSession() {
     const hasOpenSession = computed(() => currentSession.value !== null)
@@ -75,7 +76,12 @@ export function useSession() {
      * Check if the authenticated archer has an open session.
      * Returns the session if found, null otherwise.
      */
-    async function checkForOpenSession(archerId: string): Promise<SessionRead | null> {
+    async function checkForOpenSession(archerId: string, force = false): Promise<SessionRead | null> {
+        // Avoid redundant checks if we already performed it in this SPA session
+        if (lastCheckedArcherId.value === archerId && !force) {
+            return currentSession.value
+        }
+
         loading.value = true
         error.value = null
         try {
@@ -114,6 +120,7 @@ export function useSession() {
             if (!sessionId) {
                 currentSession.value = null
                 clearSessionCache(archerId)
+                lastCheckedArcherId.value = archerId
                 return null
             }
 
@@ -127,6 +134,7 @@ export function useSession() {
 
             currentSession.value = session
             setSessionCache(archerId, session)
+            lastCheckedArcherId.value = archerId
             return session
         }
         catch (e) {
@@ -134,6 +142,7 @@ export function useSession() {
             if (e instanceof ApiError && e.status === 404) {
                 currentSession.value = null
                 clearSessionCache(archerId)
+                lastCheckedArcherId.value = archerId
                 return null
             }
 
@@ -172,7 +181,6 @@ export function useSession() {
                 session_location: payload.session_location,
                 is_indoor: payload.is_indoor,
                 is_opened: payload.is_opened,
-                shot_per_round: payload.shot_per_round,
                 created_at: new Date().toISOString(),
                 closed_at: null,
             }

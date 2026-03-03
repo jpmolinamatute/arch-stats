@@ -1,7 +1,8 @@
-import type { UserSession } from '@/composables/useAuth'
+import type { ArcherRead } from '@/composables/useAuth'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import { createMockArcher } from '@/../tests/utils/mockAuth'
 import AppContainer from '@/components/AppContainer.vue'
 
 import { useAuth } from '@/composables/useAuth'
@@ -83,11 +84,8 @@ describe('appContainer', () => {
             isAuthenticated: ref(true),
             loading: ref(false),
             pendingRegistration: ref(null),
-            user: ref<UserSession>({
-                first_name: 'John',
-                last_name: 'Doe',
-                archer_id: 'archer_1',
-                email: 'john@example.com',
+            user: ref<ArcherRead>({
+                ...createMockArcher(),
             }),
             logout: vi.fn(),
             disableGoogleAutoSelect: vi.fn(),
