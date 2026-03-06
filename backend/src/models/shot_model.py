@@ -1,8 +1,9 @@
+from datetime import datetime
 from uuid import UUID
 
 from asyncpg import Pool
 
-from models.parent_model import ParentModel
+from models.parent_model import DBNotFound, ParentModel
 from schema import ShotCreate, ShotFilter, ShotRead, ShotSet
 
 
@@ -17,3 +18,17 @@ class ShotModel(ParentModel[ShotCreate, ShotSet, ShotRead, ShotFilter]):
         sql = f"SELECT COUNT(*) FROM {self.name} WHERE slot_id = $1"
         row = await self.fetchrow((sql, (slot_id,)))
         return row[0]
+
+    async def get_latest_shot_time(self, slot_id: UUID) -> datetime | None:
+        """Retrieve the latest shot's created_at timestamp for a given slot."""
+        sql = self.sql_builder.build_select_with_conditions(
+            columns=["created_at"],
+            conditions=["slot_id = $1"],
+            limit=1,
+            is_desc=True,
+        )
+        try:
+            row = await self.fetchrow((sql, (slot_id,)))
+            return row["created_at"]
+        except DBNotFound:
+            return None

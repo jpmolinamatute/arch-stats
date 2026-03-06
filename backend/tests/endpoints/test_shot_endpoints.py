@@ -1,4 +1,6 @@
+import asyncio
 from collections.abc import Callable
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 from uuid import UUID
@@ -309,6 +311,127 @@ async def test_create_multiple_shots_success(
     assert shot_5 is not None
     assert shot_5["x"] == TARGET_X_Y
     assert shot_5["y"] == TARGET_X_Y
+
+
+@pytest.mark.asyncio
+async def test_create_multiple_shots_dynamic_timestamps(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot bulk insert sets sequential, dynamic created_at timestamps spreading backward from now()."""
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
+    )
+
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    # Act
+    shots_payload = [
+        {"slot_id": str(slot_id), "x": float(i), "y": float(i), "score": 10}
+        for i in range(SHOT_BATCH_SIZE)
+    ]
+    resp = await client.post("/api/v0/shot", json=shots_payload)
+
+    # Assert
+    assert resp.status_code == HTTPStatus.CREATED
+
+    # Verify the created_at are sequential and explicitly set
+    resp_get = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
+    fetched_shots = resp_get.json()
+
+    # Sort by created_at ascending
+    # Python 3.11 fromisoformat perfectly handles the Z or +00:00 returned by the API
+
+    sorted_shots = sorted(fetched_shots, key=lambda s: datetime.fromisoformat(s["created_at"]))
+
+    # Assert there are 6 shots
+    assert len(sorted_shots) == SHOT_BATCH_SIZE
+
+    # Assert strictly increasing timestamps separated by the calculated actual interval
+    expected_interval = (SHOT_BATCH_SIZE * 20.0) / (SHOT_BATCH_SIZE - 1)
+    for i in range(1, len(sorted_shots)):
+        prev_time = datetime.fromisoformat(sorted_shots[i - 1]["created_at"])
+        curr_time = datetime.fromisoformat(sorted_shots[i]["created_at"])
+        dt = (curr_time - prev_time).total_seconds()
+        assert dt == pytest.approx(expected_interval)
+
+
+@pytest.mark.asyncio
+async def test_create_multiple_shots_dynamic_timestamps_overlap_compression(
+    client: AsyncClient, db_pool: Pool, jwt_for: Callable[[UUID], str]
+) -> None:
+    """POST /shot multiple times quickly to test overlapping compression interval.
+    The second batch should compress its interval to fit in the small time window
+    rather than overlapping backward over the first batch's timestamps.
+    """
+
+    # Arrange
+    (archer_id,) = await create_archers(db_pool, 1)
+    (session_id,) = await create_sessions(db_pool, 1)
+    (target_id,) = await create_targets(db_pool, 1, session_id=session_id)
+    (slot_id,) = await create_slot_assignments(
+        db_pool, 1, archer_ids=[archer_id], target_id=target_id, session_id=session_id
+    )
+
+    client.cookies.set("arch_stats_auth", jwt_for(archer_id), path="/")
+
+    SHOT_BATCH_SIZE = 3
+    # Configure slot to have an interval of 20 seconds
+    await db_pool.execute("UPDATE slot SET interval_seconds = 20 WHERE slot_id = $1;", slot_id)
+
+    shots_payload = [
+        {
+            "slot_id": str(slot_id),
+            "x": float(i),
+            "y": float(i),
+            "score": 10,
+        }
+        for i in range(SHOT_BATCH_SIZE)
+    ]
+
+    # Act 1: Post the first round
+    resp1 = await client.post("/api/v0/shot", json=shots_payload)
+    assert resp1.status_code == HTTPStatus.CREATED
+
+    # We wait just a tiny bit (2 seconds) instead of the expected 60 seconds (3 * 20s)
+    # This means the archer shot very fast.
+
+    await asyncio.sleep(2.0)
+
+    # Act 2: Post the exact same round again
+    resp2 = await client.post("/api/v0/shot", json=shots_payload)
+    assert resp2.status_code == HTTPStatus.CREATED
+
+    # Assert: We need to load all slots and ensure that no batch 2 shot overlapped with batch 1
+    resp_get = await client.get(f"/api/v0/shot/by-slot/{slot_id}")
+    assert resp_get.status_code == HTTPStatus.OK
+    all_shots = resp_get.json()
+
+    assert len(all_shots) == SHOT_BATCH_SIZE * 2
+
+    # Since we sorted by created_at in the model (or we enforce it here), let's sort
+    # them chronologically to measure the gap.
+    sorted_shots = sorted(all_shots, key=lambda s: s["created_at"])
+
+    # Batch 1 timestamps should be at indices 0, 1, 2
+    # Batch 2 timestamps should be at indices 3, 4, 5
+    last_shot_batch_1 = datetime.fromisoformat(sorted_shots[SHOT_BATCH_SIZE - 1]["created_at"])
+    first_shot_batch_2 = datetime.fromisoformat(sorted_shots[SHOT_BATCH_SIZE]["created_at"])
+
+    # The compression logic should ensure NO overlapping. Therefore, the first shot
+    # of the second batch MUST be strictly greater than the last shot of the first batch.
+    dt_gap = (first_shot_batch_2 - last_shot_batch_1).total_seconds()
+    assert dt_gap > 0, "Second batch overlapped backwards into the first batch's timeline!"
+
+    # Furthermore, inside the second batch, the distance between spacing should be < 20s
+    for i in range(SHOT_BATCH_SIZE + 1, len(sorted_shots)):
+        prev_time = datetime.fromisoformat(sorted_shots[i - 1]["created_at"])
+        curr_time = datetime.fromisoformat(sorted_shots[i]["created_at"])
+        dt = (curr_time - prev_time).total_seconds()
+        assert 0 < dt < 20.0  # noqa: PLR2004 "Second batch spacing should be compressed strictly under 20s"
 
 
 @pytest.mark.asyncio

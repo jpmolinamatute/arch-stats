@@ -20,6 +20,9 @@ class ShotCreate(BaseModel):
     arrow_id: UUID | None = Field(
         default=None, description="Optional arrow identifier (e.g., arrow number or code)"
     )
+    created_at: datetime | None = Field(
+        default=None, description="Optional creation timestamp for explicitly setting the time."
+    )
 
     model_config = ConfigDict(title="Shot Create", extra="forbid", populate_by_name=True)
 

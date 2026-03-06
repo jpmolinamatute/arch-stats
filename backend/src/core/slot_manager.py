@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from asyncpg import Pool
+from fastapi import HTTPException, status
 
-from models import SessionModel, SlotModel, TargetModel
+from core.base_manager import BaseManager
 from models.parent_model import DBNotFound
 from schema import (
     BowStyleType,
@@ -14,19 +14,14 @@ from schema import (
     SlotLetterType,
     SlotSet,
 )
-from schema.slot_schema import SlotRead
+from schema.slot_schema import FullSlotInfo
 
 
 class SlotManagerError(Exception):
     """Custom exception for slot assignment manager errors."""
 
 
-class SlotManager:
-    def __init__(self, db_pool: Pool) -> None:
-        self.session = SessionModel(db_pool)
-        self.target = TargetModel(db_pool)
-        self.slot = SlotModel(db_pool)
-
+class SlotManager(BaseManager):
     async def create_target(self, session_id: UUID, distance: int, lane: int) -> UUID:
         return await self.target.create_one(
             session_id=session_id,
@@ -46,6 +41,7 @@ class SlotManager:
         draw_weight: float,
         club_id: UUID | None,
         shot_per_round: int | None,
+        interval_seconds: int,
     ) -> UUID:
         new_slot_id = await self.slot.create_one(
             session_id=session_id,
@@ -57,6 +53,7 @@ class SlotManager:
             draw_weight=draw_weight,
             club_id=club_id,
             shot_per_round=shot_per_round,
+            interval_seconds=interval_seconds,
         )
         await self.slot.refresh_open_participants()
         return new_slot_id
@@ -119,60 +116,89 @@ class SlotManager:
             draw_weight=req_data.draw_weight,
             club_id=req_data.club_id,
             shot_per_round=req_data.shot_per_round,
+            interval_seconds=req_data.interval_seconds,
         )
         return SlotJoinResponse(slot_id=slot_id, slot=f"{lane}{letter.value}")
 
-    async def re_join_session(self, slot: SlotRead) -> SlotJoinResponse:
+    async def re_join_session(self, slot_id: UUID, current_archer_id: UUID) -> SlotJoinResponse:
         """Re-activate a previously inactive slot assignment.
 
         Steps:
-        1) Ensure slot exists and is currently inactive (is_shooting == False).
-        2) Ensure the corresponding session is still open.
-        3) Mark slot as active and return the compact join response.
+        1) Fetch slot to check ownership.
+        2) Ensure slot is inactive (is_shooting == False).
+        3) Ensure the corresponding session is still open.
+        4) Mark slot as active and return the compact join response.
 
         Raises:
             DBNotFound: When slot doesn't exist, is already active, or session is closed.
             SlotManagerError: On unexpected invariant violations.
         """
-        # 1) Ensure slot exists and is inactive
-        where = SlotFilter(is_shooting=False, slot_id=slot.slot_id)
-        slot_row = await self.slot.get_one(where)
+        # 1) Fetch slot to check ownership
+        slot_row = await self.verify_slot_ownership(
+            slot_id, current_archer_id, detail="ERROR: user not allowed to re-join"
+        )
 
-        # 2) Ensure the session that owns this slot is open
+        # 2) Ensure slot is inactive
+        if slot_row.is_shooting:
+            raise DBNotFound(
+                "ERROR: the archer is either not allowed to re-join or they are already in"
+            )
+
+        # 3) Ensure the session that owns this slot is open
         exists = await self.session.does_open_session_exist(slot_row.session_id)
         if not exists:
             # Keep message in sync with endpoint tests
             raise DBNotFound("ERROR: The session doesn't exist or it was already closed")
 
-        # 3) Reactivate the assignment
+        # 4) Reactivate the assignment
+        where = SlotFilter(slot_id=slot_id)
         await self.slot.update(SlotSet(is_shooting=True), where)
         # Keep open_participants in sync (materialized view refresh)
         await self.slot.refresh_open_participants()
-        slot_row = await self.slot.get_slot_with_lane(slot.slot_id)
+        slot_row = await self.slot.get_slot_with_lane(slot_id)
         if slot_row.slot is None:
             raise SlotManagerError("ERROR: slot is unexpectedly None")
         return SlotJoinResponse(slot_id=slot_row.slot_id, slot=slot_row.slot)
 
-    async def leave_session(self, slot: SlotRead) -> None:
+    async def leave_session(self, slot_id: UUID, current_archer_id: UUID) -> None:
         """Deactivate an active slot assignment (leave the session).
 
         Steps:
-        1) Ensure slot exists and is currently active (is_shooting == True).
-        2) Ensure the corresponding session is still open.
-        3) Mark slot as inactive.
+        1) Fetch slot to check ownership.
+        2) Ensure slot is active (is_shooting == True).
+        3) Ensure the corresponding session is still open.
+        4) Mark slot as inactive.
 
         Raises:
             DBNotFound: When slot doesn't exist, is already inactive, or session is closed.
         """
-        # 1) Ensure slot exists and is active
-        where = SlotFilter(is_shooting=True, slot_id=slot.slot_id)
-        slot_row = await self.slot.get_one(where)
+        # 1) Fetch slot to check ownership
+        slot_row = await self.verify_slot_ownership(
+            slot_id, current_archer_id, detail="ERROR: user not allowed to leave"
+        )
 
-        # 2) Ensure the session that owns this slot is open
+        # 2) Ensure slot is active
+        if not slot_row.is_shooting:
+            raise DBNotFound("ERROR: archer is not participating in this session")
+
+        # 3) Ensure the session that owns this slot is open
         exists = await self.session.does_open_session_exist(slot_row.session_id)
         if not exists:
             raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
 
-        # 3) Deactivate the assignment
+        # 4) Deactivate the assignment
         req = SlotLeaveRequest(session_id=slot_row.session_id, archer_id=slot_row.archer_id)
         await self.slot.leave_session(req)
+
+    async def get_full_slot_info(
+        self, current_archer_id: UUID, slot_id: UUID | None = None, archer_id: UUID | None = None
+    ) -> FullSlotInfo:
+        if archer_id is not None and current_archer_id != archer_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+        info = await self.slot.get_full_slot_info(slot_id=slot_id, archer_id=archer_id)
+
+        if slot_id is not None and current_archer_id != info.archer_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+        return info

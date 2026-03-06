@@ -36,6 +36,7 @@ const bowstyle = ref<BowStyleType>('recurve')
 const drawWeight = ref<number>(25)
 const distance = ref<number>(18)
 const shotPerRound = ref<number>(6)
+const intervalSeconds = ref<number>(20)
 const formError = ref<string | null>(null)
 
 // Face options from API
@@ -123,6 +124,7 @@ async function handleSubmit() {
             distance: distance.value,
             club_id: null,
             shot_per_round: faceType.value === 'none' ? null : shotPerRound.value,
+            interval_seconds: intervalSeconds.value,
         })
 
         // Fetch the full slot details and store in session state (ensure fresh)
@@ -257,7 +259,24 @@ async function handleSubmit() {
                     <span class="text-xs text-slate-500 mt-1 block">Typical: 3 or 6 arrows per round</span>
                 </label>
 
-                <div class="flex gap-3">
+                <!-- Shot Interval -->
+                <label class="block text-left text-xs text-slate-300 mt-4">
+                    Shot Interval (seconds)
+                    <input
+                        v-model.number="intervalSeconds"
+                        type="number"
+                        min="1"
+                        max="300"
+                        step="1"
+                        placeholder="e.g., 20"
+                        class="mt-1 w-full border border-slate-700 p-2 rounded bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                        :disabled="slotLoading"
+                    >
+                    <span class="text-xs text-slate-500 mt-1 block">Expected rhythm gap between consecutive shots</span>
+                </label>
+
+                <div class="flex gap-3 mt-4">
                     <button
                         type="submit"
                         class="flex-1 px-4 py-2 text-sm rounded bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"

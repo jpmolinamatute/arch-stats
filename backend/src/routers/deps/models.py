@@ -3,7 +3,7 @@ import logging
 from asyncpg import Pool
 from fastapi import Request, WebSocket
 
-from core import SlotManager
+from core import SessionManager, ShotManager, SlotManager
 from models import ArcherModel, LiveStatsModel, SessionModel, ShotModel, SlotModel
 from routers.deps.auth import require_auth
 
@@ -18,6 +18,15 @@ async def get_session_model(request: Request) -> SessionModel:
     logger.debug("Getting SessionModel")
     db_pool: Pool = request.app.state.db_pool
     return SessionModel(db_pool)
+
+
+async def get_session_manager(request: Request) -> SessionManager:
+    """Dependency provider for SessionManager instance."""
+    await require_auth(request)
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting SessionManager")
+    db_pool: Pool = request.app.state.db_pool
+    return SessionManager(db_pool)
 
 
 async def get_slot_model(request: Request) -> SlotModel:
@@ -91,3 +100,15 @@ async def get_slot_manager(request: Request) -> SlotManager:
     logger.debug("Getting SlotManager")
     db_pool: Pool = request.app.state.db_pool
     return SlotManager(db_pool)
+
+
+async def get_shot_manager(request: Request) -> ShotManager:
+    """Dependency provider returning a `ShotManager` for multi-step ops.
+
+    Enforces authentication as a side effect, mirroring existing behavior.
+    """
+    await require_auth(request)
+    logger: logging.Logger = request.app.state.logger
+    logger.debug("Getting ShotManager")
+    db_pool: Pool = request.app.state.db_pool
+    return ShotManager(db_pool)

@@ -289,6 +289,7 @@ describe('slotJoinForm', () => {
             distance: 18,
             club_id: null,
             shot_per_round: 6,
+            interval_seconds: 20,
         })
         expect(mockGetSlot).toHaveBeenCalled()
         expect(wrapper.emitted('slotAssigned')).toBeTruthy()

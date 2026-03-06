@@ -1,69 +1,25 @@
-from typing import Annotated, Final
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from models import DBNotFound, SessionModel, ShotModel, SlotModel
+from core import ShotManager
+from models import DBNotFound, ShotModel
 from routers.deps.auth import require_auth
-from routers.deps.models import get_session_model, get_shot_model, get_slot_model
-from schema import ShotCreate, ShotFilter, ShotId, ShotRead, SlotFilter
+from routers.deps.models import get_shot_manager, get_shot_model
+from schema import ShotCreate, ShotFilter, ShotId, ShotRead
 
 router = APIRouter(prefix="/shot", tags=["Shots"])
-
-MIN_BATCH_SIZE: Final[int] = 3
-MAX_BATCH_SIZE: Final[int] = 10
 
 
 @router.post("", response_model=ShotId | list[ShotId], status_code=status.HTTP_201_CREATED)
 async def create_shot(
     shots: ShotCreate | list[ShotCreate],
     current_archer_id: Annotated[UUID, Depends(require_auth)],
-    shot_model: Annotated[ShotModel, Depends(get_shot_model)],
-    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
-    session_model: Annotated[SessionModel, Depends(get_session_model)],
+    shot_manager: Annotated[ShotManager, Depends(get_shot_manager)],
 ) -> ShotId | list[ShotId]:
     try:
-        result: ShotId | list[ShotId]
-        if isinstance(shots, ShotCreate):
-            # Verify that the slot belongs to the archer
-            slot = await slot_model.get_one(SlotFilter(slot_id=shots.slot_id))
-            if slot.archer_id != current_archer_id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-            # Verify session is open
-            if not await session_model.does_open_session_exist(slot.session_id):
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail="Cannot add shots to a closed session",
-                )
-
-            shot_id = await shot_model.insert_one(shots)
-            result = ShotId(shot_id=shot_id)
-        elif isinstance(shots, list) and MIN_BATCH_SIZE <= len(shots) <= MAX_BATCH_SIZE:
-            slot_ids = {shot.slot_id for shot in shots}
-            if len(slot_ids) != 1:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="All shots must belong to the same slot",
-                )
-
-            slot_id = slot_ids.pop()
-            slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
-            if slot.archer_id != current_archer_id:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-            # Verify session is open
-            if not await session_model.does_open_session_exist(slot.session_id):
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail="Cannot add shots to a closed session",
-                )
-
-            shot_ids = await shot_model.insert_many(shots)
-            result = [ShotId(shot_id=shot_id) for shot_id in shot_ids]
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input")
-        return result
+        return await shot_manager.create(shots, current_archer_id)
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
@@ -73,16 +29,11 @@ async def get_shots_by_slot(
     slot_id: UUID,
     current_archer_id: Annotated[UUID, Depends(require_auth)],
     shot_model: Annotated[ShotModel, Depends(get_shot_model)],
-    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
+    shot_manager: Annotated[ShotManager, Depends(get_shot_manager)],
 ) -> list[ShotRead]:
     try:
-        # Verify that the slot belongs to the archer
-        slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
-        if slot.archer_id != current_archer_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-        shots = await shot_model.get_all(ShotFilter(slot_id=slot_id), [])
-        return shots
+        await shot_manager.verify_slot_ownership(slot_id, current_archer_id)
+        return await shot_model.get_all(ShotFilter(slot_id=slot_id), [])
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
@@ -92,14 +43,10 @@ async def get_shots_count_by_slot(
     slot_id: UUID,
     current_archer_id: Annotated[UUID, Depends(require_auth)],
     shot_model: Annotated[ShotModel, Depends(get_shot_model)],
-    slot_model: Annotated[SlotModel, Depends(get_slot_model)],
+    shot_manager: Annotated[ShotManager, Depends(get_shot_manager)],
 ) -> int:
     try:
-        # Verify that the slot belongs to the archer
-        slot = await slot_model.get_one(SlotFilter(slot_id=slot_id))
-        if slot.archer_id != current_archer_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
+        await shot_manager.verify_slot_ownership(slot_id, current_archer_id)
         return await shot_model.count_by_slot(slot_id)
     except DBNotFound as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
