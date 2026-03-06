@@ -12,6 +12,7 @@ from core.authentication import (
 from core.base_manager import BaseManager
 from core.db_pool import DBPool, DBStateError
 from core.face_data import face_data
+from core.live_stats_manager import LiveStatsManager
 from core.logger import get_logger
 from core.session_manager import SessionManager
 from core.settings import settings as settings
@@ -24,6 +25,7 @@ __all__ = [
     "DBPool",
     "DBStateError",
     "GoogleUserData",
+    "LiveStatsManager",
     "RegisterArcherRequest",
     "SessionManager",
     "ShotManager",

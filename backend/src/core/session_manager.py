@@ -31,12 +31,7 @@ class SessionManager(BaseManager):
         return SessionId(session_id=session_id)
 
     async def get_all_open_sessions(self) -> list[SessionRead]:
-        try:
-            return await self.session.get_all_open_sessions()
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-            ) from e
+        return await self.session.get_all_open_sessions()
 
     async def create_session(
         self, session_data: SessionCreate, current_archer_id: UUID

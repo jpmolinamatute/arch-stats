@@ -1,10 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 
-from core import SlotManager, SlotManagerError
-from models import DBException, DBNotFound
+from core import SlotManager
 from routers.deps.auth import require_auth
 from routers.deps.models import get_slot_manager
 from schema import FullSlotInfo, SlotJoinRequest, SlotJoinResponse
@@ -27,12 +26,9 @@ async def get_archer_current_slot(
 
     Responses: 200 OK, 404 Not Found.
     """
-    try:
-        return await slot_manager.get_full_slot_info(
-            current_archer_id=current_archer_id, archer_id=archer_id
-        )
-    except DBNotFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    return await slot_manager.get_full_slot_info(
+        current_archer_id=current_archer_id, archer_id=archer_id
+    )
 
 
 @router.get("/slot/{slot:uuid}", response_model=FullSlotInfo, status_code=status.HTTP_200_OK)
@@ -46,12 +42,7 @@ async def get_slot(
 
     Responses: 200 OK, 404 Not Found.
     """
-    try:
-        return await slot_manager.get_full_slot_info(
-            current_archer_id=current_archer_id, slot_id=slot
-        )
-    except DBNotFound as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    return await slot_manager.get_full_slot_info(current_archer_id=current_archer_id, slot_id=slot)
 
 
 @router.post(
@@ -68,19 +59,7 @@ async def join_session(
 
     Responses: 200 OK, 400 Bad Request.
     """
-    try:
-        return await slot_manager.assign_archer_to_slot(payload)
-    except DBNotFound as e:
-        # Non-existent or closed session should be treated as unprocessable (422)
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
-    except SlotManagerError as e:
-        msg = str(e)
-        if msg in (
-            "ERROR: archer already participating in an open session",
-            "ERROR: archer already joined this session",
-        ):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg) from e
+    return await slot_manager.assign_archer_to_slot(payload)
 
 
 @router.patch(
@@ -98,24 +77,7 @@ async def re_join_session(
 
     Responses: 200 OK, 400 Bad Request, 403 Forbidden, 422 Unprocessable Content.
     """
-    try:
-        # Delegate ownership, state checks and reactivation to SlotManager
-        return await slot_manager.re_join_session(slot_id, current_archer_id)
-    except DBNotFound as e:
-        # Pass through specific messages from SlotManager ensuring 422
-        msg = str(e)
-        if msg == "ERROR: The session doesn't exist or it was already closed":
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg
-            ) from e
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="ERROR: the archer is either not allowed to re-join or they are already in",
-        ) from e
-    except DBException as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
-    except SlotManagerError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    return await slot_manager.re_join_session(slot_id, current_archer_id)
 
 
 @router.patch("/slot/leave/{slot_id:uuid}", status_code=status.HTTP_200_OK)
@@ -129,18 +91,5 @@ async def leave_session(
 
     Responses: 200 OK, 400 Bad Request.
     """
-    try:
-        # Delegate ownership, active-state and session-open checks to SlotManager
-        await slot_manager.leave_session(slot_id, current_archer_id)
-        return Response(status_code=status.HTTP_200_OK)
-    except DBNotFound as e:
-        msg = str(e)
-        if msg == "ERROR: Session either doesn't exist or it was already closed":
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg
-            ) from e
-        # Archer wasn't participating (slot not active or not found)
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="ERROR: archer is not participating in this session",
-        ) from e
+    await slot_manager.leave_session(slot_id, current_archer_id)
+    return Response(status_code=status.HTTP_200_OK)

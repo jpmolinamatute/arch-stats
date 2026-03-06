@@ -6,7 +6,8 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from core.base_manager import BaseManager
-from schema import ShotCreate, ShotId, SlotRead
+from models.parent_model import DBNotFound
+from schema import ShotCreate, ShotFilter, ShotId, ShotRead, SlotRead
 
 MIN_BATCH_SIZE: Final[int] = 3
 MAX_BATCH_SIZE: Final[int] = 10
@@ -68,8 +69,6 @@ class ShotManagerError(Exception):
 class ShotManager(BaseManager):
     async def _assign_dynamic_timestamps(self, shots: list[ShotCreate], slot: SlotRead) -> None:
         """Dynamically assigns created_at backward from now() for a batch of shots."""
-        if not shots:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No shots provided")
 
         now_time = datetime.now(UTC)
         interval_seconds = getattr(slot, "interval_seconds", 20) or 20
@@ -94,14 +93,11 @@ class ShotManager(BaseManager):
             window_start = actions[scenario](window_start, window_end, shots, latest_shot_time)
 
         # 3. Distribute evenly within the finalized window
-        if len(shots) == 1:
-            shots[0].created_at = window_end
-        else:
-            total_window_seconds = (window_end - window_start).total_seconds()
-            actual_interval = total_window_seconds / (len(shots) - 1)
+        total_window_seconds = (window_end - window_start).total_seconds()
+        actual_interval = total_window_seconds / (len(shots) - 1)
 
-            for i, shot in enumerate(shots):
-                shot.created_at = window_start + timedelta(seconds=actual_interval * i)
+        for i, shot in enumerate(shots):
+            shot.created_at = window_start + timedelta(seconds=actual_interval * i)
 
     async def create_single_shot(self, shot: ShotCreate, current_archer_id: UUID) -> UUID:
         # Verify that the slot belongs to the archer
@@ -147,11 +143,28 @@ class ShotManager(BaseManager):
     async def create(
         self, shots: ShotCreate | list[ShotCreate], current_archer_id: UUID
     ) -> ShotId | list[ShotId]:
-        if isinstance(shots, ShotCreate):
-            shot_id = await self.create_single_shot(shots, current_archer_id)
-            return ShotId(shot_id=shot_id)
-        elif isinstance(shots, list):
-            shot_ids = await self.create_batch_shots(shots, current_archer_id)
-            return [ShotId(shot_id=shot_id) for shot_id in shot_ids]
-        else:
+        try:
+            if isinstance(shots, list):
+                shot_ids = await self.create_batch_shots(shots, current_archer_id)
+                return [ShotId(shot_id=shot_id) for shot_id in shot_ids]
+            else:  # isinstance(shots, ShotCreate)
+                shot_id = await self.create_single_shot(shots, current_archer_id)
+                return ShotId(shot_id=shot_id)
+        except DBNotFound as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        except TypeError:  # Original `else` block for invalid input type
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input")
+
+    async def get_shots_by_slot(self, slot_id: UUID, current_archer_id: UUID) -> list[ShotRead]:
+        try:
+            await self.verify_slot_ownership(slot_id, current_archer_id)
+            return await self.shot.get_all(ShotFilter(slot_id=slot_id), [])
+        except DBNotFound as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    async def get_shots_count_by_slot(self, slot_id: UUID, current_archer_id: UUID) -> int:
+        try:
+            await self.verify_slot_ownership(slot_id, current_archer_id)
+            return await self.shot.count_by_slot(slot_id)
+        except DBNotFound as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e

@@ -3,7 +3,7 @@ import logging
 from asyncpg import Pool
 from fastapi import Request, WebSocket
 
-from core import SessionManager, ShotManager, SlotManager
+from core import LiveStatsManager, SessionManager, ShotManager, SlotManager
 from models import ArcherModel, LiveStatsModel, SessionModel, ShotModel, SlotModel
 from routers.deps.auth import require_auth
 
@@ -27,6 +27,18 @@ async def get_session_manager(request: Request) -> SessionManager:
     logger.debug("Getting SessionManager")
     db_pool: Pool = request.app.state.db_pool
     return SessionManager(db_pool)
+
+
+async def get_live_stats_manager(request: Request) -> LiveStatsManager:
+    logger = request.app.state.logger
+    db_pool = request.app.state.db_pool
+    return LiveStatsManager(db_pool, logger)
+
+
+async def get_live_stats_manager_ws(websocket: WebSocket) -> LiveStatsManager:
+    logger = websocket.app.state.logger
+    db_pool = websocket.app.state.db_pool
+    return LiveStatsManager(db_pool, logger)
 
 
 async def get_slot_model(request: Request) -> SlotModel:
