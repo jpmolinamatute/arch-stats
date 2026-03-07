@@ -14,6 +14,26 @@ from schema import (
 from schema.archer_schema import ArcherFilter
 
 
+class SessionModelError(Exception):
+    """Base exception for Session model errors."""
+
+
+class ArcherHasOpenSessionError(SessionModelError, ValueError):
+    """Raised when the archer already has an open session."""
+
+
+class ArcherParticipatingError(SessionModelError, ValueError):
+    """Raised when the archer is already participating in an open session."""
+
+
+class SessionActiveParticipantsError(SessionModelError, ValueError):
+    """Raised when attempting to close a session that still has active participants."""
+
+
+class SessionIdMissingError(SessionModelError, ValueError):
+    """Raised when session operations lack a valid session_id."""
+
+
 class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFilter]):
     def __init__(self, db_pool: Pool) -> None:
         super().__init__("session", db_pool, SessionRead)
@@ -106,7 +126,9 @@ class SessionModel(ParentModel[SessionCreate, SessionSet, SessionRead, SessionFi
 
         # Ensure there are no active participants shooting in this session
         if await self.has_active_participants(session.session_id):
-            raise ValueError("ERROR: cannot close session with active participants")
+            raise SessionActiveParticipantsError(
+                "ERROR: cannot close session with active participants"
+            )
 
         data = SessionSet(is_opened=False, closed_at=datetime.now(UTC))
         await self.update(data, where)

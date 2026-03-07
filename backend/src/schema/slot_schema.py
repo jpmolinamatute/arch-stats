@@ -27,6 +27,12 @@ class SlotCommons(ArcherProfileBase):
         le=10,
         description="Number of shots per round for the current session format",
     )
+    interval_seconds: int = Field(
+        default=20,
+        ge=1,
+        le=300,
+        description="Time gap in seconds between each consecutive shot in a round",
+    )
 
 
 class SlotCreate(SlotCommons):
@@ -106,6 +112,12 @@ class SlotSet(BaseModel):
         ge=3,
         le=10,
         description="Number of shots per round for the current session format",
+    )
+    interval_seconds: int | None = Field(
+        default=None,
+        ge=1,
+        le=300,
+        description="Time gap in seconds between each consecutive shot in a round",
     )
 
     model_config = ConfigDict(title="Slot Assignment Set", extra="forbid")

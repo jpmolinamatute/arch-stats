@@ -9,27 +9,37 @@ from core.authentication import (
     register_archer,
     verify_google_id_token,
 )
+from core.base_manager import BaseManager
 from core.db_pool import DBPool, DBStateError
 from core.face_data import face_data
+from core.live_stats_manager import LiveStatsManager
 from core.logger import get_logger
-from core.settings import settings
+from core.session_manager import SessionManager
+from core.settings import settings as settings
+from core.shot_manager import ShotManager, ShotManagerError
 from core.slot_manager import SlotManager, SlotManagerError
 
 __all__ = [
     "AuthDeps",
-    "authenticate_archer",
-    "build_needs_registration_response",
+    "BaseManager",
     "DBPool",
     "DBStateError",
-    "decode_token",
     "GoogleUserData",
-    "hash_session_token",
+    "LiveStatsManager",
+    "RegisterArcherRequest",
+    "SessionManager",
+    "ShotManager",
+    "ShotManagerError",
+    "SlotManager",
+    "SlotManagerError",
+    "authenticate_archer",
+    "build_needs_registration_response",
+    "decode_token",
+    "face_data",
     "get_logger",
+    "hash_session_token",
     "login_existing_archer",
     "register_archer",
     "settings",
-    "SlotManager",
-    "SlotManagerError",
     "verify_google_id_token",
-    "face_data",
 ]

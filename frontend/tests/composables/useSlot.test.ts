@@ -62,6 +62,7 @@ describe('useSlot', () => {
             is_shooting: true,
             bowstyle: 'recurve',
             draw_weight: 40,
+            interval_seconds: 20,
         }
         const response: SlotJoinResponse = { slot_id: 'slot_1', slot: 'A' }
         const fullSlot: FullSlotInfo = {
@@ -78,6 +79,7 @@ describe('useSlot', () => {
             slot_letter: 'A',
             created_at: '2023-01-01',
             lane: 1,
+            interval_seconds: 20,
         }
 
         vi.mocked(api.post).mockResolvedValue(response)
@@ -110,6 +112,7 @@ describe('useSlot', () => {
             slot_letter: 'A',
             created_at: '2023-01-01',
             lane: 1,
+            interval_seconds: 20,
         }
         vi.mocked(api.get).mockResolvedValue(fullSlot)
 
