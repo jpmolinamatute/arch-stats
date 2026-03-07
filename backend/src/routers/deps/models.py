@@ -30,12 +30,14 @@ async def get_session_manager(request: Request) -> SessionManager:
 
 
 async def get_live_stats_manager(request: Request) -> LiveStatsManager:
+    await require_auth(request)
     logger = request.app.state.logger
     db_pool = request.app.state.db_pool
     return LiveStatsManager(db_pool, logger)
 
 
 async def get_live_stats_manager_ws(websocket: WebSocket) -> LiveStatsManager:
+    await require_auth(websocket)
     logger = websocket.app.state.logger
     db_pool = websocket.app.state.db_pool
     return LiveStatsManager(db_pool, logger)

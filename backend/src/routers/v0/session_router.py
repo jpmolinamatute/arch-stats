@@ -91,6 +91,7 @@ async def create_session(
 @router.get("/{session:uuid}", response_model=SessionRead, status_code=status.HTTP_200_OK)
 async def get_session(
     session: UUID,
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
     session_manager: Annotated[SessionManager, Depends(get_session_manager)],
 ) -> SessionRead:
     """
@@ -98,7 +99,7 @@ async def get_session(
 
     Responses: 200 OK, 404 Not Found.
     """
-    return await session_manager.get_session(session)
+    return await session_manager.get_session(session, current_archer_id)
 
 
 @router.patch("/re-open", response_model=SessionId, status_code=status.HTTP_200_OK)

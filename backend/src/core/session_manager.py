@@ -53,9 +53,12 @@ class SessionManager(BaseManager):
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg
             ) from e
 
-    async def get_session(self, session_id: UUID) -> SessionRead:
+    async def get_session(self, session_id: UUID, current_archer_id: UUID) -> SessionRead:
         try:
-            return await self.session.get_one(SessionFilter(session_id=session_id))
+            session = await self.session.get_one(SessionFilter(session_id=session_id))
+            if not session.is_opened and session.owner_archer_id != current_archer_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            return session
         except DBNotFound as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 

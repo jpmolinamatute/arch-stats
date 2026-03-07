@@ -52,6 +52,7 @@ async def get_slot(
 )
 async def join_session(
     payload: SlotJoinRequest,
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
     slot_manager: Annotated[SlotManager, Depends(get_slot_manager)],
 ) -> SlotJoinResponse:
     """
@@ -59,7 +60,7 @@ async def join_session(
 
     Responses: 200 OK, 400 Bad Request.
     """
-    return await slot_manager.assign_archer_to_slot(payload)
+    return await slot_manager.assign_archer_to_slot(payload, current_archer_id)
 
 
 @router.patch(

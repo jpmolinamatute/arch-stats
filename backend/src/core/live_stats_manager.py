@@ -16,16 +16,20 @@ class LiveStatsManager(BaseManager):
         self.live_stats_model = LiveStatsModel(db_pool)
         self.logger = logger
 
-    async def get_stats(self, slot_id: UUID) -> LiveStat:
+    async def get_stats(self, slot_id: UUID, current_archer_id: UUID) -> LiveStat:
         try:
+            await self.verify_slot_ownership(slot_id, current_archer_id)
             live_stat = await self.live_stats_model.get_live_stat(slot_id)
             scores = await self.live_stats_model.get_all_scores(slot_id)
             return LiveStat(scores=scores, stats=live_stat)
         except DBNotFound as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        except HTTPException:
+            raise
         except Exception as e:
+            self.logger.error("Internal Server Error in get_stats: %s", str(e), exc_info=True)
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error"
             ) from e
 
     async def listen_for_shots(self, slot_id: UUID) -> AsyncGenerator[LiveStat]:

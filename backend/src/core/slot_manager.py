@@ -21,6 +21,30 @@ class SlotManagerError(Exception):
     """Custom exception for slot assignment manager errors."""
 
 
+class ArcherAlreadyJoinedSessionError(SlotManagerError):
+    """Raised when archer is already part of this immediate session."""
+
+
+class ArcherParticipatingError(SlotManagerError):
+    """Raised when archer is already part of another open session."""
+
+
+class TargetFullError(SlotManagerError):
+    """Raised when the target lane is out of letters A/B/C/D."""
+
+
+class SessionClosedOrMissingError(DBNotFound):
+    """Raised when target session is closed or missing."""
+
+
+class ArcherNotAllowedToRejoinError(DBNotFound):
+    """Raised when archer state prevents them from re-joining."""
+
+
+class ArcherNotParticipatingError(DBNotFound):
+    """Raised when archer tries to leave a session they don't participate in."""
+
+
 class SlotManager(BaseManager):
     async def create_target(self, session_id: UUID, distance: int, lane: int) -> UUID:
         return await self.target.create_one(
@@ -58,20 +82,29 @@ class SlotManager(BaseManager):
         await self.slot.refresh_open_participants()
         return new_slot_id
 
-    async def assign_archer_to_slot(self, req_data: SlotJoinRequest) -> SlotJoinResponse:
+    async def assign_archer_to_slot(
+        self, req_data: SlotJoinRequest, current_archer_id: UUID
+    ) -> SlotJoinResponse:
         """Assigns an archer to a target slot within a session."""
         try:
+            self.verify_archer_identity(current_archer_id, req_data.archer_id)
             exists = await self.session.does_open_session_exist(req_data.session_id)
 
             if not exists:
-                raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
+                raise SessionClosedOrMissingError(
+                    "ERROR: Session either doesn't exist or it was already closed"
+                )
 
             # Prevent duplicate participation
             current_participation = await self.session.is_archer_participating(req_data.archer_id)
             if current_participation is not None:
                 if current_participation == req_data.session_id:
-                    raise SlotManagerError("ERROR: archer already joined this session")
-                raise SlotManagerError("ERROR: archer already participating in an open session")
+                    raise ArcherAlreadyJoinedSessionError(
+                        "ERROR: archer already joined this session"
+                    )
+                raise ArcherParticipatingError(
+                    "ERROR: archer already participating in an open session"
+                )
 
             available_targets = await self.slot.get_available_targets(req_data)
             lane = 1
@@ -89,7 +122,7 @@ class SlotManager(BaseManager):
                         letter = opt
                         break
                 else:
-                    raise SlotManagerError("ERROR: selected target is full")
+                    raise TargetFullError("ERROR: selected target is full")
             else:
                 lane = await self.target.get_next_empty_lane(req_data.session_id)
                 target_id = await self.create_target(
@@ -110,18 +143,19 @@ class SlotManager(BaseManager):
                 interval_seconds=req_data.interval_seconds,
             )
             return SlotJoinResponse(slot_id=slot_id, slot=f"{lane}{letter.value}")
-        except DBNotFound as e:
+        except SessionClosedOrMissingError as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
             ) from e
+        except DBNotFound as e:
+            # Fallback for general DBNF not specifically typed
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+            ) from e
+        except (ArcherParticipatingError, ArcherAlreadyJoinedSessionError) as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
         except SlotManagerError as e:
-            msg = str(e)
-            if msg in (
-                "ERROR: archer already participating in an open session",
-                "ERROR: archer already joined this session",
-            ):
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg) from e
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg) from e
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     async def re_join_session(self, slot_id: UUID, current_archer_id: UUID) -> SlotJoinResponse:
         """Re-activate a previously inactive slot assignment."""
@@ -131,13 +165,15 @@ class SlotManager(BaseManager):
             )
 
             if slot_row.is_shooting:
-                raise DBNotFound(
+                raise ArcherNotAllowedToRejoinError(
                     "ERROR: the archer is either not allowed to re-join or they are already in"
                 )
 
             exists = await self.session.does_open_session_exist(slot_row.session_id)
             if not exists:
-                raise DBNotFound("ERROR: The session doesn't exist or it was already closed")
+                raise SessionClosedOrMissingError(
+                    "ERROR: The session doesn't exist or it was already closed"
+                )
 
             where = SlotFilter(slot_id=slot_id)
             await self.slot.update(SlotSet(is_shooting=True), where)
@@ -146,12 +182,15 @@ class SlotManager(BaseManager):
             if slot_row.slot is None:
                 raise SlotManagerError("ERROR: slot is unexpectedly None")
             return SlotJoinResponse(slot_id=slot_row.slot_id, slot=slot_row.slot)
+        except SessionClosedOrMissingError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+            ) from e
+        except ArcherNotAllowedToRejoinError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+            ) from e
         except DBNotFound as e:
-            msg = str(e)
-            if msg == "ERROR: The session doesn't exist or it was already closed":
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg
-                ) from e
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="ERROR: the archer is either not allowed to re-join or they are already in",
@@ -169,20 +208,25 @@ class SlotManager(BaseManager):
             )
 
             if not slot_row.is_shooting:
-                raise DBNotFound("ERROR: archer is not participating in this session")
+                raise ArcherNotParticipatingError(
+                    "ERROR: archer is not participating in this session"
+                )
 
             exists = await self.session.does_open_session_exist(slot_row.session_id)
             if not exists:
-                raise DBNotFound("ERROR: Session either doesn't exist or it was already closed")
+                raise SessionClosedOrMissingError(
+                    "ERROR: Session either doesn't exist or it was already closed"
+                )
 
             req = SlotLeaveRequest(session_id=slot_row.session_id, archer_id=slot_row.archer_id)
             await self.slot.leave_session(req)
+        except SessionClosedOrMissingError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+            ) from e
+        except ArcherNotParticipatingError as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
         except DBNotFound as e:
-            msg = str(e)
-            if msg == "ERROR: Session either doesn't exist or it was already closed":
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=msg
-                ) from e
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="ERROR: archer is not participating in this session",

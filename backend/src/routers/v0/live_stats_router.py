@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 
 from core import LiveStatsManager
+from routers.deps.auth import require_auth
 from routers.deps.models import get_live_stats_manager, get_live_stats_manager_ws
 from schema import WebSocketMessage, WSContentType
 from schema.live_stats_schema import LiveStat
@@ -14,12 +15,13 @@ router = APIRouter(prefix="/stats", tags=["Stats"])
 @router.get("/{slot_id:uuid}", response_model=LiveStat, status_code=status.HTTP_200_OK)
 async def get_stats(
     slot_id: UUID,
+    current_archer_id: Annotated[UUID, Depends(require_auth)],
     live_stats_manager: Annotated[LiveStatsManager, Depends(get_live_stats_manager)],
 ) -> LiveStat:
     """
     Get live statistics and shots for a slot.
     """
-    return await live_stats_manager.get_stats(slot_id)
+    return await live_stats_manager.get_stats(slot_id, current_archer_id)
 
 
 @router.websocket("/ws/{slot_id:uuid}")
