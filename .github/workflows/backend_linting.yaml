@@ -69,6 +69,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.MIGRATIONS_PAT }}
       - name: Set uv & Install Dependencies
         uses: ./.github/actions/uv-setup
       - name: Install PostgreSQL client
@@ -85,25 +88,6 @@ jobs:
             echo "Waiting for Postgres (attempt $i)..."
             sleep 2
           done
-      - name: Validate migrations secrets
-        env:
-          MIGRATIONS_REPOSITORY: ${{ secrets.MIGRATIONS_REPOSITORY }}
-          MIGRATIONS_PAT: ${{ secrets.MIGRATIONS_PAT }}
-        run: |
-          if [ -z "${MIGRATIONS_REPOSITORY}" ] || [ -z "${MIGRATIONS_PAT}" ]; then
-            echo "Error: MIGRATIONS_REPOSITORY and/or MIGRATIONS_PAT secrets are not set." >&2
-            echo "Set them in repo settings to enable Flyway migrations during CI." >&2
-            exit 1
-          fi
-      - name: Checkout migrations repository
-        # Requires two repo secrets configured in this repository:
-        #  - MIGRATIONS_REPOSITORY: e.g. "<owner>/<private-migrations-repo>"
-        #  - MIGRATIONS_PAT: a fine-scoped PAT with repo read access
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
-          token: ${{ secrets.MIGRATIONS_PAT }}
-          path: backend/migrations
       - name: Run Flyway migrations
         env:
           FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
