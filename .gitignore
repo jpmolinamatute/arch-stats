@@ -17,6 +17,4 @@ backend/src/core/logs/*
 backend/src/frontend/*
 !backend/src/frontend/.gitkeep
 openapi.json
-docker/postgresql/
-backend/migrations/
 google_client_secret.json
