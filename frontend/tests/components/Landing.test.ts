@@ -40,7 +40,7 @@ describe('landing Page', () => {
         expect(wrapper.text()).toContain('Arch Stats')
 
         // Verify Dev Mode Button
-        const button = wrapper.find('button')
+        const button = wrapper.find('[data-testid="login-button-header"]')
         expect(button.exists()).toBe(true)
         expect(button.text()).toBe('Login')
 

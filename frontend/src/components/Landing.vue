@@ -19,7 +19,7 @@ async function handleLogin() {
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col bg-slate-950 text-slate-300 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div class="min-h-screen flex flex-col bg-slate-950 text-slate-300 font-sans selection:bg-blue-500/30">
         <!-- Navbar -->
         <header class="w-full py-2 px-3 md:py-4 md:px-6 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
@@ -36,6 +36,7 @@ async function handleLogin() {
                 </div>
                 <div>
                     <button
+                        data-testid="login-button-header"
                         class="px-2.5 py-1.5 md:px-5 md:py-2 text-[10px] sm:text-xs md:text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] whitespace-nowrap"
                         @click="handleLogin"
                     >
@@ -68,6 +69,7 @@ async function handleLogin() {
 
                     <div class="pt-5 md:pt-8 w-full px-2 sm:px-0">
                         <button
+                            data-testid="login-button-hero"
                             class="w-full sm:w-auto px-4 py-3 sm:px-6 sm:py-4 md:px-10 md:py-5 text-sm md:text-lg font-bold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)] md:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] hover:-translate-y-1 block mx-auto break-words"
                             @click="handleLogin"
                         >
@@ -233,7 +235,7 @@ async function handleLogin() {
     </div>
 </template>
 
-<style>
+<style scoped>
 /* Custom animations for the landing page */
 @keyframes fadeInUp {
     from {
