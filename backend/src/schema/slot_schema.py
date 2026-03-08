@@ -30,7 +30,7 @@ class SlotCommons(ArcherProfileBase):
     interval_seconds: int = Field(
         default=20,
         ge=1,
-        le=300,
+        le=100,
         description="Time gap in seconds between each consecutive shot in a round",
     )
 
@@ -116,7 +116,7 @@ class SlotSet(BaseModel):
     interval_seconds: int | None = Field(
         default=None,
         ge=1,
-        le=300,
+        le=100,
         description="Time gap in seconds between each consecutive shot in a round",
     )
 
