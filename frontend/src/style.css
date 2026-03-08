@@ -3,6 +3,7 @@
 html {
     height: 100%;
     width: 100%;
+    overflow-x: hidden;
 }
 
 :root {
@@ -31,58 +32,21 @@ body {
     height: 100%;
     width: 100%;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    place-items: center;
+    overflow-x: hidden;
     background: #0f172a;
     color: #f1f5f9; /* slate-100 */
 }
 
-section#app {
-    max-width: 100%;
+section#app, div#app {
     width: 100%;
-    flex-grow: 1;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
+    min-height: 100vh;
 }
 
 main {
     width: 100%;
 }
 
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
-}
 
-button {
-    border-radius: 6px;
-    border: 1px solid #1e293b; /* slate-800 */
-    padding: 0.6em 1.2em;
-    font-size: 0.95em;
-    font-weight: 500;
-    font-family: inherit;
-    background-image: linear-gradient(135deg, #1e3a8a, #1e40af); /* blue gradients */
-    color: #f1f5f9;
-    cursor: pointer;
-    transition:
-        background-color 0.25s,
-        border-color 0.25s;
-}
-button:hover {
-    border-color: #3b82f6;
-    background-image: linear-gradient(135deg, #1d4ed8, #1e40af);
-}
-button:focus,
-button:focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
-}
-
-.card {
-    padding: 2em;
-}
 
 /* Removed light mode overrides to keep dark-only UI */
 
