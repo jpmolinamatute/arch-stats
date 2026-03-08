@@ -42,7 +42,7 @@ describe('landing Page', () => {
         // Verify Dev Mode Button
         const button = wrapper.find('button')
         expect(button.exists()).toBe(true)
-        expect(button.text()).toBe('Login as Dummy (Dev Only)')
+        expect(button.text()).toBe('Login')
 
         // Verify Click Action
         await button.trigger('click')
