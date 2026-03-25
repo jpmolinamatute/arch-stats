@@ -1,23 +1,30 @@
 : "${ROOT_DIR:?Environment variable ROOT_DIR is not set}"
 
 COMPOSE_FILE="${ROOT_DIR}/docker/docker-compose.yaml"
-WAIT_TIME=2
+
+check_docker_compose_file() {
+    if [[ ! -f "${COMPOSE_FILE}" ]]; then
+        echo "Docker compose file not found" >&2
+        exit 1
+    fi
+}
 
 is_docker_running() {
     [ -n "$(docker compose -f "${COMPOSE_FILE}" ps --all --filter status=running --quiet)" ]
 }
 
 start_docker() {
+    check_docker_compose_file
     if is_docker_running; then
         echo "Docker compose was already running. Nothing to do here"
     else
         echo "Starting docker compose"
         docker compose -f "${COMPOSE_FILE}" up --detach --build
-        sleep "${WAIT_TIME}"
     fi
 }
 
 stop_docker() {
+    check_docker_compose_file
     echo "Stopping docker compose"
     docker compose -f "${COMPOSE_FILE}" down
     if is_docker_running; then
