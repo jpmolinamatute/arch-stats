@@ -57,9 +57,7 @@
     "ty.importStrategy": "fromEnvironment",
     "ty.diagnosticMode": "openFilesOnly",
     "ty.disableLanguageServices": false,
-    "ty.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
-    ],
+    "ty.interpreter": "${workspaceFolder}/backend/.venv/bin/python",
     "ty.path": [
         "${workspaceFolder}/backend/.venv/bin/ty"
     ],
@@ -82,5 +80,6 @@
     },
     "cSpell.words": [
         "notabool"
-    ]
+    ],
+    "typescript.tsserver.enableTracing": true
 }
