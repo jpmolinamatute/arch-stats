@@ -25,6 +25,21 @@ describe('landing Page', () => {
                     name: 'landing',
                     component: Landing,
                 },
+                {
+                    path: '/docs',
+                    name: 'docs',
+                    component: { template: '<div>Docs</div>' },
+                },
+                {
+                    path: '/about',
+                    name: 'about',
+                    component: { template: '<div>About</div>' },
+                },
+                {
+                    path: '/feedback',
+                    name: 'feedback',
+                    component: { template: '<div>Feedback</div>' },
+                },
             ],
         })
 

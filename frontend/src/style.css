@@ -7,16 +7,33 @@ html {
 }
 
 :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
     color-scheme: dark; /* force dark only */
-    color: rgba(255, 255, 255, 0.92);
-    background-color: #0f172a; /* slate-900 like */
+    color: #e2e4ea; /* warm off-white */
+    background-color: #0a0f1e; /* deep navy */
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* Landing page design tokens — scoped via CSS vars so app pages are unaffected */
+    --landing-bg: #0a0f1e;
+    --landing-bg-alt: #0d1326;
+    --landing-surface: #111827;
+    --landing-surface-raised: #1a2234;
+    --landing-border: #1e293b;
+    --landing-border-subtle: #162033;
+    --landing-text: #e2e4ea;
+    --landing-text-muted: #9ca3af;
+    --landing-text-dim: #6b7280;
+    --landing-accent: #3b82f6;
+    --landing-accent-hover: #60a5fa;
+    --landing-accent-warm: #f59e0b;
+    --landing-accent-warm-hover: #fbbf24;
+    --landing-gradient-start: #3b82f6;
+    --landing-gradient-end: #6366f1;
 }
 
 a {
@@ -33,8 +50,8 @@ body {
     width: 100%;
     margin: 0;
     overflow-x: hidden;
-    background: #0f172a;
-    color: #f1f5f9; /* slate-100 */
+    background: #0a0f1e;
+    color: #e2e4ea;
 }
 
 section#app, div#app {

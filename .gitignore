@@ -18,3 +18,4 @@ backend/src/frontend/*
 !backend/src/frontend/.gitkeep
 openapi.json
 google_client_secret.json
+.worktrees/
