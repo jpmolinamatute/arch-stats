@@ -282,7 +282,7 @@ function closeMobileMenu() {
                                 </li>
                                 <li class="pricing-card__item pricing-card__item--muted">
                                     <svg class="pricing-card__check pricing-card__check--muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                    Join Clubes
+                                    Join Clubs
                                 </li>
                                 <li class="pricing-card__item pricing-card__item--muted">
                                     <svg class="pricing-card__check pricing-card__check--muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>

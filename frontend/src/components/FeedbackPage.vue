@@ -54,7 +54,7 @@ function validateEmail(): boolean {
         return false
     }
     const emailPattern = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
-    if (!emailPattern.test(form.email)) {
+    if (!emailPattern.test(form.email.trim())) {
         errors.email = 'Please enter a valid email address.'
         return false
     }
@@ -80,11 +80,15 @@ function validateMessage(): boolean {
 }
 
 const isFormValid = computed(() => {
+    const emailTrimmed = form.email.trim()
     return (
         form.name.trim().length > 0
-        && form.email.trim().length > 0
+        && form.name.length <= NAME_MAX
+        && emailTrimmed.length > 0
+        && emailTrimmed.length <= EMAIL_MAX
+        && /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(emailTrimmed)
         && form.message.trim().length >= MESSAGE_MIN
-        && /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(form.email)
+        && form.message.length <= MESSAGE_MAX
     )
 })
 
