@@ -2,6 +2,7 @@
 
 set -Eeuo pipefail
 
+# We need GITHUB_TOKEN to download the latest version of the bundle app from GitHub
 : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"
 
 APP="arch-stats"
@@ -299,7 +300,12 @@ main() {
         exit 3
     }
 
-    if [[ ! -d "$user_dir" ]]; then
+    if [[ -d "${user_dir}" ]]; then
+        if [[ ! -r "${user_dir}" || ! -w "${user_dir}" ]]; then
+            log_error "directory ${user_dir} exists but is not readable and/or writable"
+            exit 2
+        fi
+    else
         log_error "required argument: user_dir is missing or is not a real directory"
         log_error "Usage: $0 /path/to/arch-stats"
         exit 2

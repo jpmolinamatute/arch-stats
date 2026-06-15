@@ -1,0 +1,9 @@
+# /etc/systemd/system/cloudflared-update.timer
+[Unit]
+Description=Update cloudflared
+
+[Timer]
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target

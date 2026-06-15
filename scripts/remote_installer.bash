@@ -38,6 +38,7 @@ Exit status codes:
     20  Service stop failure (only if unit exists and remains active)
     21  Service start failure
     22  Service not active after start
+    23  Cloudflared service activation failure
 
 EOF
 }
@@ -107,6 +108,121 @@ assert_system_service_running() {
     fi
     log_info "Service is active: ${SYSTEM_SERVICE}"
 }
+# Install and configure cloudflared tunnel
+install_cloudflared() {
+    # Check if there is a credentials JSON file in /tmp/
+    local cred_file
+    cred_file="$(find /tmp -maxdepth 1 -name "*.json" | head -n 1)"
+    if [[ ! -f "${cred_file}" ]]; then
+        log_info "No Cloudflared credentials file found in /tmp. Skipping Cloudflared setup."
+        return 0
+    fi
+
+    local tunnel_id
+    tunnel_id="$(basename "${cred_file}" .json)"
+    log_info "Setting up Cloudflared tunnel: ${tunnel_id}"
+
+    # Install cloudflared binary if not present
+    if ! command -v cloudflared >/dev/null 2>&1; then
+        log_info "Installing cloudflared via apt..."
+
+        # Add Cloudflare GPG key
+        if ! curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null; then
+            log_error "Failed to download Cloudflare GPG key"
+            exit 1
+        fi
+
+        # Add Cloudflare apt repository
+        local release_codename="bookworm"
+        if [[ -f /etc/os-release ]]; then
+            # shellcheck disable=SC1091
+            release_codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-bookworm}")"
+        fi
+        echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared ${release_codename} main" | tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
+
+        # Install package
+        if ! apt-get update -y && apt-get install -y cloudflared; then
+            log_error "Failed to install cloudflared package."
+            exit 1
+        fi
+    fi
+
+    # Determine app home dir
+    local user_dir
+    user_dir="$(getent passwd "$APP" | cut -d: -f6)"
+    if [[ ! -d "${user_dir}" ]]; then
+        log_error "System user '$APP' does not exist. Cannot determine home directory."
+        exit 2
+    fi
+
+    # Copy credential file to app home dir
+    local cloudflared_dir="${user_dir}/.cloudflared"
+    mkdir -p "${cloudflared_dir}"
+    chmod 700 "${cloudflared_dir}"
+
+    local dest_cred_file="${cloudflared_dir}/${tunnel_id}.json"
+    cp "${cred_file}" "${dest_cred_file}"
+    chmod 600 "${dest_cred_file}"
+    chown -R "${APP}:${APP}" "${cloudflared_dir}"
+
+    # Copy config file to /etc/cloudflared/config.yml
+    log_info "Installing cloudflared configuration file..."
+    mkdir -p "/etc/cloudflared"
+    chmod 755 "/etc/cloudflared"
+
+    if [[ ! -f "/tmp/config.yml" ]]; then
+        log_error "Cloudflared config file not found at /tmp/config.yml"
+        exit 24
+    fi
+    cp "/tmp/config.yml" "/etc/cloudflared/config.yml"
+    chmod 644 "/etc/cloudflared/config.yml"
+
+    # Copy systemd files
+    log_info "Copying cloudflared systemd files..."
+    cp "/tmp/cloudflared.service" "/tmp/cloudflared-update.service" "/tmp/cloudflared-update.timer" "/etc/systemd/system/"
+    chmod 644 /etc/systemd/system/cloudflared.service /etc/systemd/system/cloudflared-update.service /etc/systemd/system/cloudflared-update.timer
+
+    # Enable and start services
+    log_info "Activating cloudflared systemd services..."
+    if ! systemctl daemon-reload; then
+        log_error "Failed to reload systemd daemon"
+        exit 24
+    fi
+
+    if ! systemctl enable cloudflared.service; then
+        log_error "Failed to enable cloudflared.service"
+        exit 24
+    fi
+    if ! systemctl restart cloudflared.service; then
+        log_error "Failed to start/restart cloudflared.service"
+        exit 24
+    fi
+
+    if ! systemctl enable cloudflared-update.timer; then
+        log_error "Failed to enable cloudflared-update.timer"
+        exit 24
+    fi
+    if ! systemctl restart cloudflared-update.timer; then
+        log_error "Failed to start/restart cloudflared-update.timer"
+        exit 24
+    fi
+
+    # Validate active state
+    if ! systemctl is-active --quiet cloudflared.service; then
+        log_error "cloudflared.service is not active after activation"
+        exit 24
+    fi
+    if ! systemctl is-active --quiet cloudflared-update.timer; then
+        log_error "cloudflared-update.timer is not active after activation"
+        exit 24
+    fi
+
+    log_info "cloudflared services activated successfully"
+
+    # Clean up temp files from /tmp
+    log_info "Cleaning up temporary cloudflared files..."
+    rm -f "/tmp/cloudflared.service" "/tmp/cloudflared-update.service" "/tmp/cloudflared-update.timer" "/tmp/config.yml" "${cred_file}"
+}
 
 main() {
     # Help flag
@@ -124,6 +240,7 @@ main() {
     install_app_as_user
     start_system_service
     assert_system_service_running
+    install_cloudflared
     log_info "Remote installation completed."
     exit 0
 }
