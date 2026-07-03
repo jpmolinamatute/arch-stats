@@ -262,16 +262,24 @@ assert_postgres_socket() {
 install_dependencies() {
     local app_home_dir="${1}/backend"
 
+    # Ensure ~/.local/bin is in PATH for uv
+    export PATH="${HOME}/.local/bin:${PATH}"
+
+    if ! command -v uv >/dev/null 2>&1; then
+        log_info "uv not found, installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+    else
+        log_info "Running 'uv self update'"
+        if ! uv self update; then
+            log_error "uv self update failed"
+            exit 5
+        fi
+    fi
+
     cd "$app_home_dir" || {
         log_error "backend directory not found: $app_home_dir"
         exit 4
     }
-
-    log_info "Running 'uv self update'"
-    if ! uv self update; then
-        log_error "uv self update failed"
-        exit 5
-    fi
 
     log_info "Syncing production dependencies (no dev, frozen)"
     if ! uv sync --no-dev --frozen --python "$(cat .python-version)"; then

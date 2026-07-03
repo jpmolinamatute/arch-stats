@@ -7,6 +7,8 @@ networks:
 services:
   db:
     image: postgres:15
+    profiles:
+      - dev
     env_file:
       - ./.env
     ports:
@@ -29,6 +31,8 @@ services:
 
   migrations:
     image: flyway/flyway:latest
+    profiles:
+      - dev
     command:
       - migrate
     depends_on:
@@ -43,6 +47,24 @@ services:
       - FLYWAY_USER=${POSTGRES_USER}
       - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
       - FLYWAY_LOCATIONS=filesystem:/flyway/sql
+    networks:
+      - arch-stats
+
+  emulator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.rpi
+    privileged: true
+    profiles:
+      - emulator
+    ports:
+      - "2222:22"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock
+    cgroup: host
     networks:
       - arch-stats
 

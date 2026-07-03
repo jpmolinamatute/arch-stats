@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Color codes
+RED=$'\e[31m'
+GREEN=$'\e[32m'
+NC=$'\e[0m' # No Color
+
+log_info() { echo "${GREEN}INFO:${NC} $*"; }
+log_error() { echo "${RED}ERROR:${NC} $*" >&2; }

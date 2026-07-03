@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 # shellcheck source=./lib/manage_docker
 . "${ROOT_DIR}/scripts/lib/manage_docker"
+. "${ROOT_DIR}/scripts/lib/logging"
 
 usage() {
     cat <<'EOF'
@@ -19,8 +20,6 @@ Options:
     -h, --help       Show this help and exit
 EOF
 }
-
-log_info() { echo "INFO: $*"; }
 
 run_python_tests() {
     local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
@@ -59,7 +58,7 @@ run_frontend_checks() {
     cd "${ROOT_DIR}/frontend"
     log_info "Running JS/TS linter and formatter"
     npm run lint
-    echo "Running JS/TS tests"
+    log_info "Running JS/TS tests"
     npm run test
     build_frontend
     cd -
@@ -67,9 +66,9 @@ run_frontend_checks() {
 }
 
 run_bash_checks() {
-    echo "Running bash linter"
+    log_info "Running bash linter"
     shellcheck --shell=bash -x --exclude=SC1091 "${ROOT_DIR}/scripts"/*\.bash
-    echo "Running bash formatter"
+    log_info "Running bash formatter"
     shfmt --language-dialect bash --write -i 4 "${ROOT_DIR}/scripts"/*\.bash
 }
 
@@ -94,7 +93,7 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "Unknown option: $1" >&2
+                log_error "Unknown option: $1"
                 usage
                 exit 1
                 ;;

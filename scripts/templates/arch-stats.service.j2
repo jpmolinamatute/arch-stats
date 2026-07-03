@@ -1,18 +1,18 @@
 [Unit]
-Description=Arch Stats
+Description={{ app_name_label }}
 After=network.target postgresql.service
 Wants=network-online.target
 
 [Service]
-User=arch-stats
-Group=arch-stats
-WorkingDirectory=/opt/arch-stats/backend
+User={{ app_name }}
+Group={{ app_name }}
+WorkingDirectory={{ app_user_home_dir }}/backend
 
-# Environment variables (permissions 600, owned by arch-stats)
-EnvironmentFile=/opt/arch-stats/.env
+# Environment variables (permissions 600, owned by {{ app_name }})
+EnvironmentFile={{ app_user_home_dir }}/.env
 
 # Run uvicorn from within the virtual environment
-ExecStart=/opt/arch-stats/backend/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+ExecStart={{ app_user_home_dir }}/backend/.venv/bin/uvicorn main:app --host 127.0.0.1 --port {{ prod_uvicorn_port }} --workers 4
 
 # Automatically restart if it crashes
 Restart=always
