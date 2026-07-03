@@ -12,14 +12,18 @@ services:
     env_file:
       - ./.env
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:5432"
     networks:
       - arch-stats
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - PGPORT=${POSTGRES_PORT}
+      - PGDATA=/var/lib/postgresql/15/main
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/
+      - ./postgresql.conf:/etc/postgresql/15/main/postgresql.conf
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/15/main/postgresql.conf
     healthcheck:
       test:
         - CMD-SHELL

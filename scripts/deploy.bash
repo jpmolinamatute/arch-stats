@@ -23,6 +23,8 @@ EOF
 check_remote_action() {
     # @TODO: We need to check if the user and the DB are created as well.
     # @TODO: We need to check if cloudflared is configured correctly.
+    # @TODO: We need to check if the .env file is present and has the required variables.
+
     local host="${1}"
     if ssh -q -o BatchMode=yes -o ConnectTimeout=5 "${host}" "
       id -u ${APP_NAME} >/dev/null 2>&1 && \
@@ -76,32 +78,19 @@ install() {
         --output-dir "${temp_dir}" \
         --cloudflared-tunnel-id "${CLOUDFLARED_TUNNEL_ID}"
 
-    # Generate remote .env
-    cat <<EOF >"${temp_dir}/.env"
-POSTGRES_USER=${APP_NAME}
-POSTGRES_DB=${APP_NAME}
-POSTGRES_PORT=5432
-POSTGRES_SOCKET_DIR=/var/run/postgresql
-ARCH_STATS_DEV_MODE=False
-ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID=${ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID}
-ARCH_STATS_JWT_SECRET=${ARCH_STATS_JWT_SECRET}
-EOF
-
     log_info "Uploading installation files to '${host}:/tmp'"
     # Upload everything
     scp -o BatchMode=yes \
         "${SCRIPT_DIR}/remote_installer.bash" \
         "${SCRIPT_DIR}/install_app.bash" \
-        "${SCRIPT_DIR}/../OS/cloudflared/cloudflared.service" \
+        "${SCRIPT_DIR}/cloudflared/cloudflared.service" \
         "${temp_dir}/cloudflared_config.yaml" \
         "${temp_dir}/${APP_NAME}.service" \
-        "${temp_dir}/.env" \
         "${cred_file}" \
         "${cert_file}" \
         "${host}":/tmp/
 
     rm -rf "${temp_dir}"
-
     ssh -t "${host}" "sudo GITHUB_TOKEN='${GITHUB_TOKEN}' bash /tmp/remote_installer.bash '${APP_NAME}'"
 }
 
