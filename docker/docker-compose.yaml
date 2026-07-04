@@ -20,6 +20,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/
       - ./postgresql.conf:/etc/postgresql/15/main/postgresql.conf
+      - ./pg_hba.conf:/etc/postgresql/15/main/pg_hba.conf
     command:
       - postgres
       - -c

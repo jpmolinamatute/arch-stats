@@ -24,7 +24,7 @@ generate_env_file() {
 
     jwt_secret="$(openssl rand -hex 32)"
 
-    cat << EOF > "${user_dir}/.env"
+    cat <<EOF >"${user_dir}/.env"
 POSTGRES_USER="${app_user}"
 POSTGRES_PASSWORD="${postgres_password}"
 POSTGRES_DB="${app_user}"
