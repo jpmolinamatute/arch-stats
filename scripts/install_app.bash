@@ -196,13 +196,8 @@ run_migrations() {
     local migrations_dir="${1}"
     log_info "Running migrations '${migrations_dir}'"
     while IFS= read -r -d '' f; do
-        # Suppress NOTICE messages and routine status tags (e.g., "CREATE TABLE") while
-        # preserving warnings and errors on stderr.
-        # - PGOPTIONS sets client_min_messages=warning (hides NOTICE)
-        # - -q reduces psql chatter; -X ignores ~/.psqlrc; ON_ERROR_STOP stops on SQL errors
-        # - Redirect stdout to /dev/null to hide status lines; keep stderr for warnings/errors
-        if ! PGOPTIONS='-c client_min_messages=warning' \
-            psql -X -q -v ON_ERROR_STOP=1 -U "${APP}" -d "${APP}" -f "${f}" 1>/dev/null; then
+        # - ON_ERROR_STOP stops on SQL errors
+        if ! psql -h "${PG_SOCKET_DIR}" -p "${PG_PORT}" -v ON_ERROR_STOP=1 -U "${APP}" -d "${APP}" -f "${f}"; then
             log_error "Migration failed"
             exit 13
         fi

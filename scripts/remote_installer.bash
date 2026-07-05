@@ -29,7 +29,7 @@ POSTGRES_USER="${app_user}"
 POSTGRES_PASSWORD="${postgres_password}"
 POSTGRES_DB="${app_user}"
 POSTGRES_HOST="localhost"
-POSTGRES_PORT="5433"
+POSTGRES_PORT="5432"
 POSTGRES_SOCKET_DIR="/var/run/postgresql"
 ARCH_STATS_SERVER_PORT="8001"
 ARCH_STATS_DEV_MODE="false"
@@ -76,7 +76,7 @@ setup_postgres() {
     log_info "Applying custom PostgreSQL configurations..."
     mv /tmp/postgresql.conf /tmp/secondary.conf /tmp/pg_hba.conf "${pg_path}/"
     chown postgres:postgres "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
-    chmod 640 "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
+    chmod 644 "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
 
     systemctl enable --now postgresql
 
@@ -167,8 +167,8 @@ main() {
     generate_env_file "${app_user}" "${postgres_password}"
     setup_postgres "${app_user}" "${postgres_password}"
     setup_cloudflared "${app_user}"
-    register_app_service "${app_user}"
     install_app_as_user "${app_user}"
+    register_app_service "${app_user}"
 
     log_info "Starting ${app_user} service..."
     systemctl start "${app_user}.service"
