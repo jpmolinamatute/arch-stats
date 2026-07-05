@@ -26,9 +26,7 @@ def main() -> None:
     parser.add_argument(
         "--app-user-home-dir", required=True, help="Home directory of the application user"
     )
-    parser.add_argument(
-        "--cloudflared-tunnel-id", required=True, help="Cloudflared Tunnel ID"
-    )
+    parser.add_argument("--cloudflared-tunnel-id", required=True, help="Cloudflared Tunnel ID")
     parser.add_argument(
         "--output-dir", required=True, type=Path, help="Directory to save the transformed templates"
     )
@@ -59,7 +57,7 @@ def main() -> None:
     }
 
     try:
-        for template_name in ["arch-stats.service", "cloudflared_config.yaml"]:
+        for template_name in ["arch-stats.service", "cloudflared_config.yaml", "pg_hba.conf"]:
             template = env.get_template(f"{template_name}.j2")
             rendered = template.render(context)
             dest_path = output_dir / template_name

@@ -84,6 +84,9 @@ install() {
         "${SCRIPT_DIR}/remote_installer.bash" \
         "${SCRIPT_DIR}/install_app.bash" \
         "${SCRIPT_DIR}/cloudflared/cloudflared.service" \
+        "${SCRIPT_DIR}/pg_conf/postgresql.conf" \
+        "${SCRIPT_DIR}/pg_conf/secondary.conf" \
+        "${temp_dir}/pg_hba.conf" \
         "${temp_dir}/cloudflared_config.yaml" \
         "${temp_dir}/${APP_NAME}.service" \
         "${cred_file}" \

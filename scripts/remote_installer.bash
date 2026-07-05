@@ -62,14 +62,23 @@ install_os_packages() {
         postgresql \
         postgresql-contrib \
         openssl
-
-    systemctl enable --now postgresql
 }
 
 setup_postgres() {
     local app_user="${1}"
     local postgres_password="${2}"
+    local pg_path="/etc/postgresql/15/main"
     log_info "Setting up PostgreSQL user and database..."
+
+    log_info "Stopping postgresql service if running to apply custom configurations..."
+    systemctl stop postgresql || true
+
+    log_info "Applying custom PostgreSQL configurations..."
+    mv /tmp/postgresql.conf /tmp/secondary.conf /tmp/pg_hba.conf "${pg_path}/"
+    chown postgres:postgres "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
+    chmod 640 "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
+
+    systemctl enable --now postgresql
 
     # Run PostgreSQL commands from /tmp to avoid "could not change directory to '/root': Permission denied"
     (
@@ -173,6 +182,7 @@ main() {
     rm -f /tmp/remote_installer.bash /tmp/install_app.bash \
         /tmp/cloudflared_config.yaml "/tmp/${app_user}.service" \
         /tmp/cloudflared.service /tmp/cloudflared-update.service /tmp/cloudflared-update.timer \
+        /tmp/postgresql.conf /tmp/secondary.conf /tmp/pg_hba.conf \
         /tmp/*.json
 
     log_info "Remote installation completed successfully."
