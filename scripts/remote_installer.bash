@@ -7,6 +7,16 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
 
+# shellcheck disable=SC2329
+cleanup() {
+    log_info "Cleaning up temporary installation files..."
+    if [[ -n "${ROOT_DIR:-}" && "${ROOT_DIR}" =~ ^/tmp/deploy_assets && "${ROOT_DIR}" != "/tmp" && "${ROOT_DIR}" != "/" ]]; then
+        rm -rf "${ROOT_DIR}"
+    else
+        log_error "Safety check failed: ROOT_DIR is '${ROOT_DIR:-}', skipping deletion."
+    fi
+}
+
 create_app_user() {
     local app_user="${1}"
     if ! id -u "${app_user}" >/dev/null 2>&1; then
@@ -100,21 +110,21 @@ setup_cloudflared() {
     local app_user="${1}"
     local src_cred_file
     local dest_cred_file
-    local src_cert_file="/tmp/cert.pem"
+    local src_cert_file="${ROOT_DIR}/cert.pem"
     local dest_cert_file
     local user_dir
     local cf_dir
     log_info "Setting up cloudflared..."
-    src_cred_file="$(find /tmp -maxdepth 1 -name "*.json" | head -n 1)"
+    src_cred_file="$(find "${ROOT_DIR}" -maxdepth 1 -name "*.json" | head -n 1)"
     if [[ ! -f "${src_cred_file}" || ! -f "${src_cert_file}" ]]; then
-        log_error "Cloudflared credentials file or cert file not found in /tmp. Aborting."
+        log_error "Cloudflared credentials file or cert file not found in ${ROOT_DIR}. Aborting."
         exit 23
     fi
 
     user_dir="$(getent passwd "${app_user}" | cut -d: -f6)"
     cf_dir="${user_dir}/.cloudflared"
     dest_cred_file="${cf_dir}/$(basename "${src_cred_file}")"
-    dest_cert_file="${cf_dir}/$(basename "${src_cert_file}")"
+    dest_cert_file="${cf_dir}/cert.pem"
     mkdir -p "${cf_dir}"
     mv "${src_cred_file}" "${dest_cred_file}"
     mv "${src_cert_file}" "${dest_cert_file}"
@@ -123,8 +133,8 @@ setup_cloudflared() {
     chown -R "${app_user}:${app_user}" "${cf_dir}"
 
     mkdir -p "/etc/cloudflared"
-    mv /tmp/cloudflared_config.yaml /etc/cloudflared/cloudflared_config.yaml
-    mv /tmp/cloudflared.service /etc/systemd/system/
+    mv "${ROOT_DIR}/cloudflared_config.yaml" /etc/cloudflared/cloudflared_config.yaml
+    mv "${ROOT_DIR}/cloudflared.service" /etc/systemd/system/
     chmod 644 /etc/systemd/system/cloudflared.service /etc/cloudflared/cloudflared_config.yaml
 
     systemctl daemon-reload
@@ -134,7 +144,7 @@ setup_cloudflared() {
 
 register_app_service() {
     local app_user="${1}"
-    mv "/tmp/${app_user}.service" "/etc/systemd/system/"
+    mv "${ROOT_DIR}/${app_user}.service" "/etc/systemd/system/"
     chmod 644 "/etc/systemd/system/${app_user}.service"
     systemctl daemon-reload
     systemctl enable --now "${app_user}.service"
@@ -144,6 +154,14 @@ install_app_as_user() {
     local app_user="${1}"
     local user_dir
     local script_path="${ROOT_DIR}/install_app.bash"
+    local env_file="${ROOT_DIR}/env"
+    if [[ -f "${env_file}" ]]; then
+        # shellcheck disable=SC1090
+        source "${env_file}"
+    else
+        log_error "Environment file not found. Aborting."
+        exit 15
+    fi
     user_dir="$(getent passwd "$app_user" | cut -d: -f6)"
     chmod +x "$script_path"
     log_info "Running application installer as ${app_user}..."
@@ -156,6 +174,8 @@ install_app_as_user() {
 main() {
     local app_user="${1}"
     local postgres_password
+
+    trap cleanup EXIT
     if [[ $EUID -ne 0 ]]; then
         log_error "Please run as root."
         exit 1
@@ -177,13 +197,6 @@ main() {
         log_error "Service ${app_user}.service failed to start."
         exit 22
     fi
-
-    log_info "Cleaning up temporary installation files..."
-    rm -f /tmp/remote_installer.bash /tmp/install_app.bash \
-        /tmp/cloudflared_config.yaml "/tmp/${app_user}.service" \
-        /tmp/cloudflared.service /tmp/cloudflared-update.service /tmp/cloudflared-update.timer \
-        /tmp/postgresql.conf /tmp/secondary.conf /tmp/pg_hba.conf \
-        /tmp/*.json
 
     log_info "Remote installation completed successfully."
     exit 0

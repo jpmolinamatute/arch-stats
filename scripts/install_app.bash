@@ -13,9 +13,9 @@ TMP_DIR="$(mktemp -d -t "${APP}-installer.XXXXXX")"
 RELEASE_JSON_FILE="${TMP_DIR}/release.json"
 MIGRATION_ZIP_OUT="${TMP_DIR}/${APP}-migrations.zip"
 MIGRATIONS_UNPACK_DIR="${TMP_DIR}/migrations_unpacked"
-PG_SOCKET_DIR="${PG_SOCKET_DIR:-/var/run/postgresql}"
-PG_PORT="${PG_PORT:-5432}"
-PATH="/opt/arch-stats/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+PG_SOCKET_DIR="/var/run/postgresql"
+PG_PORT="5432"
+export PATH="${HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
@@ -24,12 +24,8 @@ print_help() {
     local script
     script="${0##*/}"
     cat <<EOF
-Usage: $script APP_HOME_DIR
+Usage: $script
        $script --help
-
-APP_HOME_DIR:
-    (required) Absolute path to the application system user's home directory
-    where the release archive will be extracted. Example: /home/arch-stats
 
 Description:
     Automates deployment of the latest release:
@@ -46,7 +42,6 @@ Environment Variables:
 
 Exit Status Codes:
     1   Generic fatal error / extraction failure
-    2   Missing or invalid APP_HOME_DIR
     3   Unable to change to a safe working directory
     10  PostgreSQL socket missing
     11  No SQL migrations found
@@ -72,10 +67,10 @@ cleanup_tmp_workspace() {
 
 # Remove existing application directory to ensure clean install
 purge_existing_install() {
-    local app_home_dir="${1}/backend"
-    if [[ -d "$app_home_dir" ]]; then
-        log_info "Removing existing install at: $app_home_dir"
-        rm -rf -- "$app_home_dir"
+    local backend_dir="${HOME}/backend"
+    if [[ -d "$backend_dir" ]]; then
+        log_info "Removing existing install at: $backend_dir"
+        rm -rf -- "$backend_dir"
     fi
 }
 
@@ -255,10 +250,7 @@ assert_postgres_socket() {
 }
 
 install_dependencies() {
-    local app_home_dir="${1}/backend"
-
-    # Ensure ~/.local/bin is in PATH for uv
-    export PATH="${HOME}/.local/bin:${PATH}"
+    local backend_dir="${HOME}/backend"
 
     if ! command -v uv >/dev/null 2>&1; then
         log_info "uv not found, installing uv..."
@@ -271,8 +263,8 @@ install_dependencies() {
         fi
     fi
 
-    cd "$app_home_dir" || {
-        log_error "backend directory not found: $app_home_dir"
+    cd "${backend_dir}" || {
+        log_error "backend directory not found: ${backend_dir}"
         exit 4
     }
 
@@ -287,7 +279,6 @@ install_dependencies() {
 
 main() {
     local tar_url checksum_hash tar_path
-    local user_dir="${1}"
     # Help flag
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
         print_help
@@ -303,17 +294,16 @@ main() {
         exit 3
     }
 
-    if [[ -d "${user_dir}" ]]; then
-        if [[ ! -r "${user_dir}" || ! -w "${user_dir}" ]]; then
-            log_error "directory ${user_dir} exists but is not readable and/or writable"
+    if [[ -d "${HOME}" ]]; then
+        if [[ ! -r "${HOME}" || ! -w "${HOME}" ]]; then
+            log_error "directory ${HOME} exists but is not readable and/or writable"
             exit 2
         fi
     else
-        log_error "required argument: user_dir is missing or is not a real directory"
-        log_error "Usage: $0 /path/to/arch-stats"
+        log_error "HOME is missing or is not a real directory"
         exit 2
     fi
-    purge_existing_install "${user_dir}"
+    purge_existing_install
     assert_postgres_socket
     get_repo_meta_data
     tar_url="$(json_get_tarball_url)"
@@ -321,10 +311,10 @@ main() {
     tar_path="${TMP_DIR}/${ASSET_TARBALL_NAME}"
     gh_download "$tar_url" "$tar_path"
     verify_sha256 "$tar_path" "$checksum_hash"
-    extract_app "$tar_path" "${user_dir}"
+    extract_app "$tar_path"
     download_migrations_zip
     unpack_migrations_zip
-    install_dependencies "${user_dir}"
+    install_dependencies
 
     exit 0
 }

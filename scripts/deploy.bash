@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 UNINSTALLER_SCRIPT="remote_uninstaller.bash"
 APP_NAME="arch-stats"
-
+REMOTE_SECURE_DIR="/tmp/deploy_assets"
 . "${SCRIPT_DIR}/lib/logging"
 
 usage() {
@@ -47,39 +47,14 @@ uninstall() {
     ssh -t "${host}" "sudo bash /tmp/${UNINSTALLER_SCRIPT}"
 }
 
-install() {
+upload_install_assets() {
     local host="${1}"
-    local temp_dir
-    local cred_file
-    local cert_file="${HOME}/.cloudflared/cert.pem"
-    log_info "Starting clean installation on '${host}'..."
+    local temp_dir="${2}"
+    local cred_file="${3}"
+    local cert_file="${4}"
+    local env_temp_file="${temp_dir}/env"
 
-    : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN must be set}"
-    : "${ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID:?Google OAuth Client ID is required for clean install}"
-    : "${ARCH_STATS_JWT_SECRET:?JWT Secret is required for clean install}"
-    : "${CLOUDFLARED_TUNNEL_ID:?Cloudflared Tunnel ID is required for clean install}"
-
-    cred_file="${HOME}/.cloudflared/${CLOUDFLARED_TUNNEL_ID}.json"
-    if [[ ! -f "${cred_file}" ]]; then
-        log_error "Local Cloudflared credential file not found at: ${cred_file}"
-        exit 1
-    fi
-
-    # Create temporary working dir
-
-    temp_dir="$(mktemp -d)"
-
-    # Render configurations
-    uv run "${SCRIPT_DIR}/transform_templates.py" \
-        --app-name "${APP_NAME}" \
-        --app-name-label "${APP_NAME}" \
-        --prod-uvicorn-port 8000 \
-        --app-user-home-dir "/opt/${APP_NAME}" \
-        --output-dir "${temp_dir}" \
-        --cloudflared-tunnel-id "${CLOUDFLARED_TUNNEL_ID}"
-
-    log_info "Uploading installation files to '${host}:/tmp'"
-    # Upload everything
+    log_info "Uploading installation assets to '${host}:${REMOTE_SECURE_DIR}'..."
     scp -o BatchMode=yes \
         "${SCRIPT_DIR}/remote_installer.bash" \
         "${SCRIPT_DIR}/install_app.bash" \
@@ -91,25 +66,71 @@ install() {
         "${temp_dir}/${APP_NAME}.service" \
         "${cred_file}" \
         "${cert_file}" \
-        "${host}":/tmp/
+        "${env_temp_file}" \
+        "${host}:${REMOTE_SECURE_DIR}/"
+}
 
-    rm -rf "${temp_dir}"
-    ssh -t "${host}" "sudo GITHUB_TOKEN='${GITHUB_TOKEN}' bash /tmp/remote_installer.bash '${APP_NAME}'"
+upload_update_assets() {
+    local host="${1}"
+    local temp_dir="${2}"
+    local env_temp_file="${temp_dir}/env"
+
+    log_info "Uploading update assets to '${host}:${REMOTE_SECURE_DIR}'..."
+    scp -o BatchMode=yes \
+        "${SCRIPT_DIR}/install_app.bash" \
+        "${env_temp_file}" \
+        "${host}:${REMOTE_SECURE_DIR}/"
+}
+
+install() {
+    local host="${1}"
+    local temp_dir="${2}"
+    local cred_file
+    local cert_file="${HOME}/.cloudflared/cert.pem"
+    log_info "Starting clean installation on '${host}'..."
+
+    : "${ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID:?Google OAuth Client ID is required for clean install}"
+    : "${ARCH_STATS_JWT_SECRET:?JWT Secret is required for clean install}"
+    : "${CLOUDFLARED_TUNNEL_ID:?Cloudflared Tunnel ID is required for clean install}"
+
+    cred_file="${HOME}/.cloudflared/${CLOUDFLARED_TUNNEL_ID}.json"
+    if [[ ! -f "${cred_file}" ]]; then
+        log_error "Local Cloudflared credential file not found at: ${cred_file}"
+        exit 1
+    fi
+
+    # Render configurations
+    uv run "${SCRIPT_DIR}/transform_templates.py" \
+        --app-name "${APP_NAME}" \
+        --app-name-label "${APP_NAME}" \
+        --prod-uvicorn-port 8000 \
+        --app-user-home-dir "/opt/${APP_NAME}" \
+        --output-dir "${temp_dir}" \
+        --cloudflared-tunnel-id "${CLOUDFLARED_TUNNEL_ID}"
+
+    # Upload everything securely
+    upload_install_assets "${host}" "${temp_dir}" "${cred_file}" "${cert_file}"
+    ssh -t "${host}" "sudo bash -c '${REMOTE_SECURE_DIR}/remote_installer.bash \"${APP_NAME}\"'"
 }
 
 update() {
     local host="${1}"
-
-    # Require GITHUB_TOKEN for update
-    : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN must be set}"
+    local temp_dir="${2}"
 
     log_info "Starting update on '${host}'..."
-    log_info "Uploading installation files to '${host}:/tmp'"
-    scp -o BatchMode=yes "${SCRIPT_DIR}/install_app.bash" "${host}":/tmp/
+    upload_update_assets "${host}" "${temp_dir}"
     ssh -t "${host}" "
         sudo systemctl stop ${APP_NAME}.service && \
-        sudo -u ${APP_NAME} GITHUB_TOKEN='${GITHUB_TOKEN}' bash /tmp/install_app.bash /opt/${APP_NAME} && \
-        sudo systemctl start ${APP_NAME}.service
+        (
+            sudo -u ${APP_NAME} bash -c '
+                source ${REMOTE_SECURE_DIR}/env
+                bash ${REMOTE_SECURE_DIR}/install_app.bash /opt/${APP_NAME}
+            ' && \
+            sudo systemctl start ${APP_NAME}.service
+        )
+        ec=\$?
+        sudo rm -rf ${REMOTE_SECURE_DIR}
+        exit \$ec
     "
 }
 
@@ -131,7 +152,8 @@ main() {
 
     local host="${1}"
     local action="${2:-}"
-
+    local temp_dir
+    local env_temp_file
     # Load environment variables
     if [[ -f "${SCRIPT_DIR}/../.env" ]]; then
         # shellcheck source=/dev/null
@@ -144,11 +166,19 @@ main() {
     if [[ -z "${action}" || "${action}" == "install" ]]; then
         action=$(check_remote_action "${host}")
         log_info "Resolved deployment action: ${action}"
+        temp_dir="$(mktemp -d)"
+        env_temp_file="${temp_dir}/env"
+        : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN must be set}"
+        echo "export GITHUB_TOKEN='${GITHUB_TOKEN}'" >"${env_temp_file}"
+        chmod 400 "${env_temp_file}"
+        log_info "Creating secure remote temporary directory..."
+        ssh -o BatchMode=yes "${host}" "mkdir -p -m 700 ${REMOTE_SECURE_DIR}"
         if [[ "${action}" == "install" ]]; then
-            install "${host}"
+            install "${host}" "${temp_dir}"
         elif [[ "${action}" == "update" ]]; then
-            update "${host}"
+            update "${host}" "${temp_dir}"
         fi
+        rm -rf "${temp_dir}"
     elif [[ "${action}" == "uninstall" ]]; then
         uninstall "${host}"
     else
