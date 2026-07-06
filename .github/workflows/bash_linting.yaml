@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Bash linting tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz" | tar -xJ
+          sudo mv shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
       - name: Linting
         run: shellcheck --shell=bash -x --exclude=SC1091 ./scripts/*\.bash
