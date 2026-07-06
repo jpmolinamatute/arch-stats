@@ -10,10 +10,10 @@ log_error() { echo "ERROR: $*" >&2; }
 # shellcheck disable=SC2329
 cleanup() {
     log_info "Cleaning up temporary installation files..."
-    if [[ -n "${ROOT_DIR:-}" && "${ROOT_DIR}" =~ ^/tmp/deploy_assets && "${ROOT_DIR}" != "/tmp" && "${ROOT_DIR}" != "/" ]]; then
+    if [[ -n "${ROOT_DIR}" && "${ROOT_DIR}" != "/tmp" && "${ROOT_DIR}" != "/" ]]; then
         rm -rf "${ROOT_DIR}"
     else
-        log_error "Safety check failed: ROOT_DIR is '${ROOT_DIR:-}', skipping deletion."
+        log_error "Safety check failed: ROOT_DIR is '${ROOT_DIR}', skipping deletion."
     fi
 }
 
@@ -84,15 +84,15 @@ setup_postgres() {
     systemctl stop postgresql || true
 
     log_info "Applying custom PostgreSQL configurations..."
-    mv /tmp/postgresql.conf /tmp/secondary.conf /tmp/pg_hba.conf "${pg_path}/"
+    mv "${ROOT_DIR}/postgresql.conf" "${ROOT_DIR}/secondary.conf" "${ROOT_DIR}/pg_hba.conf" "${pg_path}/"
     chown postgres:postgres "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
     chmod 644 "${pg_path}/postgresql.conf" "${pg_path}/secondary.conf" "${pg_path}/pg_hba.conf"
 
     systemctl enable --now postgresql
 
-    # Run PostgreSQL commands from /tmp to avoid "could not change directory to '/root': Permission denied"
+    # Run PostgreSQL commands from "${ROOT_DIR} to avoid "could not change directory to '/root': Permission denied"
     (
-        cd /tmp
+        cd ~postgres
         if ! sudo -u postgres psql -t -c '\du' | cut -d \| -f 1 | grep -q "${app_user}"; then
             log_info "Creating PostgreSQL user '${app_user}'..."
             sudo -u postgres psql -c "CREATE USER \"${app_user}\" WITH PASSWORD '${postgres_password}';"
@@ -153,7 +153,8 @@ register_app_service() {
 install_app_as_user() {
     local app_user="${1}"
     local user_dir
-    local script_path="${ROOT_DIR}/install_app.bash"
+    user_dir="$(getent passwd "${app_user}" | cut -d: -f6)"
+    local script_path="${user_dir}/install_app.bash"
     local env_file="${ROOT_DIR}/env"
     if [[ -f "${env_file}" ]]; then
         # shellcheck disable=SC1090
@@ -162,10 +163,11 @@ install_app_as_user() {
         log_error "Environment file not found. Aborting."
         exit 15
     fi
-    user_dir="$(getent passwd "$app_user" | cut -d: -f6)"
-    chmod +x "$script_path"
+    mv "${ROOT_DIR}/install_app.bash" "${script_path}"
+    chown "${app_user}:${app_user}" "${script_path}"
+    chmod 755 "$script_path"
     log_info "Running application installer as ${app_user}..."
-    if ! runuser -u "${app_user}" -- bash "${script_path}" "${user_dir}"; then
+    if ! runuser -u "${app_user}" -- "${script_path}"; then
         log_error "Application installation failed."
         exit 14
     fi

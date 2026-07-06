@@ -5,63 +5,17 @@ set -Eeuo pipefail
 # We need GITHUB_TOKEN to download the latest version of the bundle app from GitHub
 : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"
 
-APP="arch-stats"
-OWNER="jpmolinamatute"
-USER_AGENT="${APP}-installer"
-ASSET_TARBALL_NAME="${APP}.tar.xz"
-TMP_DIR="$(mktemp -d -t "${APP}-installer.XXXXXX")"
-RELEASE_JSON_FILE="${TMP_DIR}/release.json"
-MIGRATION_ZIP_OUT="${TMP_DIR}/${APP}-migrations.zip"
-MIGRATIONS_UNPACK_DIR="${TMP_DIR}/migrations_unpacked"
-PG_SOCKET_DIR="/var/run/postgresql"
-PG_PORT="5432"
 export PATH="${HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 log_info() { echo "INFO: $*"; }
 log_error() { echo "ERROR: $*" >&2; }
 
-print_help() {
-    local script
-    script="${0##*/}"
-    cat <<EOF
-Usage: $script
-       $script --help
-
-Description:
-    Automates deployment of the latest release:
-      - Fetches release metadata and tarball from GitHub and verifies SHA-256
-      - Extracts into the system user's home directory
-      - Downloads ephemeral SQL migrations and applies them
-      - Installs backend dependencies (production only)
-      - (Service management is not performed by this script version)
-
-Environment Variables:
-    GITHUB_TOKEN    (required) GitHub token with repo:read access
-    PG_SOCKET_DIR   (optional) PostgreSQL socket dir (default: /var/run/postgresql)
-    PG_PORT         (optional) PostgreSQL port (default: 5432)
-
-Exit Status Codes:
-    1   Generic fatal error / extraction failure
-    3   Unable to change to a safe working directory
-    10  PostgreSQL socket missing
-    11  No SQL migrations found
-    12  Network metadata/download failure
-    13  Migration failure
-    15  Download helper (curl) failure
-
-Example:
-    $script /opt/${APP}
-
-EOF
-}
-
 # shellcheck disable=SC2329 # Invoked indirectly via 'trap cleanup_tmp_workspace EXIT' in main
 cleanup_tmp_workspace() {
-    # shellcheck disable=SC2317
-    if [[ -d "$TMP_DIR" ]]; then
-        # shellcheck disable=SC2317
-        rm -rf "$TMP_DIR"
-        log_info "Removed temp workspace: ${TMP_DIR}"
+    local tmp_dir="${1}"
+    if [[ -d "$tmp_dir" ]]; then
+        rm -rf "$tmp_dir"
+        log_info "Removed temp workspace: ${tmp_dir}"
     fi
 }
 
@@ -75,10 +29,12 @@ purge_existing_install() {
 }
 
 gh_download() {
-    local url="$1"
-    local out="$2"
-    local api_call="${3:-false}"
+    local app_name="${1}"
+    local url="${2}"
+    local out="${3}"
+    local api_call="${4:-false}"
     local curl_ec
+    local user_agent="${app_name}-installer"
     local curl_opts=(
         -fsSL
         --max-time 60
@@ -86,7 +42,7 @@ gh_download() {
         --retry 3
         --retry-delay 2
         --retry-all-errors
-        --user-agent "${USER_AGENT:-arch-stats-installer}"
+        --user-agent "${user_agent}"
         -H "Authorization: Bearer ${GITHUB_TOKEN:-}"
         --output "$out"
     )
@@ -105,37 +61,44 @@ gh_download() {
 }
 
 get_repo_meta_data() {
-    local api_url="https://api.github.com/repos/${OWNER}/${APP}/releases/latest"
+    local app_name="${1}"
+    local base_url="${2}"
+    local release_json_file="${3}"
+    local api_url="${base_url}/releases/latest"
 
-    log_info "Resolving latest release metadata from GitHub API"
-    if ! gh_download "$api_url" "${RELEASE_JSON_FILE}" true; then
-        log_error "Failed to fetch latest release metadata"
-        exit 12
-    fi
-    log_info "Saved release JSON to ${RELEASE_JSON_FILE}"
+    log_info "Resolving latest release metadata from GitHub API for ${app_name}"
+    gh_download "${app_name}" "$api_url" "${release_json_file}" true
+    log_info "Saved release JSON to ${release_json_file}"
 }
 
 # Echoes the browser_download_url for the tarball asset
 json_get_tarball_url() {
+    local asset_tarball_name="${1}"
+    local release_json_file="${2}"
     local url
-    url="$(jq -r --arg name "$ASSET_TARBALL_NAME" '.assets[] | select(.name==$name) | .browser_download_url' "${RELEASE_JSON_FILE}")"
+    url="$(jq -r --arg name "${asset_tarball_name}" '.assets[] | select(.name==$name) | .browser_download_url' "${release_json_file}")"
     if [[ -z "$url" || "$url" == "null" ]]; then
-        log_error "Could not find asset '$ASSET_TARBALL_NAME' in latest release."
+        log_error "Could not find asset '${asset_tarball_name}' in latest release."
         exit 1
     fi
     echo "$url"
 }
 
 json_get_sha256() {
+    local app_name="${1}"
+    local asset_tarball_name="${2}"
+    local tmp_dir="${3}"
+    local release_json_file="${4}"
     local checksum_asset_url checksum_file sha
-    checksum_asset_url="$(jq -r --arg name "${ASSET_TARBALL_NAME}.sha256" '.assets[] | select(.name==$name) | .browser_download_url' "${RELEASE_JSON_FILE}")"
+    checksum_asset_url="$(jq -r --arg name "${asset_tarball_name}.sha256" '.assets[] | select(.name==$name) | .browser_download_url' "${release_json_file}")"
 
     if [[ -n "$checksum_asset_url" && "$checksum_asset_url" != "null" ]]; then
-        checksum_file="${TMP_DIR}/${ASSET_TARBALL_NAME}.sha256"
-        gh_download "$checksum_asset_url" "$checksum_file"
+        checksum_file="${tmp_dir}/${asset_tarball_name}.sha256"
+
+        gh_download "${app_name}" "$checksum_asset_url" "$checksum_file" false
         sha="$(grep -Eoi '^[0-9a-f]{64}' "$checksum_file" || true)"
     else
-        log_error "Checksum asset ${ASSET_TARBALL_NAME}.sha256 not found in release assets. Failing."
+        log_error "Checksum asset ${asset_tarball_name}.sha256 not found in release assets. Failing."
         exit 1
     fi
 
@@ -165,59 +128,64 @@ verify_sha256() {
 
 extract_app() {
     local tar_path="$1"
-    local backend_dir="${2}"
-    log_info "Extracting ${ASSET_TARBALL_NAME} into ${backend_dir}"
-    if ! tar -xJf "$tar_path" -C "${backend_dir}"; then
+    local asset_tarball_name="${2}"
+
+    log_info "Extracting ${asset_tarball_name} into ${HOME}"
+    if ! tar -xJf "$tar_path" -C "${HOME}"; then
         log_error "Failed to extract application tarball"
         exit 1
     fi
 }
 
-# Download the private migrations repository as a ZIP into TMP_DIR.
 download_migrations_zip() {
+    local app_name="${1}"
+    local base_url="${2}"
+    local migration_zip_out="${3}"
     local zip_url
-    zip_url="https://api.github.com/repos/${OWNER}/${APP}-migrations/zipball/main"
+    zip_url="${base_url}-migrations/zipball/main"
 
     log_info "Downloading migrations zip from: $zip_url"
-    if ! gh_download "$zip_url" "${MIGRATION_ZIP_OUT}"; then
+    if ! gh_download "${app_name}" "$zip_url" "${migration_zip_out}" false; then
         log_error "Failed to download migrations zip"
         exit 12
     fi
-    log_info "Migrations zip saved to: ${MIGRATION_ZIP_OUT}"
+    log_info "Migrations zip saved to: ${migration_zip_out}"
 }
 
 # Run migrations pointing at the local PostgreSQL DB via Unix socket
 run_migrations() {
-    local migrations_dir="${1}"
+    local app_name="${1}"
+    local migrations_dir="${2}"
     log_info "Running migrations '${migrations_dir}'"
     while IFS= read -r -d '' f; do
         # - ON_ERROR_STOP stops on SQL errors
-        if ! psql -h "${PG_SOCKET_DIR}" -p "${PG_PORT}" -v ON_ERROR_STOP=1 -U "${APP}" -d "${APP}" -f "${f}"; then
+        if ! psql -h /var/run/postgresql -p 5432 -v ON_ERROR_STOP=1 -U "${app_name}" -d "${app_name}" -f "${f}"; then
             log_error "Migration failed"
             exit 13
         fi
     done < <(find "$migrations_dir" -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
-
     log_info "Migrations completed successfully"
 }
 
-# Unpack the downloaded migrations zipball under TMP_DIR.
 unpack_migrations_zip() {
     local migrations_dir
-    if [[ ! -f "${MIGRATION_ZIP_OUT}" ]]; then
-        log_error "Migrations zip not found at ${MIGRATION_ZIP_OUT}. Did download_migrations_zip run?"
+    local app_name="${1}"
+    local migrations_unpack_dir="${2}"
+    local migration_zip_out="${3}"
+    if [[ ! -f "${migration_zip_out}" ]]; then
+        log_error "Migrations zip not found at ${migration_zip_out}. Did download_migrations_zip run?"
         exit 1
     fi
-    mkdir -p "${MIGRATIONS_UNPACK_DIR}"
-    log_info "Unpacking migrations zip into ${MIGRATIONS_UNPACK_DIR}"
+    mkdir -p "${migrations_unpack_dir}"
+    log_info "Unpacking migrations zip into ${migrations_unpack_dir}"
     # GitHub zipball root contains a single top-level directory; we extract all then normalize path.
-    if ! unzip -q "${MIGRATION_ZIP_OUT}" -d "${MIGRATIONS_UNPACK_DIR}"; then
+    if ! unzip -q "${migration_zip_out}" -d "${migrations_unpack_dir}"; then
         log_error "Failed to unzip migrations archive"
         exit 1
     fi
     # Capture the extracted top-level directory (there should be exactly one).
 
-    migrations_dir="$(find "${MIGRATIONS_UNPACK_DIR}" -mindepth 1 -maxdepth 1 -type d | head -n1)"
+    migrations_dir="$(find "${migrations_unpack_dir}" -mindepth 1 -maxdepth 1 -type d | head -n1)"
     if [[ -z "${migrations_dir}" ]]; then
         log_error "Could not determine extracted root directory"
         exit 1
@@ -231,17 +199,15 @@ unpack_migrations_zip() {
         log_error "No SQL migrations found (count=0)"
         exit 11
     fi
-    run_migrations "${migrations_dir}"
+    run_migrations "${app_name}" "${migrations_dir}"
 }
 
 assert_postgres_socket() {
-    local socket_path
-    socket_path="${PG_SOCKET_DIR}/.s.PGSQL.${PG_PORT}"
-    if [[ ! -d "${PG_SOCKET_DIR}" ]]; then
-        log_error "PostgreSQL socket directory not found at ${PG_SOCKET_DIR}. Is PostgreSQL running?"
+    local socket_path="/var/run/postgresql/.s.PGSQL.5432"
+    if [[ ! -d /var/run/postgresql/ ]]; then
+        log_error "PostgreSQL socket directory not found at /var/run/postgresql/. Is PostgreSQL running?"
         exit 10
     fi
-
     if [[ ! -S "${socket_path}" ]]; then
         log_error "PostgreSQL socket not found at ${socket_path}. Is PostgreSQL running?"
         exit 10
@@ -278,42 +244,38 @@ install_dependencies() {
 }
 
 main() {
-    local tar_url checksum_hash tar_path
-    # Help flag
-    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-        print_help
-        exit 0
-    fi
-    trap cleanup_tmp_workspace EXIT
+    local tar_url checksum_hash tar_path base_url tmp_dir app_name
+    app_name="$(whoami)"
+    local asset_tarball_name="${app_name}.tar.xz"
+    tmp_dir="$(mktemp -d -t "${app_name}-installer.XXXXXX")"
+    local migration_zip_out="${tmp_dir}/${app_name}-migrations.zip"
+    local migrations_unpack_dir="${tmp_dir}/migrations_unpacked"
+    local release_json_file="${tmp_dir}/release.json"
 
-    # Switch to a safe, world-accessible working directory to avoid
-    # 'find: Failed to restore initial working directory' when the caller's
-    # cwd is in a directory this user cannot traverse (e.g., another user's $HOME).
-    cd / || {
-        log_error "Failed to change working directory to /"
-        exit 3
-    }
+    base_url="https://api.github.com/repos/jpmolinamatute/${app_name}"
+    trap 'cleanup_tmp_workspace "${tmp_dir}"' EXIT
 
     if [[ -d "${HOME}" ]]; then
         if [[ ! -r "${HOME}" || ! -w "${HOME}" ]]; then
             log_error "directory ${HOME} exists but is not readable and/or writable"
             exit 2
         fi
+        cd "${HOME}"
     else
         log_error "HOME is missing or is not a real directory"
         exit 2
     fi
     purge_existing_install
     assert_postgres_socket
-    get_repo_meta_data
-    tar_url="$(json_get_tarball_url)"
-    checksum_hash="$(json_get_sha256)"
-    tar_path="${TMP_DIR}/${ASSET_TARBALL_NAME}"
-    gh_download "$tar_url" "$tar_path"
+    get_repo_meta_data "${app_name}" "${base_url}" "${release_json_file}"
+    tar_url="$(json_get_tarball_url "${asset_tarball_name}" "${release_json_file}")"
+    checksum_hash="$(json_get_sha256 "${app_name}" "${asset_tarball_name}" "${tmp_dir}" "${release_json_file}")"
+    tar_path="${tmp_dir}/${asset_tarball_name}"
+    gh_download "${app_name}" "$tar_url" "$tar_path" false
     verify_sha256 "$tar_path" "$checksum_hash"
-    extract_app "$tar_path"
-    download_migrations_zip
-    unpack_migrations_zip
+    extract_app "$tar_path" "${asset_tarball_name}"
+    download_migrations_zip "${app_name}" "${base_url}" "${migration_zip_out}"
+    unpack_migrations_zip "${app_name}" "${migrations_unpack_dir}" "${migration_zip_out}"
     install_dependencies
 
     exit 0
