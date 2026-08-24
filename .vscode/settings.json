@@ -55,7 +55,7 @@
         "${workspaceFolder}/backend/.venv/bin/ruff"
     ],
     "ty.importStrategy": "fromEnvironment",
-    "ty.diagnosticMode": "openFilesOnly",
+    "ty.diagnosticMode": "workspace",
     "ty.disableLanguageServices": false,
     "ty.interpreter": "${workspaceFolder}/backend/.venv/bin/python",
     "ty.path": [
