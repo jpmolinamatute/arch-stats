@@ -10,4 +10,4 @@
 | `[x]` | Step 6: Verify compilation (`go build ./cmd/arch-stats`) |
 | `[x]` | Step 7: Verify execution (`./arch-stats`) and `go vet ./...` |
 | `[x]` | Step 8: Clean up binary and update task checklist in `docs/go_refactor/tasks/001-go_module_and_project_scaffold.md` |
-| `[ ]` | Step 9: Commit changes |
+| `[x]` | Step 9: Commit changes |
