@@ -6,7 +6,7 @@
             "name": "Debug: FastAPI (Uvicorn)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/backend/.venv/bin/uvicorn",
+            "program": "${workspaceFolder}/backend-old/.venv/bin/uvicorn",
             "args": [
                 "--factory",
                 "--reload",
@@ -30,11 +30,11 @@
                 "server.app:run"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend/src",
+            "cwd": "${workspaceFolder}/backend-old/src",
             "justMyCode": true,
             "env": {
                 "ARCH_STATS_DEV_MODE": "true",
-                "PYTHONPATH": "${workspaceFolder}/backend/src"
+                "PYTHONPATH": "${workspaceFolder}/backend-old/src"
             }
         },
         {

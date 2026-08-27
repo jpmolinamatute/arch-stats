@@ -70,7 +70,7 @@ jobs:
             -v "${{ github.workspace }}/migrations:/flyway/sql" \
             flyway/flyway:latest migrate
       - name: Generate OpenAPI Spec
-        working-directory: ./backend/src
+        working-directory: ./backend-old/src
         env:
           POSTGRES_USER: "admin"
           POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
@@ -84,7 +84,7 @@ jobs:
           ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
           ARCH_STATS_JWT_ALGORITHM: "HS256"
           ARCH_STATS_JWT_TTL_MINUTES: "60"
-          PYTHONPATH: "${{ github.workspace }}/backend/src"
+          PYTHONPATH: "${{ github.workspace }}/backend-old/src"
         run: "${GITHUB_WORKSPACE}/scripts/generate_fe_types.bash"
       - name: Build FE bundle
         working-directory: ./frontend
@@ -92,7 +92,7 @@ jobs:
       - name: Build tar file
         env:
           XZ_OPT: -9
-        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend/tests' --exclude='backend/.venv' --exclude='backend/.mypy_cache' --exclude='*/__pycache__' ./backend
+        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend-old/tests' --exclude='backend-old/.venv' --exclude='backend-old/.mypy_cache' --exclude='*/__pycache__' ./backend-old
       - name: Generate checksum
         run: sha256sum "${GITHUB_WORKSPACE}/arch-stats.tar.xz" > "${GITHUB_WORKSPACE}/arch-stats.tar.xz.sha256"
       - name: Create GitHub release (versioned tag)

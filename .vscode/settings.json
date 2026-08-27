@@ -11,16 +11,16 @@
     "eslint.format.enable": true,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "--config-file=${workspaceFolder}/backend/pyproject.toml"
+        "--config-file=${workspaceFolder}/backend-old/pyproject.toml"
     ],
-    "python.testing.cwd": "${workspaceFolder}/backend",
-    "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
+    "python.testing.cwd": "${workspaceFolder}/backend-old",
+    "python.testing.pytestPath": "${workspaceFolder}/backend-old/.venv/bin/pytest",
     "python.testing.unittestEnabled": false,
     "python.terminal.activateEnvInCurrentTerminal": true,
     "python.useEnvironmentsExtension": false,
     "python.terminal.activateEnvironment": true,
     "python.languageServer": "None",
-    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend-old/.venv/bin/python",
     "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format",
         "editor.formatOnSave": true
@@ -39,34 +39,34 @@
     "sqlfluff.executablePath": "/usr/bin/sqlfluff",
     "sqlfluff.shell": true,
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "./backend/src"
+        "PYTHONPATH": "./backend-old/src"
     },
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
-    "ruff.configuration": "${workspaceFolder}/backend/pyproject.toml",
+    "ruff.configuration": "${workspaceFolder}/backend-old/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
     "ruff.configurationPreference": "filesystemFirst",
     "ruff.interpreter": [
-        "${workspaceFolder}/backend/.venv/bin/python"
+        "${workspaceFolder}/backend-old/.venv/bin/python"
     ],
     "ruff.path": [
-        "${workspaceFolder}/backend/.venv/bin/ruff"
+        "${workspaceFolder}/backend-old/.venv/bin/ruff"
     ],
     "ty.importStrategy": "fromEnvironment",
     "ty.diagnosticMode": "workspace",
     "ty.disableLanguageServices": false,
-    "ty.interpreter": "${workspaceFolder}/backend/.venv/bin/python",
+    "ty.interpreter": "${workspaceFolder}/backend-old/.venv/bin/python",
     "ty.path": [
-        "${workspaceFolder}/backend/.venv/bin/ty"
+        "${workspaceFolder}/backend-old/.venv/bin/ty"
     ],
     "ty.configuration": {
         "environment": {
             "root": [
-                "backend/",
-                "backend/src",
-                "backend/tests"
+                "backend-old/",
+                "backend-old/src",
+                "backend-old/tests"
             ]
         }
     },

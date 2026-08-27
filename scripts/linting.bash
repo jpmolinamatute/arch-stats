@@ -22,7 +22,7 @@ EOF
 }
 
 run_python_tests() {
-    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
+    local pyproject_path="${ROOT_DIR}/backend-old/pyproject.toml"
     start_docker
     log_info "running python tests..."
     uv run pytest --config-file "${pyproject_path}"
@@ -30,8 +30,8 @@ run_python_tests() {
 }
 
 run_python_checks() {
-    local pyproject_path="${ROOT_DIR}/backend/pyproject.toml"
-    cd "${ROOT_DIR}/backend"
+    local pyproject_path="${ROOT_DIR}/backend-old/pyproject.toml"
+    cd "${ROOT_DIR}/backend-old"
 
     log_info "Running Ty..."
     uv run ty check
@@ -105,7 +105,7 @@ main() {
         for file in $staged_files; do
             if [[ $file =~ ^frontend/ ]]; then
                 needs_frontend=true
-            elif [[ $file =~ ^backend/ ]]; then
+            elif [[ $file =~ ^backend-old/ ]]; then
                 needs_backend=true
             elif [[ $file =~ ^scripts/ ]]; then
                 needs_scripts=true

@@ -5,14 +5,14 @@ description: How to run pytest to ensure code quality and functionality
 
 # Python Tests
 
-We use Pytest for unit testing. We also use ./backend/pyproject.toml to configure Pytest.
+We use Pytest for unit testing. We also use ./backend-old/pyproject.toml to configure Pytest.
 There are two ways to run tests check:
 
 1. Manually:
 
     ```bash
     docker compose -f ./docker/docker-compose.yaml up -d  # this will start the PostgreSQL Database
-    cd ./backend
+    cd ./backend-old
     uv run pytest -vv
     cd -
     docker compose -f ./docker/docker-compose.yaml down  # this will stop the PostgreSQL Database

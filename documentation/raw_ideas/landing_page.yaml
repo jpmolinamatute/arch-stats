@@ -1,0 +1,52 @@
+title: Landing Page RAW ideas
+items:
+    - title: Promote the app
+      context: landing_page
+      description: |
+        Take control of your archery journey. Arch-Stats lets you log accurate session data quickly and easily, giving you the insights you need to make better decisions on the range. Turn your raw data into measurable progress over time, and always retain full ownership with the ability to export your stats whenever you need them.
+      skills:
+        - Frontend Developer
+        - UX Designer
+        - Technical Writer
+    - title: Feedback
+      context: landing_page
+      description: |
+        Allow archers to send us massages via a form. The form will have a name field, email field  and a textarea, we convert that into a JSON file (up to 5mb and some validations) and the upload it to the server. The JSON file will have 4 fields in total, 3 text fields: name, email, message and an auto-generated timestamp. We would need an API POST endpoint to receive the JSON file. We also would need an environment variable to set a "safe" path to store the JSON file. The validation must be done on the frontend and backend. make sure the input is "clean" to avoid any XSS attacks. The path would be something like ${ARCH_STATS_DATA_PATH}/feedback/${YEAR}/${MONTH}/${DAY}/${ISO8601_TIMESTAMP}.json. We add a "template" in the textarea to help archer to give us better feedback
+      skills:
+        - UX Designer
+        - Frontend Developer
+        - Backend Developer
+    - title: Features & Benefits
+      context: landing_page
+      description: |
+        Showcase exactly how the app works in bite-sized, visual pieces. Example features: "Frictionless Data Entry", "Detailed Session Analytics", and "Full Data Ownership". Replace text with screenshots or icons where possible.
+      skills:
+        - UX Designer
+        - Frontend Developer
+        - Technical Writer
+    - title: Pricing & Open Source
+      context: landing_page
+      description: |
+        Clearly communicate the business model to remove hesitation. State that the web application is and will always be 100% free and open-source. You can also use this section to tease that a premium mobile app is coming in the future.
+      skills:
+        - Technical Writer
+        - UX Designer
+    - title: Access to the app
+      context: button
+      description: |
+        There is a button for users to login, and after login the user is taken to the app. This is basically done. We just need to work on the button themes and location within the page.
+      skills:
+        - Frontend Developer
+        - UX Designer
+    - tittle: Documentation
+      context: button
+      description: We just need to work on the button themes and location within the page.
+      skills:
+        - Frontend Developer
+        - UX Designer
+    - title: About Us.
+      context: button
+      description: We just need to work on the button themes and location within the page.
+      skills:
+        - Frontend Developer
+        - UX Designer

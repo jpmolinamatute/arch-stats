@@ -12,10 +12,10 @@ frontend/.vitest-localstorage-wal
 ignore/*
 frontend/src/types/*
 !frontend/src/types/.gitkeep
-backend/src/core/logs/*
-!backend/src/core/logs/.gitkeep
-backend/src/frontend/*
-!backend/src/frontend/.gitkeep
+backend-old/src/core/logs/*
+!backend-old/src/core/logs/.gitkeep
+backend-old/src/frontend/*
+!backend-old/src/frontend/.gitkeep
 openapi.json
 google_client_secret.json
 .worktrees/

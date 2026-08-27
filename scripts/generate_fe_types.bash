@@ -8,8 +8,8 @@ ENV_FILE="${ROOT_DIR}/.env"
 openapi_via_script() {
     local openapi_source="$1"
     (
-        cd "${ROOT_DIR}/backend"
-        export PYTHONPATH="${ROOT_DIR}/backend:${ROOT_DIR}/backend/src"
+        cd "${ROOT_DIR}/backend-old"
+        export PYTHONPATH="${ROOT_DIR}/backend-old:${ROOT_DIR}/backend-old/src"
         echo "Info: Generating OpenAPI spec from script"
         uv run ./tools/generate_openapi.py "${openapi_source}"
     )

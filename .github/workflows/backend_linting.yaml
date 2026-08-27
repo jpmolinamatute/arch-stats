@@ -3,8 +3,8 @@ name: Backend Type Check, Linting & Formatting
 on:
   pull_request:
     paths:
-      - backend/**/*.py
-      - backend/pyproject.toml
+      - backend-old/**/*.py
+      - backend-old/pyproject.toml
       - .github/workflows/backend_linting.yaml
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 defaults:
   run:
     shell: bash
-    working-directory: backend
+    working-directory: backend-old
 
 jobs:
   linting:
@@ -95,7 +95,7 @@ jobs:
           FLYWAY_PASSWORD: "NOT_A_REAL_PASSWORD"
         run: |
           # Ensure migrations directory exists (checkout above should have created it)
-          mkdir -p "${{ github.workspace }}/backend/migrations"
+          mkdir -p "${{ github.workspace }}/backend-old/migrations"
           # Run flyway in a container against the service Postgres on localhost
           docker run --rm \
             --network host \
@@ -103,7 +103,7 @@ jobs:
             -e FLYWAY_USER="$FLYWAY_USER" \
             -e FLYWAY_PASSWORD="$FLYWAY_PASSWORD" \
             -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
-            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            -v "${{ github.workspace }}/backend-old/migrations:/flyway/sql" \
             flyway/flyway:latest migrate
       - name: Run Tests
         env:
@@ -118,5 +118,5 @@ jobs:
           ARCH_STATS_JWT_ALGORITHM: "HS256"
           ARCH_STATS_JWT_TTL_MINUTES: "60"
           ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
-          PYTHONPATH: "${{ github.workspace }}/backend/src"
+          PYTHONPATH: "${{ github.workspace }}/backend-old/src"
         run: uv run pytest --maxfail=1 --disable-warnings -q

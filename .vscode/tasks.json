@@ -74,7 +74,7 @@
                     "focus": false,
                     "panel": "dedicated"
                 },
-                "detail": "Start FastAPI server with Uvicorn in backend/server"
+                "detail": "Start FastAPI server with Uvicorn in backend-old/server"
             },
             {
                 "label": "Start Vite Server",
