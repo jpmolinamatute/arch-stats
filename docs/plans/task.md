@@ -1,13 +1,12 @@
-# Task List: Task 001 - Initialize Go Module and Project Scaffold
+# Task List: Task 002 - Create `internal/apperror/` Domain Error Types
 
 | Status | Task Description |
 | :---: | :--- |
-| `[x]` | Step 1: Create and checkout git branch `refactor/001-go-module-and-project-scaffold` |
-| `[x]` | Step 2: Initialize Go module `github.com/jpmolinamatute/arch-stats/backend` with Go 1.27.0 in `backend/go.mod` |
-| `[x]` | Step 3: Create directory skeleton with `.gitkeep` files in `backend/internal/*` |
-| `[x]` | Step 4: Write minimal `backend/cmd/arch-stats/main.go` |
-| `[x]` | Step 5: Update `.gitignore` for Go binaries |
-| `[x]` | Step 6: Verify compilation (`go build ./cmd/arch-stats`) |
-| `[x]` | Step 7: Verify execution (`./arch-stats`) and `go vet ./...` |
-| `[x]` | Step 8: Clean up binary and update task checklist in `docs/go_refactor/tasks/001-go_module_and_project_scaffold.md` |
-| `[x]` | Step 9: Commit changes |
+| `[x]` | Step 1: Create and checkout git branch `refactor/002-apperror-package` |
+| `[x]` | Step 2: Write failing unit tests in `backend/internal/apperror/errors_test.go` |
+| `[x]` | Step 3: Run `go test ./internal/apperror/...` to verify test failure |
+| `[x]` | Step 4: Implement domain error types in `backend/internal/apperror/errors.go` |
+| `[x]` | Step 5: Run tests `go test ./internal/apperror/... -v` to verify they pass |
+| `[x]` | Step 6: Run `go vet ./...` and `go build ./...` across backend |
+| `[x]` | Step 7: Remove `backend/internal/apperror/.gitkeep` |
+| `[x]` | Step 8: Commit changes to `refactor/002-apperror-package` |
