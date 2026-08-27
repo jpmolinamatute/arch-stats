@@ -16,9 +16,9 @@ and prints a startup message, proving the scaffold is valid.
 
 ## Acceptance Criteria
 
-- [ ] `backend/go.mod` exists with module path `github.com/jpmolinamatute/arch-stats/backend`
+- [x] `backend/go.mod` exists with module path `github.com/jpmolinamatute/arch-stats/backend`
   and Go version `1.27.0`.
-- [ ] The following directory structure exists (with `.gitkeep` files to preserve empty dirs):
+- [x] The following directory structure exists (with `.gitkeep` files to preserve empty dirs):
 
   ```txt
   backend/
@@ -38,9 +38,9 @@ and prints a startup message, proving the scaffold is valid.
       └── websocket/
   ```
 
-- [ ] `go build ./cmd/arch-stats` succeeds with zero errors.
-- [ ] Running the binary prints: `arch-stats server starting...` and exits cleanly.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go build ./cmd/arch-stats` succeeds with zero errors.
+- [x] Running the binary prints: `arch-stats server starting...` and exits cleanly.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -60,7 +60,7 @@ and prints a startup message, proving the scaffold is valid.
 
 ## Steps
 
-- [ ] **Step 1: Initialize the Go module**
+- [x] **Step 1: Initialize the Go module**
 
   ```bash
   mkdir -p backend
@@ -70,7 +70,7 @@ and prints a startup message, proving the scaffold is valid.
 
   Edit `go.mod` to ensure the Go version line reads `go 1.27.0`.
 
-- [ ] **Step 2: Create the directory skeleton**
+- [x] **Step 2: Create the directory skeleton**
 
   ```bash
   mkdir -p cmd/arch-stats
@@ -83,7 +83,7 @@ and prints a startup message, proving the scaffold is valid.
   for dir in internal/*/; do touch "$dir/.gitkeep"; done
   ```
 
-- [ ] **Step 3: Write the minimal `main.go`**
+- [x] **Step 3: Write the minimal `main.go`**
 
   Create `backend/cmd/arch-stats/main.go`:
 
@@ -97,7 +97,7 @@ and prints a startup message, proving the scaffold is valid.
   }
   ```
 
-- [ ] **Step 4: Verify it compiles**
+- [x] **Step 4: Verify it compiles**
 
   ```bash
   cd backend
@@ -106,7 +106,7 @@ and prints a startup message, proving the scaffold is valid.
 
   Expected: exits 0, produces `arch-stats` binary in `backend/`.
 
-- [ ] **Step 5: Run the binary**
+- [x] **Step 5: Run the binary**
 
   ```bash
   ./arch-stats
@@ -114,7 +114,7 @@ and prints a startup message, proving the scaffold is valid.
 
   Expected output: `arch-stats server starting...`
 
-- [ ] **Step 6: Run go vet**
+- [x] **Step 6: Run go vet**
 
   ```bash
   go vet ./...
@@ -122,7 +122,7 @@ and prints a startup message, proving the scaffold is valid.
 
   Expected: no issues reported.
 
-- [ ] **Step 7: Clean up and commit**
+- [x] **Step 7: Clean up and commit**
 
   ```bash
   rm -f arch-stats  # remove compiled binary
