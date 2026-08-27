@@ -87,13 +87,6 @@ directory in the next task.
   uv run ruff check src/
   ```
 
-- [x] **Step 6: Commit**
-
-  ```bash
-  git add -A
-  git commit -m "refactor: rename backend/ to backend-old/ for Go port reference"
-  ```
-
 ## Verification
 
 - `ls -la backend-old/` shows the full Python backend.
