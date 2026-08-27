@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: backend/**/*.py
+globs: backend-old/**/*.py
 ---
 
 # New Code

@@ -194,7 +194,7 @@ For a PR to be mergeable, the following workflows must pass if triggered:
 | Workflow | Triggers on Changes In | Must Pass |
 | :--- | :--- | :--- |
 | **Frontend** | `frontend/**` | Formatting, Linting, Tests |
-| **Backend** | `backend/**` | Black, Isort, MyPy, Pylint, Tests |
+| **Backend** | `backend-old/**` | Black, Isort, MyPy, Pylint, Tests |
 | **Scripts** | `scripts/*.bash` | ShellCheck, shfmt |
 
 > [!NOTE]
@@ -225,5 +225,5 @@ Deployment and CI jobs must surface required runtime variables explicitly.
 
 ## References
 
-- **Backend**: [backend/README.md](../backend/README.md)
+- **Backend (Legacy)**: [backend-old/README.md](../backend-old/README.md)
 - **Frontend**: [frontend/README.md](../frontend/README.md)

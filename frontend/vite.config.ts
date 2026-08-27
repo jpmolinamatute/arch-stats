@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
             {
                 name: 'clean-out-dir',
                 buildStart() {
-                    const outDir = fileURLToPath(new URL('../backend/src/frontend', import.meta.url))
+                    const outDir = fileURLToPath(new URL('../backend-old/src/frontend', import.meta.url))
                     const files = readdirSync(outDir)
                     for (const file of files) {
                         if (file !== '.gitkeep') {
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
             },
         },
         build: {
-            outDir: '../backend/src/frontend',
+            outDir: '../backend-old/src/frontend',
             emptyOutDir: false,
         },
         server: {

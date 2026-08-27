@@ -1,6 +1,6 @@
 ---
 name: backend-virtual-environment
-description: Activate the python virtual environment in the backend directory.
+description: Activate the python virtual environment in the backend-old directory.
 ---
 
 # Activate Python Virtual Environment
@@ -9,13 +9,13 @@ Most task can be done via uv, but in certain cases you may want to run python co
 directly, in that case you need to activate the python virtual environment first.
 
 ```bash
-cd ./backend
+cd ./backend-old
 source .venv/bin/activate
 ```
 
 if there is no virtual environment, create one:
 
 ```bash
-cd ./backend
+cd ./backend-old
 uv sync
 ```

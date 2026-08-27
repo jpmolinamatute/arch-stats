@@ -10,7 +10,7 @@ We use ty for type annotation checking. There are two ways to run type annotatio
 1. Manually:
 
    ```bash
-   cd ./backend
+   cd ./backend-old
    uv run ty check
    ```
 

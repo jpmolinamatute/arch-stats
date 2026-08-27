@@ -44,7 +44,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../backend/migrations:/flyway/sql
+      - ../backend-old/migrations:/flyway/sql
     env_file:
       - ./.env
     environment:

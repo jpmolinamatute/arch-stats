@@ -5,13 +5,13 @@ description: How to run Ruff to lint python files
 
 # Python Linting
 
-We use ruff to lint all Python files. We also use ./backend/pyproject.toml to configure Ruff.
+We use ruff to lint all Python files. We also use ./backend-old/pyproject.toml to configure Ruff.
 There are two ways to run linting
 
 1. Manually:
 
    ```bash
-   cd ./backend
+   cd ./backend-old
    uv run ruff check --fix --config ./pyproject.toml
    ```
 
