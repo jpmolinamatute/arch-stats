@@ -16,20 +16,20 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/pool.go` provides a `NewPool(ctx, cfg) (*pgxpool.Pool, error)`
+- [x] `backend/internal/repository/pool.go` provides a `NewPool(ctx, cfg) (*pgxpool.Pool, error)`
   function that:
     - Parses the connection string from `cfg.DatabaseURL()`
     - Configures min/max connections from config
     - Returns a connected pool or an error
-- [ ] `main.go` is updated to:
+- [x] `main.go` is updated to:
     - Load config via `config.Load()`
     - Create the pool via `repository.NewPool()`
     - Defer `pool.Close()`
     - Listen for OS signals (SIGINT, SIGTERM) for graceful shutdown
     - Log pool connection status
-- [ ] Unit test for `NewPool` configuration parsing exists (does not require a real DB).
-- [ ] `go build ./cmd/arch-stats` compiles cleanly.
-- [ ] `go vet ./...` reports no issues.
+- [x] Unit test for `NewPool` configuration parsing exists (does not require a real DB).
+- [x] `go build ./cmd/arch-stats` compiles cleanly.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -43,7 +43,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
 
 ## Steps
 
-- [ ] **Step 1: Add pgx dependency**
+- [x] **Step 1: Add pgx dependency**
 
   ```bash
   cd backend
@@ -51,7 +51,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
   go get github.com/jackc/pgx/v5/pgxpool
   ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
   Create `backend/internal/repository/pool_test.go`:
 
@@ -87,14 +87,14 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
   }
   ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 4: Implement `pool.go`**
+- [x] **Step 4: Implement `pool.go`**
 
   Create `backend/internal/repository/pool.go`:
 
@@ -143,7 +143,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
   }
   ```
 
-- [ ] **Step 5: Update `main.go` with pool initialization and graceful shutdown**
+- [x] **Step 5: Update `main.go` with pool initialization and graceful shutdown**
 
   Update `backend/cmd/arch-stats/main.go` to:
     - Load config
@@ -152,7 +152,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
     - Set up OS signal handling for graceful shutdown
     - Defer pool.Close()
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
   ```bash
   cd backend
@@ -161,7 +161,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
 
   Expected: all tests PASS.
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend
@@ -169,7 +169,7 @@ Wire this into `main.go` with graceful shutdown on SIGINT/SIGTERM.
   go build ./cmd/arch-stats
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   rm -f backend/internal/repository/.gitkeep
