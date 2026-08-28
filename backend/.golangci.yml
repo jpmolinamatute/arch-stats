@@ -1,0 +1,61 @@
+version: "2"
+run:
+  tests: true
+linters:
+  enable:
+    - gocritic
+    - misspell
+    - nolintlint
+    - prealloc
+    - revive
+    - thelper
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    revive:
+      rules:
+        - name: blank-imports
+        - name: dot-imports
+        - name: exported
+        - name: unexported-return
+        - name: var-naming
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - goconst
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofumpt
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

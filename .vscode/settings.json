@@ -81,5 +81,26 @@
     "cSpell.words": [
         "notabool"
     ],
-    "typescript.tsserver.enableTracing": true
+    "typescript.tsserver.enableTracing": true,
+    "go.lintTool": "golangci-lint",
+    "go.lintFlags": [
+        "--config=${workspaceFolder}/backend/.golangci.yml"
+    ],
+    "go.lintOnSave": "workspace",
+    "gopls": {
+        "formatting.gofumpt": true
+    },
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "golang.go",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "go.testFlags": [
+        "-v",
+        "-count=1"
+    ],
+    "go.testTimeout": "30s",
+    "go.testEnvFile": "${workspaceFolder}/backend/.env"
 }

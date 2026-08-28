@@ -16,5 +16,6 @@
         "ms-vscode-remote.remote-ssh",
         "timonwong.shellcheck",
         "vitest.explorer",
+        "golang.go"
     ]
 }

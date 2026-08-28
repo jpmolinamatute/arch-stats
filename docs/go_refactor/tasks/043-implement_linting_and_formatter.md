@@ -18,24 +18,24 @@ feedback using the identical configuration.
 
 ## Acceptance Criteria
 
-- [ ] `backend/.golangci.yml` exists with a curated linter set including at minimum: `govet`,
+- [x] `backend/.golangci.yml` exists with a curated linter set including at minimum: `govet`,
   `staticcheck`, `errcheck`, `gosimple`, `unused`, `gofumpt`, `revive`, and `ineffassign`.
-- [ ] `golangci-lint run ./...` passes from the `backend/` directory with zero findings (or all
+- [x] `golangci-lint run ./...` passes from the `backend/` directory with zero findings (or all
   existing findings are fixed).
-- [ ] `gofumpt -l .` from `backend/` reports no files needing formatting (all Go files are
+- [x] `gofumpt -l .` from `backend/` reports no files needing formatting (all Go files are
   already formatted).
-- [ ] `scripts/linting.bash` has a new `run_go_checks` function that runs `gofumpt -l -w .`,
+- [x] `scripts/linting.bash` has a new `run_go_checks` function that runs `gofumpt -l -w .`,
   `golangci-lint run ./...`, and `go test ./... -count=1` from the `backend/` directory.
-- [ ] `scripts/linting.bash` usage text includes `--go` flag.
-- [ ] `scripts/linting.bash` auto-detects staged `backend/**/*.go` files and triggers Go checks
+- [x] `scripts/linting.bash` usage text includes `--go` flag.
+- [x] `scripts/linting.bash` auto-detects staged `backend/**/*.go` files and triggers Go checks
   (mirroring the existing staged-file detection pattern for `frontend/`, `backend-old/`, and
   `scripts/`).
-- [ ] `.vscode/settings.json` configures Go format-on-save using `gofumpt` via the `gopls`
+- [x] `.vscode/settings.json` configures Go format-on-save using `gofumpt` via the `gopls`
   language server.
-- [ ] `.vscode/extensions.json` recommends the `golang.go` extension.
-- [ ] Running `git commit` with staged `.go` files triggers the Go linter and formatter via the
+- [x] `.vscode/extensions.json` recommends the `golang.go` extension.
+- [x] Running `git commit` with staged `.go` files triggers the Go linter and formatter via the
   existing pre-commit hook symlink (`.git/hooks/pre-commit` → `../../scripts/linting.bash`).
-- [ ] `.github/workflows/backend_linting.yaml` is rewritten to replace all Python jobs with Go
+- [x] `.github/workflows/backend_linting.yaml` is rewritten to replace all Python jobs with Go
   equivalents:
     - Trigger: `pull_request` on paths `backend/**/*.go`, `backend/go.mod`, `backend/go.sum`,
       and the workflow file itself.
@@ -75,7 +75,7 @@ feedback using the identical configuration.
 
 ## Steps
 
-- [ ] **Step 1: Create `backend/.golangci.yml`**
+- [x] **Step 1: Create `backend/.golangci.yml`**
 
   Create the golangci-lint configuration file at `backend/.golangci.yml`:
 
@@ -124,7 +124,7 @@ feedback using the identical configuration.
     max-same-issues: 0
   ```
 
-- [ ] **Step 2: Install `golangci-lint` and `gofumpt`**
+- [x] **Step 2: Install `golangci-lint` and `gofumpt`**
 
   ```bash
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
@@ -138,7 +138,7 @@ feedback using the identical configuration.
   gofumpt --version
   ```
 
-- [ ] **Step 3: Format all existing Go files with `gofumpt`**
+- [x] **Step 3: Format all existing Go files with `gofumpt`**
 
   ```bash
   cd backend
@@ -153,7 +153,7 @@ feedback using the identical configuration.
 
   Expected: no output (all files formatted).
 
-- [ ] **Step 4: Run `golangci-lint` and fix all findings**
+- [x] **Step 4: Run `golangci-lint` and fix all findings**
 
   ```bash
   cd backend
@@ -163,7 +163,7 @@ feedback using the identical configuration.
   Fix any reported issues until the linter passes cleanly. If specific linter rules are
   inapplicable to this codebase, disable them in `.golangci.yml` with a comment explaining why.
 
-- [ ] **Step 5: Add `run_go_checks` function to `scripts/linting.bash`**
+- [x] **Step 5: Add `run_go_checks` function to `scripts/linting.bash`**
 
   Add the new function after the existing `run_bash_checks` function (after line 73):
 
@@ -180,7 +180,7 @@ feedback using the identical configuration.
   }
   ```
 
-- [ ] **Step 6: Update `usage()` in `scripts/linting.bash`**
+- [x] **Step 6: Update `usage()` in `scripts/linting.bash`**
 
   Update the usage text to include the `--go` option:
 
@@ -201,7 +201,7 @@ feedback using the identical configuration.
   }
   ```
 
-- [ ] **Step 7: Update `main()` in `scripts/linting.bash`**
+- [x] **Step 7: Update `main()` in `scripts/linting.bash`**
 
   Add `--go` flag handling and staged-file detection for `backend/` Go files:
 
@@ -232,7 +232,7 @@ feedback using the identical configuration.
   fi
   ```
 
-- [ ] **Step 8: Update `.vscode/settings.json` for Go**
+- [x] **Step 8: Update `.vscode/settings.json` for Go**
 
   Add Go language settings to `.vscode/settings.json`:
 
@@ -252,7 +252,7 @@ feedback using the identical configuration.
   }
   ```
 
-- [ ] **Step 9: Update `.vscode/extensions.json`**
+- [x] **Step 9: Update `.vscode/extensions.json`**
 
   Add `golang.go` to the recommendations list:
 
@@ -260,7 +260,7 @@ feedback using the identical configuration.
   "golang.go"
   ```
 
-- [ ] **Step 10: Rewrite `.github/workflows/backend_linting.yaml`**
+- [x] **Step 10: Rewrite `.github/workflows/backend_linting.yaml`**
 
   Replace the entire contents of `.github/workflows/backend_linting.yaml`:
 
@@ -295,7 +295,7 @@ feedback using the identical configuration.
           with:
             go-version: "1.27.0"
         - name: Run golangci-lint
-          uses: golangci/golangci-lint-action@v6
+          uses: golangci/golangci-lint-action@v9
           with:
             version: latest
             working-directory: backend
@@ -382,7 +382,7 @@ feedback using the identical configuration.
           run: go test ./... -v -count=1 -race
   ```
 
-- [ ] **Step 11: Verify no Python references remain in the workflow**
+- [x] **Step 11: Verify no Python references remain in the workflow**
 
   ```bash
   grep -iE "ruff|pytest|uv-setup|uvicorn|flyway|uv run|pyproject|python" .github/workflows/backend_linting.yaml
@@ -390,13 +390,13 @@ feedback using the identical configuration.
 
   Expected: no results.
 
-- [ ] **Step 12: Validate YAML syntax**
+- [x] **Step 12: Validate YAML syntax**
 
   ```bash
   uv run python -c "import yaml; yaml.safe_load(open('.github/workflows/backend_linting.yaml'))"
   ```
 
-- [ ] **Step 13: End-to-end verification**
+- [x] **Step 13: End-to-end verification**
 
   Stage a Go file and verify the pre-commit hook runs Go checks:
 

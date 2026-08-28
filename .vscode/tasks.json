@@ -92,6 +92,28 @@
                 },
                 "problemMatcher": [],
                 "detail": "Start Vite server with proxy to backend"
+            },
+            {
+                "label": "Run Go Tests",
+                "type": "shell",
+                "command": "go",
+                "args": [
+                    "test",
+                    "./...",
+                    "-v",
+                    "-count=1"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/backend"
+                },
+                "group": {
+                    "kind": "test",
+                    "isDefault": true
+                },
+                "problemMatcher": [
+                    "$go"
+                ],
+                "detail": "Run all Go tests in backend"
             }
         ]
     }
