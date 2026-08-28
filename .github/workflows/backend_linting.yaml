@@ -87,17 +87,18 @@ jobs:
         uses: ./.github/actions/go-setup
       - name: Build binary
         run: go build -o ./arch-stats ./cmd/arch-stats
-      - name: Run migrations
-        env:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
-          POSTGRES_DB: "arch-stats"
-          POSTGRES_HOST: "127.0.0.1"
-          POSTGRES_PORT: "5432"
-          ARCH_STATS_DEV_MODE: "true"
-          ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
-          ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
-        run: ./arch-stats migrate
+      # - name: Run migrations
+      #   env:
+      #     POSTGRES_USER: "admin"
+      #     POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+      #     POSTGRES_DB: "arch-stats"
+      #     POSTGRES_HOST: "127.0.0.1"
+      #     POSTGRES_PORT: "5432"
+      #     ARCH_STATS_DEV_MODE: "true"
+      #     ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
+      #     ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
+      #     POSTGRES_POOL_MIN_SIZE: "1"
+      #   run: ./arch-stats migrate
       - name: Run tests
         env:
           POSTGRES_USER: "admin"
