@@ -17,7 +17,7 @@ on every PR that touches backend files.
 
 ## Acceptance Criteria
 
-- [ ] `.github/workflows/backend_linting.yaml` is rewritten with:
+- [x] `.github/workflows/backend_linting.yaml` is rewritten with:
     - Trigger: `pull_request` on paths `backend/**/*.go`, `backend/go.mod`, `backend/go.sum`
     - Jobs:
       1. **lint**: runs `golangci-lint run` on the backend
@@ -25,10 +25,10 @@ on every PR that touches backend files.
          and goose migrations (for integration tests)
     - Go version: `1.27.0`
     - Uses `golangci-lint-action` for caching
-- [ ] The `uv-setup` custom action is no longer referenced.
-- [ ] PostgreSQL service container runs version 17.
-- [ ] Migrations run via the Go binary (`./arch-stats migrate`) instead of Flyway.
-- [ ] The workflow passes when pushed to a branch (dry run).
+- [x] The `uv-setup` custom action is no longer referenced.
+- [x] PostgreSQL service container runs version 17.
+- [x] Migrations run via the Go binary (`./arch-stats migrate`) instead of Flyway.
+- [x] The workflow passes when pushed to a branch (dry run).
 
 ## Files to Modify
 
@@ -43,7 +43,7 @@ on every PR that touches backend files.
 
 ## Steps
 
-- [ ] **Step 1: Rewrite the workflow**
+- [x] **Step 1: Rewrite the workflow**
 
   Replace the entire contents of `.github/workflows/backend_linting.yaml`:
 
@@ -77,7 +77,7 @@ on every PR that touches backend files.
           with:
             go-version: "1.27.0"
         - name: Run golangci-lint
-          uses: golangci/golangci-lint-action@v6
+          uses: golangci/golangci-lint-action@v9
           with:
             version: latest
             working-directory: backend
@@ -144,13 +144,13 @@ on every PR that touches backend files.
           run: go test ./... -v -count=1 -race
   ```
 
-- [ ] **Step 2: Validate YAML syntax**
+- [x] **Step 2: Validate YAML syntax**
 
   ```bash
   python3 -c "import yaml; yaml.safe_load(open('.github/workflows/backend_linting.yaml'))"
   ```
 
-- [ ] **Step 3: Verify no Python references remain**
+- [x] **Step 3: Verify no Python references remain**
 
   ```bash
   grep -i "ruff\|pytest\|uv-setup\|uvicorn\|flyway" .github/workflows/backend_linting.yaml
@@ -158,7 +158,7 @@ on every PR that touches backend files.
 
   Expected: no results.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add -A
