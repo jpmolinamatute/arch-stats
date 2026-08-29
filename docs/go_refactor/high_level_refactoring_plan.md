@@ -154,6 +154,10 @@ Replace Flyway with `pressly/goose`.
 - Goose runs all migrations fresh (they must be idempotent or the DB is at the right state).
 - Existing SQL migration files remain the source of truth, add `-- +goose Up` / `-- +goose Down`
   markers and rename to goose naming convention.
+- **Schema evolution conventions**: The migrations repository `README.md` must document how to
+  author new migrations (naming, Up/Down rules, data migration guidelines). The test script must
+  dynamically discover migration files. All migration PRs must pass the full up → test → down → up
+  cycle. See task 005 for details.
 
 **Integration:**
 
@@ -196,8 +200,21 @@ Replace Flyway with `pressly/goose`.
 
 - **`pgx` direct API** with `pgxpool` for connection pooling.
 - **`squirrel`** for dynamic query building (SELECT, INSERT, UPDATE, DELETE with WHERE clauses).
+  Raw SQL is acceptable for complex analytical/reporting queries and DDL operations (e.g.,
+  materialized view refresh).
 - **Repository pattern**: Each domain has a repository struct with methods like `FindByID`,
   `FindAll`, `Create`, `Update`, `Delete`.
+- **Transaction support**: A `WithTx(ctx, pool, fn)` helper enables multi-repository atomic
+  operations. The `DBTX` interface is satisfied by both `pgxpool.Pool` and `pgx.Tx`, so
+  repositories work transparently within or outside transactions.
+- **Reporting / analytics queries**: A separate `ReportingRepo` handles cross-domain read-only
+  queries (joins, aggregations, window functions). This follows a lightweight CQRS separation:
+  CRUD repositories serve the operational API, while the reporting repository serves future
+  charts/reports/tables. Reporting queries may also be backed by PostgreSQL views.
+- **Materialized view refresh**: A `MaintenanceRepo` owns `REFRESH MATERIALIZED VIEW CONCURRENTLY`
+  operations. The `open_participants` view must be refreshed after slot/session state changes.
+- **Schema version awareness**: The application logs the current goose migration version on startup
+  and exposes it via a health endpoint.
 
 ## 8. Re-architect the Code from Scratch with TDD
 

@@ -21,6 +21,11 @@ for database access, following the patterns established in the Python `parent_mo
     - A `DBTX` interface abstracting `pgxpool.Pool` for testability (methods: `Query`, `QueryRow`,
     `Exec`)
     - Common helper functions for scanning rows into structs
+    - A `WithTx(ctx, pool, fn)` helper function that begins a transaction, executes `fn(tx)`,
+      and commits or rolls back. This enables multi-repository operations to run atomically
+      (e.g., creating a session + target + slot in one transaction). The `fn` callback receives
+      a `pgx.Tx` which satisfies the `DBTX` interface, so repositories can accept either a pool
+      or a transaction transparently.
 - [ ] `backend/internal/repository/archer.go` implements `ArcherRepo` with methods:
     - `FindByID(ctx, id) (*model.ArcherRead, error)`
     - `FindByEmail(ctx, email) (*model.ArcherRead, error)`
@@ -29,7 +34,20 @@ for database access, following the patterns established in the Python `parent_mo
     - `Create(ctx, data) (uuid.UUID, error)`
     - `Update(ctx, data, filter) error`
     - `Delete(ctx, id) error`
-- [ ] All queries are built with `squirrel` (not raw SQL strings).
+- [ ] `backend/internal/repository/maintenance.go` implements `MaintenanceRepo` with methods:
+    - `RefreshOpenParticipants(ctx) error` — executes
+      `REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants`. This must be called after
+      slot creation/update/deletion and after session close.
+    - `GetSchemaVersion(ctx) (int64, error)` — reads the current goose migration version from
+      `goose_db_version` for startup logging and health checks.
+- [ ] `backend/internal/repository/reporting.go` implements `ReportingRepo` with read-only
+  methods for cross-domain analytics queries. Initial methods (can be stubs that return
+  placeholder data for now, to be fleshed out when reporting features are built):
+    - `GetSessionSummary(ctx, sessionID) (*model.SessionSummaryReport, error)`
+    - `GetArcherPerformance(ctx, archerID, from, to) ([]model.ScoringTrend, error)`
+  These queries may use raw SQL (not squirrel) when the join/aggregation complexity warrants it.
+- [ ] All queries are built with `squirrel` (not raw SQL strings), except for `ReportingRepo`
+  and `MaintenanceRepo` where raw SQL is acceptable for complex analytical queries and DDL.
 - [ ] Unit tests with a mock DBTX interface verify query building logic.
 - [ ] `go test ./internal/repository/...` passes.
 - [ ] `go vet ./...` reports no issues.
@@ -41,6 +59,10 @@ for database access, following the patterns established in the Python `parent_mo
 | Create | `backend/internal/repository/base.go` |
 | Create | `backend/internal/repository/archer.go` |
 | Create | `backend/internal/repository/archer_test.go` |
+| Create | `backend/internal/repository/maintenance.go` |
+| Create | `backend/internal/repository/maintenance_test.go` |
+| Create | `backend/internal/repository/reporting.go` |
+| Create | `backend/internal/repository/reporting_test.go` |
 | Modify | `backend/go.mod` (add squirrel + uuid dependencies) |
 
 ## Reference
@@ -85,20 +107,51 @@ for database access, following the patterns established in the Python `parent_mo
 
       "github.com/jackc/pgx/v5"
       "github.com/jackc/pgx/v5/pgconn"
+      "github.com/jackc/pgx/v5/pgxpool"
   )
 
   // DBTX abstracts the pgxpool.Pool interface for testability.
-  type DBTX interface {
-      Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-      QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-      Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
-  }
+   type DBTX interface {
+       Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+       QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+       Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+   }
+
+   // WithTx wraps a function in a database transaction. The callback receives
+   // a pgx.Tx which also satisfies the DBTX interface, so any repository method
+   // that accepts DBTX can participate in the transaction transparently.
+   func WithTx(ctx context.Context, pool *pgxpool.Pool, fn func(tx pgx.Tx) error) error {
+       tx, err := pool.Begin(ctx)
+       if err != nil {
+           return fmt.Errorf("beginning transaction: %w", err)
+       }
+       defer tx.Rollback(ctx) // no-op if already committed
+
+       if err := fn(tx); err != nil {
+           return err
+       }
+       return tx.Commit(ctx)
+   }
   ```
 
 - [ ] **Step 5: Implement `archer.go`**
 
   Implement `ArcherRepo` struct with all CRUD methods using squirrel.
   Use `squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)` for PostgreSQL.
+
+- [ ] **Step 5b: Implement `maintenance.go`**
+
+  Implement `MaintenanceRepo` with:
+    - `RefreshOpenParticipants(ctx)` using `REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants`.
+    - `GetSchemaVersion(ctx)` using `goose.GetDBVersion()` or a direct query on `goose_db_version`.
+
+- [ ] **Step 5c: Implement `reporting.go`**
+
+  Implement `ReportingRepo` with initial stub methods. These can return placeholder data
+  or `apperror.ErrNotImplemented` for now. The key is establishing the pattern:
+    - Separate from entity CRUD repos.
+    - Accepts `DBTX` interface.
+    - May use raw SQL for complex joins/aggregations instead of squirrel.
 
 - [ ] **Step 6: Run tests to verify they pass**
 
