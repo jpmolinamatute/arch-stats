@@ -26,6 +26,10 @@ domains: archer, auth, session, slot, shot, face, target, and shared enums.
     - `face.go` — Face types (create, read)
     - `target.go` — Target types (create, read)
     - `live_stats.go` — Live stats / WebSocket message types
+    - `report.go` — Report/projection types for analytics queries that join multiple tables
+      (e.g., `SessionSummaryReport`, `ScoringTrend`, `ArcherPerformanceReport`). These do not
+      map 1:1 to any single table; they represent cross-domain read projections for future
+      reporting/charting use cases.
     - `base.go` — Shared base types (pagination, list response wrapper)
 - [ ] All structs have appropriate JSON tags matching the current API contract.
 - [ ] All structs have validation tags where appropriate.
@@ -105,6 +109,17 @@ The Python schemas to port are in:
     - Use `time.Time` for datetime fields
     - Use `uuid.UUID` for ID fields (from `github.com/google/uuid`)
 
+- [ ] **Step 5b: Implement `report.go`**
+
+  Define report/projection structs for future analytics and charting. These represent
+  cross-domain read queries and do not map 1:1 to any single table:
+    - `SessionSummaryReport` — aggregated session data (total shots, average score, duration)
+    - `ScoringTrend` — time-series data points for score progression over sessions
+    - `ArcherPerformanceReport` — per-archer stats across sessions (averages, totals, bests)
+
+  These structs can start minimal and grow as reporting features are added. The key is that
+  they exist as a separate category from the CRUD-oriented `XxxRead` types.
+
 - [ ] **Step 6: Run tests to verify they pass**
 
   ```bash
@@ -134,3 +149,19 @@ The Python schemas to port are in:
 - `cd backend && go vet ./...` — clean.
 - `cd backend && go build ./...` — compiles.
 - JSON tags match the existing API contract (snake_case field names).
+
+## Design Note: Two-Tier Model Approach
+
+Currently, `XxxRead` structs serve as both "database scan target" and "API response." This is
+acceptable for the initial port. However, as the schema evolves independently of the API
+contract (e.g., adding audit columns, internal fields, or changing column types), consider
+splitting into:
+
+| Layer | Location | Purpose |
+| ----- | -------- | ------- |
+| DB row structs | `internal/repository/` (unexported, e.g., `archerRow`) | Exact 1:1 mapping to table columns, used for `pgx` row scanning |
+| API/domain structs | `internal/model/` (exported, e.g., `ArcherRead`) | What the service/handler layers work with |
+
+The repository translates between these layers. To prepare for this future split without doing
+it now, **centralize all `pgx.Row.Scan()` calls within repository methods** — do not scatter
+row scanning logic across the codebase. This is already the plan in tasks 008–013.

@@ -29,13 +29,14 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   2. Create logger
   3. Connect database pool
   4. Run migrations (if configured)
-  5. Create all repositories (passing pool)
-  6. Create all services (passing repositories)
-  7. Create auth service (passing repos + config)
-  8. Create all handlers (passing services)
-  9. Build chi router with route groups
-  10. Apply middleware stack
-  11. Start HTTP server with graceful shutdown
+  5. Log current schema version via `MaintenanceRepo.GetSchemaVersion()`
+  6. Create all repositories (passing pool), including `MaintenanceRepo` and `ReportingRepo`
+  7. Create all services (passing repositories)
+  8. Create auth service (passing repos + config)
+  9. Create all handlers (passing services)
+  10. Build chi router with route groups
+  11. Apply middleware stack
+  12. Start HTTP server with graceful shutdown
 - [ ] Route groups match the Python API structure:
     - `/api/v0/auth/` — auth handler (public: login, register; protected: logout, me)
     - `/api/v0/archer/` — archer handler (protected)
@@ -46,6 +47,8 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
     - `/api/v0/stats/` — live stats handler (protected)
 - [ ] Middleware stack applied in correct order: logging → recovery → CORS → (per-group auth)
   → error mapper.
+- [ ] A `GET /api/v0/health` endpoint returns JSON with at minimum the current database schema
+  version (from `MaintenanceRepo.GetSchemaVersion()`). This is a public, unauthenticated endpoint.
 - [ ] `go build ./cmd/arch-stats` compiles cleanly.
 - [ ] `go vet ./...` reports no issues.
 - [ ] Running the binary with valid DB config starts the HTTP server and logs "listening on :PORT".
@@ -99,6 +102,13 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
       shotRepo := repository.NewShotRepo(pool)
       faceRepo := repository.NewFaceRepo(pool)
       targetRepo := repository.NewTargetRepo(pool)
+      maintenanceRepo := repository.NewMaintenanceRepo(pool)
+      reportingRepo := repository.NewReportingRepo(pool)
+
+      // 5b. Log schema version
+      if ver, err := maintenanceRepo.GetSchemaVersion(ctx); err == nil {
+          slog.Info("database schema version", "version", ver)
+      }
 
       // 6. Services
       archerSvc := service.NewArcherService(archerRepo)
