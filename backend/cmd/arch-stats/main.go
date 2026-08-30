@@ -51,6 +51,35 @@ func run() error {
 		"max_conns", cfg.PostgresPoolMaxSize,
 	)
 
+	// Standalone migration CLI subcommand
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		slog.Info("running database migrations...")
+		if err := repository.RunMigrations(ctx, pool, "migrations"); err != nil {
+			slog.Error("migration failed", "error", err)
+			return err
+		}
+		slog.Info("migrations applied successfully")
+		return nil
+	}
+
+	// Startup auto-migration if configured
+	if cfg.ApplyMigrationsOnStart {
+		slog.Info("applying database migrations on startup...")
+		if err := repository.RunMigrations(ctx, pool, "migrations"); err != nil {
+			slog.Error("startup migration failed", "error", err)
+			return err
+		}
+		slog.Info("startup migrations applied successfully")
+	}
+
+	// Log current database schema version
+	version, err := repository.GetSchemaVersion(ctx, pool)
+	if err != nil {
+		slog.Warn("could not read schema version", "error", err)
+	} else {
+		slog.Info("database schema version", "version", version)
+	}
+
 	slog.Info("arch-stats server running, waiting for shutdown signal...")
 	<-ctx.Done()
 	slog.Info("shutting down gracefully...")

@@ -80,33 +80,42 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    env:
+      APPLY_DB_MIGRATIONS_ON_START: "true"
+      ARCH_STATS_DEV_MODE: "true"
+      ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
+      ARCH_STATS_JWT_ALGORITHM: "HS256"
+      ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
+      ARCH_STATS_JWT_TTL_MINUTES: "60"
+      ARCH_STATS_SERVER_PORT: "8000"
+      ARCH_STATS_WS_CHANNEL: "archy"
+      POSTGRES_COMMAND_TIMEOUT: "15.0"
+      POSTGRES_DB: "arch-stats"
+      POSTGRES_HOST: "127.0.0.1"
+      POSTGRES_MAX_INACTIVE_CONNECTION_LIFETIME: "300.0"
+      POSTGRES_MAX_QUERIES: "50000"
+      POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+      POSTGRES_POOL_MAX_SIZE: "2"
+      POSTGRES_POOL_MIN_SIZE: "1"
+      POSTGRES_PORT: "5432"
+      POSTGRES_STATEMENT_CACHE_SIZE: "200"
+      POSTGRES_USER: "admin"
+      SESSION_TOKEN_BYTES: "32"
+      SESSION_TTL_HOURS: "24"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Checkout migrations repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
+          token: ${{ secrets.MIGRATIONS_PAT }}
+          path: backend/migrations
       - name: Setup Go & Install Dependencies
         uses: ./.github/actions/go-setup
       - name: Build binary
         run: go build -o ./arch-stats ./cmd/arch-stats
-      # - name: Run migrations
-      #   env:
-      #     POSTGRES_USER: "admin"
-      #     POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
-      #     POSTGRES_DB: "arch-stats"
-      #     POSTGRES_HOST: "127.0.0.1"
-      #     POSTGRES_PORT: "5432"
-      #     ARCH_STATS_DEV_MODE: "true"
-      #     ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
-      #     ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
-      #     POSTGRES_POOL_MIN_SIZE: "1"
-      #   run: ./arch-stats migrate
+      - name: Run migrations
+        run: ./arch-stats migrate
       - name: Run tests
-        env:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
-          POSTGRES_DB: "arch-stats"
-          POSTGRES_HOST: "127.0.0.1"
-          POSTGRES_PORT: "5432"
-          ARCH_STATS_DEV_MODE: "true"
-          ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
-          ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
         run: go test ./... -v -count=1 -race
