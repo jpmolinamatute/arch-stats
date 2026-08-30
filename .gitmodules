@@ -1,3 +1,3 @@
-[submodule "backend-old/migrations"]
-	path = backend-old/migrations
+[submodule "backend/migrations"]
+	path = backend/migrations
 	url = git@github.com:jpmolinamatute/arch-stats-migrations.git

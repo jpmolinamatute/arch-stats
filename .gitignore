@@ -20,4 +20,4 @@ openapi.json
 google_client_secret.json
 .worktrees/
 backend/arch-stats
-arch-stats
+/arch-stats
