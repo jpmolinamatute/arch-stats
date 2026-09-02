@@ -1,28 +1,27 @@
 ---
 trigger: glob
-globs: backend-old/**/*.py
+globs: backend/**/*.go
 ---
 
-# New Code
+# New Go Backend Code
 
-## Coding
+## Coding Standards
 
-When suggesting new code follow these rules:
+When creating or modifying Go backend code, follow these rules:
 
-* Validate code against the latest documentation from the Context7 MCP.
-* Functions and methods must be properly type annotated (avoid "Any" types at any cost).
-* Code must pass linting. Use backend-linting skill.
-* Code must pass type annotation checks. Use backend-type-annotation skill.
-* Code must be properly formatted. Use backend-formatting skill.
-* Always write tests for new code, write success and fail path tests and all tests must pass.
-  Use backend-tests skill.
+* Adhere to [Effective Go](https://go.dev/doc/effective_go) standards. Use the `backend-go-coding` skill.
+* Code must pass linting and formatting without errors. Use the `backend-linting` skill (`cd backend && golangci-lint run ./...`).
+* Always write unit tests for new code (covering both success and error paths). All tests must pass. Use the `backend-tests` skill (`cd backend && go test -race ./... -v`).
+* Use `internal/apperror` sentinel errors and wrap errors using `%w` or `apperror.Wrap`.
+* Do not introduce external dependencies without checking `backend-package-management`.
 
-## Running Code or Python Scripts
+## Workflow Chain
 
-We use uv for creating python virtual environments, managing python packages (aka dependencies)
-and running scripts. In order to do this, please use backend-virtual-environment, backend-package-management
-and backend-scripts skills.
+Whenever writing Go code:
+1. Implement code according to `backend-go-coding`.
+2. Run `backend-linting` to format and check.
+3. Run `backend-tests` to ensure tests pass.
 
 ## Feedback
 
-* Explain what was done and why it was done
+* Explain what was done and why it was done in all agent responses.

@@ -58,7 +58,7 @@ run_go_checks() {
     log_info "Running Go formatter (gofumpt)..."
     gofumpt -l -w .
     log_info "Running Go linter (golangci-lint)..."
-    golangci-lint run ./...
+    golangci-lint --fix run ./...
     log_info "Running Go tests..."
     go test ./... -count=1
     cd -

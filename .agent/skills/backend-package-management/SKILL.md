@@ -1,34 +1,45 @@
 ---
 name: backend-package-management
-description: How to use uv to install/uninstall/update python packages
+description: How to manage Go module dependencies using go get, go mod tidy, and go mod download
 ---
 
-# Python Package Management
+# Go Package & Dependency Management
 
-We use uv to install, uninstall and update python packages. We also use
-./backend-old/pyproject.toml to configure uv.
+We use Go modules (`go.mod` and `go.sum` in `backend/`) to manage backend dependencies.
 
-## Install dependencies
+All commands should be executed from the `backend/` directory:
 
 ```bash
-cd ./backend-old
-uv add <package_name>
-# or
-uv add --dev <package_name>
+cd backend
 ```
 
-## Uninstall dependencies
+## Add or Update Dependencies
 
 ```bash
-cd ./backend-old
-uv remove <package_name>
-# or
-uv remove --dev <package_name>
+# Add or upgrade a dependency
+go get github.com/example/pkg@latest
+
+# Add a specific version
+go get github.com/example/pkg@v1.2.3
 ```
 
-## Update dependencies
+## Clean and Prune Dependencies
+
+Always run `go mod tidy` after adding or removing package imports to remove unused modules and
+update checksums in `go.sum`:
 
 ```bash
-cd ./backend-old
-uv sync --upgrade
+go mod tidy
+```
+
+## Download Cached Dependencies
+
+```bash
+go mod download
+```
+
+## Verify Dependencies
+
+```bash
+go mod verify
 ```

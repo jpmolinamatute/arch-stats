@@ -1,25 +1,56 @@
 ---
 name: backend-tests
-description: How to run pytest to ensure code quality and functionality
+description: How to run Go backend unit and integration tests using go test
 ---
 
-# Python Tests
+# Go Backend Tests
 
-We use Pytest for unit testing. We also use ./backend-old/pyproject.toml to configure Pytest.
-There are two ways to run tests check:
+We use Go's standard testing toolchain (`go test`) for unit and integration testing in `backend/`.
 
-1. Manually:
+## Running Tests
 
-    ```bash
-    docker compose -f ./docker/docker-compose.yaml up -d  # this will start the PostgreSQL Database
-    cd ./backend-old
-    uv run pytest -vv
-    cd -
-    docker compose -f ./docker/docker-compose.yaml down  # this will stop the PostgreSQL Database
-    ```
+All commands are executed from the `backend/` directory:
 
-2. Via script (run from project root), this will also run formatting, lint and type annotation check:
+```bash
+cd backend
+```
 
-    ```bash
-    ./scripts/linting.bash --backend
-    ```
+### 1. Run All Tests
+
+```bash
+go test ./... -v
+```
+
+### 2. Run with Race Detection (Recommended before commit)
+
+```bash
+go test -race ./... -v
+```
+
+### 3. Run Tests for a Specific Package
+
+```bash
+go test ./internal/config/... -v
+go test ./internal/apperror/... -v
+go test ./internal/repository/... -v
+```
+
+### 4. Run a Specific Test Function
+
+```bash
+go test ./internal/config/... -run TestNewLogger_DevMode -v
+```
+
+### 5. Bypass Test Cache
+
+```bash
+go test ./... -count=1 -v
+```
+
+### 6. Full Suite via Root Script
+
+From the project root:
+
+```bash
+./scripts/linting.bash --go
+```
