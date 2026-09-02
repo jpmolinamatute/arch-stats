@@ -1,41 +1,54 @@
 ---
 name: backend-run-server
-description: Starts the FastAPI backend server using the dedicated VS Code task and bash script.
+description: How to start the Go backend server in development mode (with air live-reload) or production mode
 ---
 
-# Skill: Run Backend Server
+# Run Backend Server
 
-This skill automates the execution of the FastAPI development server while ensuring all
-environmental non-negotiable are met.
+This skill describes how to run the Go backend server in local development or production mode.
 
 ## Prerequisites
 
-Before starting the server, you must verify the following:
-
-1. **Docker Infrastructure:** Ensure the PostgreSQL 17 containers are running.
-   - Command: `docker compose -f docker/docker-compose.yaml up -d`.
-2. **Environment:** You must be using the Python 3.14 environment managed by `uv`.
-
-## Execution Steps
-
-To launch the server, use the integrated VS Code task runner:
-
-1. **Trigger Task:** Execute the VS Code task labeled `"Start Uvicorn Server"`.
-2. **Manual Fallback:** If the task runner is unavailable, execute the canonical script
-   directly from the project root:
-
+1. **Docker Infrastructure:** PostgreSQL 17 container must be running:
    ```bash
-   ./scripts/start_uvicorn.bash
+   docker compose -f docker/docker-compose.yaml up -d
    ```
+2. **Environment Variables:** Verify `backend/.env` exists or required environment variables are set (see `internal/config/config.go`).
+
+## Execution Options
+
+### Option 1: Live-Reload Dev Mode with `air` (Recommended for development)
+
+From the `backend/` directory:
+
+```bash
+cd backend
+air
+```
+
+Or trigger the VS Code task: `"Start Go Server (air)"`.
+
+`air` monitors `.go` and `.toml` files in `backend/` and automatically recompiles and restarts the server on change.
+
+### Option 2: One-Shot Run (Direct execution)
+
+To run without live reload:
+
+```bash
+cd backend
+go run ./cmd/arch-stats
+```
+
+### Option 3: Compile and Run Binary (Production-like)
+
+```bash
+cd backend
+go build -o arch-stats ./cmd/arch-stats
+./arch-stats
+```
 
 ## Verification
 
-- Monitor the dedicated terminal panel for the Uvicorn startup sequence.
-- Confirm the server is serving FastAPI on the expected local port.
-- Data Flow Check: Ensure the server is successfully connecting to the asyncpg pool.
-
-## Troubleshooting
-
-- If the server fails to start, check if the database port is blocked or if Docker
-  containers are unhealthy.
-- Ensure no other instances of Uvicorn are running (pgrep -af uvicorn).
+- Check stdout for the startup banner: `arch-stats starting (dev_mode=true)`
+- Verify database connection pool initialization succeeds.
+- Confirm server is listening on the configured port (default `:8080`).
