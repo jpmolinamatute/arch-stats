@@ -27,6 +27,10 @@ func run() error {
 		return err
 	}
 
+	logger := config.NewLogger(cfg.DevMode)
+	slog.SetDefault(logger)
+	logger.Info("arch-stats starting", "dev_mode", cfg.DevMode)
+
 	if err := cfg.Validate(); err != nil {
 		slog.Error("invalid configuration", "error", err)
 		return err
