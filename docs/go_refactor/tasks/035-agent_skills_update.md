@@ -25,7 +25,8 @@ toolchain.
     - Mandates calling the `backend-linting` skill after writing or modifying Go code.
     - Mandates calling the `backend-tests` skill after linting.
 - [x] `backend-linting` consolidates formatting, linting, and type checking:
-    - References `golangci-lint run ./...` and `golangci-lint run --fix` (with gofumpt, govet, staticcheck).
+    - References `golangci-lint run ./...` and `golangci-lint run --fix` (with gofumpt, govet,
+      staticcheck).
 - [x] Redundant Python-era skills are removed:
     - `backend-formatting` is deleted (absorbed into `backend-linting`).
     - `backend-type-annotation` is deleted (absorbed into `backend-linting` / staticcheck / compiler).
@@ -81,7 +82,8 @@ toolchain.
 - [x] **Step 2: Update `backend-linting`**
 
   Consolidate linting, formatting, and type-checking into `.agent/skills/backend-linting/SKILL.md`:
-    - `golangci-lint run ./...` for complete linting and static checks (govet, staticcheck, errcheck, revive, etc.)
+    - `golangci-lint run ./...` for complete linting and static checks (govet, staticcheck, errcheck,
+      revive, etc.)
     - `golangci-lint run --fix ./...` or `gofumpt -l -w .` for formatting and autofixes
     - Run from `backend/` directory
 
@@ -126,7 +128,8 @@ toolchain.
     - Formatting & Linting: golangci-lint, gofumpt
     - Repo map: `backend/cmd/`, `backend/internal/` structure
     - Core workflows: `air`, `go test`, `docker compose`
-    - Backend patterns: repository pattern, constructor injection, error wrapping, reference `backend-go-coding`
+    - Backend patterns: repository pattern, constructor injection, error wrapping, reference
+      `backend-go-coding`
 
 - [x] **Step 9: Commit**
 
@@ -141,6 +144,7 @@ toolchain.
   Python references in backend skills.
 - `grep -rn "ruff\|pytest\|uvicorn\|asyncpg" .agent/rules/instructions.md` — no Python
   references in instructions.
-- Skills `backend-formatting`, `backend-type-annotation`, and `backend-virtual-environment` no longer exist.
+- Skills `backend-formatting`, `backend-type-annotation`, and `backend-virtual-environment` no
+  longer exist.
 - New skill `backend-go-coding` exists and links to `backend-linting` and `backend-tests`.
 - Each skill's commands are valid Go commands that work when executed.
