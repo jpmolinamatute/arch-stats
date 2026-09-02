@@ -5,20 +5,13 @@ description: How to run golangci-lint and gofumpt to lint, format, and check Go 
 
 # Go Backend Linting & Formatting
 
-We use `golangci-lint` (which includes `govet`, `staticcheck`, `errcheck`, `gofumpt`, `revive`, and `ineffassign`) to lint, format, and statically analyze all Go code under `backend/`. Configuration is defined in `backend/.golangci.yml`.
+We use `golangci-lint` (which includes `govet`, `staticcheck`, `errcheck`, `gofumpt`, `revive`, and
+`ineffassign`) to lint, format, and statically analyze all Go code under `backend/`. Configuration is
+defined in `backend/.golangci.yml`.
 
 ## How to Run
 
-### 1. Fast Linting (From `backend/`)
-
-Run from the `backend/` directory:
-
-```bash
-cd backend
-golangci-lint run ./...
-```
-
-### 2. Auto-fix Formatting and Lint Issues
+### 1. Auto-fix Formatting and Lint Issues
 
 To automatically fix format errors and auto-fixable lint issues:
 
@@ -29,7 +22,7 @@ golangci-lint run --fix ./...
 gofumpt -l -w .
 ```
 
-### 3. Full Project Go Verification Script (From project root)
+### 2. Full Project Go Verification Script (From project root)
 
 Runs formatter (`gofumpt`), linter (`golangci-lint`), and unit tests (`go test`):
 
@@ -39,4 +32,5 @@ Runs formatter (`gofumpt`), linter (`golangci-lint`), and unit tests (`go test`)
 
 ## IDE Integration
 
-Antigravity IDE / VS Code automatically formats on save using `gofumpt` and displays inline lint diagnostics via `golangci-lint`.
+Antigravity IDE / VS Code automatically formats on save using `gofumpt` and displays inline lint
+diagnostics via `golangci-lint`.

@@ -10,10 +10,13 @@ This skill describes how to run the Go backend server in local development or pr
 ## Prerequisites
 
 1. **Docker Infrastructure:** PostgreSQL 17 container must be running:
+
    ```bash
    docker compose -f docker/docker-compose.yaml up -d
    ```
-2. **Environment Variables:** Verify `backend/.env` exists or required environment variables are set (see `internal/config/config.go`).
+
+2. **Environment Variables:** Verify `backend/.env` exists or required environment variables are set
+   (see `internal/config/config.go`).
 
 ## Execution Options
 
@@ -28,7 +31,8 @@ air
 
 Or trigger the VS Code task: `"Start Go Server (air)"`.
 
-`air` monitors `.go` and `.toml` files in `backend/` and automatically recompiles and restarts the server on change.
+`air` monitors `.go` and `.toml` files in `backend/` and automatically recompiles and restarts the
+server on change.
 
 ### Option 2: One-Shot Run (Direct execution)
 

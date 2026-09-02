@@ -25,7 +25,8 @@ go get github.com/example/pkg@v1.2.3
 
 ## Clean and Prune Dependencies
 
-Always run `go mod tidy` after adding or removing package imports to remove unused modules and update checksums in `go.sum`:
+Always run `go mod tidy` after adding or removing package imports to remove unused modules and
+update checksums in `go.sum`:
 
 ```bash
 go mod tidy
