@@ -1,22 +1,42 @@
 ---
 name: backend-linting
-description: How to run Ruff to lint python files
+description: How to run golangci-lint and gofumpt to lint, format, and check Go backend code
 ---
 
-# Python Linting
+# Go Backend Linting & Formatting
 
-We use ruff to lint all Python files. We also use ./backend-old/pyproject.toml to configure Ruff.
-There are two ways to run linting
+We use `golangci-lint` (which includes `govet`, `staticcheck`, `errcheck`, `gofumpt`, `revive`, and `ineffassign`) to lint, format, and statically analyze all Go code under `backend/`. Configuration is defined in `backend/.golangci.yml`.
 
-1. Manually:
+## How to Run
 
-   ```bash
-   cd ./backend-old
-   uv run ruff check --fix --config ./pyproject.toml
-   ```
+### 1. Fast Linting (From `backend/`)
 
-2. Via script (run from project root), this will also run formatting, type annotation check and tests:
+Run from the `backend/` directory:
 
-   ```bash
-   ./scripts/linting.bash --backend
-   ```
+```bash
+cd backend
+golangci-lint run ./...
+```
+
+### 2. Auto-fix Formatting and Lint Issues
+
+To automatically fix format errors and auto-fixable lint issues:
+
+```bash
+cd backend
+golangci-lint run --fix ./...
+# or format directly with gofumpt:
+gofumpt -l -w .
+```
+
+### 3. Full Project Go Verification Script (From project root)
+
+Runs formatter (`gofumpt`), linter (`golangci-lint`), and unit tests (`go test`):
+
+```bash
+./scripts/linting.bash --go
+```
+
+## IDE Integration
+
+Antigravity IDE / VS Code automatically formats on save using `gofumpt` and displays inline lint diagnostics via `golangci-lint`.
