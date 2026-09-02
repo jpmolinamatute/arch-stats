@@ -58,23 +58,23 @@ arch-stats (Main Repo)
 
 ### Repository 1: `arch-stats-migrations` (Submodule)
 
-- [ ] All existing SQL migration files are renamed from Flyway format to goose format:
+- [x] All existing SQL migration files are renamed from Flyway format to goose format:
     - `V001__2025-09-26_db_init.sql` → `001_2025-09-26_db_init.sql`
     - `V002__2025-09-26_archers_table.sql` → `002_2025-09-26_archers_table.sql`
     - `V003__2025-09-26_authentication_session_table.sql` → `003_2025-09-26_authentication_session_table.sql`
     - `V004__2025-09-26_shooting_sessions_table.sql` → `004_2025-09-26_shooting_sessions_table.sql`
     - `V005__2025-10-28_arrow_table.sql` → `005_2025-10-28_arrow_table.sql`
     - `V006__2025-10-28_shot_table.sql` → `006_2025-10-28_shot_table.sql`
-- [ ] Each migration file contains explicit `-- +goose Up` and `-- +goose Down` markers.
-- [ ] Every `-- +goose Down` block contains valid, reverse-dependency rollback statements (dropping
+- [x] Each migration file contains explicit `-- +goose Up` and `-- +goose Down` markers.
+- [x] Every `-- +goose Down` block contains valid, reverse-dependency rollback statements (dropping
   tables, views, materialized views, triggers, functions, types, and extensions cleanly).
-- [ ] `scripts/run_migration_tests.bash` validates all 21+ schema test cases, function/view
+- [x] `scripts/run_migration_tests.bash` validates all 21+ schema test cases, function/view
   behaviors, triggers, and constraint checks against PostgreSQL.
-- [ ] `scripts/run_migration_tests.bash` includes verification for goose migration application (`up`)
+- [x] `scripts/run_migration_tests.bash` includes verification for goose migration application (`up`)
   and rollback (`down`).
-- [ ] `scripts/run_migration_tests.bash` dynamically discovers all `*.sql` migration files rather
+- [x] `scripts/run_migration_tests.bash` dynamically discovers all `*.sql` migration files rather
   than hardcoding file names or counts, so that newly added migrations are automatically validated.
-- [ ] `README.md` in the migrations repository is updated to document:
+- [x] `README.md` in the migrations repository is updated to document:
     - Goose usage (CLI commands, embedded usage).
     - **Schema evolution conventions**: how to author new migrations, including:
         - Naming convention: `NNN_YYYY-MM-DD_description.sql` with sequential numbering.
@@ -85,29 +85,29 @@ arch-stats (Main Repo)
         - Guidelines for **data migrations** (not just DDL): when and how to transform existing row
           data as columns change meaning or type.
         - Review process: all migration PRs must pass the full `up → test → down → up` cycle in CI.
-- [ ] Changes in `arch-stats-migrations` are committed to git.
+- [x] Changes in `arch-stats-migrations` are committed to git.
 
 ### Repository 2: `arch-stats` (Main Application)
 
-- [ ] Git submodule configuration (`.gitmodules`) is updated so that `backend/migrations` tracks
+- [x] Git submodule configuration (`.gitmodules`) is updated so that `backend/migrations` tracks
   `git@github.com:jpmolinamatute/arch-stats-migrations.git` at the new commit SHA.
-- [ ] `backend/internal/repository/migrate.go` provides `RunMigrations(ctx context.Context, pool
+- [x] `backend/internal/repository/migrate.go` provides `RunMigrations(ctx context.Context, pool
   *pgxpool.Pool, migrationsDir string) error` using `pressly/goose/v3` and `pgx/v5/stdlib`.
-- [ ] `backend/internal/repository/migrate_test.go` provides unit tests that verify:
+- [x] `backend/internal/repository/migrate_test.go` provides unit tests that verify:
     - All migration files in `../../migrations/` exist.
     - Filenames match the goose naming pattern `^\d{3}_\w+\.sql$`.
     - Every file contains `-- +goose Up` and `-- +goose Down` markers.
-- [ ] `backend/cmd/arch-stats/main.go` supports:
+- [x] `backend/cmd/arch-stats/main.go` supports:
     - Standalone migration subcommand: `arch-stats migrate` runs migrations and exits.
     - Startup migration check: if `config.ApplyMigrationsOnStart` is true, runs migrations before
       listening on HTTP.
     - After migrations run (or on startup if skipped), the application logs the current schema
       version via `goose.GetDBVersion(db)` using `slog.Info`.
-- [ ] `backend/go.mod` and `backend/go.sum` include `github.com/pressly/goose/v3`.
-- [ ] `go test ./internal/repository/... -v` passes.
-- [ ] `go vet ./...` reports no issues.
-- [ ] `go build ./cmd/arch-stats` compiles cleanly.
-- [ ] Changes in `arch-stats` are committed to the `refactor/005-migration-tooling-goose` branch.
+- [x] `backend/go.mod` and `backend/go.sum` include `github.com/pressly/goose/v3`.
+- [x] `go test ./internal/repository/... -v` passes.
+- [x] `go vet ./...` reports no issues.
+- [x] `go build ./cmd/arch-stats` compiles cleanly.
+- [x] Changes in `arch-stats` are committed to the `refactor/005-migration-tooling-goose` branch.
 
 ## Files to Create / Modify
 
@@ -559,14 +559,14 @@ DROP TABLE IF EXISTS shot CASCADE;
 
 ### Part 1: Migrations Repository Work (`arch-stats-migrations`)
 
-- [ ] **Step 1: Convert migration files to goose format**
+- [x] **Step 1: Convert migration files to goose format**
 
   In the `backend/migrations/` (submodule) directory:
   1. Rename files from `V00X__...sql` to `00X_...sql`.
   2. Add `-- +goose Up` before existing creation DDL.
   3. Add `-- +goose Down` with appropriate drop/rollback DDL.
 
-- [ ] **Step 2: Update `scripts/run_migration_tests.bash`**
+- [x] **Step 2: Update `scripts/run_migration_tests.bash`**
 
   Ensure the test script:
     - Dynamically discovers all `*.sql` migration files (no hardcoded file names or counts).
@@ -576,14 +576,14 @@ DROP TABLE IF EXISTS shot CASCADE;
     - Re-applies `-- +goose Up` to ensure clean idempotency.
     - New migrations added in the future are automatically picked up without script changes.
 
-- [ ] **Step 3: Run migration tests**
+- [x] **Step 3: Run migration tests**
 
   ```bash
   cd backend/migrations
   ./scripts/run_migration_tests.bash
   ```
 
-- [ ] **Step 4: Commit to `arch-stats-migrations`**
+- [x] **Step 4: Commit to `arch-stats-migrations`**
 
   ```bash
   cd backend/migrations
@@ -596,7 +596,7 @@ DROP TABLE IF EXISTS shot CASCADE;
 
 ### Part 2: Main Application Repository Work (`arch-stats`)
 
-- [ ] **Step 5: Add goose dependency**
+- [x] **Step 5: Add goose dependency**
 
   ```bash
   cd backend
@@ -604,7 +604,7 @@ DROP TABLE IF EXISTS shot CASCADE;
   go get github.com/jackc/pgx/v5/stdlib
   ```
 
-- [ ] **Step 6: Update `.gitmodules` submodule configuration**
+- [x] **Step 6: Update `.gitmodules` submodule configuration**
 
   Update `.gitmodules` so `backend/migrations` points to `git@github.com:jpmolinamatute/arch-stats-migrations.git`:
 
@@ -614,7 +614,7 @@ DROP TABLE IF EXISTS shot CASCADE;
     url = git@github.com:jpmolinamatute/arch-stats-migrations.git
   ```
 
-- [ ] **Step 7: Implement the migration runner (`backend/internal/repository/migrate.go`)**
+- [x] **Step 7: Implement the migration runner (`backend/internal/repository/migrate.go`)**
 
   ```go
   package repository
@@ -661,7 +661,7 @@ DROP TABLE IF EXISTS shot CASCADE;
   }
   ```
 
-- [ ] **Step 8: Write migration unit tests (`backend/internal/repository/migrate_test.go`)**
+- [x] **Step 8: Write migration unit tests (`backend/internal/repository/migrate_test.go`)**
 
   ```go
   package repository_test
@@ -714,7 +714,7 @@ DROP TABLE IF EXISTS shot CASCADE;
   }
   ```
 
-- [ ] **Step 9: Update `main.go` with CLI subcommand, startup migration, and version logging**
+- [x] **Step 9: Update `main.go` with CLI subcommand, startup migration, and version logging**
 
   Update `backend/cmd/arch-stats/main.go`:
     - Handle `migrate` subcommand:
@@ -750,7 +750,7 @@ DROP TABLE IF EXISTS shot CASCADE;
       }
       ```
 
-- [ ] **Step 10: Run tests, vet, and build**
+- [x] **Step 10: Run tests, vet, and build**
 
   ```bash
   cd backend
@@ -759,7 +759,7 @@ DROP TABLE IF EXISTS shot CASCADE;
   go build ./cmd/arch-stats
   ```
 
-- [ ] **Step 11: Commit to `arch-stats` main repository**
+- [x] **Step 11: Commit to `arch-stats` main repository**
 
   ```bash
   git add .gitmodules backend/go.mod backend/go.sum backend/internal/repository/migrate.go \
