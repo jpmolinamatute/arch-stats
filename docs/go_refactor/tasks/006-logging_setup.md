@@ -16,14 +16,14 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/config/logger.go` provides a `NewLogger(devMode bool) *slog.Logger`
+- [x] `backend/internal/config/logger.go` provides a `NewLogger(devMode bool) *slog.Logger`
   function that:
     - In dev mode: uses `slog.NewTextHandler` with `LevelDebug`
     - In prod mode: uses `slog.NewJSONHandler` with `LevelInfo` writing to `os.Stdout`
-- [ ] Unit tests verify both dev and prod logger configurations.
-- [ ] `main.go` is updated to create the logger from config and set it as the default.
-- [ ] `go test ./internal/config/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Unit tests verify both dev and prod logger configurations.
+- [x] `main.go` is updated to create the logger from config and set it as the default.
+- [x] `go test ./internal/config/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -35,7 +35,7 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
 
 ## Steps
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
   Create `backend/internal/config/logger_test.go`:
 
@@ -72,14 +72,14 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
   }
   ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/config/... -v
   ```
 
-- [ ] **Step 3: Implement the logger factory**
+- [x] **Step 3: Implement the logger factory**
 
   Create `backend/internal/config/logger.go`:
 
@@ -111,14 +111,14 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
   }
   ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/config/... -v
   ```
 
-- [ ] **Step 5: Update `main.go`**
+- [x] **Step 5: Update `main.go`**
 
   Add logger initialization after config loading:
 
@@ -128,7 +128,7 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
   logger.Info("arch-stats starting", "dev_mode", cfg.DevMode)
   ```
 
-- [ ] **Step 6: Run go vet and build**
+- [x] **Step 6: Run go vet and build**
 
   ```bash
   cd backend
@@ -136,7 +136,7 @@ function that configures JSON or text output based on dev/prod mode. Wire the lo
   go build ./cmd/arch-stats
   ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
   ```bash
   git add -A
