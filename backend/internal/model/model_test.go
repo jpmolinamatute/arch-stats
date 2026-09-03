@@ -196,3 +196,95 @@ func TestAuthModels_JSON(t *testing.T) {
 	}
 }
 
+func TestSessionModels_JSON(t *testing.T) {
+	ownerID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	sessionID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	now := time.Now().UTC().Truncate(time.Second)
+
+	create := model.SessionCreate{
+		OwnerArcherID:   ownerID,
+		SessionLocation: "Sherwood Forest Range",
+		IsIndoor:        false,
+		IsOpened:        true,
+	}
+
+	b, err := json.Marshal(create)
+	if err != nil {
+		t.Fatalf("failed to marshal SessionCreate: %v", err)
+	}
+
+	var createMap map[string]any
+	if err := json.Unmarshal(b, &createMap); err != nil {
+		t.Fatalf("failed to unmarshal SessionCreate JSON: %v", err)
+	}
+
+	for _, k := range []string{"owner_archer_id", "session_location", "is_indoor", "is_opened"} {
+		if _, ok := createMap[k]; !ok {
+			t.Errorf("expected key %q missing in SessionCreate", k)
+		}
+	}
+
+	read := model.SessionRead{
+		SessionID:       sessionID,
+		OwnerArcherID:   ownerID,
+		SessionLocation: create.SessionLocation,
+		IsIndoor:        create.IsIndoor,
+		IsOpened:        create.IsOpened,
+		CreatedAt:       now,
+		ClosedAt:        nil,
+	}
+
+	rb, err := json.Marshal(read)
+	if err != nil {
+		t.Fatalf("failed to marshal SessionRead: %v", err)
+	}
+
+	var decodedRead model.SessionRead
+	if err := json.Unmarshal(rb, &decodedRead); err != nil {
+		t.Fatalf("failed to unmarshal SessionRead: %v", err)
+	}
+
+	if decodedRead.SessionID != sessionID || decodedRead.ClosedAt != nil {
+		t.Errorf("mismatch in decoded SessionRead: %+v", decodedRead)
+	}
+}
+
+func TestTargetAndSlotModels_JSON(t *testing.T) {
+	sessionID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	targetID := uuid.MustParse("33333333-3333-3333-3333-333333333333")
+	slotID := uuid.MustParse("44444444-4444-4444-4444-444444444444")
+	archerID := uuid.MustParse("55555555-5555-5555-5555-555555555555")
+	now := time.Now().UTC().Truncate(time.Second)
+
+	fullSlot := model.FullSlotInfo{
+		SlotID:          slotID,
+		TargetID:        targetID,
+		ArcherID:        archerID,
+		SessionID:       sessionID,
+		SlotLetter:      model.SlotLetterA,
+		Lane:            1,
+		Distance:        18,
+		Slot:            "1A",
+		FaceType:        model.FaceTypeWA40Full,
+		Bowstyle:        model.BowstyleRecurve,
+		DrawWeight:      38.0,
+		IsShooting:      true,
+		IntervalSeconds: 20,
+		CreatedAt:       now,
+	}
+
+	b, err := json.Marshal(fullSlot)
+	if err != nil {
+		t.Fatalf("failed to marshal FullSlotInfo: %v", err)
+	}
+
+	var decoded model.FullSlotInfo
+	if err := json.Unmarshal(b, &decoded); err != nil {
+		t.Fatalf("failed to unmarshal FullSlotInfo: %v", err)
+	}
+
+	if decoded.Slot != "1A" || decoded.Lane != 1 || decoded.SlotLetter != model.SlotLetterA {
+		t.Errorf("mismatch in decoded FullSlotInfo: %+v", decoded)
+	}
+}
+
