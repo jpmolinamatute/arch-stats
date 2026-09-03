@@ -16,6 +16,9 @@ type AuthCreate struct {
 	IPInet           *string   `json:"ip_inet,omitempty"`
 }
 
+// AuthSessionCreate is an alias for AuthCreate to support session repository naming conventions.
+type AuthSessionCreate = AuthCreate
+
 // AuthFilter represents criteria to query authentication sessions.
 type AuthFilter struct {
 	SessionTokenHash []byte     `json:"session_token_hash,omitempty"`
@@ -44,6 +47,9 @@ type AuthRead struct {
 	UA               *string    `json:"ua,omitempty"`
 	IPInet           *string    `json:"ip_inet,omitempty"`
 }
+
+// AuthSessionRead is an alias for AuthRead to support session repository naming conventions.
+type AuthSessionRead = AuthRead
 
 // GoogleOneTapRequest represents the incoming ID token from Google One Tap.
 type GoogleOneTapRequest struct {
