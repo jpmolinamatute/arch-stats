@@ -92,7 +92,7 @@ func (r *SessionRepo) FindOpen(ctx context.Context, archerID uuid.UUID) (*model.
 
 // FindAll queries all shooting sessions matching the optional criteria in filter.
 //
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
+
 func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error) {
 	q := StmtBuilder.Select(sessionColumns...).
 		From("session").
@@ -137,7 +137,7 @@ func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) (
 
 // Create inserts a new shooting session record and returns the generated UUID identifier.
 //
-//nolint:gocritic // hugeParam: data value parameter matches repository interface specification
+
 func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
 	sql, args, err := StmtBuilder.Insert("session").
 		Columns(
@@ -170,7 +170,7 @@ func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uui
 // Requires at least one filter criterion to prevent unbounded updates.
 // Returns apperror.ErrNotFound if no session matched the filter.
 //
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
+
 func (r *SessionRepo) Update(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error {
 	q := StmtBuilder.Update("session")
 	setCount := 0
