@@ -17,7 +17,7 @@ for database access, following the patterns established in the Python `parent_mo
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/base.go` defines:
+- [x] `backend/internal/repository/base.go` defines:
     - A `DBTX` interface abstracting `pgxpool.Pool` for testability (methods: `Query`, `QueryRow`,
     `Exec`)
     - Common helper functions for scanning rows into structs
@@ -26,7 +26,7 @@ for database access, following the patterns established in the Python `parent_mo
       (e.g., creating a session + target + slot in one transaction). The `fn` callback receives
       a `pgx.Tx` which satisfies the `DBTX` interface, so repositories can accept either a pool
       or a transaction transparently.
-- [ ] `backend/internal/repository/archer.go` implements `ArcherRepo` with methods:
+- [x] `backend/internal/repository/archer.go` implements `ArcherRepo` with methods:
     - `FindByID(ctx, id) (*model.ArcherRead, error)`
     - `FindByEmail(ctx, email) (*model.ArcherRead, error)`
     - `FindByGoogleSubject(ctx, sub) (*model.ArcherRead, error)`
@@ -34,23 +34,23 @@ for database access, following the patterns established in the Python `parent_mo
     - `Create(ctx, data) (uuid.UUID, error)`
     - `Update(ctx, data, filter) error`
     - `Delete(ctx, id) error`
-- [ ] `backend/internal/repository/maintenance.go` implements `MaintenanceRepo` with methods:
+- [x] `backend/internal/repository/maintenance.go` implements `MaintenanceRepo` with methods:
     - `RefreshOpenParticipants(ctx) error` — executes
       `REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants`. This must be called after
       slot creation/update/deletion and after session close.
     - `GetSchemaVersion(ctx) (int64, error)` — reads the current goose migration version from
       `goose_db_version` for startup logging and health checks.
-- [ ] `backend/internal/repository/reporting.go` implements `ReportingRepo` with read-only
+- [x] `backend/internal/repository/reporting.go` implements `ReportingRepo` with read-only
   methods for cross-domain analytics queries. Initial methods (can be stubs that return
   placeholder data for now, to be fleshed out when reporting features are built):
     - `GetSessionSummary(ctx, sessionID) (*model.SessionSummaryReport, error)`
     - `GetArcherPerformance(ctx, archerID, from, to) ([]model.ScoringTrend, error)`
   These queries may use raw SQL (not squirrel) when the join/aggregation complexity warrants it.
-- [ ] All queries are built with `squirrel` (not raw SQL strings), except for `ReportingRepo`
+- [x] All queries are built with `squirrel` (not raw SQL strings), except for `ReportingRepo`
   and `MaintenanceRepo` where raw SQL is acceptable for complex analytical queries and DDL.
-- [ ] Unit tests with a mock DBTX interface verify query building logic.
-- [ ] `go test ./internal/repository/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Unit tests with a mock DBTX interface verify query building logic.
+- [x] `go test ./internal/repository/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -72,7 +72,7 @@ for database access, following the patterns established in the Python `parent_mo
 
 ## Steps
 
-- [ ] **Step 1: Add dependencies**
+- [x] **Step 1: Add dependencies**
 
   ```bash
   cd backend
@@ -80,7 +80,7 @@ for database access, following the patterns established in the Python `parent_mo
   go get github.com/google/uuid
   ```
 
-- [ ] **Step 2: Write failing tests for ArcherRepo query building**
+- [x] **Step 2: Write failing tests for ArcherRepo query building**
 
   Create `backend/internal/repository/archer_test.go`:
     - Test that `FindByID` builds the correct SQL (use squirrel's `ToSql()` to verify)
@@ -88,14 +88,14 @@ for database access, following the patterns established in the Python `parent_mo
     - Test that `Update` builds a valid UPDATE with WHERE clause
     - Test that `FindAll` with filters builds correct WHERE clauses
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 4: Implement `base.go`**
+- [x] **Step 4: Implement `base.go`**
 
   Define the `DBTX` interface and common helpers:
 
@@ -134,18 +134,18 @@ for database access, following the patterns established in the Python `parent_mo
    }
   ```
 
-- [ ] **Step 5: Implement `archer.go`**
+- [x] **Step 5: Implement `archer.go`**
 
   Implement `ArcherRepo` struct with all CRUD methods using squirrel.
   Use `squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)` for PostgreSQL.
 
-- [ ] **Step 5b: Implement `maintenance.go`**
+- [x] **Step 5b: Implement `maintenance.go`**
 
   Implement `MaintenanceRepo` with:
     - `RefreshOpenParticipants(ctx)` using `REFRESH MATERIALIZED VIEW CONCURRENTLY open_participants`.
     - `GetSchemaVersion(ctx)` using `goose.GetDBVersion()` or a direct query on `goose_db_version`.
 
-- [ ] **Step 5c: Implement `reporting.go`**
+- [x] **Step 5c: Implement `reporting.go`**
 
   Implement `ReportingRepo` with initial stub methods. These can return placeholder data
   or `apperror.ErrNotImplemented` for now. The key is establishing the pattern:
@@ -153,14 +153,14 @@ for database access, following the patterns established in the Python `parent_mo
     - Accepts `DBTX` interface.
     - May use raw SQL for complex joins/aggregations instead of squirrel.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend
@@ -168,7 +168,7 @@ for database access, following the patterns established in the Python `parent_mo
   go build ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   git add -A
