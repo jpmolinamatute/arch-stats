@@ -17,7 +17,7 @@ shooting sessions with their status transitions (open/closed).
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/session.go` implements `SessionRepo` with methods:
+- [x] `backend/internal/repository/session.go` implements `SessionRepo` with methods:
     - `FindByID(ctx, id) (*model.SessionRead, error)`
     - `FindAll(ctx, filter) ([]model.SessionRead, error)`
     - `FindOpen(ctx, archerID) (*model.SessionRead, error)` — find the currently open session
@@ -25,10 +25,10 @@ shooting sessions with their status transitions (open/closed).
     - `Update(ctx, data, filter) error`
     - `Close(ctx, id) error` — set status to closed, set ended_at timestamp
     - `Delete(ctx, id) error`
-- [ ] All queries use squirrel.
-- [ ] Unit tests verify query building for all methods.
-- [ ] `go test ./internal/repository/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All queries use squirrel.
+- [x] Unit tests verify query building for all methods.
+- [x] `go test ./internal/repository/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -44,7 +44,7 @@ shooting sessions with their status transitions (open/closed).
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/repository/session_test.go`:
     - Test `FindByID` builds SELECT with correct columns and WHERE clause
@@ -52,25 +52,25 @@ shooting sessions with their status transitions (open/closed).
     - Test `Create` builds INSERT with all required columns
     - Test `Close` builds UPDATE setting status and ended_at
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Implement `session.go`**
+- [x] **Step 3: Implement `session.go`**
 
   Implement `SessionRepo` struct with all methods using squirrel and the `DBTX` interface.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend
@@ -78,7 +78,7 @@ shooting sessions with their status transitions (open/closed).
   go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A

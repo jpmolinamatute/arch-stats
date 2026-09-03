@@ -144,6 +144,43 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 			case bool:
 				*d = &val
 			}
+		case *model.SlotLetter:
+			switch val := v.(type) {
+			case model.SlotLetter:
+				*d = val
+			case string:
+				*d = model.SlotLetter(val)
+			}
+		case *model.FaceType:
+			switch val := v.(type) {
+			case model.FaceType:
+				*d = val
+			case string:
+				*d = model.FaceType(val)
+			}
+		case *int:
+			switch val := v.(type) {
+			case int:
+				*d = val
+			case int64:
+				*d = int(val)
+			}
+		case **int:
+			switch val := v.(type) {
+			case nil:
+				*d = nil
+			case *int:
+				*d = val
+			case int:
+				*d = &val
+			}
+		case *int64:
+			switch val := v.(type) {
+			case int64:
+				*d = val
+			case int:
+				*d = int64(val)
+			}
 		case *any:
 			*d = v
 		}

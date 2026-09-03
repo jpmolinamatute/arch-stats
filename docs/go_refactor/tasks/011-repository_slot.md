@@ -17,17 +17,17 @@ their relationship to sessions and score tracking.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/slot.go` implements `SlotRepo` with methods:
+- [x] `backend/internal/repository/slot.go` implements `SlotRepo` with methods:
     - `FindByID(ctx, id) (*model.SlotRead, error)`
     - `FindBySessionID(ctx, sessionID) ([]model.SlotRead, error)`
     - `Create(ctx, data) (uuid.UUID, error)`
     - `Update(ctx, data, filter) error`
     - `Delete(ctx, id) error`
     - `CountBySessionID(ctx, sessionID) (int, error)`
-- [ ] All queries use squirrel.
-- [ ] Unit tests verify query building for all methods.
-- [ ] `go test ./internal/repository/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All queries use squirrel.
+- [x] Unit tests verify query building for all methods.
+- [x] `go test ./internal/repository/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -43,7 +43,7 @@ their relationship to sessions and score tracking.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/repository/slot_test.go`:
     - Test `FindBySessionID` builds SELECT with WHERE session_id = $1 ORDER BY slot_number
@@ -51,23 +51,23 @@ their relationship to sessions and score tracking.
     - Test `Update` builds UPDATE with appropriate SET and WHERE clauses
     - Test `CountBySessionID` builds SELECT COUNT(*) with WHERE session_id
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Implement `slot.go`**
+- [x] **Step 3: Implement `slot.go`**
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend
@@ -75,7 +75,7 @@ their relationship to sessions and score tracking.
   go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
