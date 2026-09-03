@@ -433,4 +433,3 @@ func TestLiveStatsAndReports_JSON(t *testing.T) {
 		t.Errorf("mismatch in decoded ArcherPerformanceReport: %+v", decodedPerf)
 	}
 }
-
