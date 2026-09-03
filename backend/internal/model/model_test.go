@@ -448,9 +448,11 @@ func TestAuthSessionAliases(t *testing.T) {
 		IPInet:           &ip,
 	}
 
-	var baseCreate model.AuthCreate = create
-	if baseCreate.ArcherID != create.ArcherID {
-		t.Fatalf("expected ArcherID %v, got %v", create.ArcherID, baseCreate.ArcherID)
+	acceptsAuthCreate := func(c model.AuthCreate) uuid.UUID {
+		return c.ArcherID
+	}
+	if acceptsAuthCreate(create) != create.ArcherID {
+		t.Fatalf("expected ArcherID %v, got %v", create.ArcherID, acceptsAuthCreate(create))
 	}
 
 	read := model.AuthSessionRead{
@@ -463,8 +465,10 @@ func TestAuthSessionAliases(t *testing.T) {
 		IPInet:           &ip,
 	}
 
-	var baseRead model.AuthRead = read
-	if baseRead.AuthID != read.AuthID {
-		t.Fatalf("expected AuthID %v, got %v", read.AuthID, baseRead.AuthID)
+	acceptsAuthRead := func(r model.AuthRead) uuid.UUID {
+		return r.AuthID
+	}
+	if acceptsAuthRead(read) != read.AuthID {
+		t.Fatalf("expected AuthID %v, got %v", read.AuthID, acceptsAuthRead(read))
 	}
 }
