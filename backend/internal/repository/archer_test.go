@@ -115,6 +115,24 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 			*d = v.(float64)
 		case *time.Time:
 			*d = v.(time.Time)
+		case **time.Time:
+			switch val := v.(type) {
+			case nil:
+				*d = nil
+			case *time.Time:
+				*d = val
+			case time.Time:
+				*d = &val
+			}
+		case *[]byte:
+			switch val := v.(type) {
+			case []byte:
+				*d = val
+			case *[]byte:
+				if val != nil {
+					*d = *val
+				}
+			}
 		case *any:
 			*d = v
 		}

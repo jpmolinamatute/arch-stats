@@ -433,3 +433,42 @@ func TestLiveStatsAndReports_JSON(t *testing.T) {
 		t.Errorf("mismatch in decoded ArcherPerformanceReport: %+v", decodedPerf)
 	}
 }
+
+func TestAuthSessionAliases(t *testing.T) {
+	now := time.Now().UTC()
+	ua := "Mozilla/5.0"
+	ip := "192.168.1.1"
+
+	create := model.AuthSessionCreate{
+		ArcherID:         uuid.New(),
+		SessionTokenHash: []byte("hash-token-123"),
+		CreatedAt:        now,
+		ExpiresAt:        now.Add(time.Hour),
+		UA:               &ua,
+		IPInet:           &ip,
+	}
+
+	acceptsAuthCreate := func(c model.AuthCreate) uuid.UUID {
+		return c.ArcherID
+	}
+	if acceptsAuthCreate(create) != create.ArcherID {
+		t.Fatalf("expected ArcherID %v, got %v", create.ArcherID, acceptsAuthCreate(create))
+	}
+
+	read := model.AuthSessionRead{
+		AuthID:           uuid.New(),
+		ArcherID:         create.ArcherID,
+		SessionTokenHash: create.SessionTokenHash,
+		CreatedAt:        now,
+		ExpiresAt:        now.Add(time.Hour),
+		UA:               &ua,
+		IPInet:           &ip,
+	}
+
+	acceptsAuthRead := func(r model.AuthRead) uuid.UUID {
+		return r.AuthID
+	}
+	if acceptsAuthRead(read) != read.AuthID {
+		t.Fatalf("expected AuthID %v, got %v", read.AuthID, acceptsAuthRead(read))
+	}
+}
