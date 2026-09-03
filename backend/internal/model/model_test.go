@@ -288,3 +288,149 @@ func TestTargetAndSlotModels_JSON(t *testing.T) {
 	}
 }
 
+func TestShotAndFaceModels_JSON(t *testing.T) {
+	shotID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	slotID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	arrowID := uuid.MustParse("33333333-3333-3333-3333-333333333333")
+	now := time.Now().UTC().Truncate(time.Second)
+
+	x := 12.5
+	y := -8.3
+	score := 10
+	shot := model.ShotRead{
+		ShotID:    shotID,
+		SlotID:    slotID,
+		X:         &x,
+		Y:         &y,
+		IsX:       true,
+		Score:     &score,
+		ArrowID:   &arrowID,
+		CreatedAt: now,
+	}
+
+	b, err := json.Marshal(shot)
+	if err != nil {
+		t.Fatalf("failed to marshal ShotRead: %v", err)
+	}
+
+	var decodedShot model.ShotRead
+	if err := json.Unmarshal(b, &decodedShot); err != nil {
+		t.Fatalf("failed to unmarshal ShotRead: %v", err)
+	}
+
+	if decodedShot.ShotID != shotID || *decodedShot.X != 12.5 || !decodedShot.IsX || *decodedShot.Score != 10 {
+		t.Errorf("mismatch in decoded ShotRead: %+v", decodedShot)
+	}
+
+	face := model.Face{
+		FaceType: model.FaceTypeWA40Full,
+		FaceName: "WA 40cm Full Face",
+		Spots: []model.Spot{
+			{XOffset: 0.0, YOffset: 0.0, Diameter: 400.0},
+		},
+		Rings: []model.Ring{
+			{DataScore: 10, Fill: "#FFD700", R: 20.0, Stroke: "#000000", StrokeWidth: 1.0},
+		},
+		ViewBox:     400.0,
+		RenderCross: true,
+	}
+
+	fb, err := json.Marshal(face)
+	if err != nil {
+		t.Fatalf("failed to marshal Face: %v", err)
+	}
+
+	var decodedFace model.Face
+	if err := json.Unmarshal(fb, &decodedFace); err != nil {
+		t.Fatalf("failed to unmarshal Face: %v", err)
+	}
+
+	if decodedFace.FaceType != model.FaceTypeWA40Full || len(decodedFace.Spots) != 1 || len(decodedFace.Rings) != 1 {
+		t.Errorf("mismatch in decoded Face: %+v", decodedFace)
+	}
+}
+
+func TestLiveStatsAndReports_JSON(t *testing.T) {
+	slotID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	shotID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	sessionID := uuid.MustParse("44444444-4444-4444-4444-444444444444")
+	archerID := uuid.MustParse("55555555-5555-5555-5555-555555555555")
+	now := time.Now().UTC().Truncate(time.Second)
+
+	wsMsg := model.WebSocketMessage{
+		TS:          now,
+		ContentType: model.WSContentTypeShotCreated,
+		Content: model.LiveStat{
+			Scores: []model.ShotScore{
+				{ShotID: shotID, Score: 10, IsX: true, CreatedAt: now},
+			},
+			Stats: model.Stats{
+				SlotID:        slotID,
+				NumberOfShots: 1,
+				TotalScore:    10,
+				MaxScore:      10,
+				Mean:          10.0,
+			},
+		},
+	}
+
+	b, err := json.Marshal(wsMsg)
+	if err != nil {
+		t.Fatalf("failed to marshal WebSocketMessage: %v", err)
+	}
+
+	var decodedMsg model.WebSocketMessage
+	if err := json.Unmarshal(b, &decodedMsg); err != nil {
+		t.Fatalf("failed to unmarshal WebSocketMessage: %v", err)
+	}
+
+	if decodedMsg.ContentType != model.WSContentTypeShotCreated || decodedMsg.Content.Stats.TotalScore != 10 {
+		t.Errorf("mismatch in decoded WebSocketMessage: %+v", decodedMsg)
+	}
+
+	report := model.SessionSummaryReport{
+		SessionID:       sessionID,
+		SessionLocation: "Sherwood Forest",
+		TotalShots:      60,
+		AverageScore:    9.45,
+		StartedAt:       now,
+	}
+
+	rb, err := json.Marshal(report)
+	if err != nil {
+		t.Fatalf("failed to marshal SessionSummaryReport: %v", err)
+	}
+
+	var decodedReport model.SessionSummaryReport
+	if err := json.Unmarshal(rb, &decodedReport); err != nil {
+		t.Fatalf("failed to unmarshal SessionSummaryReport: %v", err)
+	}
+
+	if decodedReport.SessionID != sessionID || decodedReport.TotalShots != 60 {
+		t.Errorf("mismatch in decoded SessionSummaryReport: %+v", decodedReport)
+	}
+
+	archPerf := model.ArcherPerformanceReport{
+		ArcherID:      archerID,
+		TotalSessions: 12,
+		TotalShots:    720,
+		AverageScore:  9.2,
+		BestScore:     300,
+		TotalXCount:   154,
+	}
+
+	ab, err := json.Marshal(archPerf)
+	if err != nil {
+		t.Fatalf("failed to marshal ArcherPerformanceReport: %v", err)
+	}
+
+	var decodedPerf model.ArcherPerformanceReport
+	if err := json.Unmarshal(ab, &decodedPerf); err != nil {
+		t.Fatalf("failed to unmarshal ArcherPerformanceReport: %v", err)
+	}
+
+	if decodedPerf.ArcherID != archerID || decodedPerf.TotalXCount != 154 {
+		t.Errorf("mismatch in decoded ArcherPerformanceReport: %+v", decodedPerf)
+	}
+}
+
