@@ -133,6 +133,17 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 					*d = *val
 				}
 			}
+		case *bool:
+			*d = v.(bool)
+		case **bool:
+			switch val := v.(type) {
+			case nil:
+				*d = nil
+			case *bool:
+				*d = val
+			case bool:
+				*d = &val
+			}
 		case *any:
 			*d = v
 		}
