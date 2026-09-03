@@ -16,7 +16,7 @@ domains: archer, auth, session, slot, shot, face, target, and shared enums.
 
 ## Acceptance Criteria
 
-- [ ] The following files exist in `backend/internal/model/`:
+- [x] The following files exist in `backend/internal/model/`:
     - `enums.go` — shared enums (gender, bowstyle, session status, slot type, etc.)
     - `archer.go` — Archer domain types (create, read, update, filter)
     - `auth.go` — Auth types (session create, authenticated response, registration)
@@ -31,12 +31,12 @@ domains: archer, auth, session, slot, shot, face, target, and shared enums.
       map 1:1 to any single table; they represent cross-domain read projections for future
       reporting/charting use cases.
     - `base.go` — Shared base types (pagination, list response wrapper)
-- [ ] All structs have appropriate JSON tags matching the current API contract.
-- [ ] All structs have validation tags where appropriate.
-- [ ] Enums are implemented as typed string constants.
-- [ ] Unit tests verify JSON marshaling/unmarshaling for representative types.
-- [ ] `go test ./internal/model/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All structs have appropriate JSON tags matching the current API contract.
+- [x] All structs have validation tags where appropriate.
+- [x] Enums are implemented as typed string constants.
+- [x] Unit tests verify JSON marshaling/unmarshaling for representative types.
+- [x] `go test ./internal/model/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -71,7 +71,7 @@ The Python schemas to port are in:
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests for JSON round-tripping**
+- [x] **Step 1: Write failing tests for JSON round-tripping**
 
   Create `backend/internal/model/model_test.go` with tests that:
     - Marshal an `ArcherRead` struct to JSON and verify field names match the API contract
@@ -79,14 +79,14 @@ The Python schemas to port are in:
     - Verify enum values marshal as expected strings
     - Test `SessionRead` and `SlotRead` similarly
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/model/... -v
   ```
 
-- [ ] **Step 3: Implement `enums.go`**
+- [x] **Step 3: Implement `enums.go`**
 
   Define typed string constants for all enums matching `backend-old/src/schema/enums.py`:
     - `Gender` (male, female, other, prefer_not_to_say)
@@ -94,13 +94,13 @@ The Python schemas to port are in:
     - `SessionStatus` (open, closed)
     - Any other enums used in the schemas
 
-- [ ] **Step 4: Implement `base.go`**
+- [x] **Step 4: Implement `base.go`**
 
   Define shared types:
     - `ListResponse[T any]` — generic wrapper with `data []T` and pagination fields
     - `ErrorResponse` — standard error response body
 
-- [ ] **Step 5: Implement domain model files**
+- [x] **Step 5: Implement domain model files**
 
   For each domain (archer, auth, session, slot, shot, face, target, live_stats):
     - Define `XxxCreate`, `XxxRead`, `XxxUpdate`, `XxxFilter` structs
@@ -109,7 +109,7 @@ The Python schemas to port are in:
     - Use `time.Time` for datetime fields
     - Use `uuid.UUID` for ID fields (from `github.com/google/uuid`)
 
-- [ ] **Step 5b: Implement `report.go`**
+- [x] **Step 5b: Implement `report.go`**
 
   Define report/projection structs for future analytics and charting. These represent
   cross-domain read queries and do not map 1:1 to any single table:
@@ -120,14 +120,14 @@ The Python schemas to port are in:
   These structs can start minimal and grow as reporting features are added. The key is that
   they exist as a separate category from the CRUD-oriented `XxxRead` types.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/model/... -v
   ```
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend
@@ -135,7 +135,7 @@ The Python schemas to port are in:
   go build ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   rm -f backend/internal/model/.gitkeep
