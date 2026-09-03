@@ -12,20 +12,20 @@ authentication system to create, validate, and expire sessions.
 
 ## Dependencies
 
-- Task 008 (repository base patterns + DBTX interface)
 - Task 007 (auth model structs)
+- Task 008 (repository base patterns + DBTX interface)
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/auth_session.go` implements `AuthSessionRepo` with methods:
+- [x] `backend/internal/repository/auth_session.go` implements `AuthSessionRepo` with methods:
     - `Create(ctx, data model.AuthSessionCreate) error`
     - `FindByTokenHash(ctx, hash []byte) (*model.AuthSessionRead, error)`
     - `DeleteByArcherID(ctx, archerID uuid.UUID) error` (logout all sessions)
     - `DeleteExpired(ctx) (int64, error)` (cleanup expired sessions)
-- [ ] All queries use squirrel.
-- [ ] Unit tests verify query building and scan logic.
-- [ ] `go test ./internal/repository/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All queries use squirrel.
+- [x] Unit tests verify query building and scan logic.
+- [x] `go test ./internal/repository/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -41,7 +41,7 @@ authentication system to create, validate, and expire sessions.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/repository/auth_session_test.go`:
     - Test `Create` builds correct INSERT with session_token_hash, archer_id, expires_at, ua, ip_inet
@@ -49,25 +49,25 @@ authentication system to create, validate, and expire sessions.
     - Test `DeleteByArcherID` builds correct DELETE with WHERE on archer_id
     - Test `DeleteExpired` builds correct DELETE with WHERE expires_at < NOW()
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Implement `auth_session.go`**
+- [x] **Step 3: Implement `auth_session.go`**
 
   Implement `AuthSessionRepo` struct with all methods using squirrel and the `DBTX` interface.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend
@@ -75,7 +75,7 @@ authentication system to create, validate, and expire sessions.
   go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
