@@ -263,7 +263,7 @@ func TestShotRepo_Create_WithCreatedAt(t *testing.T) {
 			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
-					*(dest[0].(*uuid.UUID)) = expectedID
+					*dest[0].(*uuid.UUID) = expectedID
 					return nil
 				},
 			}
@@ -311,7 +311,7 @@ func TestShotRepo_Create_WithoutCreatedAt(t *testing.T) {
 			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
-					*(dest[0].(*uuid.UUID)) = expectedID
+					*dest[0].(*uuid.UUID) = expectedID
 					return nil
 				},
 			}
@@ -525,5 +525,100 @@ func TestShotRepo_Delete_NotFound(t *testing.T) {
 	err := repo.Delete(context.Background(), shotID)
 	if !errors.Is(err, apperror.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestShotRepo_CountBySlotID_Success(t *testing.T) {
+	slotID := uuid.New()
+	expectedCount := 18
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					*(dest[0].(*int)) = expectedCount
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	count, err := repo.CountBySlotID(context.Background(), slotID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != expectedCount {
+		t.Fatalf("expected count %d, got %d", expectedCount, count)
+	}
+
+	if !strings.HasPrefix(executedSQL, "SELECT COUNT(*) FROM shot WHERE slot_id = $1") {
+		t.Errorf("unexpected COUNT query SQL: %s", executedSQL)
+	}
+	if len(executedArgs) != 1 || (executedArgs[0] != slotID && executedArgs[0] != slotID.String()) {
+		t.Errorf("expected arg %v, got %v", slotID, executedArgs)
+	}
+}
+
+func TestShotRepo_GetLatestShotTime_Success(t *testing.T) {
+	slotID := uuid.New()
+	now := time.Now().Truncate(time.Second).UTC()
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					*(dest[0].(*time.Time)) = now
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	ts, err := repo.GetLatestShotTime(context.Background(), slotID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ts == nil || !ts.Equal(now) {
+		t.Fatalf("expected timestamp %v, got %v", now, ts)
+	}
+
+	if !strings.HasPrefix(executedSQL, "SELECT created_at FROM shot WHERE slot_id = $1 ORDER BY created_at DESC LIMIT 1") {
+		t.Errorf("unexpected SQL for latest shot time: %s", executedSQL)
+	}
+	if len(executedArgs) != 1 || (executedArgs[0] != slotID && executedArgs[0] != slotID.String()) {
+		t.Errorf("expected arg %v, got %v", slotID, executedArgs)
+	}
+}
+
+func TestShotRepo_GetLatestShotTime_NoneReturnsNil(t *testing.T) {
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					return pgx.ErrNoRows
+				},
+			}
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	ts, err := repo.GetLatestShotTime(context.Background(), uuid.New())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ts != nil {
+		t.Fatalf("expected nil timestamp, got %v", ts)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -302,4 +303,43 @@ func (r *ShotRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// CountBySlotID counts the total number of shots recorded for a given slot.
+func (r *ShotRepo) CountBySlotID(ctx context.Context, slotID uuid.UUID) (int, error) {
+	sql, args, err := StmtBuilder.Select("COUNT(*)").
+		From("shot").
+		Where(squirrel.Eq{"slot_id": slotID}).
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building count shots by slot id query: %w", err)
+	}
+
+	var count int
+	if err := r.db.QueryRow(ctx, sql, args...).Scan(&count); err != nil {
+		return 0, fmt.Errorf("counting shots by slot id: %w", err)
+	}
+
+	return count, nil
+}
+
+// GetLatestShotTime retrieves the timestamp of the most recently recorded shot for a given slot.
+// Returns nil, nil if no shots exist for the slot.
+func (r *ShotRepo) GetLatestShotTime(ctx context.Context, slotID uuid.UUID) (*time.Time, error) {
+	sql, args, err := StmtBuilder.Select("created_at").
+		From("shot").
+		Where(squirrel.Eq{"slot_id": slotID}).
+		OrderBy("created_at DESC").
+		Limit(1).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building get latest shot time query: %w", err)
+	}
+
+	row := r.db.QueryRow(ctx, sql, args...)
+	return ScanOne(row, func(r pgx.Row) (time.Time, error) {
+		var t time.Time
+		err := r.Scan(&t)
+		return t, err
+	})
 }
