@@ -717,3 +717,74 @@ func TestSessionRepo_WithTx(t *testing.T) {
 		t.Errorf("expected new instance from WithTx")
 	}
 }
+
+func TestSessionRepo_FindParticipating_Success(t *testing.T) {
+	archerID := uuid.New()
+	expectedSessionID := uuid.New()
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			if !strings.Contains(sql, "FROM slot s") || !strings.Contains(sql, "JOIN session ses") {
+				t.Errorf("unexpected query SQL: %s", sql)
+			}
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					*(dest[0].(*uuid.UUID)) = expectedSessionID
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewSessionRepo(mock)
+	got, err := repo.FindParticipating(context.Background(), archerID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == nil || *got != expectedSessionID {
+		t.Fatalf("expected session ID %v, got %v", expectedSessionID, got)
+	}
+}
+
+func TestSessionRepo_FindParticipating_NotFound(t *testing.T) {
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					return pgx.ErrNoRows
+				},
+			}
+		},
+	}
+
+	repo := repository.NewSessionRepo(mock)
+	got, err := repo.FindParticipating(context.Background(), uuid.New())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("expected nil session ID, got %v", got)
+	}
+}
+
+func TestSessionRepo_FindParticipating_DBError(t *testing.T) {
+	dbErr := errors.New("query participating error")
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					return dbErr
+				},
+			}
+		},
+	}
+
+	repo := repository.NewSessionRepo(mock)
+	_, err := repo.FindParticipating(context.Background(), uuid.New())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !errors.Is(err, dbErr) {
+		t.Fatalf("expected dbErr wrapped, got: %v", err)
+	}
+}

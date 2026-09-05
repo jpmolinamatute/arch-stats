@@ -26,6 +26,7 @@ type mockSessionRepo struct {
 	updateFn   func(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error
 	closeFn    func(ctx context.Context, id uuid.UUID) error
 	deleteFn   func(ctx context.Context, id uuid.UUID) error
+	findParticipatingFn func(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error)
 }
 
 func (m *mockSessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
@@ -75,6 +76,13 @@ func (m *mockSessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
 		return m.deleteFn(ctx, id)
 	}
 	return nil
+}
+
+func (m *mockSessionRepo) FindParticipating(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error) {
+	if m.findParticipatingFn != nil {
+		return m.findParticipatingFn(ctx, archerID)
+	}
+	return nil, nil
 }
 
 func sampleSessionRead(id, archerID uuid.UUID, isOpened bool) model.SessionRead {
@@ -644,6 +652,74 @@ func TestSessionService_Delete(t *testing.T) {
 		err := svc.Delete(ctx, sessionID)
 		if !errors.Is(err, repoErr) {
 			t.Errorf("expected wrapped repoErr, got: %v", err)
+		}
+	})
+}
+
+func TestSessionService_GetParticipating(t *testing.T) {
+	t.Run("returns session id when archer is participating", func(t *testing.T) {
+		archerID := uuid.New()
+		sessionID := uuid.New()
+		repo := &mockSessionRepo{
+			findParticipatingFn: func(ctx context.Context, id uuid.UUID) (*uuid.UUID, error) {
+				if id == archerID {
+					return &sessionID, nil
+				}
+				return nil, nil
+			},
+		}
+		svc := service.NewSessionService(repo)
+
+		got, err := svc.GetParticipating(context.Background(), archerID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got == nil || *got != sessionID {
+			t.Fatalf("expected session ID %v, got %v", sessionID, got)
+		}
+	})
+
+	t.Run("returns nil when archer is not participating", func(t *testing.T) {
+		archerID := uuid.New()
+		repo := &mockSessionRepo{
+			findParticipatingFn: func(ctx context.Context, id uuid.UUID) (*uuid.UUID, error) {
+				return nil, nil
+			},
+		}
+		svc := service.NewSessionService(repo)
+
+		got, err := svc.GetParticipating(context.Background(), archerID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != nil {
+			t.Fatalf("expected nil session ID, got %v", got)
+		}
+	})
+
+	t.Run("validates empty UUID", func(t *testing.T) {
+		repo := &mockSessionRepo{}
+		svc := service.NewSessionService(repo)
+
+		_, err := svc.GetParticipating(context.Background(), uuid.Nil)
+		if !errors.Is(err, apperror.ErrValidation) {
+			t.Fatalf("expected apperror.ErrValidation, got %v", err)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		repoErr := errors.New("query failed")
+		archerID := uuid.New()
+		repo := &mockSessionRepo{
+			findParticipatingFn: func(ctx context.Context, id uuid.UUID) (*uuid.UUID, error) {
+				return nil, repoErr
+			},
+		}
+		svc := service.NewSessionService(repo)
+
+		_, err := svc.GetParticipating(context.Background(), archerID)
+		if !errors.Is(err, repoErr) {
+			t.Fatalf("expected wrapped repoErr, got %v", err)
 		}
 	})
 }

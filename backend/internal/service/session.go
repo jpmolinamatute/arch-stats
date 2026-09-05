@@ -19,6 +19,7 @@ type SessionRepository interface {
 	Update(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error
 	Close(ctx context.Context, id uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	FindParticipating(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error)
 }
 
 // SessionService encapsulates business logic and lifecycle rules for shooting sessions.
@@ -179,4 +180,18 @@ func (s *SessionService) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("deleting session: %w", err)
 	}
 	return nil
+}
+
+// GetParticipating retrieves the active open session ID that the archer is currently shooting in, if any.
+// Returns nil, nil if the archer is not participating in any active session.
+func (s *SessionService) GetParticipating(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error) {
+	if archerID == uuid.Nil {
+		return nil, apperror.Wrap(apperror.ErrValidation, "archer id is required")
+	}
+
+	sessionID, err := s.repo.FindParticipating(ctx, archerID)
+	if err != nil {
+		return nil, fmt.Errorf("checking active session participation: %w", err)
+	}
+	return sessionID, nil
 }
