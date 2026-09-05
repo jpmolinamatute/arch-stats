@@ -68,13 +68,13 @@ backend/
   - `WithArcherID(ctx context.Context, archerID uuid.UUID) context.Context`
   - `GetArcherID(ctx context.Context) (uuid.UUID, error)`
 
-- [ ] **Step 1: Create git branch**
+- [x] **Step 1: Create git branch**
 
 ```bash
 git switch -c refactor/018-middleware-stack
 ```
 
-- [ ] **Step 2: Write failing tests for context helpers**
+- [x] **Step 2: Write failing tests for context helpers**
 
 Create `backend/internal/middleware/context_test.go`:
 
@@ -137,14 +137,14 @@ func TestContext_GetArcherID_NilUUIDReturnsError(t *testing.T) {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v
 ```
 Expected: Compilation failure because `middleware.WithArcherID` and `middleware.GetArcherID` are not defined.
 
-- [ ] **Step 4: Write minimal context implementation**
+- [x] **Step 4: Write minimal context implementation**
 
 Create `backend/internal/middleware/context.go`:
 
@@ -184,14 +184,14 @@ func GetArcherID(ctx context.Context) (uuid.UUID, error) {
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v
 ```
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/internal/middleware/context.go backend/internal/middleware/context_test.go
@@ -214,7 +214,7 @@ git commit -m "feat(middleware): add archer ID context helpers and unit tests"
   - `WriteError(w http.ResponseWriter, err error)`
   - `ErrorMapper(next http.Handler) http.Handler`
 
-- [ ] **Step 1: Write failing tests for error mapper**
+- [x] **Step 1: Write failing tests for error mapper**
 
 Create `backend/internal/middleware/error_mapper_test.go`:
 
@@ -399,14 +399,14 @@ func stringContains(s, substr string) bool {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v
 ```
 Expected: Compilation failure because `middleware.MapError`, `middleware.WriteError`, `middleware.ErrorResponse`, and `middleware.ErrorMapper` are not defined.
 
-- [ ] **Step 3: Write minimal implementation for error mapper**
+- [x] **Step 3: Write minimal implementation for error mapper**
 
 Create `backend/internal/middleware/error_mapper.go`:
 
@@ -486,14 +486,14 @@ func ErrorMapper(next http.Handler) http.Handler {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/middleware/error_mapper.go backend/internal/middleware/error_mapper_test.go
@@ -512,7 +512,7 @@ git commit -m "feat(middleware): add error-to-HTTP mapper and JSON error writer"
 - Consumes: `auth.Service`, `DecodeJWT`, `DecodeSessionID`, `HashSessionToken`, `ValidateSession`
 - Produces: `(s *Service) Authenticate(ctx context.Context, tokenStr string) (uuid.UUID, error)`
 
-- [ ] **Step 1: Write failing tests for Service.Authenticate**
+- [x] **Step 1: Write failing tests for Service.Authenticate**
 
 Append to `backend/internal/auth/service_test.go`:
 
@@ -628,14 +628,14 @@ func TestService_Authenticate_RevokedSession(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/auth/... -v -run TestService_Authenticate
 ```
 Expected: Compilation failure because `svc.Authenticate` is not defined.
 
-- [ ] **Step 3: Implement Service.Authenticate**
+- [x] **Step 3: Implement Service.Authenticate**
 
 Add method to `backend/internal/auth/service.go`:
 
@@ -672,21 +672,21 @@ func (s *Service) Authenticate(ctx context.Context, tokenStr string) (uuid.UUID,
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/auth/... -v -run TestService_Authenticate
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Run full auth test suite**
+- [x] **Step 5: Run full auth test suite**
 
 ```bash
 cd backend && go test ./internal/auth/... -v
 ```
 Expected: All auth tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/internal/auth/service.go backend/internal/auth/service_test.go
@@ -710,7 +710,7 @@ git commit -m "feat(auth): add Authenticate token validation method to auth.Serv
   - `const AuthCookieName = "arch_stats_auth"`
   - `Auth(auth TokenAuthenticator) func(http.Handler) http.Handler`
 
-- [ ] **Step 1: Write failing tests for auth middleware**
+- [x] **Step 1: Write failing tests for auth middleware**
 
 Create `backend/internal/middleware/auth_test.go`:
 
@@ -889,14 +889,14 @@ func TestAuth_HeaderTakesPrecedenceOverCookie(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestAuth
 ```
 Expected: Compilation failure because `middleware.Auth` and `middleware.AuthCookieName` are not defined.
 
-- [ ] **Step 3: Implement Auth middleware**
+- [x] **Step 3: Implement Auth middleware**
 
 Create `backend/internal/middleware/auth.go`:
 
@@ -964,14 +964,14 @@ func extractToken(r *http.Request) string {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestAuth
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/middleware/auth.go backend/internal/middleware/auth_test.go
@@ -992,7 +992,7 @@ git commit -m "feat(middleware): add Auth authentication middleware and unit tes
   - `RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler`
   - `Logging(next http.Handler) http.Handler`
 
-- [ ] **Step 1: Write failing tests for RequestLogger**
+- [x] **Step 1: Write failing tests for RequestLogger**
 
 Create `backend/internal/middleware/logging_test.go`:
 
@@ -1079,14 +1079,14 @@ func TestRequestLogger_DefaultStatus200(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestRequestLogger
 ```
 Expected: Compilation failure because `middleware.RequestLogger` is not defined.
 
-- [ ] **Step 3: Implement logging middleware**
+- [x] **Step 3: Implement logging middleware**
 
 Create `backend/internal/middleware/logging.go`:
 
@@ -1169,14 +1169,14 @@ func Logging(next http.Handler) http.Handler {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestRequestLogger
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/middleware/logging.go backend/internal/middleware/logging_test.go
@@ -1198,7 +1198,7 @@ git commit -m "feat(middleware): add structured request logging middleware"
   - `GetCORSOptions(devMode bool) CORSOptions`
   - `CORS(devMode bool) func(http.Handler) http.Handler`
 
-- [ ] **Step 1: Write failing tests for CORS**
+- [x] **Step 1: Write failing tests for CORS**
 
 Create `backend/internal/middleware/cors_test.go`:
 
@@ -1296,14 +1296,14 @@ func TestCORS_ProdModeNoDevOrigins(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestCORS
 ```
 Expected: Compilation failure because `middleware.CORS` is not defined.
 
-- [ ] **Step 3: Implement CORS middleware**
+- [x] **Step 3: Implement CORS middleware**
 
 Create `backend/internal/middleware/cors.go`:
 
@@ -1429,14 +1429,14 @@ func CORS(devMode bool) func(http.Handler) http.Handler {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestCORS
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/middleware/cors.go backend/internal/middleware/cors_test.go
@@ -1455,7 +1455,7 @@ git commit -m "feat(middleware): add CORS configuration middleware for dev and p
 - Consumes: `WriteError(w, err)`, `log/slog`, `runtime/debug`
 - Produces: `Recovery(next http.Handler) http.Handler`
 
-- [ ] **Step 1: Write failing tests for Recovery**
+- [x] **Step 1: Write failing tests for Recovery**
 
 Create `backend/internal/middleware/recovery_test.go`:
 
@@ -1518,14 +1518,14 @@ func TestRecovery_NormalHandlerUnaffected(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestRecovery
 ```
 Expected: Compilation failure because `middleware.Recovery` is not defined.
 
-- [ ] **Step 3: Implement Recovery middleware**
+- [x] **Step 3: Implement Recovery middleware**
 
 Create `backend/internal/middleware/recovery.go`:
 
@@ -1562,14 +1562,14 @@ func Recovery(next http.Handler) http.Handler {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/middleware/... -v -run TestRecovery
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/internal/middleware/recovery.go backend/internal/middleware/recovery_test.go
@@ -1587,48 +1587,48 @@ git commit -m "feat(middleware): add panic recovery middleware with slog stack t
 - Consumes: all middleware packages
 - Produces: clean code repository passing tests, vet, and lint
 
-- [ ] **Step 1: Delete .gitkeep**
+- [x] **Step 1: Delete .gitkeep**
 
 ```bash
 rm -f backend/internal/middleware/.gitkeep
 ```
 
-- [ ] **Step 2: Run middleware unit tests**
+- [x] **Step 2: Run middleware unit tests**
 
 ```bash
 cd backend && go test -race ./internal/middleware/... -v
 ```
 Expected: All tests PASS.
 
-- [ ] **Step 3: Run all backend unit tests**
+- [x] **Step 3: Run all backend unit tests**
 
 ```bash
 cd backend && go test -race ./... -v
 ```
 Expected: All tests in all packages PASS.
 
-- [ ] **Step 4: Run go vet**
+- [x] **Step 4: Run go vet**
 
 ```bash
 cd backend && go vet ./...
 ```
 Expected: 0 issues.
 
-- [ ] **Step 5: Run golangci-lint**
+- [x] **Step 5: Run golangci-lint**
 
 ```bash
 cd backend && golangci-lint run ./...
 ```
 Expected: 0 issues.
 
-- [ ] **Step 6: Run go build**
+- [x] **Step 6: Run go build**
 
 ```bash
 cd backend && go build ./...
 ```
 Expected: Compiles cleanly.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
