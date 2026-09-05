@@ -16,20 +16,20 @@ definitions); the target service manages target assignments per slot.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/service/face.go` implements `FaceService` with methods:
+- [x] `backend/internal/service/face.go` implements `FaceService` with methods:
     - `GetByID(ctx, id) (*model.FaceRead, error)`
     - `ListAll(ctx) ([]model.FaceRead, error)`
     - `ListByType(ctx, faceType) ([]model.FaceRead, error)`
-- [ ] `backend/internal/service/target.go` implements `TargetService` with methods:
+- [x] `backend/internal/service/target.go` implements `TargetService` with methods:
     - `GetByID(ctx, id) (*model.TargetRead, error)`
     - `ListBySlotID(ctx, slotID) ([]model.TargetRead, error)`
     - `Create(ctx, data) (uuid.UUID, error)`
     - `Update(ctx, id, data) error`
     - `Delete(ctx, id) error`
-- [ ] Services accept repository interfaces via constructor injection.
-- [ ] Unit tests with mock repositories verify business logic.
-- [ ] `go test ./internal/service/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Services accept repository interfaces via constructor injection.
+- [x] Unit tests with mock repositories verify business logic.
+- [x] `go test ./internal/service/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -42,35 +42,35 @@ definitions); the target service manages target assignments per slot.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests for FaceService**
+- [x] **Step 1: Write failing tests for FaceService**
 
   Create `backend/internal/service/face_test.go`:
     - Test `GetByID` returns `apperror.ErrNotFound` when face doesn't exist
     - Test `ListAll` returns all faces from repository
 
-- [ ] **Step 2: Write failing tests for TargetService**
+- [x] **Step 2: Write failing tests for TargetService**
 
   Create `backend/internal/service/target_test.go`:
     - Test `Create` validates face_id exists before inserting
     - Test `GetByID` returns `apperror.ErrNotFound` when target doesn't exist
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/service/... -v
   ```
 
-- [ ] **Step 4: Implement `face.go` and `target.go`**
+- [x] **Step 4: Implement `face.go` and `target.go`**
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/service/... -v
   ```
 
-- [ ] **Step 6: Run go vet and build**
+- [x] **Step 6: Run go vet and build**
 
   ```bash
   cd backend
@@ -78,7 +78,7 @@ definitions); the target service manages target assignments per slot.
   go build ./...
   ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
   ```bash
   git add -A
