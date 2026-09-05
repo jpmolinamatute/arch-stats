@@ -31,3 +31,6 @@ type Face struct {
 	ViewBox     float64  `json:"viewBox"`
 	RenderCross bool     `json:"render_cross"`
 }
+
+// FaceRead is an alias for Face to support repository and service layer naming conventions.
+type FaceRead = Face
