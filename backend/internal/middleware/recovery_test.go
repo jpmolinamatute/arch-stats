@@ -14,7 +14,7 @@ func TestRecovery_CatchesPanicAndReturns500(t *testing.T) {
 		panic("something went critically wrong")
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	req := httptest.NewRequest(http.MethodGet, "/panic", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	// Should not crash the test process
@@ -42,7 +42,7 @@ func TestRecovery_NormalHandlerUnaffected(t *testing.T) {
 		_, _ = w.Write([]byte("healthy"))
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/healthy", nil)
+	req := httptest.NewRequest(http.MethodGet, "/healthy", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)

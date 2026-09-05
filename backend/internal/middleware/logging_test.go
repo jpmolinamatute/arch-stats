@@ -22,7 +22,7 @@ func TestRequestLogger_LogsFields(t *testing.T) {
 		_, _ = w.Write([]byte("created"))
 	}))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v0/shot", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v0/shot", http.NoBody)
 	req.RemoteAddr = "192.168.1.100:12345"
 	req.Header.Set("User-Agent", "ArchStatsClient/1.0")
 	rec := httptest.NewRecorder()
@@ -65,7 +65,7 @@ func TestRequestLogger_DefaultStatus200(t *testing.T) {
 		_, _ = w.Write([]byte("ok without explicit WriteHeader"))
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)

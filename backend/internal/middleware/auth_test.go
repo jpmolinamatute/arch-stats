@@ -30,7 +30,7 @@ func TestAuth_MissingTokenReturns401(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)
@@ -58,7 +58,7 @@ func TestAuth_InvalidTokenReturns401(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", http.NoBody)
 	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: "bad-token"})
 	rec := httptest.NewRecorder()
 
@@ -90,7 +90,7 @@ func TestAuth_ValidCookieAttachesArcherID(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", http.NoBody)
 	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: "valid-cookie-token"})
 	rec := httptest.NewRecorder()
 
@@ -125,7 +125,7 @@ func TestAuth_ValidAuthorizationHeaderAttachesArcherID(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", http.NoBody)
 	req.Header.Set("Authorization", "Bearer valid-header-token")
 	rec := httptest.NewRecorder()
 
@@ -156,7 +156,7 @@ func TestAuth_HeaderTakesPrecedenceOverCookie(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/archer/me", http.NoBody)
 	req.Header.Set("Authorization", "Bearer header-token")
 	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: "cookie-token"})
 	rec := httptest.NewRecorder()

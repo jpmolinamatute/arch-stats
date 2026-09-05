@@ -156,7 +156,7 @@ func TestErrorMapper_MiddlewarePassesThrough(t *testing.T) {
 
 	wrapped := middleware.ErrorMapper(handler)
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
 	rec := httptest.NewRecorder()
 	wrapped.ServeHTTP(rec, req)
 

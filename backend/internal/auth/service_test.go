@@ -653,4 +653,3 @@ func TestService_Authenticate(t *testing.T) {
 		}
 	})
 }
-

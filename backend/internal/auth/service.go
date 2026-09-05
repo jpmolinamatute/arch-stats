@@ -281,7 +281,6 @@ func (s *Service) Authenticate(ctx context.Context, tokenStr string) (uuid.UUID,
 	return archerID, nil
 }
 
-
 func (s *Service) createSessionAndToken(
 	ctx context.Context,
 	archer *model.ArcherRead,

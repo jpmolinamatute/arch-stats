@@ -14,7 +14,7 @@ func TestCORS_DevModePreflight(t *testing.T) {
 		t.Error("preflight OPTIONS request should not reach downstream handler")
 	}))
 
-	req := httptest.NewRequest(http.MethodOptions, "/api/v0/session", nil)
+	req := httptest.NewRequest(http.MethodOptions, "/api/v0/session", http.NoBody)
 	req.Header.Set("Origin", "http://localhost:5173")
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "Content-Type, Authorization")
@@ -47,7 +47,7 @@ func TestCORS_DevModeActualRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", http.NoBody)
 	req.Header.Set("Origin", "http://localhost:5173")
 	rec := httptest.NewRecorder()
 
@@ -75,7 +75,7 @@ func TestCORS_ProdModeNoDevOrigins(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/faces", http.NoBody)
 	req.Header.Set("Origin", "http://malicious.example.com")
 	rec := httptest.NewRecorder()
 
