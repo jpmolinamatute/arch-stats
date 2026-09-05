@@ -23,11 +23,6 @@ type AuthService interface {
 	Authenticate(ctx context.Context, token string) (uuid.UUID, error)
 }
 
-// ArcherService defines the profile operations required by the HTTP auth handler.
-type ArcherService interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error)
-}
-
 // AuthHandlerConfig specifies runtime configuration for cookie management and token lifetimes.
 type AuthHandlerConfig struct {
 	JWTTTLMinutes int

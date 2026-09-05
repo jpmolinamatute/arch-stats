@@ -17,23 +17,23 @@ Implement the archers HTTP handler in `internal/handler/`, porting the Python
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/archer.go` implements `ArcherHandler` with methods:
+- [x] `backend/internal/handler/archer.go` implements `ArcherHandler` with methods:
     - `List(w, r)` — GET `/api/v0/archer/` — list all archers
     - `GetByID(w, r)` — GET `/api/v0/archer/{id}` — get single archer by UUID
     - `Create(w, r)` — POST `/api/v0/archer/` — create a new archer, returns 201
     - `Update(w, r)` — PATCH `/api/v0/archer/` — update archer fields
     - `Delete(w, r)` — DELETE `/api/v0/archer/{id}` — delete archer, returns 204
-- [ ] Handler delegates all business logic to `ArcherService`.
-- [ ] Error responses use the error mapper middleware (404, 422).
-- [ ] JSON response shapes match the Python API contract (snake_case fields).
-- [ ] Unit tests using `httptest` with mock service verify:
+- [x] Handler delegates all business logic to `ArcherService`.
+- [x] Error responses use the error mapper middleware (404, 422).
+- [x] JSON response shapes match the Python API contract (snake_case fields).
+- [x] Unit tests using `httptest` with mock service verify:
     - List returns 200 + JSON array
     - GetByID with valid ID returns 200 + archer JSON
     - GetByID with non-existent ID returns 404
     - Create with valid payload returns 201 + `{"archer_id": "..."}`
     - Delete with valid ID returns 204
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -49,36 +49,36 @@ Implement the archers HTTP handler in `internal/handler/`, porting the Python
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/handler/archer_test.go` using `httptest.NewRecorder()`:
     - Define a mock `archerService` interface
     - Test each endpoint with mock responses
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `archer.go`**
+- [x] **Step 3: Implement `archer.go`**
 
   Implement `ArcherHandler` struct with constructor injection of the service interface.
   Parse UUID path params using `chi.URLParam(r, "id")`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A

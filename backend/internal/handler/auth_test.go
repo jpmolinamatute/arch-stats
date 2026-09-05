@@ -65,6 +65,10 @@ func (m *mockAuthService) Authenticate(ctx context.Context, token string) (uuid.
 
 type mockArcherService struct {
 	getByIDFn func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error)
+	listFn    func(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error)
+	createFn  func(ctx context.Context, data model.ArcherCreate) (uuid.UUID, error)
+	updateFn  func(ctx context.Context, id uuid.UUID, data model.ArcherSet) error
+	deleteFn  func(ctx context.Context, id uuid.UUID) error
 }
 
 func (m *mockArcherService) GetByID(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
@@ -72,6 +76,36 @@ func (m *mockArcherService) GetByID(ctx context.Context, id uuid.UUID) (*model.A
 		return m.getByIDFn(ctx, id)
 	}
 	return nil, errors.New("unimplemented")
+}
+
+//nolint:gocritic // hugeParam: filter matches ArcherService interface specification
+func (m *mockArcherService) List(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, filter)
+	}
+	return nil, errors.New("unimplemented")
+}
+
+//nolint:gocritic // hugeParam: data matches domain model parameter specification
+func (m *mockArcherService) Create(ctx context.Context, data model.ArcherCreate) (uuid.UUID, error) {
+	if m.createFn != nil {
+		return m.createFn(ctx, data)
+	}
+	return uuid.Nil, errors.New("unimplemented")
+}
+
+func (m *mockArcherService) Update(ctx context.Context, id uuid.UUID, data model.ArcherSet) error {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, id, data)
+	}
+	return errors.New("unimplemented")
+}
+
+func (m *mockArcherService) Delete(ctx context.Context, id uuid.UUID) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, id)
+	}
+	return errors.New("unimplemented")
 }
 
 func TestAuthHandler_Login(t *testing.T) {
