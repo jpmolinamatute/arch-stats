@@ -113,6 +113,15 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 			*d = v.(model.Bowstyle)
 		case *float64:
 			*d = v.(float64)
+		case **float64:
+			switch val := v.(type) {
+			case nil:
+				*d = nil
+			case *float64:
+				*d = val
+			case float64:
+				*d = &val
+			}
 		case *time.Time:
 			*d = v.(time.Time)
 		case **time.Time:

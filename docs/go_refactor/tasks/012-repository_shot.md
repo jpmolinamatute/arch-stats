@@ -17,16 +17,16 @@ including score recording and position tracking.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/repository/shot.go` implements `ShotRepo` with methods:
+- [x] `backend/internal/repository/shot.go` implements `ShotRepo` with methods:
     - `FindByID(ctx, id) (*model.ShotRead, error)`
     - `FindBySlotID(ctx, slotID) ([]model.ShotRead, error)`
     - `Create(ctx, data) (uuid.UUID, error)`
     - `Update(ctx, data, filter) error`
     - `Delete(ctx, id) error`
-- [ ] All queries use squirrel.
-- [ ] Unit tests verify query building for all methods.
-- [ ] `go test ./internal/repository/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All queries use squirrel.
+- [x] Unit tests verify query building for all methods.
+- [x] `go test ./internal/repository/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -42,30 +42,30 @@ including score recording and position tracking.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/repository/shot_test.go`:
-    - Test `FindBySlotID` builds SELECT with WHERE slot_id = $1 ORDER BY arrow_number
-    - Test `Create` builds INSERT with slot_id, arrow_number, score, x_position, y_position
+    - Test `FindBySlotID` builds SELECT with WHERE slot_id = $1 ORDER BY created_at ASC
+    - Test `Create` builds INSERT with slot_id, x, y, is_x, score, arrow_id
     - Test `Update` builds UPDATE with appropriate SET and WHERE
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Implement `shot.go`**
+- [x] **Step 3: Implement `shot.go`**
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend
@@ -73,7 +73,7 @@ including score recording and position tracking.
   go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A

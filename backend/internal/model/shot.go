@@ -18,8 +18,14 @@ type ShotCreate struct {
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 }
 
-// ShotSet represents updates to shot fields (placeholder; shots are immutable).
-type ShotSet struct{}
+// ShotSet represents updates to mutable shot fields.
+type ShotSet struct {
+	X       *float64   `json:"x,omitempty"`
+	Y       *float64   `json:"y,omitempty"`
+	IsX     *bool      `json:"is_x,omitempty"`
+	Score   *int       `json:"score,omitempty" validate:"omitempty,gte=0,lte=10"`
+	ArrowID *uuid.UUID `json:"arrow_id,omitempty"`
+}
 
 // ShotFilter represents criteria to query shots.
 type ShotFilter struct {
