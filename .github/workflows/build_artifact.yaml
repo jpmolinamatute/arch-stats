@@ -1,111 +1,111 @@
-name: Build Artifact
-on:
-  push:
-    branches:
-      - main
+# name: Build Artifact
+# on:
+#   push:
+#     branches:
+#       - main
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-defaults:
-  run:
-    shell: bash
+# defaults:
+#   run:
+#     shell: bash
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
-          POSTGRES_DB: "arch-stats"
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U admin"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set uv & Install Dependencies
-        uses: ./.github/actions/uv-setup
-      - name: Setup Node & Install Dependencies
-        uses: ./.github/actions/npm-setup
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-      - name: Wait for Postgres to be ready
-        run: |
-          for i in {1..30}; do
-            if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
-              echo "Postgres is accepting TCP connections"
-              break
-            fi
-            echo "Waiting for Postgres (attempt $i)..."
-            sleep 2
-          done
-      - name: Checkout migrations repository
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
-          token: ${{ secrets.MIGRATIONS_PAT }}
-          path: ${{ github.workspace }}/migrations
-      - name: Run Flyway migrations
-        env:
-          FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
-          FLYWAY_USER: "admin"
-          FLYWAY_PASSWORD: "NOT_A_REAL_PASSWORD"
-        run: |
-          docker run --rm \
-            --network host \
-            -e FLYWAY_URL="$FLYWAY_URL" \
-            -e FLYWAY_USER="$FLYWAY_USER" \
-            -e FLYWAY_PASSWORD="$FLYWAY_PASSWORD" \
-            -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
-            -v "${{ github.workspace }}/migrations:/flyway/sql" \
-            flyway/flyway:latest migrate
-      - name: Generate OpenAPI Spec
-        working-directory: ./backend-old/src
-        env:
-          POSTGRES_USER: "admin"
-          POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
-          POSTGRES_DB: "arch-stats"
-          POSTGRES_HOST: "127.0.0.1"
-          POSTGRES_PORT: "5432"
-          ARCH_STATS_DEV_MODE: "true"
-          ARCH_STATS_SERVER_PORT: "8000"
-          ARCH_STATS_WS_CHANNEL: "archy"
-          ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
-          ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
-          ARCH_STATS_JWT_ALGORITHM: "HS256"
-          ARCH_STATS_JWT_TTL_MINUTES: "60"
-          PYTHONPATH: "${{ github.workspace }}/backend-old/src"
-        run: "${GITHUB_WORKSPACE}/scripts/generate_fe_types.bash"
-      - name: Build FE bundle
-        working-directory: ./frontend
-        run: npm run build
-      - name: Build tar file
-        env:
-          XZ_OPT: -9
-        run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend-old/tests' --exclude='backend-old/.venv' --exclude='backend-old/.mypy_cache' --exclude='*/__pycache__' ./backend-old
-      - name: Generate checksum
-        run: sha256sum "${GITHUB_WORKSPACE}/arch-stats.tar.xz" > "${GITHUB_WORKSPACE}/arch-stats.tar.xz.sha256"
-      - name: Create GitHub release (versioned tag)
-        uses: softprops/action-gh-release@v2
-        with:
-          # Create a new immutable tag for each run so the release points to this commit
-          tag_name: v${{ github.run_number }}
-          name: Build v${{ github.run_number }}
-          target_commitish: ${{ github.sha }}
-          make_latest: true
-          files: |
-            ${{ github.workspace}}/arch-stats.tar.xz
-            ${{ github.workspace}}/arch-stats.tar.xz.sha256
-          fail_on_unmatched_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     services:
+#       postgres:
+#         image: postgres:17.2
+#         env:
+#           POSTGRES_USER: "admin"
+#           POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+#           POSTGRES_DB: "arch-stats"
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd "pg_isready -U admin"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#       - name: Set uv & Install Dependencies
+#         uses: ./.github/actions/uv-setup
+#       - name: Setup Node & Install Dependencies
+#         uses: ./.github/actions/npm-setup
+#       - name: Install PostgreSQL client
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y postgresql-client
+#       - name: Wait for Postgres to be ready
+#         run: |
+#           for i in {1..30}; do
+#             if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
+#               echo "Postgres is accepting TCP connections"
+#               break
+#             fi
+#             echo "Waiting for Postgres (attempt $i)..."
+#             sleep 2
+#           done
+#       - name: Checkout migrations repository
+#         uses: actions/checkout@v4
+#         with:
+#           repository: ${{ secrets.MIGRATIONS_REPOSITORY }}
+#           token: ${{ secrets.MIGRATIONS_PAT }}
+#           path: ${{ github.workspace }}/migrations
+#       - name: Run Flyway migrations
+#         env:
+#           FLYWAY_URL: "jdbc:postgresql://127.0.0.1:5432/arch-stats"
+#           FLYWAY_USER: "admin"
+#           FLYWAY_PASSWORD: "NOT_A_REAL_PASSWORD"
+#         run: |
+#           docker run --rm \
+#             --network host \
+#             -e FLYWAY_URL="$FLYWAY_URL" \
+#             -e FLYWAY_USER="$FLYWAY_USER" \
+#             -e FLYWAY_PASSWORD="$FLYWAY_PASSWORD" \
+#             -e FLYWAY_LOCATIONS=filesystem:/flyway/sql \
+#             -v "${{ github.workspace }}/migrations:/flyway/sql" \
+#             flyway/flyway:latest migrate
+#       - name: Generate OpenAPI Spec
+#         working-directory: ./backend-old/src
+#         env:
+#           POSTGRES_USER: "admin"
+#           POSTGRES_PASSWORD: "NOT_A_REAL_PASSWORD"
+#           POSTGRES_DB: "arch-stats"
+#           POSTGRES_HOST: "127.0.0.1"
+#           POSTGRES_PORT: "5432"
+#           ARCH_STATS_DEV_MODE: "true"
+#           ARCH_STATS_SERVER_PORT: "8000"
+#           ARCH_STATS_WS_CHANNEL: "archy"
+#           ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID: "NOT_A_REAL_CLIENT_ID"
+#           ARCH_STATS_JWT_SECRET: "dev-insecure-change-me"
+#           ARCH_STATS_JWT_ALGORITHM: "HS256"
+#           ARCH_STATS_JWT_TTL_MINUTES: "60"
+#           PYTHONPATH: "${{ github.workspace }}/backend-old/src"
+#         run: "${GITHUB_WORKSPACE}/scripts/generate_fe_types.bash"
+#       - name: Build FE bundle
+#         working-directory: ./frontend
+#         run: npm run build
+#       - name: Build tar file
+#         env:
+#           XZ_OPT: -9
+#         run: tar -cvJf "${GITHUB_WORKSPACE}/arch-stats.tar.xz" --exclude='backend-old/tests' --exclude='backend-old/.venv' --exclude='backend-old/.mypy_cache' --exclude='*/__pycache__' ./backend-old
+#       - name: Generate checksum
+#         run: sha256sum "${GITHUB_WORKSPACE}/arch-stats.tar.xz" > "${GITHUB_WORKSPACE}/arch-stats.tar.xz.sha256"
+#       - name: Create GitHub release (versioned tag)
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           # Create a new immutable tag for each run so the release points to this commit
+#           tag_name: v${{ github.run_number }}
+#           name: Build v${{ github.run_number }}
+#           target_commitish: ${{ github.sha }}
+#           make_latest: true
+#           files: |
+#             ${{ github.workspace}}/arch-stats.tar.xz
+#             ${{ github.workspace}}/arch-stats.tar.xz.sha256
+#           fail_on_unmatched_files: true
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
