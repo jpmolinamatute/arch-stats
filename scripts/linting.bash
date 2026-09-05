@@ -60,7 +60,7 @@ run_go_checks() {
     log_info "Running Go linter (golangci-lint)..."
     golangci-lint run --fix ./...
     log_info "Running Go tests..."
-    go test -json ./... -count=1  | jq -r -s '
+    go test -json ./... -count=1 | jq -r -s '
   # Print package summary lines
   (.[] | select(.Action == "output" and .Test == null and (.Output | test("^(ok|\\?|FAIL)"))) | .Output | rtrimstr("\n")),
   "",
