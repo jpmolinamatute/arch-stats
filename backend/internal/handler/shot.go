@@ -1,0 +1,196 @@
+package handler
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
+)
+
+// ShotService defines the domain operations required by ShotHandler.
+type ShotService interface {
+	Create(ctx context.Context, shot model.ShotCreate, archerID uuid.UUID) (uuid.UUID, error)
+	CreateBatch(ctx context.Context, shots []model.ShotCreate, archerID uuid.UUID) ([]uuid.UUID, error)
+	GetBySlot(ctx context.Context, slotID, archerID uuid.UUID) ([]model.ShotRead, error)
+	CountBySlot(ctx context.Context, slotID, archerID uuid.UUID) (int, error)
+}
+
+// ShotHandler manages HTTP endpoints for shot records.
+type ShotHandler struct {
+	shotSvc ShotService
+}
+
+// NewShotHandler constructs a ShotHandler with service dependency injection.
+func NewShotHandler(shotSvc ShotService) *ShotHandler {
+	return &ShotHandler{
+		shotSvc: shotSvc,
+	}
+}
+
+// Routes registers all shot management endpoints on the provided chi Router.
+func (h *ShotHandler) Routes(r chi.Router) {
+	r.Post("/", h.Create)
+	r.Get("/by-slot/{slot_id}", h.GetBySlot)
+	r.Get("/count-by-slot/{slot_id}", h.CountBySlot)
+}
+
+// Create handles POST /api/v0/shot.
+// Supports both a single ShotCreate object and a batch []ShotCreate array.
+// Returns HTTP 201 Created with model.ShotID or []model.ShotID.
+func (h *ShotHandler) Create(w http.ResponseWriter, r *http.Request) {
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if r.Body == nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
+		return
+	}
+	defer r.Body.Close()
+
+	raw, err := io.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "failed to read request body"))
+		return
+	}
+
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
+		return
+	}
+
+	if trimmed[0] == '[' {
+		h.handleBatchCreate(w, r.Context(), trimmed, authArcherID)
+		return
+	}
+
+	h.handleSingleCreate(w, r.Context(), trimmed, authArcherID)
+}
+
+func (h *ShotHandler) handleSingleCreate(w http.ResponseWriter, ctx context.Context, raw []byte, authArcherID uuid.UUID) {
+	var shot model.ShotCreate
+	if err := json.Unmarshal(raw, &shot); err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
+		return
+	}
+
+	id, err := h.shotSvc.Create(ctx, shot, authArcherID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusCreated, model.ShotID{ShotID: id})
+}
+
+func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Context, raw []byte, authArcherID uuid.UUID) {
+	var shots []model.ShotCreate
+	if err := json.Unmarshal(raw, &shots); err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
+		return
+	}
+
+	if len(shots) < 3 || len(shots) > 10 {
+		writeError(w, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
+	slotID := shots[0].SlotID
+	for _, s := range shots[1:] {
+		if s.SlotID != slotID {
+			writeError(w, http.StatusBadRequest, "All shots must belong to the same slot")
+			return
+		}
+	}
+
+	ids, err := h.shotSvc.CreateBatch(ctx, shots, authArcherID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	resp := make([]model.ShotID, len(ids))
+	for i, id := range ids {
+		resp[i] = model.ShotID{ShotID: id}
+	}
+
+	_ = writeJSON(w, http.StatusCreated, resp)
+}
+
+// GetBySlot handles GET /api/v0/shot/by-slot/{slot_id}.
+// Returns list of shots for the given slot owned by the authenticated archer.
+func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	slotIDStr := getURLParam(r, "slot_id")
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "slot")
+	}
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "id")
+	}
+
+	slotID, err := uuid.Parse(slotIDStr)
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+		return
+	}
+
+	shots, err := h.shotSvc.GetBySlot(r.Context(), slotID, authArcherID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if shots == nil {
+		shots = []model.ShotRead{}
+	}
+
+	_ = writeJSON(w, http.StatusOK, shots)
+}
+
+// CountBySlot handles GET /api/v0/shot/count-by-slot/{slot_id}.
+// Returns total shot count for the given slot owned by the authenticated archer.
+func (h *ShotHandler) CountBySlot(w http.ResponseWriter, r *http.Request) {
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	slotIDStr := getURLParam(r, "slot_id")
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "slot")
+	}
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "id")
+	}
+
+	slotID, err := uuid.Parse(slotIDStr)
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+		return
+	}
+
+	count, err := h.shotSvc.CountBySlot(r.Context(), slotID, authArcherID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, count)
+}
