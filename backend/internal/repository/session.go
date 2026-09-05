@@ -294,3 +294,30 @@ func (r *SessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+// FindParticipating queries whether the specified archer is assigned to an active shooting slot in an open session.
+// Returns the session ID pointer if participating, or nil, nil if not found.
+func (r *SessionRepo) FindParticipating(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error) {
+	sql, args, err := StmtBuilder.Select("s.session_id").
+		From("slot s").
+		Join("session ses ON s.session_id = ses.session_id").
+		Where(squirrel.Eq{"s.archer_id": archerID}).
+		Where(squirrel.Eq{"s.is_shooting": true}).
+		Where(squirrel.Eq{"ses.is_opened": true}).
+		Limit(1).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building find participating query: %w", err)
+	}
+
+	var sessionID uuid.UUID
+	err = r.db.QueryRow(ctx, sql, args...).Scan(&sessionID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("querying participating session: %w", err)
+	}
+
+	return &sessionID, nil
+}
