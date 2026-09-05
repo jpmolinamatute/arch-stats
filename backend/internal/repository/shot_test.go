@@ -541,7 +541,7 @@ func TestShotRepo_CountBySlotID_Success(t *testing.T) {
 			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
-					*(dest[0].(*int)) = expectedCount
+					*dest[0].(*int) = expectedCount
 					return nil
 				},
 			}
@@ -578,7 +578,7 @@ func TestShotRepo_GetLatestShotTime_Success(t *testing.T) {
 			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
-					*(dest[0].(*time.Time)) = now
+					*dest[0].(*time.Time) = now
 					return nil
 				},
 			}
