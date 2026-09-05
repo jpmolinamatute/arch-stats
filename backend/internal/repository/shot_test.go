@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/repository"
 )
@@ -240,5 +242,288 @@ func TestShotRepo_FindAll_WithFilter(t *testing.T) {
 	}
 	if len(executedArgs) != 7 {
 		t.Errorf("expected 7 args, got %d: %v", len(executedArgs), executedArgs)
+	}
+}
+
+func TestShotRepo_Create_WithCreatedAt(t *testing.T) {
+	slotID := uuid.New()
+	arrowID := uuid.New()
+	expectedID := uuid.New()
+	x := 12.0
+	y := -4.0
+	score := 9
+	createdAt := time.Now().Truncate(time.Second).UTC()
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					*(dest[0].(*uuid.UUID)) = expectedID
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	id, err := repo.Create(context.Background(), model.ShotCreate{
+		SlotID:    slotID,
+		X:         &x,
+		Y:         &y,
+		IsX:       false,
+		Score:     &score,
+		ArrowID:   &arrowID,
+		CreatedAt: &createdAt,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if id != expectedID {
+		t.Fatalf("expected ID %v, got %v", expectedID, id)
+	}
+
+	if !strings.HasPrefix(executedSQL, "INSERT INTO shot (slot_id,x,y,is_x,score,arrow_id,created_at)") {
+		t.Errorf("unexpected INSERT SQL: %s", executedSQL)
+	}
+	if !strings.Contains(executedSQL, "RETURNING shot_id") {
+		t.Errorf("expected RETURNING shot_id in SQL: %s", executedSQL)
+	}
+	if len(executedArgs) != 7 {
+		t.Errorf("expected 7 args, got %d: %v", len(executedArgs), executedArgs)
+	}
+}
+
+func TestShotRepo_Create_WithoutCreatedAt(t *testing.T) {
+	slotID := uuid.New()
+	expectedID := uuid.New()
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					*(dest[0].(*uuid.UUID)) = expectedID
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	id, err := repo.Create(context.Background(), model.ShotCreate{
+		SlotID: slotID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if id != expectedID {
+		t.Fatalf("expected ID %v, got %v", expectedID, id)
+	}
+
+	if !strings.HasPrefix(executedSQL, "INSERT INTO shot (slot_id,x,y,is_x,score,arrow_id)") {
+		t.Errorf("unexpected INSERT SQL without created_at: %s", executedSQL)
+	}
+	if strings.Contains(executedSQL, "created_at") {
+		t.Errorf("expected created_at omitted from INSERT, got: %s", executedSQL)
+	}
+	if len(executedArgs) != 6 {
+		t.Errorf("expected 6 args, got %d: %v", len(executedArgs), executedArgs)
+	}
+}
+
+func TestShotRepo_CreateBatch_Success(t *testing.T) {
+	slotID := uuid.New()
+	id1 := uuid.New()
+	id2 := uuid.New()
+	now := time.Now().Truncate(time.Second).UTC()
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		queryFn: func(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+			executedSQL = sql
+			executedArgs = args
+			return &mockMultiRows{
+				records: [][]any{
+					{id1},
+					{id2},
+				},
+			}, nil
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	shots := []model.ShotCreate{
+		{SlotID: slotID, CreatedAt: &now},
+		{SlotID: slotID, CreatedAt: &now},
+	}
+
+	ids, err := repo.CreateBatch(context.Background(), shots)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(ids) != 2 || ids[0] != id1 || ids[1] != id2 {
+		t.Fatalf("unexpected IDs returned: %v", ids)
+	}
+
+	if !strings.HasPrefix(executedSQL, "INSERT INTO shot (slot_id,x,y,is_x,score,arrow_id,created_at) VALUES") {
+		t.Errorf("unexpected batch INSERT SQL: %s", executedSQL)
+	}
+	if !strings.Contains(executedSQL, "RETURNING shot_id") {
+		t.Errorf("expected RETURNING shot_id in SQL: %s", executedSQL)
+	}
+	if len(executedArgs) != 14 {
+		t.Errorf("expected 14 args, got %d: %v", len(executedArgs), executedArgs)
+	}
+}
+
+func TestShotRepo_CreateBatch_EmptyReturnsNil(t *testing.T) {
+	mock := &mockDBTX{}
+	repo := repository.NewShotRepo(mock)
+	ids, err := repo.CreateBatch(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ids != nil {
+		t.Fatalf("expected nil IDs for empty batch, got %v", ids)
+	}
+}
+
+func TestShotRepo_Update_Success(t *testing.T) {
+	shotID := uuid.New()
+	arrowID := uuid.New()
+	x := 1.0
+	y := 2.0
+	score := 10
+	isX := true
+
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		execFn: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+			executedSQL = sql
+			executedArgs = args
+			return pgconn.NewCommandTag("UPDATE 1"), nil
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	err := repo.Update(
+		context.Background(),
+		model.ShotSet{
+			X:       &x,
+			Y:       &y,
+			Score:   &score,
+			IsX:     &isX,
+			ArrowID: &arrowID,
+		},
+		model.ShotFilter{ShotID: &shotID},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.HasPrefix(executedSQL, "UPDATE shot SET") {
+		t.Errorf("unexpected UPDATE SQL: %s", executedSQL)
+	}
+	for _, col := range []string{"x", "y", "is_x", "score", "arrow_id"} {
+		if !strings.Contains(executedSQL, col+" =") {
+			t.Errorf("expected SET clause for %s in SQL: %s", col, executedSQL)
+		}
+	}
+	if !strings.Contains(executedSQL, "WHERE shot_id = $6") {
+		t.Errorf("expected WHERE shot_id = $6, got: %s", executedSQL)
+	}
+	if len(executedArgs) != 6 {
+		t.Errorf("expected 6 args, got %d: %v", len(executedArgs), executedArgs)
+	}
+}
+
+func TestShotRepo_Update_EmptySetIsNoOp(t *testing.T) {
+	mock := &mockDBTX{}
+	repo := repository.NewShotRepo(mock)
+	shotID := uuid.New()
+
+	err := repo.Update(context.Background(), model.ShotSet{}, model.ShotFilter{ShotID: &shotID})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestShotRepo_Update_MissingFilterReturnsError(t *testing.T) {
+	score := 10
+	repo := repository.NewShotRepo(&mockDBTX{})
+	err := repo.Update(context.Background(), model.ShotSet{Score: &score}, model.ShotFilter{})
+	if err == nil {
+		t.Fatal("expected error for empty filter, got nil")
+	}
+}
+
+func TestShotRepo_Update_NotFound(t *testing.T) {
+	shotID := uuid.New()
+	score := 10
+	mock := &mockDBTX{
+		execFn: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+			return pgconn.NewCommandTag("UPDATE 0"), nil
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	err := repo.Update(context.Background(), model.ShotSet{Score: &score}, model.ShotFilter{ShotID: &shotID})
+	if !errors.Is(err, apperror.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestShotRepo_Delete_Success(t *testing.T) {
+	shotID := uuid.New()
+	var executedSQL string
+	var executedArgs []any
+
+	mock := &mockDBTX{
+		execFn: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+			executedSQL = sql
+			executedArgs = args
+			return pgconn.NewCommandTag("DELETE 1"), nil
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	err := repo.Delete(context.Background(), shotID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.HasPrefix(executedSQL, "DELETE FROM shot WHERE shot_id = $1") {
+		t.Errorf("unexpected DELETE SQL: %s", executedSQL)
+	}
+	if len(executedArgs) != 1 || (executedArgs[0] != shotID && executedArgs[0] != shotID.String()) {
+		t.Errorf("expected arg %v, got %v", shotID, executedArgs)
+	}
+}
+
+func TestShotRepo_Delete_NotFound(t *testing.T) {
+	shotID := uuid.New()
+	mock := &mockDBTX{
+		execFn: func(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+			return pgconn.NewCommandTag("DELETE 0"), nil
+		},
+	}
+
+	repo := repository.NewShotRepo(mock)
+	err := repo.Delete(context.Background(), shotID)
+	if !errors.Is(err, apperror.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }
