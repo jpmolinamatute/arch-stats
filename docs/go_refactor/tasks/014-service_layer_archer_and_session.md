@@ -18,21 +18,21 @@ orchestration of repository calls.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/service/archer.go` implements `ArcherService` with methods:
+- [x] `backend/internal/service/archer.go` implements `ArcherService` with methods:
     - `GetByID(ctx, id) (*model.ArcherRead, error)` — returns `apperror.ErrNotFound` if missing
     - `List(ctx, filter) ([]model.ArcherRead, error)`
     - `Create(ctx, data) (uuid.UUID, error)` — validates required fields
     - `Update(ctx, id, data) error` — returns `apperror.ErrNotFound` if missing
-- [ ] `backend/internal/service/session.go` implements `SessionService` with methods:
+- [x] `backend/internal/service/session.go` implements `SessionService` with methods:
     - `GetByID(ctx, id) (*model.SessionRead, error)`
     - `GetOpen(ctx, archerID) (*model.SessionRead, error)`
     - `List(ctx, filter) ([]model.SessionRead, error)`
     - `Create(ctx, data) (uuid.UUID, error)` — validates no other open session exists
     - `Close(ctx, id) error` — validates session is currently open
-- [ ] Services accept repository interfaces via constructor injection (testable with mocks).
-- [ ] Unit tests use mock repositories to verify business logic.
-- [ ] `go test ./internal/service/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Services accept repository interfaces via constructor injection (testable with mocks).
+- [x] Unit tests use mock repositories to verify business logic.
+- [x] `go test ./internal/service/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -46,7 +46,7 @@ orchestration of repository calls.
 
 ## Steps
 
-- [ ] **Step 1: Define repository interfaces for mock injection**
+- [x] **Step 1: Define repository interfaces for mock injection**
 
   In each service file, define an interface that the repository must satisfy. This decouples
   the service from the concrete repository implementation.
@@ -61,37 +61,37 @@ orchestration of repository calls.
   }
   ```
 
-- [ ] **Step 2: Write failing tests for ArcherService**
+- [x] **Step 2: Write failing tests for ArcherService**
 
   Create `backend/internal/service/archer_test.go`:
     - Test `GetByID` returns `apperror.ErrNotFound` when repo returns nil
     - Test `GetByID` returns the archer when repo finds one
     - Test `Create` validates required fields before calling repo
 
-- [ ] **Step 3: Write failing tests for SessionService**
+- [x] **Step 3: Write failing tests for SessionService**
 
   Create `backend/internal/service/session_test.go`:
     - Test `Create` returns `apperror.ErrConflict` when an open session already exists
     - Test `Close` returns `apperror.ErrNotFound` when session doesn't exist
     - Test `Close` returns `apperror.ErrValidation` when session is already closed
 
-- [ ] **Step 4: Run tests to verify they fail**
+- [x] **Step 4: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/service/... -v
   ```
 
-- [ ] **Step 5: Implement `archer.go` and `session.go`**
+- [x] **Step 5: Implement `archer.go` and `session.go`**
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
   ```bash
   cd backend
   go test ./internal/service/... -v
   ```
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend
@@ -99,7 +99,7 @@ orchestration of repository calls.
   go build ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   rm -f backend/internal/service/.gitkeep

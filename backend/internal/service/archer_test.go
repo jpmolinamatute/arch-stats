@@ -9,7 +9,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/repository"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/service"
+)
+
+var (
+	_ service.ArcherRepository = (*mockArcherRepo)(nil)
+	_ service.ArcherRepository = (*repository.ArcherRepo)(nil)
 )
 
 type mockArcherRepo struct {
