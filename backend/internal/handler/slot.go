@@ -115,16 +115,103 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 }
 
 // JoinSession handles POST /api/v0/session/slot.
+// Assigns an archer to a target slot within an open session.
+// Enforces that only the authenticated archer can join for themselves.
 func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	var req model.SlotJoinRequest
+	if err := readJSON(r, &req); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if req.ArcherID == uuid.Nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "archer_id is required"))
+		return
+	}
+	if req.SessionID == uuid.Nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
+		return
+	}
+
+	if req.ArcherID != authArcherID {
+		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		return
+	}
+
+	resp, err := h.slotSvc.JoinSession(r.Context(), req)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, resp)
 }
 
 // ReJoinSession handles PATCH /api/v0/session/slot/re-join/{slot_id}.
+// Re-activates a previously inactive slot assignment.
 func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	slotIDStr := getURLParam(r, "slot_id")
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "slot")
+	}
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "id")
+	}
+
+	slotID, err := uuid.Parse(slotIDStr)
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+		return
+	}
+
+	resp, err := h.slotSvc.ReJoinSession(r.Context(), slotID, authArcherID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, resp)
 }
 
 // LeaveSession handles PATCH /api/v0/session/slot/leave/{slot_id}.
+// Deactivates an active slot assignment (leave the session).
 func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	slotIDStr := getURLParam(r, "slot_id")
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "slot")
+	}
+	if slotIDStr == "" {
+		slotIDStr = getURLParam(r, "id")
+	}
+
+	slotID, err := uuid.Parse(slotIDStr)
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+		return
+	}
+
+	if err := h.slotSvc.LeaveSession(r.Context(), slotID, authArcherID); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

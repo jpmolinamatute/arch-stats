@@ -1,12 +1,14 @@
 package handler_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -301,6 +303,312 @@ func TestSlotHandler_GetSlot(t *testing.T) {
 		}
 		if resp.SlotID != slotID || resp.ArcherID != authID {
 			t.Fatalf("unexpected response payload: %+v", resp)
+		}
+	})
+}
+
+func TestSlotHandler_JoinSession(t *testing.T) {
+	validJoinPayload := func(archerID, sessionID uuid.UUID) model.SlotJoinRequest {
+		return model.SlotJoinRequest{
+			ArcherID:        archerID,
+			SessionID:       sessionID,
+			Distance:        18,
+			FaceType:        model.FaceTypeWA40Full,
+			Bowstyle:        model.BowstyleRecurve,
+			DrawWeight:      32.0,
+			IsShooting:      true,
+			IntervalSeconds: 15,
+		}
+	}
+
+	t.Run("returns_401_when_unauthenticated", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		payload := validJoinPayload(uuid.New(), uuid.New())
+		bodyBytes, _ := json.Marshal(payload)
+		req := newSlotTestRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes), nil, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_422_when_body_is_invalid_JSON", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		authID := uuid.New()
+		req := newSlotTestRequest(http.MethodPost, "/", strings.NewReader("{invalid"), &authID, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_422_when_required_ids_are_nil", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		authID := uuid.New()
+		payload := validJoinPayload(uuid.Nil, uuid.Nil)
+		bodyBytes, _ := json.Marshal(payload)
+		req := newSlotTestRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes), &authID, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_403_when_authenticated_archer_does_not_match_payload_archer", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		authID := uuid.New()
+		otherID := uuid.New()
+		payload := validJoinPayload(otherID, uuid.New())
+		bodyBytes, _ := json.Marshal(payload)
+		req := newSlotTestRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes), &authID, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusForbidden {
+			t.Fatalf("expected status 403, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_409_when_service_returns_conflict", func(t *testing.T) {
+		authID := uuid.New()
+		sessionID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			joinSessionFn: func(ctx context.Context, req model.SlotJoinRequest) (*model.SlotJoinResponse, error) {
+				return nil, apperror.Wrap(apperror.ErrConflict, "archer already joined this session")
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		payload := validJoinPayload(authID, sessionID)
+		bodyBytes, _ := json.Marshal(payload)
+		req := newSlotTestRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes), &authID, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusConflict {
+			t.Fatalf("expected status 409, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_200_with_slot_join_response_when_valid", func(t *testing.T) {
+		authID := uuid.New()
+		sessionID := uuid.New()
+		newSlotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			joinSessionFn: func(ctx context.Context, req model.SlotJoinRequest) (*model.SlotJoinResponse, error) {
+				return &model.SlotJoinResponse{
+					SlotID: newSlotID,
+					Slot:   "1A",
+				}, nil
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		payload := validJoinPayload(authID, sessionID)
+		bodyBytes, _ := json.Marshal(payload)
+		req := newSlotTestRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes), &authID, "", "")
+		rr := httptest.NewRecorder()
+
+		h.JoinSession(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", rr.Code, rr.Body.String())
+		}
+
+		var resp model.SlotJoinResponse
+		if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.SlotID != newSlotID || resp.Slot != "1A" {
+			t.Fatalf("unexpected join response: %+v", resp)
+		}
+	})
+}
+
+func TestSlotHandler_ReJoinSession(t *testing.T) {
+	t.Run("returns_401_when_unauthenticated", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		req := newSlotTestRequest(http.MethodPatch, "/re-join/"+uuid.NewString(), nil, nil, "slot_id", uuid.NewString())
+		rr := httptest.NewRecorder()
+
+		h.ReJoinSession(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_422_when_slot_id_is_invalid", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		authID := uuid.New()
+		req := newSlotTestRequest(http.MethodPatch, "/re-join/not-uuid", nil, &authID, "slot_id", "not-uuid")
+		rr := httptest.NewRecorder()
+
+		h.ReJoinSession(rr, req)
+
+		if rr.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_404_when_slot_not_found", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			reJoinSessionFn: func(ctx context.Context, sID, aID uuid.UUID) (*model.SlotJoinResponse, error) {
+				return nil, apperror.ErrNotFound
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/re-join/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.ReJoinSession(rr, req)
+
+		if rr.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_403_when_user_forbidden_to_rejoin", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			reJoinSessionFn: func(ctx context.Context, sID, aID uuid.UUID) (*model.SlotJoinResponse, error) {
+				return nil, apperror.Wrap(apperror.ErrForbidden, "Forbidden")
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/re-join/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.ReJoinSession(rr, req)
+
+		if rr.Code != http.StatusForbidden {
+			t.Fatalf("expected status 403, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_200_with_slot_join_response_when_rejoined", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			reJoinSessionFn: func(ctx context.Context, sID, aID uuid.UUID) (*model.SlotJoinResponse, error) {
+				return &model.SlotJoinResponse{
+					SlotID: slotID,
+					Slot:   "2B",
+				}, nil
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/re-join/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.ReJoinSession(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", rr.Code, rr.Body.String())
+		}
+
+		var resp model.SlotJoinResponse
+		if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.SlotID != slotID || resp.Slot != "2B" {
+			t.Fatalf("unexpected rejoin response: %+v", resp)
+		}
+	})
+}
+
+func TestSlotHandler_LeaveSession(t *testing.T) {
+	t.Run("returns_401_when_unauthenticated", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		req := newSlotTestRequest(http.MethodPatch, "/leave/"+uuid.NewString(), nil, nil, "slot_id", uuid.NewString())
+		rr := httptest.NewRecorder()
+
+		h.LeaveSession(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_422_when_slot_id_is_invalid", func(t *testing.T) {
+		h := handler.NewSlotHandler(&mockSlotHandlerService{})
+		authID := uuid.New()
+		req := newSlotTestRequest(http.MethodPatch, "/leave/not-uuid", nil, &authID, "slot_id", "not-uuid")
+		rr := httptest.NewRecorder()
+
+		h.LeaveSession(rr, req)
+
+		if rr.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_404_when_slot_not_found", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			leaveSessionFn: func(ctx context.Context, sID, aID uuid.UUID) error {
+				return apperror.ErrNotFound
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/leave/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.LeaveSession(rr, req)
+
+		if rr.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_409_when_archer_is_not_participating", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			leaveSessionFn: func(ctx context.Context, sID, aID uuid.UUID) error {
+				return apperror.Wrap(apperror.ErrConflict, "archer is not participating in this session")
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/leave/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.LeaveSession(rr, req)
+
+		if rr.Code != http.StatusConflict {
+			t.Fatalf("expected status 409, got %d: %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("returns_200_when_leave_succeeds", func(t *testing.T) {
+		authID := uuid.New()
+		slotID := uuid.New()
+		mockSvc := &mockSlotHandlerService{
+			leaveSessionFn: func(ctx context.Context, sID, aID uuid.UUID) error {
+				return nil
+			},
+		}
+		h := handler.NewSlotHandler(mockSvc)
+		req := newSlotTestRequest(http.MethodPatch, "/leave/"+slotID.String(), nil, &authID, "slot_id", slotID.String())
+		rr := httptest.NewRecorder()
+
+		h.LeaveSession(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", rr.Code, rr.Body.String())
 		}
 	})
 }
