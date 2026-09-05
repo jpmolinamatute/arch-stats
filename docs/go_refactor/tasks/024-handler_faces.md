@@ -17,17 +17,17 @@ face by type. These endpoints do NOT require authentication (public data).
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/face.go` implements `FaceHandler` with methods:
+- [x] `backend/internal/handler/face.go` implements `FaceHandler` with methods:
     - `ListFaces(w, r)` — GET `/api/v0/faces` — returns list of face summaries (face_type + face_name)
     - `GetFace(w, r)` — GET `/api/v0/faces/{face_type}` — returns full face definition
-- [ ] These endpoints do NOT go through auth middleware (public).
-- [ ] GetFace with unknown face_type returns 404.
-- [ ] Unit tests using `httptest` with mock service verify:
+- [x] These endpoints do NOT go through auth middleware (public).
+- [x] GetFace with unknown face_type returns 404.
+- [x] Unit tests using `httptest` with mock service verify:
     - ListFaces returns 200 + JSON array of face summaries
     - GetFace with valid type returns 200 + full face JSON
     - GetFace with unknown type returns 404
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -43,33 +43,33 @@ face by type. These endpoints do NOT require authentication (public data).
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/handler/face_test.go`:
     - Define mock `faceService` interface
     - Test list and get by type
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `face.go`**
+- [x] **Step 3: Implement `face.go`**
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
