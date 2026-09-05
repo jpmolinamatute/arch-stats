@@ -133,6 +133,15 @@ func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Routes registers all archer CRUD endpoints on the provided chi Router.
+func (h *ArcherHandler) Routes(r chi.Router) {
+	r.Get("/", h.List)
+	r.Get("/{id}", h.GetByID)
+	r.Post("/", h.Create)
+	r.Patch("/", h.Update)
+	r.Delete("/{id}", h.Delete)
+}
+
 func getURLParam(r *http.Request, key string) string {
 	if val := chi.URLParam(r, key); val != "" {
 		return val

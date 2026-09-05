@@ -443,3 +443,55 @@ func TestArcherHandler_Delete(t *testing.T) {
 		}
 	})
 }
+
+func TestArcherHandler_Routes(t *testing.T) {
+	targetID := uuid.New()
+	svc := &mockArcherHandlerService{
+		listFn: func(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
+			return []model.ArcherRead{{ArcherID: targetID, FirstName: "Katniss"}}, nil
+		},
+		getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
+			if id == targetID {
+				return &model.ArcherRead{ArcherID: targetID, FirstName: "Katniss"}, nil
+			}
+			return nil, apperror.ErrNotFound
+		},
+		deleteFn: func(ctx context.Context, id uuid.UUID) error {
+			if id == targetID {
+				return nil
+			}
+			return apperror.ErrNotFound
+		},
+	}
+	h := handler.NewArcherHandler(svc)
+
+	r := chi.NewRouter()
+	r.Route("/archer", h.Routes)
+
+	t.Run("GET /archer/ matches List", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/archer/", http.NoBody)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("GET /archer/{id} matches GetByID", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/archer/"+targetID.String(), http.NoBody)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", rec.Code)
+		}
+	})
+
+	t.Run("DELETE /archer/{id} matches Delete", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/archer/"+targetID.String(), http.NoBody)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("expected 204, got %d", rec.Code)
+		}
+	})
+}
