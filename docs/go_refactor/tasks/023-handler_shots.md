@@ -18,20 +18,20 @@ count by slot. All endpoints require authentication.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/shot.go` implements `ShotHandler` with methods:
+- [x] `backend/internal/handler/shot.go` implements `ShotHandler` with methods:
     - `Create(w, r)` — POST `/api/v0/shot` — accepts single shot or array of shots, returns 201
     - `GetBySlot(w, r)` — GET `/api/v0/shot/by-slot/{slot_id}` — list shots for a slot
     - `CountBySlot(w, r)` — GET `/api/v0/shot/count-by-slot/{slot_id}` — count shots in a slot
-- [ ] The `Create` endpoint handles both `ShotCreate` and `[]ShotCreate` payloads (matching
+- [x] The `Create` endpoint handles both `ShotCreate` and `[]ShotCreate` payloads (matching
   the Python union type `ShotCreate | list[ShotCreate]`).
-- [ ] All endpoints extract authenticated archer ID from request context.
-- [ ] Unit tests using `httptest` with mock service verify:
+- [x] All endpoints extract authenticated archer ID from request context.
+- [x] Unit tests using `httptest` with mock service verify:
     - Create single shot returns 201 + shot ID
     - Create batch returns 201 + array of shot IDs
     - GetBySlot returns 200 + array of shots
     - CountBySlot returns 200 + integer count
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -47,20 +47,20 @@ count by slot. All endpoints require authentication.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/handler/shot_test.go`:
     - Define mock `shotService` interface
     - Test single and batch create
     - Test list and count by slot
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `shot.go`**
+- [x] **Step 3: Implement `shot.go`**
 
   For the union type (single vs. batch create), use `json.RawMessage` to peek at the payload
   structure before unmarshaling:
@@ -75,19 +75,19 @@ count by slot. All endpoints require authentication.
   }
   ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
