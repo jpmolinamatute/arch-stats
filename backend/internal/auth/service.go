@@ -34,6 +34,7 @@ type Config struct {
 	JWTTTLMinutes       int
 	SessionTokenBytes   int
 	GoogleOAuthClientID string
+	GoogleVerifier      GooglePayloadVerifier
 }
 
 // SessionMetadata captures optional client request metadata (e.g. User-Agent and client IP).
@@ -247,7 +248,89 @@ func (s *Service) RevokeAllSessions(ctx context.Context, archerID uuid.UUID) err
 
 // VerifyGoogleToken verifies a Google One Tap credential using the configured client ID.
 func (s *Service) VerifyGoogleToken(ctx context.Context, credential string) (*GoogleUserData, error) {
-	return VerifyGoogleIDToken(ctx, credential, s.cfg.GoogleOAuthClientID)
+	verifier := s.cfg.GoogleVerifier
+	if verifier == nil {
+		verifier = defaultGooglePayloadVerifier
+	}
+	return VerifyGoogleIDTokenWithVerifier(ctx, credential, s.cfg.GoogleOAuthClientID, verifier)
+}
+
+// LoginWithGoogle verifies a Google One Tap credential. If an archer with the verified Google subject
+// already exists, it creates an active session and returns AuthAuthenticated. If the subject is unknown,
+// it returns an AuthNeedsRegistration response with Google profile claims.
+func (s *Service) LoginWithGoogle(
+	ctx context.Context,
+	credential string,
+	now time.Time,
+	meta ...SessionMetadata,
+) (*model.AuthAuthenticated, *model.AuthNeedsRegistration, error) {
+	googleData, err := s.VerifyGoogleToken(ctx, credential)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if strings.TrimSpace(googleData.Sub) == "" || strings.TrimSpace(googleData.Email) == "" {
+		return nil, nil, apperror.Wrap(apperror.ErrValidation, "google token missing required sub or email claim")
+	}
+
+	existing, err := s.archers.FindByGoogleSubject(ctx, googleData.Sub)
+	if err != nil {
+		return nil, nil, fmt.Errorf("checking archer by google subject: %w", err)
+	}
+
+	if existing == nil {
+		return nil, BuildNeedsRegistrationResponse(googleData), nil
+	}
+
+	authd, err := s.LoginExisting(ctx, existing, googleData, now, meta...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return authd, nil, nil
+}
+
+// RegisterWithGoogle verifies the submitted Google credential and registers a new archer profile.
+// If an archer with the same Google subject already exists, it transparently logs them in.
+//
+//nolint:gocritic // hugeParam: payload matches API request specification
+func (s *Service) RegisterWithGoogle(
+	ctx context.Context,
+	payload model.AuthRegistrationRequest,
+	now time.Time,
+	meta ...SessionMetadata,
+) (*model.AuthAuthenticated, error) {
+	googleData, err := s.VerifyGoogleToken(ctx, payload.Credential)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Register(ctx, payload, googleData, now, meta...)
+}
+
+// RevokeToken extracts the session ID from an access JWT and revokes the corresponding database session.
+func (s *Service) RevokeToken(ctx context.Context, tokenStr string) error {
+	if strings.TrimSpace(tokenStr) == "" {
+		return nil
+	}
+
+	claims, err := DecodeJWT(tokenStr, s.cfg.JWTSecret, s.cfg.JWTAlgorithm)
+	if err != nil {
+		return nil // Ignore invalid tokens during logout
+	}
+
+	rawSession, err := DecodeSessionID(claims.SID)
+	if err != nil {
+		return nil
+	}
+
+	tokenHash := HashSessionToken(rawSession)
+	return s.RevokeSession(ctx, tokenHash, time.Now().UTC())
+}
+
+// DecodeToken decodes and validates an access JWT against the service signing configuration.
+func (s *Service) DecodeToken(tokenStr string) (*Claims, error) {
+	return DecodeJWT(tokenStr, s.cfg.JWTSecret, s.cfg.JWTAlgorithm)
 }
 
 // Authenticate verifies and decodes an access JWT, validates the underlying session in the database,

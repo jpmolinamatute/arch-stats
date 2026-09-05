@@ -23,7 +23,7 @@ type TokenAuthenticator interface {
 func Auth(authenticator TokenAuthenticator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := extractToken(r)
+			token := ExtractToken(r)
 			if token == "" {
 				WriteError(w, apperror.Wrap(apperror.ErrUnauthorized, "missing authentication token"))
 				return
@@ -41,7 +41,9 @@ func Auth(authenticator TokenAuthenticator) func(http.Handler) http.Handler {
 	}
 }
 
-func extractToken(r *http.Request) string {
+// ExtractToken extracts the bearer token from either the Authorization header
+// or the arch_stats_auth cookie.
+func ExtractToken(r *http.Request) string {
 	if authHeader := r.Header.Get("Authorization"); authHeader != "" {
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
