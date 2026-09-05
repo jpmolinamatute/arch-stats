@@ -11,6 +11,7 @@ import (
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/auth"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
+	"google.golang.org/api/idtoken"
 )
 
 type mockArcherRepo struct {
@@ -652,4 +653,261 @@ func TestService_Authenticate(t *testing.T) {
 			t.Errorf("Authenticate() error = %v, want ErrUnauthorized", err)
 		}
 	})
+}
+
+func TestService_LoginWithGoogle(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	now := time.Date(2026, 9, 5, 12, 0, 0, 0, time.UTC)
+
+	t.Run("returns AuthNeedsRegistration when archer does not exist", func(t *testing.T) {
+		t.Parallel()
+		archers := &mockArcherRepo{
+			findByGoogleSubjectFn: func(ctx context.Context, sub string) (*model.ArcherRead, error) {
+				return nil, nil
+			},
+		}
+		sessions := &mockSessionRepo{}
+		cfg := defaultTestConfig()
+		cfg.GoogleVerifier = func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error) {
+			return &idtoken.Payload{
+				Subject: "google-sub-new",
+				Claims: map[string]any{
+					"email":       "new@example.com",
+					"given_name":  "New",
+					"family_name": "Archer",
+					"picture":     "https://pic.example.com/new.jpg",
+				},
+			}, nil
+		}
+
+		svc := auth.NewService(archers, sessions, cfg)
+		authd, needsReg, err := svc.LoginWithGoogle(ctx, "valid-token", now)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if authd != nil {
+			t.Fatalf("expected nil AuthAuthenticated, got %+v", authd)
+		}
+		if needsReg == nil {
+			t.Fatal("expected non-nil AuthNeedsRegistration")
+		}
+		if needsReg.GoogleEmail != "new@example.com" || needsReg.GoogleSubject != "google-sub-new" {
+			t.Fatalf("mismatched Google details: %+v", needsReg)
+		}
+	})
+
+	t.Run("returns AuthAuthenticated when archer exists", func(t *testing.T) {
+		t.Parallel()
+		existingID := uuid.New()
+		existing := &model.ArcherRead{
+			ArcherID:      existingID,
+			FirstName:     "Existing",
+			LastName:      "User",
+			Email:         "existing@example.com",
+			GoogleSubject: "google-sub-existing",
+		}
+		archers := &mockArcherRepo{
+			findByGoogleSubjectFn: func(ctx context.Context, sub string) (*model.ArcherRead, error) {
+				if sub == "google-sub-existing" {
+					return existing, nil
+				}
+				return nil, nil
+			},
+			findByIDFn: func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
+				return existing, nil
+			},
+			updateFn: func(ctx context.Context, data model.ArcherSet, filter model.ArcherFilter) error {
+				return nil
+			},
+		}
+		sessions := &mockSessionRepo{
+			createFn: func(ctx context.Context, data model.AuthSessionCreate) error {
+				return nil
+			},
+		}
+		cfg := defaultTestConfig()
+		cfg.GoogleVerifier = func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error) {
+			return &idtoken.Payload{
+				Subject: "google-sub-existing",
+				Claims: map[string]any{
+					"email": "existing@example.com",
+				},
+			}, nil
+		}
+
+		svc := auth.NewService(archers, sessions, cfg)
+		authd, needsReg, err := svc.LoginWithGoogle(ctx, "valid-token", now)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if needsReg != nil {
+			t.Fatalf("expected nil AuthNeedsRegistration, got %+v", needsReg)
+		}
+		if authd == nil {
+			t.Fatal("expected non-nil AuthAuthenticated")
+		}
+		if authd.Archer.ArcherID != existingID {
+			t.Fatalf("expected archer id %s, got %s", existingID, authd.Archer.ArcherID)
+		}
+	})
+
+	t.Run("returns unauthorized error when google verification fails", func(t *testing.T) {
+		t.Parallel()
+		archers := &mockArcherRepo{}
+		sessions := &mockSessionRepo{}
+		cfg := defaultTestConfig()
+		cfg.GoogleVerifier = func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error) {
+			return nil, errors.New("bad token")
+		}
+
+		svc := auth.NewService(archers, sessions, cfg)
+		_, _, err := svc.LoginWithGoogle(ctx, "bad-token", now)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !errors.Is(err, apperror.ErrUnauthorized) {
+			t.Fatalf("expected ErrUnauthorized, got %v", err)
+		}
+	})
+}
+
+func TestService_RegisterWithGoogle(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	now := time.Date(2026, 9, 5, 12, 0, 0, 0, time.UTC)
+
+	createdID := uuid.New()
+	archers := &mockArcherRepo{
+		findByGoogleSubjectFn: func(ctx context.Context, sub string) (*model.ArcherRead, error) {
+			return nil, nil
+		},
+		createFn: func(ctx context.Context, data model.ArcherCreate) (uuid.UUID, error) {
+			return createdID, nil
+		},
+		findByIDFn: func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
+			return &model.ArcherRead{
+				ArcherID:  createdID,
+				Email:     "reg@example.com",
+				FirstName: "Reg",
+				LastName:  "User",
+			}, nil
+		},
+	}
+	sessions := &mockSessionRepo{
+		createFn: func(ctx context.Context, data model.AuthSessionCreate) error {
+			return nil
+		},
+	}
+	cfg := defaultTestConfig()
+	cfg.GoogleVerifier = func(ctx context.Context, idToken, audience string) (*idtoken.Payload, error) {
+		return &idtoken.Payload{
+			Subject: "google-sub-reg",
+			Claims: map[string]any{
+				"email":       "reg@example.com",
+				"given_name":  "Reg",
+				"family_name": "User",
+			},
+		}, nil
+	}
+
+	svc := auth.NewService(archers, sessions, cfg)
+
+	payload := model.AuthRegistrationRequest{
+		Credential:  "valid-reg-token",
+		DateOfBirth: "1995-05-15",
+		Gender:      model.GenderFemale,
+		Bowstyle:    model.BowstyleRecurve,
+		DrawWeight:  32.5,
+	}
+
+	authd, err := svc.RegisterWithGoogle(ctx, payload, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if authd == nil || authd.Archer.Email != "reg@example.com" {
+		t.Fatalf("unexpected registration result: %+v", authd)
+	}
+}
+
+func TestService_RevokeTokenAndDecodeToken(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	archerID := uuid.New()
+	arch := &model.ArcherRead{
+		ArcherID: archerID,
+		Email:    "test@example.com",
+	}
+
+	archers := &mockArcherRepo{
+		updateFn: func(ctx context.Context, data model.ArcherSet, filter model.ArcherFilter) error {
+			return nil
+		},
+		findByIDFn: func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
+			return arch, nil
+		},
+	}
+
+	var storedHash []byte
+	var isRevoked bool
+	sessions := &mockSessionRepo{
+		createFn: func(ctx context.Context, data model.AuthSessionCreate) error {
+			storedHash = data.SessionTokenHash
+			return nil
+		},
+		findByTokenHashFn: func(ctx context.Context, hash []byte) (*model.AuthSessionRead, error) {
+			if !bytes.Equal(hash, storedHash) {
+				return nil, nil
+			}
+			var revokedAt *time.Time
+			if isRevoked {
+				rev := now
+				revokedAt = &rev
+			}
+			return &model.AuthSessionRead{
+				ArcherID:         archerID,
+				SessionTokenHash: storedHash,
+				CreatedAt:        now,
+				ExpiresAt:        now.Add(time.Hour),
+				RevokedAt:        revokedAt,
+			}, nil
+		},
+		revokeByTokenHashFn: func(ctx context.Context, hash []byte, revokedAt time.Time) error {
+			if bytes.Equal(hash, storedHash) {
+				isRevoked = true
+			}
+			return nil
+		},
+	}
+
+	cfg := defaultTestConfig()
+	svc := auth.NewService(archers, sessions, cfg)
+
+	authd, err := svc.LoginExisting(ctx, arch, nil, now)
+	if err != nil {
+		t.Fatalf("LoginExisting failed: %v", err)
+	}
+
+	claims, err := svc.DecodeToken(authd.AccessToken)
+	if err != nil {
+		t.Fatalf("DecodeToken failed: %v", err)
+	}
+	if claims.Sub != archerID.String() {
+		t.Fatalf("expected subject %s, got %s", archerID, claims.Sub)
+	}
+
+	if err := svc.RevokeToken(ctx, authd.AccessToken); err != nil {
+		t.Fatalf("RevokeToken failed: %v", err)
+	}
+
+	// Verify token is now invalid due to revoked session
+	_, err = svc.Authenticate(ctx, authd.AccessToken)
+	if err == nil {
+		t.Fatal("expected Authenticate to fail after revocation, but succeeded")
+	}
+	if !errors.Is(err, apperror.ErrUnauthorized) {
+		t.Fatalf("expected ErrUnauthorized, got %v", err)
+	}
 }
