@@ -181,8 +181,33 @@ func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 }
 
 // Create handles POST /api/v0/session.
+// Creates a new shooting session and returns 201 Created with the session ID.
+// Enforces that an archer can only create a session for themselves.
 func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	var req model.SessionCreate
+	if err := readJSON(r, &req); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if req.OwnerArcherID != authArcherID {
+		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "ERROR: user not allowed to open a session for another archer"))
+		return
+	}
+
+	id, err := h.sessionSvc.Create(r.Context(), req)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusCreated, model.SessionID{SessionID: &id})
 }
 
 // GetByID handles GET /api/v0/session/{id}.
@@ -221,11 +246,81 @@ func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // ReOpen handles PATCH /api/v0/session/re-open.
+// Re-opens a closed shooting session after verifying owner identity and absence of conflicts.
+// Returns 200 OK with the re-opened session ID.
 func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	var req model.SessionID
+	if err := readJSON(r, &req); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if req.SessionID == nil || *req.SessionID == uuid.Nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
+		return
+	}
+
+	session, err := h.sessionSvc.GetByID(r.Context(), *req.SessionID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if session.OwnerArcherID != authArcherID {
+		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Archer is not allowed to re-open this session"))
+		return
+	}
+
+	if err := h.sessionSvc.ReOpen(r.Context(), *req.SessionID); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: req.SessionID})
 }
 
 // Close handles PATCH /api/v0/session/close.
+// Marks an active shooting session as closed. Returns 200 OK with {"status": "closed"}.
+// Validates session presence, owner identity, and active open status.
 func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	var req model.SessionID
+	if err := readJSON(r, &req); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if req.SessionID == nil || *req.SessionID == uuid.Nil {
+		writeError(w, http.StatusBadRequest, "ERROR: session_id wasn't provided")
+		return
+	}
+
+	session, err := h.sessionSvc.GetByID(r.Context(), *req.SessionID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	if session.OwnerArcherID != authArcherID {
+		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		return
+	}
+
+	if err := h.sessionSvc.Close(r.Context(), *req.SessionID); err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, map[string]string{"status": "closed"})
 }

@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -43,7 +44,6 @@ func (m *mockSessionHandlerService) GetOpen(ctx context.Context, archerID uuid.U
 	return nil, errors.New("unimplemented")
 }
 
-//nolint:gocritic // hugeParam: filter matches interface specification
 func (m *mockSessionHandlerService) List(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error) {
 	if m.listFn != nil {
 		return m.listFn(ctx, filter)
@@ -51,7 +51,6 @@ func (m *mockSessionHandlerService) List(ctx context.Context, filter model.Sessi
 	return nil, errors.New("unimplemented")
 }
 
-//nolint:gocritic // hugeParam: data matches interface specification
 func (m *mockSessionHandlerService) Create(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
 	if m.createFn != nil {
 		return m.createFn(ctx, data)
@@ -611,6 +610,392 @@ func TestSessionHandler_GetByID(t *testing.T) {
 		}
 		if resp.SessionID != sessionID {
 			t.Fatalf("unexpected session ID: %v", resp.SessionID)
+		}
+	})
+}
+
+func TestSessionHandler_Create(t *testing.T) {
+	authID := uuid.New()
+	sessionID := uuid.New()
+
+	validPayload := func(owner uuid.UUID) []byte {
+		data, _ := json.Marshal(model.SessionCreate{
+			OwnerArcherID:   owner,
+			SessionLocation: "Main Range",
+			IsIndoor:        false,
+			IsOpened:        true,
+		})
+		return data
+	}
+
+	t.Run("returns 401 when unauthenticated", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", bytes.NewReader(validPayload(authID)), nil, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 422 when body is invalid JSON", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", strings.NewReader("{invalid json"), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 403 when creating session for another archer", func(t *testing.T) {
+		otherID := uuid.New()
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", bytes.NewReader(validPayload(otherID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("expected status 403, got %d", rec.Code)
+		}
+		var errResp middleware.ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("failed to decode error response: %v", err)
+		}
+		if !strings.Contains(errResp.Detail, "user not allowed to open a session for another archer") {
+			t.Fatalf("unexpected error detail: %s", errResp.Detail)
+		}
+	})
+
+	t.Run("returns 409 when archer already has an open session", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			createFn: func(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
+				return uuid.Nil, apperror.Wrap(apperror.ErrConflict, "archer already has an open session")
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", bytes.NewReader(validPayload(authID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusConflict {
+			t.Fatalf("expected status 409, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 422 when service returns validation error", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			createFn: func(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
+				return uuid.Nil, apperror.Wrap(apperror.ErrValidation, "session_location is required")
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", bytes.NewReader(validPayload(authID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 201 with session_id when successfully created", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			createFn: func(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
+				if data.OwnerArcherID != authID || data.SessionLocation != "Main Range" {
+					t.Errorf("unexpected create data: %+v", data)
+				}
+				return sessionID, nil
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPost, "/api/v0/session", bytes.NewReader(validPayload(authID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("expected status 201, got %d", rec.Code)
+		}
+		var resp model.SessionID
+		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.SessionID == nil || *resp.SessionID != sessionID {
+			t.Fatalf("expected session_id %v, got %v", sessionID, resp.SessionID)
+		}
+	})
+}
+
+func TestSessionHandler_ReOpen(t *testing.T) {
+	authID := uuid.New()
+	sessionID := uuid.New()
+
+	payload := func(sid *uuid.UUID) []byte {
+		data, _ := json.Marshal(model.SessionID{SessionID: sid})
+		return data
+	}
+
+	t.Run("returns 401 when unauthenticated", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), nil, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 422 when session_id is missing or nil", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		nilUUID := uuid.Nil
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&nilUUID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 404 when session does not exist", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return nil, apperror.ErrNotFound
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 403 when authenticated archer is not the session owner", func(t *testing.T) {
+		ownerID := uuid.New()
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, ownerID, false), nil
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("expected status 403, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 422 when session is already open", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, authID, true), nil
+			},
+			reOpenFn: func(ctx context.Context, id uuid.UUID) error {
+				return apperror.Wrap(apperror.ErrValidation, "session is already open")
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 409 when owner has another conflicting open session", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, authID, false), nil
+			},
+			reOpenFn: func(ctx context.Context, id uuid.UUID) error {
+				return apperror.Wrap(apperror.ErrConflict, "archer already has an open session")
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusConflict {
+			t.Fatalf("expected status 409, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 200 with session_id when successfully reopened", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, authID, false), nil
+			},
+			reOpenFn: func(ctx context.Context, id uuid.UUID) error {
+				if id != sessionID {
+					t.Errorf("expected id %v, got %v", sessionID, id)
+				}
+				return nil
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/re-open", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.ReOpen(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", rec.Code)
+		}
+		var resp model.SessionID
+		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp.SessionID == nil || *resp.SessionID != sessionID {
+			t.Fatalf("expected session_id %v, got %v", sessionID, resp.SessionID)
+		}
+	})
+}
+
+func TestSessionHandler_Close(t *testing.T) {
+	authID := uuid.New()
+	sessionID := uuid.New()
+
+	payload := func(sid *uuid.UUID) []byte {
+		data, _ := json.Marshal(model.SessionID{SessionID: sid})
+		return data
+	}
+
+	t.Run("returns 401 when unauthenticated", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", bytes.NewReader(payload(&sessionID)), nil, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 400 when session_id is missing", func(t *testing.T) {
+		h := handler.NewSessionHandler(&mockSessionHandlerService{})
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", strings.NewReader("{}"), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", rec.Code)
+		}
+		var errResp middleware.ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("failed to decode error response: %v", err)
+		}
+		if errResp.Detail != "ERROR: session_id wasn't provided" {
+			t.Fatalf("unexpected detail message: %q", errResp.Detail)
+		}
+	})
+
+	t.Run("returns 404 when session does not exist", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return nil, apperror.ErrNotFound
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 403 when authenticated archer is not owner", func(t *testing.T) {
+		ownerID := uuid.New()
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, ownerID, true), nil
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("expected status 403, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 422 when session is already closed", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, authID, false), nil
+			},
+			closeFn: func(ctx context.Context, id uuid.UUID) error {
+				return apperror.Wrap(apperror.ErrValidation, "session is already closed")
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status 422, got %d", rec.Code)
+		}
+	})
+
+	t.Run("returns 200 with status closed when successful", func(t *testing.T) {
+		svc := &mockSessionHandlerService{
+			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
+				return sampleSessionReadData(sessionID, authID, true), nil
+			},
+			closeFn: func(ctx context.Context, id uuid.UUID) error {
+				if id != sessionID {
+					t.Errorf("expected session id %v, got %v", sessionID, id)
+				}
+				return nil
+			},
+		}
+		h := handler.NewSessionHandler(svc)
+		req := newSessionTestRequest(http.MethodPatch, "/api/v0/session/close", bytes.NewReader(payload(&sessionID)), &authID, "", "")
+		rec := httptest.NewRecorder()
+
+		h.Close(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", rec.Code)
+		}
+		var resp map[string]string
+		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if resp["status"] != "closed" {
+			t.Fatalf("expected status 'closed', got %q", resp["status"])
 		}
 	})
 }
