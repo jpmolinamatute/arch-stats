@@ -19,7 +19,7 @@ require authentication.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/session.go` implements `SessionHandler` with methods:
+- [x] `backend/internal/handler/session.go` implements `SessionHandler` with methods:
     - `GetOpenForArcher(w, r)` — GET `/api/v0/session/archer/{archer_id}/open-session`
     - `GetClosedForArcher(w, r)` — GET `/api/v0/session/archer/{archer_id}/close-session`
     - `GetParticipating(w, r)` — GET `/api/v0/session/archer/{archer_id}/participating`
@@ -28,17 +28,17 @@ require authentication.
     - `GetByID(w, r)` — GET `/api/v0/session/{id}`
     - `ReOpen(w, r)` — PATCH `/api/v0/session/re-open`
     - `Close(w, r)` — PATCH `/api/v0/session/close`
-- [ ] All endpoints extract the authenticated archer ID from the request context
+- [x] All endpoints extract the authenticated archer ID from the request context
   (set by auth middleware).
-- [ ] Handler delegates business logic to `SessionService`.
-- [ ] Error responses: 404 (not found), 409 (conflict — e.g., already open), 422 (validation).
-- [ ] Unit tests using `httptest` with mock service verify key flows:
+- [x] Handler delegates business logic to `SessionService`.
+- [x] Error responses: 404 (not found), 409 (conflict — e.g., already open), 422 (validation).
+- [x] Unit tests using `httptest` with mock service verify key flows:
     - Create returns 201 + session ID
     - Close returns 200
     - GetByID with non-existent ID returns 404
     - Create when open session exists returns 409
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -54,37 +54,37 @@ require authentication.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/handler/session_test.go`:
     - Define mock `sessionService` interface
     - Test create, close, get, list endpoints
     - Inject authenticated archer ID into request context for tests
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `session.go`**
+- [x] **Step 3: Implement `session.go`**
 
   Implement `SessionHandler` struct. Use `middleware.GetArcherID(r.Context())` to extract
   the authenticated archer from each request.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
