@@ -21,3 +21,4 @@ google_client_secret.json
 .worktrees/
 backend/arch-stats
 /arch-stats
+/docs/plans/task.md
