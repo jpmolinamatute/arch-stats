@@ -19,13 +19,13 @@ var (
 )
 
 type mockSessionRepo struct {
-	findByIDFn func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error)
-	findOpenFn func(ctx context.Context, archerID uuid.UUID) (*model.SessionRead, error)
-	findAllFn  func(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error)
-	createFn   func(ctx context.Context, data model.SessionCreate) (uuid.UUID, error)
-	updateFn   func(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error
-	closeFn    func(ctx context.Context, id uuid.UUID) error
-	deleteFn   func(ctx context.Context, id uuid.UUID) error
+	findByIDFn          func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error)
+	findOpenFn          func(ctx context.Context, archerID uuid.UUID) (*model.SessionRead, error)
+	findAllFn           func(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error)
+	createFn            func(ctx context.Context, data model.SessionCreate) (uuid.UUID, error)
+	updateFn            func(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error
+	closeFn             func(ctx context.Context, id uuid.UUID) error
+	deleteFn            func(ctx context.Context, id uuid.UUID) error
 	findParticipatingFn func(ctx context.Context, archerID uuid.UUID) (*uuid.UUID, error)
 }
 

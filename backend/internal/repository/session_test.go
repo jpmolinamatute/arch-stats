@@ -729,7 +729,7 @@ func TestSessionRepo_FindParticipating_Success(t *testing.T) {
 			}
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
-					*(dest[0].(*uuid.UUID)) = expectedSessionID
+					*dest[0].(*uuid.UUID) = expectedSessionID
 					return nil
 				},
 			}
