@@ -60,7 +60,18 @@ run_go_checks() {
     log_info "Running Go linter (golangci-lint)..."
     golangci-lint run --fix ./...
     log_info "Running Go tests..."
-    go test ./... -count=1
+    go test -json ./... -count=1  | jq -r -s '
+  # Print package summary lines
+  (.[] | select(.Action == "output" and .Test == null and (.Output | test("^(ok|\\?|FAIL)"))) | .Output | rtrimstr("\n")),
+  "",
+  (
+    ([.[] | select(.Test != null and .Action == "pass")] | length) as $passed |
+    ([.[] | select(.Test != null and .Action == "fail")] | length) as $failed |
+    ([.[] | select(.Test != null and .Action == "skip")] | length) as $skipped |
+    ($passed + $failed + $skipped) as $total |
+    "Summary: \($total) tests | \($passed) passed | \($failed) failed | \($skipped) skipped"
+  )
+'
     cd -
 }
 
