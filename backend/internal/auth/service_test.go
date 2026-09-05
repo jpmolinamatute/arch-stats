@@ -533,3 +533,124 @@ func TestService_RevokeAllSessions(t *testing.T) {
 		}
 	})
 }
+
+func TestService_Authenticate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	archerID := uuid.New()
+	cfg := defaultTestConfig()
+
+	rawSession := []byte("12345678901234567890123456789012")
+	sid := auth.EncodeSessionID(rawSession)
+	tokenHash := auth.HashSessionToken(rawSession)
+	now := time.Now().UTC()
+
+	t.Run("valid token returns archer id", func(t *testing.T) {
+		t.Parallel()
+		jwtToken, err := auth.BuildJWT(archerID, sid, now, now.Add(time.Hour), cfg.JWTSecret, cfg.JWTAlgorithm)
+		if err != nil {
+			t.Fatalf("BuildJWT() error: %v", err)
+		}
+
+		sessionRepo := &mockSessionRepo{
+			findByTokenHashFn: func(ctx context.Context, hash []byte) (*model.AuthSessionRead, error) {
+				if !bytes.Equal(hash, tokenHash) {
+					return nil, nil
+				}
+				return &model.AuthSessionRead{
+					ArcherID:         archerID,
+					SessionTokenHash: tokenHash,
+					CreatedAt:        now,
+					ExpiresAt:        now.Add(time.Hour),
+				}, nil
+			},
+		}
+
+		svc := auth.NewService(&mockArcherRepo{}, sessionRepo, cfg)
+		gotID, err := svc.Authenticate(ctx, jwtToken)
+		if err != nil {
+			t.Fatalf("Authenticate() unexpected error: %v", err)
+		}
+		if gotID != archerID {
+			t.Errorf("Authenticate() = %v, want %v", gotID, archerID)
+		}
+	})
+
+	t.Run("expired jwt returns unauthorized", func(t *testing.T) {
+		t.Parallel()
+		past := now.Add(-2 * time.Hour)
+		jwtToken, err := auth.BuildJWT(archerID, sid, past, past.Add(time.Hour), cfg.JWTSecret, cfg.JWTAlgorithm)
+		if err != nil {
+			t.Fatalf("BuildJWT() error: %v", err)
+		}
+
+		svc := auth.NewService(&mockArcherRepo{}, &mockSessionRepo{}, cfg)
+		_, err = svc.Authenticate(ctx, jwtToken)
+		if err == nil {
+			t.Fatal("Authenticate() expected error for expired JWT, got nil")
+		}
+		if !errors.Is(err, apperror.ErrUnauthorized) {
+			t.Errorf("Authenticate() error = %v, want ErrUnauthorized", err)
+		}
+	})
+
+	t.Run("revoked session returns unauthorized", func(t *testing.T) {
+		t.Parallel()
+		jwtToken, err := auth.BuildJWT(archerID, sid, now, now.Add(time.Hour), cfg.JWTSecret, cfg.JWTAlgorithm)
+		if err != nil {
+			t.Fatalf("BuildJWT() error: %v", err)
+		}
+
+		revokedAt := now.Add(-5 * time.Minute)
+		sessionRepo := &mockSessionRepo{
+			findByTokenHashFn: func(ctx context.Context, hash []byte) (*model.AuthSessionRead, error) {
+				return &model.AuthSessionRead{
+					ArcherID:         archerID,
+					SessionTokenHash: tokenHash,
+					CreatedAt:        now,
+					ExpiresAt:        now.Add(time.Hour),
+					RevokedAt:        &revokedAt,
+				}, nil
+			},
+		}
+
+		svc := auth.NewService(&mockArcherRepo{}, sessionRepo, cfg)
+		_, err = svc.Authenticate(ctx, jwtToken)
+		if err == nil {
+			t.Fatal("Authenticate() expected error for revoked session, got nil")
+		}
+		if !errors.Is(err, apperror.ErrUnauthorized) {
+			t.Errorf("Authenticate() error = %v, want ErrUnauthorized", err)
+		}
+	})
+
+	t.Run("mismatched session archer id returns unauthorized", func(t *testing.T) {
+		t.Parallel()
+		jwtToken, err := auth.BuildJWT(archerID, sid, now, now.Add(time.Hour), cfg.JWTSecret, cfg.JWTAlgorithm)
+		if err != nil {
+			t.Fatalf("BuildJWT() error: %v", err)
+		}
+
+		otherArcherID := uuid.New()
+		sessionRepo := &mockSessionRepo{
+			findByTokenHashFn: func(ctx context.Context, hash []byte) (*model.AuthSessionRead, error) {
+				return &model.AuthSessionRead{
+					ArcherID:         otherArcherID,
+					SessionTokenHash: tokenHash,
+					CreatedAt:        now,
+					ExpiresAt:        now.Add(time.Hour),
+				}, nil
+			},
+		}
+
+		svc := auth.NewService(&mockArcherRepo{}, sessionRepo, cfg)
+		_, err = svc.Authenticate(ctx, jwtToken)
+		if err == nil {
+			t.Fatal("Authenticate() expected error for mismatched archer ID, got nil")
+		}
+		if !errors.Is(err, apperror.ErrUnauthorized) {
+			t.Errorf("Authenticate() error = %v, want ErrUnauthorized", err)
+		}
+	})
+}
+

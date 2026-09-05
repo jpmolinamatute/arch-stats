@@ -250,6 +250,38 @@ func (s *Service) VerifyGoogleToken(ctx context.Context, credential string) (*Go
 	return VerifyGoogleIDToken(ctx, credential, s.cfg.GoogleOAuthClientID)
 }
 
+// Authenticate verifies and decodes an access JWT, validates the underlying session in the database,
+// ensures the session matches the archer, and returns the authenticated archer UUID.
+func (s *Service) Authenticate(ctx context.Context, tokenStr string) (uuid.UUID, error) {
+	claims, err := DecodeJWT(tokenStr, s.cfg.JWTSecret, s.cfg.JWTAlgorithm)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	rawSession, err := DecodeSessionID(claims.SID)
+	if err != nil {
+		return uuid.Nil, apperror.Wrap(apperror.ErrUnauthorized, "invalid session id in token")
+	}
+
+	tokenHash := HashSessionToken(rawSession)
+	session, err := s.ValidateSession(ctx, tokenHash)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	archerID, err := claims.ArcherID()
+	if err != nil {
+		return uuid.Nil, apperror.Wrap(apperror.ErrUnauthorized, "invalid archer id in token")
+	}
+
+	if session.ArcherID != archerID {
+		return uuid.Nil, apperror.Wrap(apperror.ErrUnauthorized, "session does not belong to archer")
+	}
+
+	return archerID, nil
+}
+
+
 func (s *Service) createSessionAndToken(
 	ctx context.Context,
 	archer *model.ArcherRead,
