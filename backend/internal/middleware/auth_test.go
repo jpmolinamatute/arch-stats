@@ -173,7 +173,7 @@ func TestAuth_HeaderTakesPrecedenceOverCookie(t *testing.T) {
 
 func TestExtractToken(t *testing.T) {
 	t.Run("extracts from Authorization header with Bearer prefix", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		req.Header.Set("Authorization", "Bearer header-token-xyz")
 
 		got := middleware.ExtractToken(req)
@@ -183,7 +183,7 @@ func TestExtractToken(t *testing.T) {
 	})
 
 	t.Run("extracts from cookie when Authorization header is absent", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		req.AddCookie(&http.Cookie{
 			Name:  middleware.AuthCookieName,
 			Value: "cookie-token-abc",
@@ -196,7 +196,7 @@ func TestExtractToken(t *testing.T) {
 	})
 
 	t.Run("prefers Authorization header over cookie", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		req.Header.Set("Authorization", "Bearer header-priority-token")
 		req.AddCookie(&http.Cookie{
 			Name:  middleware.AuthCookieName,
@@ -210,7 +210,7 @@ func TestExtractToken(t *testing.T) {
 	})
 
 	t.Run("returns empty string when neither header nor cookie present", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 		got := middleware.ExtractToken(req)
 		if got != "" {
 			t.Fatalf("expected empty string, got %q", got)

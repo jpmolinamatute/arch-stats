@@ -75,7 +75,7 @@ func TestReadJSON(t *testing.T) {
 	})
 
 	t.Run("returns ErrValidation on empty request body", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/", http.NoBody)
 		var dst samplePayload
 		err := handler.ReadJSON(req, &dst)
 		if err == nil {
