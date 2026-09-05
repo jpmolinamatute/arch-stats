@@ -18,22 +18,22 @@ by ID, join/re-join/leave a session. All endpoints require authentication.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/slot.go` implements `SlotHandler` with methods:
+- [x] `backend/internal/handler/slot.go` implements `SlotHandler` with methods:
     - `GetArcherCurrentSlot(w, r)` — GET `/api/v0/session/slot/archer/{archer_id}`
     - `GetSlot(w, r)` — GET `/api/v0/session/slot/{slot_id}`
     - `JoinSession(w, r)` — POST `/api/v0/session/slot`
     - `ReJoinSession(w, r)` — PATCH `/api/v0/session/slot/re-join/{slot_id}`
     - `LeaveSession(w, r)` — PATCH `/api/v0/session/slot/leave/{slot_id}`
-- [ ] All endpoints extract the authenticated archer ID from request context.
-- [ ] Handler delegates business logic to `SlotService`.
-- [ ] Error responses: 400 (bad request), 403 (forbidden), 404 (not found), 422 (validation).
-- [ ] Unit tests using `httptest` with mock service verify:
+- [x] All endpoints extract the authenticated archer ID from request context.
+- [x] Handler delegates business logic to `SlotService`.
+- [x] Error responses: 400 (bad request), 403 (forbidden), 404 (not found), 422 (validation).
+- [x] Unit tests using `httptest` with mock service verify:
     - GetArcherCurrentSlot returns 200 + full slot info
     - JoinSession with valid payload returns 200 + slot join response
     - LeaveSession returns 200
     - GetSlot with non-existent ID returns 404
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -49,33 +49,33 @@ by ID, join/re-join/leave a session. All endpoints require authentication.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
   Create `backend/internal/handler/slot_test.go`:
     - Define mock `slotService` interface
     - Test join, re-join, leave, get endpoints
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `slot.go`**
+- [x] **Step 3: Implement `slot.go`**
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
