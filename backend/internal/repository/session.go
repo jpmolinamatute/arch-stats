@@ -58,17 +58,8 @@ func scanSession(scanner interface{ Scan(dest ...any) error }) (model.SessionRea
 // FindByID retrieves a shooting session by its primary key identifier.
 // Returns nil, nil if no session exists with the given ID.
 func (r *SessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
-	sql, args, err := StmtBuilder.Select(sessionColumns...).
-		From("session").
-		Where(squirrel.Eq{"session_id": id}).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("building find by id query: %w", err)
-	}
-
-	row := r.db.QueryRow(ctx, sql, args...)
-	return ScanOne(row, func(r pgx.Row) (model.SessionRead, error) {
-		return scanSession(r)
+	return findByID(ctx, r.db, "session", "session_id", sessionColumns, id, func(row pgx.Row) (model.SessionRead, error) {
+		return scanSession(row)
 	})
 }
 
@@ -139,7 +130,7 @@ func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) (
 //
 
 func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
-	sql, args, err := StmtBuilder.Insert("session").
+	builder := StmtBuilder.Insert("session").
 		Columns(
 			"owner_archer_id",
 			"session_location",
@@ -151,19 +142,9 @@ func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uui
 			data.SessionLocation,
 			data.IsIndoor,
 			data.IsOpened,
-		).
-		Suffix("RETURNING session_id").
-		ToSql()
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("building create session query: %w", err)
-	}
+		)
 
-	var newID uuid.UUID
-	if err := r.db.QueryRow(ctx, sql, args...).Scan(&newID); err != nil {
-		return uuid.Nil, fmt.Errorf("inserting session: %w", err)
-	}
-
-	return newID, nil
+	return createReturningID(ctx, r.db, builder, "session_id")
 }
 
 // Update mutates session fields specified in data for rows matching filter.
@@ -227,24 +208,10 @@ func (r *SessionRepo) Update(ctx context.Context, data model.SessionSet, filter 
 	}
 
 	if whereCount == 0 {
-		return errors.New("update requires at least one filter condition to prevent unrestricted updates")
+		return errUpdateRequiresFilter
 	}
 
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return fmt.Errorf("building update query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing update: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return execUpdate(ctx, r.db, q)
 }
 
 // Close marks an active shooting session as closed, setting is_opened = false and closed_at = current UTC timestamp.
@@ -276,23 +243,7 @@ func (r *SessionRepo) Close(ctx context.Context, id uuid.UUID) error {
 // Delete removes a shooting session by its primary key identifier.
 // Returns apperror.ErrNotFound if no session existed with the given ID.
 func (r *SessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("session").
-		Where(squirrel.Eq{"session_id": id}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("building delete session query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing delete session: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return deleteByID(ctx, r.db, "session", "session_id", id)
 }
 
 // FindParticipating queries whether the specified archer is assigned to an active shooting slot in an open session.
