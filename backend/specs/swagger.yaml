@@ -1,0 +1,1575 @@
+basePath: /api/v0
+definitions:
+  ArcherCreate:
+    properties:
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      date_of_birth:
+        type: string
+      draw_weight:
+        maximum: 200
+        type: number
+      email:
+        type: string
+      first_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      gender:
+        $ref: '#/definitions/Gender'
+      google_picture_url:
+        type: string
+      google_subject:
+        type: string
+      last_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - bowstyle
+    - date_of_birth
+    - draw_weight
+    - email
+    - first_name
+    - gender
+    - google_subject
+    - last_name
+    type: object
+  ArcherFilter:
+    properties:
+      archer_id:
+        type: string
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      created_at:
+        type: string
+      draw_weight:
+        type: number
+      first_name:
+        type: string
+      gender:
+        $ref: '#/definitions/Gender'
+      google_subject:
+        type: string
+      last_login_at:
+        type: string
+      last_name:
+        type: string
+    type: object
+  ArcherID:
+    properties:
+      archer_id:
+        type: string
+    required:
+    - archer_id
+    type: object
+  ArcherRead:
+    properties:
+      archer_id:
+        type: string
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      created_at:
+        type: string
+      date_of_birth:
+        type: string
+      draw_weight:
+        type: number
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        $ref: '#/definitions/Gender'
+      google_picture_url:
+        type: string
+      google_subject:
+        type: string
+      last_login_at:
+        type: string
+      last_name:
+        type: string
+    required:
+    - archer_id
+    - bowstyle
+    - created_at
+    - date_of_birth
+    - draw_weight
+    - email
+    - first_name
+    - gender
+    - google_subject
+    - last_login_at
+    - last_name
+    type: object
+  ArcherSet:
+    properties:
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      draw_weight:
+        maximum: 200
+        type: number
+      first_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      gender:
+        $ref: '#/definitions/Gender'
+      google_picture_url:
+        type: string
+      last_login_at:
+        type: string
+      last_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  ArcherUpdate:
+    properties:
+      data:
+        $ref: '#/definitions/ArcherSet'
+      where:
+        $ref: '#/definitions/ArcherFilter'
+    required:
+    - data
+    - where
+    type: object
+  AuthAuthenticated:
+    properties:
+      access_token:
+        type: string
+      archer:
+        $ref: '#/definitions/ArcherRead'
+      expires_at:
+        type: string
+      status:
+        $ref: '#/definitions/AuthStatus'
+    required:
+    - access_token
+    - archer
+    - expires_at
+    - status
+    type: object
+  AuthRegistrationRequest:
+    properties:
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      credential:
+        minLength: 10
+        type: string
+      date_of_birth:
+        type: string
+      draw_weight:
+        maximum: 200
+        type: number
+      first_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      gender:
+        $ref: '#/definitions/Gender'
+      last_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - bowstyle
+    - credential
+    - date_of_birth
+    - draw_weight
+    - gender
+    type: object
+  AuthStatus:
+    enum:
+    - authenticated
+    - needs_registration
+    type: string
+    x-enum-varnames:
+    - AuthStatusAuthenticated
+    - AuthStatusNeedsRegistration
+  Bowstyle:
+    enum:
+    - recurve
+    - compound
+    - barebow
+    - longbow
+    type: string
+    x-enum-varnames:
+    - BowstyleRecurve
+    - BowstyleCompound
+    - BowstyleBarebow
+    - BowstyleLongbow
+  ErrorResponse:
+    properties:
+      code:
+        type: string
+      detail:
+        type: string
+    required:
+    - detail
+    type: object
+  Face:
+    properties:
+      face_name:
+        type: string
+      face_type:
+        $ref: '#/definitions/FaceType'
+      render_cross:
+        type: boolean
+      rings:
+        items:
+          $ref: '#/definitions/Ring'
+        type: array
+      spots:
+        items:
+          $ref: '#/definitions/Spot'
+        type: array
+      viewBox:
+        type: number
+    required:
+    - face_name
+    - face_type
+    - render_cross
+    - rings
+    - spots
+    - viewBox
+    type: object
+  FaceMinimal:
+    properties:
+      face_name:
+        type: string
+      face_type:
+        $ref: '#/definitions/FaceType'
+    required:
+    - face_name
+    - face_type
+    type: object
+  FaceType:
+    enum:
+    - wa_40cm_full
+    - wa_60cm_full
+    - wa_80cm_full
+    - wa_122cm_full
+    - wa_40cm_6rings
+    - wa_60cm_6rings
+    - wa_80cm_6rings
+    - wa_122cm_6rings
+    - wa_40cm_triple_vertical
+    - wa_60cm_triple_triangular
+    - none
+    type: string
+    x-enum-varnames:
+    - FaceTypeWA40Full
+    - FaceTypeWA60Full
+    - FaceTypeWA80Full
+    - FaceTypeWA122Full
+    - FaceTypeWA406Rings
+    - FaceTypeWA606Rings
+    - FaceTypeWA806Rings
+    - FaceTypeWA1226Rings
+    - FaceTypeWA40TripleVertical
+    - FaceTypeWA60TripleTriangular
+    - FaceTypeNone
+  FullSlotInfo:
+    properties:
+      archer_id:
+        type: string
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      created_at:
+        type: string
+      distance:
+        type: integer
+      draw_weight:
+        type: number
+      face_type:
+        $ref: '#/definitions/FaceType'
+      interval_seconds:
+        type: integer
+      is_shooting:
+        type: boolean
+      lane:
+        type: integer
+      session_id:
+        type: string
+      shot_per_round:
+        type: integer
+      slot:
+        type: string
+      slot_id:
+        type: string
+      slot_letter:
+        $ref: '#/definitions/SlotLetter'
+      target_id:
+        type: string
+    required:
+    - archer_id
+    - bowstyle
+    - created_at
+    - distance
+    - draw_weight
+    - face_type
+    - interval_seconds
+    - is_shooting
+    - lane
+    - session_id
+    - slot
+    - slot_id
+    - slot_letter
+    - target_id
+    type: object
+  Gender:
+    enum:
+    - male
+    - female
+    - non_binary
+    - other
+    - unspecified
+    type: string
+    x-enum-varnames:
+    - GenderMale
+    - GenderFemale
+    - GenderNonBinary
+    - GenderOther
+    - GenderUnspecified
+  GoogleOneTapRequest:
+    properties:
+      credential:
+        minLength: 10
+        type: string
+    required:
+    - credential
+    type: object
+  HealthResponse:
+    properties:
+      error:
+        type: string
+      schema_version:
+        type: integer
+      status:
+        type: string
+    required:
+    - schema_version
+    - status
+    type: object
+  LiveStat:
+    properties:
+      scores:
+        items:
+          $ref: '#/definitions/ShotScore'
+        type: array
+      stats:
+        $ref: '#/definitions/Stats'
+    required:
+    - scores
+    - stats
+    type: object
+  LogoutResponse:
+    properties:
+      success:
+        type: boolean
+    required:
+    - success
+    type: object
+  Ring:
+    properties:
+      data_score:
+        type: integer
+      fill:
+        type: string
+      r:
+        type: number
+      stroke:
+        type: string
+      stroke_width:
+        type: number
+    required:
+    - data_score
+    - fill
+    - r
+    - stroke
+    - stroke_width
+    type: object
+  SessionCreate:
+    properties:
+      is_indoor:
+        type: boolean
+      is_opened:
+        type: boolean
+      owner_archer_id:
+        type: string
+      session_location:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - is_indoor
+    - is_opened
+    - owner_archer_id
+    - session_location
+    type: object
+  SessionId:
+    properties:
+      session_id:
+        type: string
+    type: object
+  SessionRead:
+    properties:
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      is_indoor:
+        type: boolean
+      is_opened:
+        type: boolean
+      owner_archer_id:
+        type: string
+      session_id:
+        type: string
+      session_location:
+        type: string
+    required:
+    - created_at
+    - is_indoor
+    - is_opened
+    - owner_archer_id
+    - session_id
+    - session_location
+    type: object
+  ShotCreate:
+    properties:
+      arrow_id:
+        type: string
+      created_at:
+        type: string
+      is_x:
+        type: boolean
+      score:
+        maximum: 10
+        minimum: 0
+        type: integer
+      slot_id:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+    required:
+    - is_x
+    - slot_id
+    type: object
+  ShotId:
+    properties:
+      shot_id:
+        type: string
+    required:
+    - shot_id
+    type: object
+  ShotRead:
+    properties:
+      arrow_id:
+        type: string
+      created_at:
+        type: string
+      is_x:
+        type: boolean
+      score:
+        type: integer
+      shot_id:
+        type: string
+      slot_id:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+    required:
+    - created_at
+    - is_x
+    - shot_id
+    - slot_id
+    type: object
+  ShotScore:
+    properties:
+      created_at:
+        type: string
+      is_x:
+        type: boolean
+      score:
+        maximum: 10
+        minimum: 0
+        type: integer
+      shot_id:
+        type: string
+    required:
+    - created_at
+    - is_x
+    - score
+    - shot_id
+    type: object
+  SlotJoinRequest:
+    properties:
+      archer_id:
+        type: string
+      bowstyle:
+        $ref: '#/definitions/Bowstyle'
+      club_id:
+        type: string
+      distance:
+        maximum: 100
+        minimum: 1
+        type: integer
+      draw_weight:
+        maximum: 200
+        type: number
+      face_type:
+        $ref: '#/definitions/FaceType'
+      interval_seconds:
+        maximum: 100
+        minimum: 1
+        type: integer
+      is_shooting:
+        type: boolean
+      session_id:
+        type: string
+      shot_per_round:
+        maximum: 10
+        minimum: 3
+        type: integer
+    required:
+    - archer_id
+    - bowstyle
+    - distance
+    - draw_weight
+    - face_type
+    - interval_seconds
+    - is_shooting
+    - session_id
+    type: object
+  SlotJoinResponse:
+    properties:
+      slot:
+        type: string
+      slot_id:
+        type: string
+    required:
+    - slot
+    - slot_id
+    type: object
+  SlotLetter:
+    enum:
+    - A
+    - B
+    - C
+    - D
+    type: string
+    x-enum-varnames:
+    - SlotLetterA
+    - SlotLetterB
+    - SlotLetterC
+    - SlotLetterD
+  Spot:
+    properties:
+      diameter:
+        type: number
+      x_offset:
+        type: number
+      y_offset:
+        type: number
+    required:
+    - diameter
+    - x_offset
+    - y_offset
+    type: object
+  Stats:
+    properties:
+      max_score:
+        minimum: 0
+        type: integer
+      mean:
+        type: number
+      number_of_shots:
+        minimum: 0
+        type: integer
+      slot_id:
+        type: string
+      total_score:
+        minimum: 0
+        type: integer
+    required:
+    - max_score
+    - mean
+    - number_of_shots
+    - slot_id
+    - total_score
+    type: object
+info:
+  contact: {}
+  description: Backend API for archery statistics tracking
+  title: Arch Stats API
+  version: v0
+paths:
+  /archer/:
+    get:
+      description: Query archers matching default filter criteria and return a JSON
+        list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ArcherRead'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Archers
+      tags:
+      - Archers
+    patch:
+      consumes:
+      - application/json
+      description: Update archer fields matching the specified where filter
+      parameters:
+      - description: Archer update filter and data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ArcherUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Archer
+      tags:
+      - Archers
+    post:
+      consumes:
+      - application/json
+      description: Parse archer creation payload, persist new profile, and return
+        created identifier
+      parameters:
+      - description: Archer creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ArcherCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ArcherID'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Archer
+      tags:
+      - Archers
+  /archer/{id}:
+    delete:
+      description: Remove an archer profile by UUID primary key identifier
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Archer
+      tags:
+      - Archers
+    get:
+      description: Retrieve a single archer profile by UUID primary key identifier
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArcherRead'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Archer
+      tags:
+      - Archers
+  /auth/google:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate via Google One Tap credential. For existing archers,
+        sets the auth cookie and returns credentials. For new archers, returns registration
+        requirement.
+      parameters:
+      - description: Google One Tap credential
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/GoogleOneTapRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthAuthenticated'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Google One Tap Login
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate via Google One Tap credential. For existing archers,
+        sets the auth cookie and returns credentials. For new archers, returns registration
+        requirement.
+      parameters:
+      - description: Google One Tap credential
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/GoogleOneTapRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthAuthenticated'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Google One Tap Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Deletes the auth cookie and revokes the active session token in
+        the database
+      operationId: logout_api_v0_auth_logout_post
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LogoutResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Returns the currently authenticated archer from the request context
+        or token cookie
+      operationId: get_current_user_api_v0_auth_me_get
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthAuthenticated'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Current User
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new archer profile with Google One Tap credential and
+        demographic details
+      operationId: register_api_v0_auth_register_post
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/AuthRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AuthAuthenticated'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AuthAuthenticated'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Register
+      tags:
+      - Auth
+  /faces:
+    get:
+      description: Returns a list of target face summaries (face_type and face_name).
+        Public endpoint.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/FaceMinimal'
+            type: array
+      summary: List Faces
+      tags:
+      - Faces
+  /faces/{face_type}:
+    get:
+      description: Returns the full geometry and scoring layout for the requested
+        face type. Public endpoint.
+      parameters:
+      - description: Face type identifier
+        in: path
+        name: face_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Face'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Get Face
+      tags:
+      - Faces
+  /health:
+    get:
+      description: Returns current service health and database migration schema version.
+        Public endpoint.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/HealthResponse'
+      summary: Health Check
+      tags:
+      - System
+  /session:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new shooting session and returns the assigned session
+        ID
+      parameters:
+      - description: Session creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SessionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/SessionId'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Session
+      tags:
+      - Sessions
+  /session/{id}:
+    get:
+      description: Returns full session details for the given session UUID
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionRead'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Session
+      tags:
+      - Sessions
+  /session/archer/{archer_id}/close-session:
+    get:
+      description: Returns all closed sessions owned by the archer
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: archer_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/SessionRead'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Closed Session For Archer
+      tags:
+      - Sessions
+  /session/archer/{archer_id}/open-session:
+    get:
+      description: Returns the open session ID owned by the archer, or null session_id
+        if none exists
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: archer_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionId'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Open Session For Archer
+      tags:
+      - Sessions
+  /session/archer/{archer_id}/participating:
+    get:
+      description: Returns the open session ID the archer is currently participating
+        in, or null if none
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: archer_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionId'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Participating Session For Archer
+      tags:
+      - Sessions
+  /session/close:
+    patch:
+      consumes:
+      - application/json
+      description: Marks an active shooting session as closed
+      parameters:
+      - description: Session identifier payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SessionId'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Close Session
+      tags:
+      - Sessions
+  /session/open:
+    get:
+      description: Returns all currently open sessions in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/SessionRead'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Open Sessions
+      tags:
+      - Sessions
+  /session/re-open:
+    patch:
+      consumes:
+      - application/json
+      description: Re-opens a closed shooting session after verifying owner identity
+        and absence of conflicts
+      parameters:
+      - description: Session identifier payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SessionId'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SessionId'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Re Open Session
+      tags:
+      - Sessions
+  /session/slot:
+    post:
+      consumes:
+      - application/json
+      description: Assigns an archer to a target slot within an open session
+      parameters:
+      - description: Slot join parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SlotJoinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SlotJoinResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Join Session
+      tags:
+      - Slots
+  /session/slot/{slot_id}:
+    get:
+      description: Returns active slot assignment details by slot UUID
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/FullSlotInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Slot
+      tags:
+      - Slots
+  /session/slot/archer/{archer_id}:
+    get:
+      description: Returns active slot assignment for the given archer (open session
+        and is_shooting = true)
+      parameters:
+      - description: Archer UUID
+        in: path
+        name: archer_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/FullSlotInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Archer Current Slot
+      tags:
+      - Slots
+  /session/slot/leave/{slot_id}:
+    patch:
+      description: Deactivates an active slot assignment (stop shooting in the session)
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Leave Session
+      tags:
+      - Slots
+  /session/slot/re-join/{slot_id}:
+    patch:
+      description: Re-activates a previously inactive slot assignment
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SlotJoinResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Re Join Session
+      tags:
+      - Slots
+  /shot:
+    post:
+      consumes:
+      - application/json
+      description: Record a single shot or a batch array of shots (3 to 10 shots)
+        for the authenticated archer
+      parameters:
+      - description: Shot creation payload (object or array)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ShotCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ShotId'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Shot
+      tags:
+      - Shots
+  /shot/by-slot/{slot_id}:
+    get:
+      description: Returns list of shots for the given slot owned by the authenticated
+        archer
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ShotRead'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Shots By Slot
+      tags:
+      - Shots
+  /shot/count-by-slot/{slot_id}:
+    get:
+      description: Returns total shot count for the given slot owned by the authenticated
+        archer
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Shots Count By Slot
+      tags:
+      - Shots
+  /stats/{slot_id}:
+    get:
+      description: Returns current live aggregate statistics and recent shot scores
+        for a slot
+      parameters:
+      - description: Slot UUID
+        in: path
+        name: slot_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LiveStat'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Stats
+      tags:
+      - Stats
+securityDefinitions:
+  BearerAuth:
+    in: cookie
+    name: access_token
+    type: apiKey
+swagger: "2.0"

@@ -96,8 +96,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Accept      json
 // @Produce     json
 // @Param       request body model.AuthRegistrationRequest true "Registration details"
+// @Success     200 {object} model.AuthAuthenticated
 // @Success     201 {object} model.AuthAuthenticated
 // @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @ID          register_api_v0_auth_register_post
 // @Router      /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.AuthRegistrationRequest
@@ -132,6 +135,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Success     200 {object} model.LogoutResponse
 // @Failure     401 {object} model.ErrorResponse
 // @Security    BearerAuth
+// @ID          logout_api_v0_auth_logout_post
 // @Router      /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	token := middleware.ExtractToken(r)
@@ -152,6 +156,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure     401 {object} model.ErrorResponse
 // @Failure     404 {object} model.ErrorResponse
 // @Security    BearerAuth
+// @ID          get_current_user_api_v0_auth_me_get
 // @Router      /auth/me [get]
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	archerID, err := middleware.GetArcherID(r.Context())
