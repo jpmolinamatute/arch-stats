@@ -15,7 +15,7 @@ convert_swagger_to_openapi() {
     )
     if [[ -f "${ROOT_DIR}/scripts/enrich_openapi.py" ]]; then
         echo "Info: Enriching OpenAPI 3.0 spec for frontend compatibility"
-        python3 "${ROOT_DIR}/scripts/enrich_openapi.py" "${dst}"
+        "${ROOT_DIR}/scripts/enrich_openapi.py" "${dst}"
     fi
 }
 
