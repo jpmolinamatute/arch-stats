@@ -17,28 +17,26 @@ and the Go backend has been validated. This is the final cleanup step of the rep
 
 ## Acceptance Criteria
 
-- [ ] The `backend-old/` directory is deleted from the repository.
-- [ ] All references to `backend-old/` are removed from:
+- [x] The `backend-old/` directory is deleted from the repository.
+- [x] All references to `backend-old/` are removed from:
     - `.github/workflows/` — no workflow references backend-old
     - `scripts/` — no script references backend-old
     - `docker/` — no docker config references backend-old
     - `.agent/` — no skill references backend-old
     - `docs/` — task files can still reference it historically but no active config
     - `.gitmodules` — if the migrations submodule pointed into backend-old
-- [ ] The `.github/actions/uv-setup/` custom action is deleted (no longer needed).
-- [ ] The repository compiles, tests pass, and CI pipelines work without `backend-old/`.
-- [ ] `git log --oneline -1` shows a clean commit message.
+- [x] The repository compiles, tests pass, and CI pipelines work without `backend-old/`.
+- [x] `git log --oneline -1` shows a clean commit message.
 
 ## Files to Delete
 
 | Action | Path |
 | ------ | ---- |
 | Delete | `backend-old/` (entire directory) |
-| Delete | `.github/actions/uv-setup/` (if it exists and is Python-only) |
 
 ## Steps
 
-- [ ] **Step 1: Verify the Go backend is fully functional**
+- [x] **Step 1: Verify the Go backend is fully functional**
 
   ```bash
   cd backend
@@ -49,7 +47,7 @@ and the Go backend has been validated. This is the final cleanup step of the rep
 
   All must pass before proceeding.
 
-- [ ] **Step 2: Search for any remaining references**
+- [x] **Step 2: Search for any remaining references**
 
   ```bash
   grep -rn "backend-old" . --include="*.yaml" --include="*.yml" --include="*.bash" \
@@ -59,19 +57,13 @@ and the Go backend has been validated. This is the final cleanup step of the rep
 
   Fix any active references found (docs/tasks/ references are historical and acceptable).
 
-- [ ] **Step 3: Delete `backend-old/`**
+- [x] **Step 3: Delete `backend-old/`**
 
   ```bash
   git rm -r backend-old/
   ```
 
-- [ ] **Step 4: Delete `uv-setup` action if it exists**
-
-  ```bash
-  git rm -r .github/actions/uv-setup/ 2>/dev/null || true
-  ```
-
-- [ ] **Step 5: Verify the build still works**
+- [x] **Step 4: Verify the build still works**
 
   ```bash
   cd backend
@@ -79,7 +71,7 @@ and the Go backend has been validated. This is the final cleanup step of the rep
   go test ./... -v -count=1
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add -A

@@ -22,7 +22,7 @@ The frontend is a Single Page Application (SPA) built with a modern stack:
 - **State Management**: Minimal global state; prefers Composables.
 - **API Integration**: Generated TypeScript clients from OpenAPI specs.
 
-It communicates with a Python backend (FastAPI/Uvicorn) served at `http://localhost:8000`.
+It communicates with a Go backend (Chi router) served at `http://localhost:8000`.
 
 ## Golden Constraints (must-follow)
 
@@ -31,7 +31,7 @@ It communicates with a Python backend (FastAPI/Uvicorn) served at `http://localh
 - **API calls in composables**: Components must not call `fetch()` directly.
 - **Strict typing**: No implicit `any`; keep TypeScript strict.
 - **Formatting**: ESLint + Prettier; keep diffs minimal and focused.
-- **Build output path**: `npm run build` emits to `../backend/src/frontend/`.
+- **Build output path**: `npm run build` emits to `../backend/frontend/`.
 
 ## Prerequisites
 
@@ -74,7 +74,7 @@ Follow these steps to get from zero to "Hello World":
     Open a new terminal and run:
 
     ```bash
-    ./scripts/start_uvicorn.bash
+    cd backend && air
     ```
 
 ## Quickstart (VS Code tasks)
@@ -82,7 +82,7 @@ Follow these steps to get from zero to "Hello World":
 If you use VS Code, the workspace defines helpful tasks:
 
 - Start frontend dev server: Run task `Start Vite Server`.
-- Start backend API: Run task `Start Uvicorn Server`.
+- Start backend API: Run task `Start Go Server (air)`.
 - Start/stop database: Run tasks `Start Docker Compose` and
   `Stop Docker Compose` (or `Stop & Remove Volumes`).
 
@@ -218,7 +218,7 @@ server: {
 
 ### Production Build
 
-In production, the frontend is built into static files and served directly by the backend (Uvicorn).
+In production, the frontend is built into static files and served directly by the Go backend.
 
 1. **Build the Frontend**:
 
@@ -226,16 +226,16 @@ In production, the frontend is built into static files and served directly by th
     npm run build
     ```
 
-    This compiles the app to `../backend/src/frontend/`.
+    This compiles the app to `../backend/frontend/`.
 
-2. **Serve with Uvicorn**:
-    When you start the backend:
+2. **Serve with Go Backend**:
+    When you run the backend:
 
     ```bash
-    ./scripts/start_uvicorn.bash
+    cd backend && go run ./cmd/arch-stats
     ```
 
-    Uvicorn serves the API at `/api/v0` AND the static frontend files at the root `/`.
+    The Go server serves the API at `/api/v0` AND the static frontend files at the root `/`.
 
 ## Troubleshooting
 
@@ -244,7 +244,7 @@ In production, the frontend is built into static files and served directly by th
 - Proxy not working: Check `vite.config.ts` proxy to `http://localhost:8000` and ports.
 - CORS errors in dev: Use the dev proxy (`/api/v0`), not absolute backend URLs.
 - Node/npm issues: Ensure versions match the prerequisites listed above.
-- Build path mismatch: Production build must emit to `../backend/src/frontend/`.
+- Build path mismatch: Production build must emit to `../backend/frontend/`.
 
 ### Do / Don't
 
@@ -256,5 +256,5 @@ In production, the frontend is built into static files and served directly by th
 
 ## References
 
-- **Backend**: [backend/README.md](../backend/README.md)
+- **Backend**: [backend/](../backend)
 - **Scripts**: [scripts/README.md](../scripts/README.md)

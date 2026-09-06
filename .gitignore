@@ -12,8 +12,6 @@ frontend/.vitest-localstorage-wal
 ignore/*
 frontend/src/types/*
 !frontend/src/types/.gitkeep
-backend-old/src/core/logs/*
-!backend-old/src/core/logs/.gitkeep
 backend/frontend/*
 !backend/frontend/.gitkeep
 openapi.json

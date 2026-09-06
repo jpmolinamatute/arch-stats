@@ -55,7 +55,6 @@ Here are the primary scripts used in the project lifecycle:
 | Script | Description |
 | :--- | :--- |
 | [`install.bash`](./install.bash) | Installs Arch-Stats to the local system (downloads artifact, sets up venv). |
-| [`start_uvicorn.bash`](./start_uvicorn.bash) | Starts the backend dev server with hot reload and Docker dependencies. |
 | [`generate_fe_types.bash`](./generate_fe_types.bash) | Generates frontend TypeScript types from the backend OpenAPI schema. |
 | [`linting.bash`](./linting.bash) | All-in-one runner for backend, frontend, and bash linting/testing. |
 | [`create_pr.bash`](./create_pr.bash) | Automates PR creation with labels based on changed files. |
@@ -72,10 +71,10 @@ To keep frontend TypeScript types in sync with the backend Pydantic models, use 
 
 The script intelligently determines the source of the OpenAPI schema:
 
-1. **Server Running**: If `uvicorn` is detected, it fetches the schema directly from
-   `http://localhost:8001/api/openapi.json`.
-2. **Server Stopped**: If `uvicorn` is not running, it generates a static `openapi.json` file using
-   the backend tool.
+1. **Server Running**: If the backend is running, it fetches the schema directly from
+   `http://localhost:8000/api/openapi.json`.
+2. **Server Stopped**: If the backend is not running, it regenerates Swagger 2.0 specs via `swag`
+   and converts them to OpenAPI 3.0.
 
 ## Git Hooks & Safety Net
 
@@ -194,7 +193,7 @@ For a PR to be mergeable, the following workflows must pass if triggered:
 | Workflow | Triggers on Changes In | Must Pass |
 | :--- | :--- | :--- |
 | **Frontend** | `frontend/**` | Formatting, Linting, Tests |
-| **Backend** | `backend-old/**` | Black, Isort, MyPy, Pylint, Tests |
+| **Backend** | `backend/**` | golangci-lint, gofumpt, go test |
 | **Scripts** | `scripts/*.bash` | ShellCheck, shfmt |
 
 > [!NOTE]
@@ -225,5 +224,5 @@ Deployment and CI jobs must surface required runtime variables explicitly.
 
 ## References
 
-- **Backend (Legacy)**: [backend-old/README.md](../backend-old/README.md)
+- **Backend**: [backend/](../backend)
 - **Frontend**: [frontend/README.md](../frontend/README.md)

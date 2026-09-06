@@ -1,51 +1,14 @@
 {
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug: FastAPI (Uvicorn)",
-            "type": "debugpy",
+            "name": "Launch Go Backend",
+            "type": "go",
             "request": "launch",
-            "program": "${workspaceFolder}/backend-old/.venv/bin/uvicorn",
-            "args": [
-                "--factory",
-                "--reload",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                "8000",
-                "--loop",
-                "uvloop",
-                "--lifespan",
-                "on",
-                "--ws",
-                "websockets",
-                "--http",
-                "h11",
-                "--use-colors",
-                "--log-level",
-                "debug",
-                "--timeout-graceful-shutdown",
-                "10",
-                "server.app:run"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/backend-old/src",
-            "justMyCode": true,
-            "env": {
-                "ARCH_STATS_DEV_MODE": "true",
-                "PYTHONPATH": "${workspaceFolder}/backend-old/src"
-            }
-        },
-        {
-            "name": "Attach: Python Process",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "justMyCode": true
+            "mode": "auto",
+            "program": "${workspaceFolder}/backend/cmd/arch-stats",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/backend/.env"
         }
     ]
 }

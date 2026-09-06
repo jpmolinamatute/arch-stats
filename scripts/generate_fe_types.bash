@@ -19,16 +19,6 @@ convert_swagger_to_openapi() {
     fi
 }
 
-openapi_via_script() {
-    local openapi_source="$1"
-    (
-        cd "${ROOT_DIR}/backend-old"
-        export PYTHONPATH="${ROOT_DIR}/backend-old:${ROOT_DIR}/backend-old/src"
-        echo "Info: Generating OpenAPI spec from script"
-        uv run ./tools/generate_openapi.py "${openapi_source}"
-    )
-}
-
 frontend() {
     local openapi_source="$1"
     (
@@ -62,9 +52,6 @@ main() {
         if [[ -f "${ROOT_DIR}/backend/specs/swagger.json" ]]; then
             openapi_source="${ROOT_DIR}/openapi.json"
             convert_swagger_to_openapi "${ROOT_DIR}/backend/specs/swagger.json" "${openapi_source}"
-        elif [[ -f "${ROOT_DIR}/backend-old/tools/generate_openapi.py" ]]; then
-            openapi_source="${ROOT_DIR}/openapi.json"
-            openapi_via_script "${openapi_source}"
         else
             openapi_source="${ROOT_DIR}/openapi.json"
         fi
