@@ -20,7 +20,7 @@ with mocks cannot.
 
 ## Acceptance Criteria
 
-- [ ] `backend/tests/integration/auth_flow_test.go` tests the following scenarios:
+- [x] `backend/tests/integration/auth_flow_test.go` tests the following scenarios:
     - **Session lifecycle**: Create archer → create auth session → find session by token hash →
     verify archer_id matches → delete session → verify it's gone
     - **JWT round-trip with DB**: Create archer → create auth session → build JWT with session
@@ -31,9 +31,9 @@ with mocks cannot.
     DeleteExpired → verify session is removed
     - **Session token hash consistency**: Generate token → hash it → store hash in DB →
     regenerate hash from same raw token → find by hash → verify it matches
-- [ ] Each test truncates tables after completion.
-- [ ] `go test ./tests/integration/... -v -count=1 -run Auth` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Each test truncates tables after completion.
+- [x] `go test ./tests/integration/... -v -count=1 -run Auth` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -48,7 +48,7 @@ with mocks cannot.
 
 ## Steps
 
-- [ ] **Step 1: Write auth session lifecycle test**
+- [x] **Step 1: Write auth session lifecycle test**
 
   ```go
   func TestAuthFlow_SessionLifecycle(t *testing.T) {
@@ -107,38 +107,38 @@ with mocks cannot.
   }
   ```
 
-- [ ] **Step 2: Write JWT round-trip with DB test**
+- [x] **Step 2: Write JWT round-trip with DB test**
 
   Test that a JWT built from a real session can be decoded and the claims match the DB records.
 
-- [ ] **Step 3: Write multiple sessions test**
+- [x] **Step 3: Write multiple sessions test**
 
   Test creating multiple sessions for one archer and bulk-deleting them.
 
-- [ ] **Step 4: Write expired session cleanup test**
+- [x] **Step 4: Write expired session cleanup test**
 
   Test that `DeleteExpired` only removes sessions past their expiry time.
 
-- [ ] **Step 5: Write token hash consistency test**
+- [x] **Step 5: Write token hash consistency test**
 
   Test that hashing the same raw token bytes always produces the same hash, and that hash
   can be used to look up the session.
 
-- [ ] **Step 6: Run integration tests**
+- [x] **Step 6: Run integration tests**
 
   ```bash
   cd backend
   go test ./tests/integration/... -v -count=1 -run Auth
   ```
 
-- [ ] **Step 7: Run go vet**
+- [x] **Step 7: Run go vet**
 
   ```bash
   cd backend
   go vet ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   git add -A
