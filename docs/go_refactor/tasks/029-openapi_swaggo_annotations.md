@@ -18,7 +18,7 @@ API contract.
 
 ## Acceptance Criteria
 
-- [ ] Every handler function has `swaggo/swag` annotations including:
+- [x] Every handler function has `swaggo/swag` annotations including:
     - `@Summary`, `@Description`
     - `@Tags` (matching the Python router tags: Archers, Sessions, Slots, Shots, Faces, Stats, Auth)
     - `@Accept json` / `@Produce json`
@@ -26,16 +26,16 @@ API contract.
     - `@Success` and `@Failure` with response types
     - `@Security` for authenticated endpoints
     - `@Router` with path and HTTP method
-- [ ] `main.go` has top-level swag annotations:
+- [x] `main.go` has top-level swag annotations:
     - `@title Arch Stats API`
     - `@version v0`
     - `@BasePath /api/v0`
     - `@securityDefinitions.apikey BearerAuth`
-- [ ] Running `swag init` generates `backend/specs/swagger.json` and `backend/specs/swagger.yaml`.
-- [ ] The generated spec can be consumed by `npm run generate:types` in the frontend to produce
+- [x] Running `swag init` generates `backend/specs/swagger.json` and `backend/specs/swagger.yaml`.
+- [x] The generated spec can be consumed by `npm run generate:types` in the frontend to produce
   valid TypeScript types.
-- [ ] `go build ./cmd/arch-stats` compiles cleanly.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go build ./cmd/arch-stats` compiles cleanly.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Modify
 
@@ -53,13 +53,13 @@ API contract.
 
 ## Steps
 
-- [ ] **Step 1: Install swag CLI**
+- [x] **Step 1: Install swag CLI**
 
   ```bash
   go install github.com/swaggo/swag/cmd/swag@latest
   ```
 
-- [ ] **Step 2: Add top-level annotations to `main.go`**
+- [x] **Step 2: Add top-level annotations to `main.go`**
 
   Add before the `main()` function:
 
@@ -74,7 +74,7 @@ API contract.
   // @name access_token
   ```
 
-- [ ] **Step 3: Annotate all handler functions**
+- [x] **Step 3: Annotate all handler functions**
 
   Example for `GetArcher`:
 
@@ -95,7 +95,7 @@ API contract.
 
   Repeat for all handler functions across all 7 handler files.
 
-- [ ] **Step 4: Run `swag init`**
+- [x] **Step 4: Run `swag init`**
 
   ```bash
   cd backend
@@ -104,14 +104,14 @@ API contract.
 
   Expected: generates `specs/swagger.json`, `specs/swagger.yaml`, `specs/docs.go`.
 
-- [ ] **Step 5: Verify the spec is valid**
+- [x] **Step 5: Verify the spec is valid**
 
   ```bash
   cat backend/specs/swagger.json | python3 -m json.tool > /dev/null
   echo "JSON is valid"
   ```
 
-- [ ] **Step 6: Test frontend type generation**
+- [x] **Step 6: Test frontend type generation**
 
   ```bash
   cp backend/specs/swagger.json openapi.json
@@ -121,13 +121,13 @@ API contract.
 
   Expected: TypeScript types are generated without errors.
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./cmd/arch-stats
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   git add -A
