@@ -167,10 +167,6 @@ func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if shots == nil {
-		shots = []model.ShotRead{}
-	}
-
 	_ = WriteJSON(w, http.StatusOK, shots)
 }
 

@@ -452,7 +452,7 @@ func TestSessionHandler_ListAllOpen(t *testing.T) {
 	t.Run("returns 200 with empty array when no open sessions exist", func(t *testing.T) {
 		svc := &mockSessionHandlerService{
 			listFn: func(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error) {
-				return nil, nil
+				return []model.SessionRead{}, nil
 			},
 		}
 		h := handler.NewSessionHandler(svc)

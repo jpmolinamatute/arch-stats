@@ -482,7 +482,7 @@ func TestShotHandler_GetBySlot(t *testing.T) {
 	t.Run("returns 200 with empty array when no shots recorded", func(t *testing.T) {
 		svc := &mockShotHandlerService{
 			getBySlotFn: func(ctx context.Context, sID, aID uuid.UUID) ([]model.ShotRead, error) {
-				return nil, nil
+				return []model.ShotRead{}, nil
 			},
 		}
 

@@ -108,10 +108,6 @@ func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if sessions == nil {
-		sessions = []model.SessionRead{}
-	}
-
 	_ = WriteJSON(w, http.StatusOK, sessions)
 }
 
@@ -166,10 +162,6 @@ func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		WriteAppError(w, err)
 		return
-	}
-
-	if sessions == nil {
-		sessions = []model.SessionRead{}
 	}
 
 	_ = WriteJSON(w, http.StatusOK, sessions)

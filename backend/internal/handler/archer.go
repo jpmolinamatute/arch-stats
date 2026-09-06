@@ -47,10 +47,6 @@ func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if archers == nil {
-		archers = []model.ArcherRead{}
-	}
-
 	_ = WriteJSON(w, http.StatusOK, archers)
 }
 
