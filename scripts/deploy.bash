@@ -80,6 +80,8 @@ upload_install_assets() {
     local cred_file="${3}"
     local cert_file="${4}"
     local env_temp_file="${temp_dir}/env"
+    local migrations_dir
+    migrations_dir="$(readlink -f "${SCRIPT_DIR}/../backend/migrations")"
 
     log_info "Uploading installation assets to '${host}:${REMOTE_SECURE_DIR}'..."
     scp "${SCP_OPTS[@]}" \
@@ -96,8 +98,8 @@ upload_install_assets() {
         "${env_temp_file}" \
         "${host}:${REMOTE_SECURE_DIR}/"
 
-    if [[ -d "${SCRIPT_DIR}/../backend/migrations" ]]; then
-        scp -r "${SCP_OPTS[@]}" "${SCRIPT_DIR}/../backend/migrations" "${host}:${REMOTE_SECURE_DIR}/"
+    if [[ -d "${migrations_dir}" ]]; then
+        scp -r "${SCP_OPTS[@]}" "${migrations_dir}" "${host}:${REMOTE_SECURE_DIR}/"
     fi
 }
 
@@ -105,15 +107,16 @@ upload_update_assets() {
     local host="${1}"
     local temp_dir="${2}"
     local env_temp_file="${temp_dir}/env"
-
+    local migrations_dir
+    migrations_dir="$(readlink -f "${SCRIPT_DIR}/../backend/migrations")"
     log_info "Uploading update assets to '${host}:${REMOTE_SECURE_DIR}'..."
     scp "${SCP_OPTS[@]}" \
         "${SCRIPT_DIR}/install_app.bash" \
         "${env_temp_file}" \
         "${host}:${REMOTE_SECURE_DIR}/"
 
-    if [[ -d "${SCRIPT_DIR}/../backend/migrations" ]]; then
-        scp -r "${SCP_OPTS[@]}" "${SCRIPT_DIR}/../backend/migrations" "${host}:${REMOTE_SECURE_DIR}/"
+    if [[ -d "${migrations_dir}" ]]; then
+        scp -r "${SCP_OPTS[@]}" "${migrations_dir}" "${host}:${REMOTE_SECURE_DIR}/"
     fi
 }
 

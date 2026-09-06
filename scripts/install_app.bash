@@ -111,16 +111,18 @@ install_migrations() {
     local app_user="${4}"
     local target_migrations="${install_dir}/migrations"
     local staged_migrations="/tmp/deploy_assets/migrations"
-
+    local zip_url
+    local zip_file
+    local unpack_dir
     mkdir -p "${target_migrations}"
 
     if [[ -d "${staged_migrations}" ]] && compgen -G "${staged_migrations}/*.sql" >/dev/null; then
         log_info "Installing migrations from staged assets..."
         cp "${staged_migrations}"/*.sql "${target_migrations}/"
     else
-        local zip_url="${base_url}-migrations/zipball/main"
-        local zip_file="${tmp_dir}/migrations.zip"
-        local unpack_dir="${tmp_dir}/migrations_unpacked"
+        zip_url="${base_url}-migrations/zipball/main"
+        zip_file="${tmp_dir}/migrations.zip"
+        unpack_dir="${tmp_dir}/migrations_unpacked"
 
         log_info "Downloading migrations archive from ${zip_url}..."
         gh_download "${zip_url}" "${zip_file}" false
@@ -189,9 +191,7 @@ main() {
     mkdir -p "${install_dir}"
     log_info "Installing binary to ${target_bin}..."
     install -m 755 -o "${app_user}" -g "${app_user}" "${dl_bin}" "${target_bin}"
-
     install_migrations "${base_url}" "${install_dir}" "${tmp_dir}" "${app_user}"
-
     log_info "Running database migrations as user ${app_user}..."
     if ! runuser -u "${app_user}" -- bash -c "cd '${install_dir}' && '${target_bin}' migrate"; then
         log_error "Database migrations failed."
