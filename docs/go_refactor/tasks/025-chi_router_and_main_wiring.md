@@ -24,7 +24,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
 
 ## Acceptance Criteria
 
-- [ ] `backend/cmd/arch-stats/main.go` performs full dependency wiring:
+- [x] `backend/cmd/arch-stats/main.go` performs full dependency wiring:
   1. Load config
   2. Create logger
   3. Connect database pool
@@ -37,21 +37,21 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   10. Build chi router with route groups
   11. Apply middleware stack
   12. Start HTTP server with graceful shutdown
-- [ ] Route groups match the Python API structure:
+- [x] Route groups match the Python API structure:
     - `/api/v0/auth/` — auth handler (public: login, register; protected: logout, me)
     - `/api/v0/archer/` — archer handler (protected)
     - `/api/v0/session/` — session handler (protected)
     - `/api/v0/session/slot/` — slot handler (protected)
     - `/api/v0/shot/` — shot handler (protected)
     - `/api/v0/faces/` — face handler (public)
-    - `/api/v0/stats/` — live stats handler (protected)
-- [ ] Middleware stack applied in correct order: logging → recovery → CORS → (per-group auth)
+    - `/api/v0/stats/` — live stats handler (protected) (Note: stats handler scheduled for Task 027)
+- [x] Middleware stack applied in correct order: logging → recovery → CORS → (per-group auth)
   → error mapper.
-- [ ] A `GET /api/v0/health` endpoint returns JSON with at minimum the current database schema
+- [x] A `GET /api/v0/health` endpoint returns JSON with at minimum the current database schema
   version (from `MaintenanceRepo.GetSchemaVersion()`). This is a public, unauthenticated endpoint.
-- [ ] `go build ./cmd/arch-stats` compiles cleanly.
-- [ ] `go vet ./...` reports no issues.
-- [ ] Running the binary with valid DB config starts the HTTP server and logs "listening on :PORT".
+- [x] `go build ./cmd/arch-stats` compiles cleanly.
+- [x] `go vet ./...` reports no issues.
+- [x] Running the binary with valid DB config starts the HTTP server and logs "listening on :PORT".
 
 ## Files to Modify
 
@@ -62,7 +62,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
 
 ## Steps
 
-- [ ] **Step 1: Add chi dependency**
+- [x] **Step 1: Add chi dependency**
 
   ```bash
   cd backend
@@ -70,7 +70,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   go get github.com/go-chi/cors
   ```
 
-- [ ] **Step 2: Refactor `main.go` into a structured wiring function**
+- [x] **Step 2: Refactor `main.go` into a structured wiring function**
 
   Organize `main.go` into clear sections:
 
@@ -138,7 +138,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   }
   ```
 
-- [ ] **Step 3: Build the chi router with route groups**
+- [x] **Step 3: Build the chi router with route groups**
 
   ```go
   func buildRouter(cfg *config.Config, authSvc *auth.Service, ...) chi.Router {
@@ -180,7 +180,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   }
   ```
 
-- [ ] **Step 4: Run go vet and build**
+- [x] **Step 4: Run go vet and build**
 
   ```bash
   cd backend
@@ -188,7 +188,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
   go build ./cmd/arch-stats
   ```
 
-- [ ] **Step 5: Manual verification**
+- [x] **Step 5: Manual verification**
 
   Start the server with a running PostgreSQL instance:
 
@@ -207,7 +207,7 @@ this task, the Go binary is a fully runnable HTTP server serving all API endpoin
 
   Expected: JSON array of face data (public endpoint, no auth needed).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
