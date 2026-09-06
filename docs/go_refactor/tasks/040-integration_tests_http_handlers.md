@@ -19,51 +19,51 @@ is the primary behavioral verification that the Go port matches the Python API c
 
 ## Acceptance Criteria
 
-- [ ] `backend/tests/integration/endpoint_archer_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_archer_test.go` ports tests from
   `test_archer_endpoints.py`:
     - GET `/api/v0/archers` — list archers (authenticated)
     - GET `/api/v0/archers/:id` — get single archer
     - Unauthenticated requests → 401
-- [ ] `backend/tests/integration/endpoint_auth_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_auth_test.go` ports tests from
   `test_auth_endpoints.py`:
     - POST `/api/v0/auth/login` — with valid/invalid credentials
     - POST `/api/v0/auth/register` — with valid/missing fields
     - POST `/api/v0/auth/logout` — clears session
     - GET `/api/v0/auth/me` — returns authenticated archer
-- [ ] `backend/tests/integration/endpoint_session_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_session_test.go` ports tests from
   `test_session_endpoints.py`:
     - POST `/api/v0/sessions` — create session
     - GET `/api/v0/sessions` — list sessions
     - GET `/api/v0/sessions/open` — get open session
     - PUT `/api/v0/sessions/:id/close` — close session
     - Cannot create session when one is already open → 409
-- [ ] `backend/tests/integration/endpoint_slot_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_slot_test.go` ports tests from
   `test_slot_endpoints.py`:
     - POST `/api/v0/slots` — create slot in open session
     - GET `/api/v0/slots?session_id=X` — list slots by session
     - PUT `/api/v0/slots/:id` — update slot
     - DELETE `/api/v0/slots/:id` — delete slot
     - Create slot in closed session → 422
-- [ ] `backend/tests/integration/endpoint_shot_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_shot_test.go` ports tests from
   `test_shot_endpoints.py`:
     - POST `/api/v0/shots` — create shot in slot
     - GET `/api/v0/shots?slot_id=X` — list shots by slot
     - PUT `/api/v0/shots/:id` — update shot
     - DELETE `/api/v0/shots/:id` — delete shot
-- [ ] `backend/tests/integration/endpoint_faces_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_faces_test.go` ports tests from
   `test_faces_endpoints.py`:
     - GET `/api/v0/faces` — list available faces
-- [ ] `backend/tests/integration/endpoint_security_test.go` ports tests from
+- [x] `backend/tests/integration/endpoint_security_test.go` ports tests from
   `test_security_edge_cases.py`:
     - Cross-user access attempts → 403
     - Expired JWT → 401
     - Malformed JWT → 401
     - Missing auth cookie → 401
-- [ ] All tests verify JSON response bodies match the expected API contract (field names,
+- [x] All tests verify JSON response bodies match the expected API contract (field names,
   types, structure).
-- [ ] Each test truncates tables after completion.
-- [ ] `go test ./tests/integration/... -v -count=1` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Each test truncates tables after completion.
+- [x] `go test ./tests/integration/... -v -count=1` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -92,7 +92,7 @@ Port tests from these Python files:
 
 ## Steps
 
-- [ ] **Step 1: Add HTTP test helpers to `helpers_test.go`**
+- [x] **Step 1: Add HTTP test helpers to `helpers_test.go`**
 
   Add utilities for creating an `httptest.Server` with the full chi router:
 
@@ -111,50 +111,50 @@ Port tests from these Python files:
   }
   ```
 
-- [ ] **Step 2: Write `endpoint_auth_test.go`**
+- [x] **Step 2: Write `endpoint_auth_test.go`**
 
   Start with auth since it establishes the authentication flow other tests depend on.
   Port each test case from `test_auth_endpoints.py`.
 
-- [ ] **Step 3: Write `endpoint_archer_test.go`**
+- [x] **Step 3: Write `endpoint_archer_test.go`**
 
   Port tests from `test_archer_endpoints.py`.
 
-- [ ] **Step 4: Write `endpoint_session_test.go`**
+- [x] **Step 4: Write `endpoint_session_test.go`**
 
   Port tests from `test_session_endpoints.py`. This is the largest test file (25.7KB Python).
 
-- [ ] **Step 5: Write `endpoint_slot_test.go`**
+- [x] **Step 5: Write `endpoint_slot_test.go`**
 
   Port tests from `test_slot_endpoints.py`. This is the largest overall (33.8KB Python).
 
-- [ ] **Step 6: Write `endpoint_shot_test.go`**
+- [x] **Step 6: Write `endpoint_shot_test.go`**
 
   Port tests from `test_shot_endpoints.py`.
 
-- [ ] **Step 7: Write `endpoint_faces_test.go`**
+- [x] **Step 7: Write `endpoint_faces_test.go`**
 
   Port tests from `test_faces_endpoints.py` (smallest file).
 
-- [ ] **Step 8: Write `endpoint_security_test.go`**
+- [x] **Step 8: Write `endpoint_security_test.go`**
 
   Port tests from `test_security_edge_cases.py`.
 
-- [ ] **Step 9: Run all integration tests**
+- [x] **Step 9: Run all integration tests**
 
   ```bash
   cd backend
   go test ./tests/integration/... -v -count=1
   ```
 
-- [ ] **Step 10: Run go vet**
+- [x] **Step 10: Run go vet**
 
   ```bash
   cd backend
   go vet ./...
   ```
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
   ```bash
   git add -A
