@@ -327,6 +327,18 @@ Required environment variables for fresh install:
 The project includes a Docker-based emulator that mimics the Raspberry Pi environment for
 testing deployment scripts locally without physical hardware.
 
+> **Host aliases setup:** To use the same hostnames from
+> [`docker-compose.yaml`](../docker/docker-compose.yaml) on your host machine, add the
+> following entries to `/etc/hosts`:
+>
+> ```text
+> 127.0.0.1        localhost db emulator
+> ::1              localhost db emulator
+> ```
+>
+> This lets you reference the `db` and `emulator` services by name both inside Docker
+> (via the bridge network) and directly from the host.
+
 **1. Start the emulator:**
 
 ```bash
@@ -340,7 +352,7 @@ PostgreSQL, and SSH everything the real Pi would have.
 **2. Connect via SSH:**
 
 ```bash
-ssh -p 2222 -i docker/ssh/arch_stats_dev root@localhost
+ssh -p 2222 -i docker/ssh/arch_stats_dev root@emulator
 ```
 
 The emulator uses a pre-configured SSH key pair located in `docker/ssh/`.
@@ -349,21 +361,21 @@ The emulator uses a pre-configured SSH key pair located in `docker/ssh/`.
 
 ```bash
 # Full deployment
-./scripts/deploy.bash -p 2222 -i docker/ssh/arch_stats_dev root@localhost
+./scripts/deploy.bash -p 2222 -i docker/ssh/arch_stats_dev root@emulator
 
 # Or target a specific action
-./scripts/deploy.bash -p 2222 -i docker/ssh/arch_stats_dev root@localhost install
+./scripts/deploy.bash -p 2222 -i docker/ssh/arch_stats_dev root@emulator install
 ```
 
 **4. Verify the service inside the emulator:**
 
 ```bash
 # Check systemd service status
-ssh -p 2222 -i docker/ssh/arch_stats_dev root@localhost "systemctl status arch-stats.service"
+ssh -p 2222 -i docker/ssh/arch_stats_dev root@emulator "systemctl status arch-stats.service"
 
 # Verify the API responds
-ssh -p 2222 -i docker/ssh/arch_stats_dev root@localhost \
-    "curl -s http://localhost:8001/api/v0/health"
+ssh -p 2222 -i docker/ssh/arch_stats_dev root@emulator \
+    "curl -s http://emulator:8001/api/v0/health"
 ```
 
 **5. Stop the emulator:**

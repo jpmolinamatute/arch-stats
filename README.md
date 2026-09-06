@@ -4,6 +4,6 @@
 
 ## Project Structure
 
-- [Backend](./backend)
+- [Backend](./backend/README.md)
 - [Frontend](./frontend/README.md)
 - [Scripts](./scripts/README.md)
