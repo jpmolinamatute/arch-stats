@@ -521,4 +521,3 @@ func TestRouter_SPAFallbackAndAssets(t *testing.T) {
 		})
 	}
 }
-
