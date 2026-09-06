@@ -2,14 +2,12 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
@@ -83,17 +81,8 @@ func scanArcher(scanner interface{ Scan(dest ...any) error }) (model.ArcherRead,
 
 // FindByID retrieves an archer by primary key identifier.
 func (r *ArcherRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error) {
-	sql, args, err := StmtBuilder.Select(archerColumns...).
-		From("archer").
-		Where(squirrel.Eq{"archer_id": id}).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("building find by id query: %w", err)
-	}
-
-	row := r.db.QueryRow(ctx, sql, args...)
-	return ScanOne(row, func(r pgx.Row) (model.ArcherRead, error) {
-		return scanArcher(r)
+	return findByID(ctx, r.db, "archer", "archer_id", archerColumns, id, func(row pgx.Row) (model.ArcherRead, error) {
+		return scanArcher(row)
 	})
 }
 
@@ -192,7 +181,7 @@ func (r *ArcherRepo) Create(ctx context.Context, data model.ArcherCreate) (uuid.
 		return uuid.Nil, fmt.Errorf("parsing date_of_birth: %w", err)
 	}
 
-	sql, args, err := StmtBuilder.Insert("archer").
+	builder := StmtBuilder.Insert("archer").
 		Columns(
 			"first_name",
 			"last_name",
@@ -216,19 +205,9 @@ func (r *ArcherRepo) Create(ctx context.Context, data model.ArcherCreate) (uuid.
 			data.ClubID,
 			data.GooglePictureURL,
 			data.GoogleSubject,
-		).
-		Suffix("RETURNING archer_id").
-		ToSql()
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("building create query: %w", err)
-	}
+		)
 
-	var newID uuid.UUID
-	if err := r.db.QueryRow(ctx, sql, args...).Scan(&newID); err != nil {
-		return uuid.Nil, fmt.Errorf("inserting archer: %w", err)
-	}
-
-	return newID, nil
+	return createReturningID(ctx, r.db, builder, "archer_id")
 }
 
 // Update updates fields of an archer specified by data for rows matching filter.
@@ -318,43 +297,13 @@ func (r *ArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter mo
 	}
 
 	if whereCount == 0 {
-		return errors.New("update requires at least one filter condition to prevent unrestricted updates")
+		return errUpdateRequiresFilter
 	}
 
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return fmt.Errorf("building update query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing update: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return execUpdate(ctx, r.db, q)
 }
 
 // Delete removes an archer by primary key identifier.
 func (r *ArcherRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("archer").
-		Where(squirrel.Eq{"archer_id": id}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("building delete query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing delete: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return deleteByID(ctx, r.db, "archer", "archer_id", id)
 }
