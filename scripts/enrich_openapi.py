@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-"""Enrich OpenAPI 3.0 specification for frontend TypeScript code generation compatibility.
+#!/usr/bin/env python
+"""
+Enrich OpenAPI 3.0 specification for frontend TypeScript code generation compatibility.
 
 This script post-processes the OpenAPI 3.0 JSON specification generated from
 swaggo (Swagger 2.0 -> OpenAPI 3.0 via swagger2openapi) to ensure complete
@@ -9,17 +10,14 @@ compatibility with frontend expectations:
 3. Sets nullable: true on pointer / optional domain model fields.
 """
 
-from __future__ import annotations
-
 import copy
 import json
 import sys
 from pathlib import Path
 
 
-def enrich_openapi(spec_path: str | Path) -> None:
-    path = Path(spec_path)
-    with path.open("r", encoding="utf-8") as f:
+def enrich_openapi(spec_path: Path) -> None:
+    with spec_path.open("r", encoding="utf-8") as f:
         spec = json.load(f)
 
     schemas = spec.setdefault("components", {}).setdefault("schemas", {})
@@ -94,9 +92,7 @@ def enrich_openapi(spec_path: str | Path) -> None:
             "properties": {
                 "loc": {
                     "type": "array",
-                    "items": {
-                        "anyOf": [{"type": "string"}, {"type": "integer"}]
-                    },
+                    "items": {"anyOf": [{"type": "string"}, {"type": "integer"}]},
                 },
                 "msg": {"type": "string"},
                 "type": {"type": "string"},
@@ -156,15 +152,28 @@ def enrich_openapi(spec_path: str | Path) -> None:
                 if fld in props:
                     props[fld]["nullable"] = True
 
-    with path.open("w", encoding="utf-8") as f:
+    with spec_path.open("w", encoding="utf-8") as f:
         json.dump(spec, f, indent=2)
+
+
+def validate_file_path(raw: str) -> Path:
+    """Validate that *raw* refers to an existing regular file and return its Path."""
+    p = Path(raw)
+    if not p.exists():
+        print(f"Error: file not found: {p}", file=sys.stderr)
+        sys.exit(1)
+    if not p.is_file():
+        print(f"Error: not a regular file: {p}", file=sys.stderr)
+        sys.exit(1)
+    return p
 
 
 def main() -> None:
     if len(sys.argv) < 2:
         print(f"Usage: {sys.argv[0]} <path_to_openapi.json>", file=sys.stderr)
         sys.exit(1)
-    enrich_openapi(sys.argv[1])
+    spec_path = validate_file_path(sys.argv[1])
+    enrich_openapi(spec_path)
 
 
 if __name__ == "__main__":
