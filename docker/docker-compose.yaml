@@ -6,7 +6,7 @@ networks:
 
 services:
   db:
-    image: postgres:15
+    image: postgres:17
     profiles:
       - dev
     env_file:
@@ -33,27 +33,9 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
-
-  migrations:
-    image: flyway/flyway:latest
-    profiles:
-      - dev
-    command:
-      - migrate
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ../backend-old/migrations:/flyway/sql
-    env_file:
-      - ./.env
-    environment:
-      - FLYWAY_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
-      - FLYWAY_USER=${POSTGRES_USER}
-      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
-      - FLYWAY_LOCATIONS=filesystem:/flyway/sql
-    networks:
-      - arch-stats
+    # Migrations are handled by the Go binary via embedded goose.
+    # Run: ./arch-stats migrate
+    # Or set APPLY_DB_MIGRATIONS_ON_START=true for auto-migration on startup.
 
   emulator:
     build:
