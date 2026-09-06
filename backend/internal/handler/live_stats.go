@@ -45,9 +45,18 @@ func (h *LiveStatsHandler) Routes(r chi.Router) {
 	r.Get("/{slot_id}", h.GetStats)
 }
 
-// GetStats handles GET /api/v0/stats/{slot_id}.
-// Returns HTTP 200 OK with model.LiveStat JSON containing current stats and shot scores.
-// Requires authentication and returns 401 if missing auth context.
+// GetStats godoc
+// @Summary     Get Stats
+// @Description Returns current live aggregate statistics and recent shot scores for a slot
+// @Tags        Stats
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200 {object} model.LiveStat
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /stats/{slot_id} [get]
 func (h *LiveStatsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {

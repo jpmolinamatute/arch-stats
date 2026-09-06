@@ -41,9 +41,19 @@ func (h *ShotHandler) Routes(r chi.Router) {
 	r.Get("/count-by-slot/{slot_id}", h.CountBySlot)
 }
 
-// Create handles POST /api/v0/shot.
-// Supports both a single ShotCreate object and a batch []ShotCreate array.
-// Returns HTTP 201 Created with model.ShotID or []model.ShotID.
+// Create godoc
+// @Summary     Create Shot
+// @Description Record a single shot or a batch array of shots (3 to 10 shots) for the authenticated archer
+// @Tags        Shots
+// @Accept      json
+// @Produce     json
+// @Param       request body model.ShotCreate true "Shot creation payload (object or array)"
+// @Success     201 {object} model.ShotId
+// @Failure     400 {object} model.ErrorResponse
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /shot [post]
 func (h *ShotHandler) Create(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -127,8 +137,18 @@ func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Conte
 	_ = writeJSON(w, http.StatusCreated, resp)
 }
 
-// GetBySlot handles GET /api/v0/shot/by-slot/{slot_id}.
-// Returns list of shots for the given slot owned by the authenticated archer.
+// GetBySlot godoc
+// @Summary     Get Shots By Slot
+// @Description Returns list of shots for the given slot owned by the authenticated archer
+// @Tags        Shots
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200 {array} model.ShotRead
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /shot/by-slot/{slot_id} [get]
 func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -163,8 +183,17 @@ func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, shots)
 }
 
-// CountBySlot handles GET /api/v0/shot/count-by-slot/{slot_id}.
-// Returns total shot count for the given slot owned by the authenticated archer.
+// CountBySlot godoc
+// @Summary     Get Shots Count By Slot
+// @Description Returns total shot count for the given slot owned by the authenticated archer
+// @Tags        Shots
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200 {integer} int
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /shot/count-by-slot/{slot_id} [get]
 func (h *ShotHandler) CountBySlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {

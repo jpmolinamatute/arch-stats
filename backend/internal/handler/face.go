@@ -34,9 +34,13 @@ func (h *FaceHandler) Routes(r chi.Router) {
 	r.Get("/{face_type}", h.GetFace)
 }
 
-// ListFaces handles GET /api/v0/faces.
-// Returns a list of target face summaries (face_type and face_name).
-// This endpoint is public and does not require authentication.
+// ListFaces godoc
+// @Summary     List Faces
+// @Description Returns a list of target face summaries (face_type and face_name). Public endpoint.
+// @Tags        Faces
+// @Produce     json
+// @Success     200 {array} model.FaceMinimal
+// @Router      /faces [get]
 func (h *FaceHandler) ListFaces(w http.ResponseWriter, r *http.Request) {
 	faces, err := h.faceSvc.ListAll(r.Context())
 	if err != nil {
@@ -55,10 +59,16 @@ func (h *FaceHandler) ListFaces(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, summaries)
 }
 
-// GetFace handles GET /api/v0/faces/{face_type}.
-// Returns the full geometry and scoring layout for the requested face type.
-// If face_type is not found, returns HTTP 404.
-// This endpoint is public and does not require authentication.
+// GetFace godoc
+// @Summary     Get Face
+// @Description Returns the full geometry and scoring layout for the requested face type. Public endpoint.
+// @Tags        Faces
+// @Produce     json
+// @Param       face_type path string true "Face type identifier"
+// @Success     200 {object} model.Face
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Router      /faces/{face_type} [get]
 func (h *FaceHandler) GetFace(w http.ResponseWriter, r *http.Request) {
 	faceType := getURLParam(r, "face_type")
 	if faceType == "" {
