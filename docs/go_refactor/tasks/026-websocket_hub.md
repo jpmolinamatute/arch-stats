@@ -19,25 +19,25 @@ concurrency model.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/websocket/hub.go` implements a `Hub` struct with:
+- [x] `backend/internal/websocket/hub.go` implements a `Hub` struct with:
     - `Run(ctx)` — starts the hub goroutine, listens for NOTIFY events on the configured channel
     - `Register(client)` — registers a new WebSocket client for broadcasts
     - `Unregister(client)` — removes a disconnected client
     - Internal broadcast channel distributing NOTIFY payloads to all registered clients
-- [ ] `backend/internal/websocket/client.go` implements a `Client` struct with:
+- [x] `backend/internal/websocket/client.go` implements a `Client` struct with:
     - `WritePump(ctx)` — goroutine writing messages from the hub to the WebSocket connection
     - `ReadPump(ctx)` — goroutine reading (to detect client disconnect)
     - `Send` channel for receiving messages from the hub
-- [ ] The hub uses a dedicated `pgx` connection (not from the pool) for `LISTEN` since it must
+- [x] The hub uses a dedicated `pgx` connection (not from the pool) for `LISTEN` since it must
   hold the connection open indefinitely.
-- [ ] Hub gracefully shuts down when context is cancelled: closes all client connections, stops
+- [x] Hub gracefully shuts down when context is cancelled: closes all client connections, stops
   the LISTEN goroutine.
-- [ ] Unit tests verify:
+- [x] Unit tests verify:
     - Registering and unregistering clients changes the client count
     - Broadcasting a message reaches all registered clients
     - Unregistered clients do not receive messages
-- [ ] `go test ./internal/websocket/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/websocket/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -56,14 +56,14 @@ concurrency model.
 
 ## Steps
 
-- [ ] **Step 1: Add WebSocket dependency**
+- [x] **Step 1: Add WebSocket dependency**
 
   ```bash
   cd backend
   go get nhooyr.io/websocket
   ```
 
-- [ ] **Step 2: Write failing tests for the hub**
+- [x] **Step 2: Write failing tests for the hub**
 
   Create `backend/internal/websocket/hub_test.go`:
     - Test register adds client to the hub
@@ -72,17 +72,17 @@ concurrency model.
     - Test broadcast skips unregistered clients
     - Use Go channels to simulate client Send channels (no real WebSocket needed)
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/websocket/... -v
   ```
 
-- [ ] **Step 4: Implement `client.go`**
+- [x] **Step 4: Implement `client.go`**
 
   Define the `Client` struct with a `Send` channel and `Conn` field.
 
-- [ ] **Step 5: Implement `hub.go`**
+- [x] **Step 5: Implement `hub.go`**
 
   Implement the hub with:
     - `register` channel (chan *Client)
@@ -92,19 +92,19 @@ concurrency model.
     - `Run()` goroutine selecting on all channels
     - `ListenNotify()` goroutine using pgx `conn.WaitForNotification()`
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/websocket/... -v
   ```
 
-- [ ] **Step 7: Run go vet and build**
+- [x] **Step 7: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   rm -f backend/internal/websocket/.gitkeep
