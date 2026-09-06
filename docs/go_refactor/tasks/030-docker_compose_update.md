@@ -17,18 +17,18 @@ container may not be needed. Update the PostgreSQL service to version 17.
 
 ## Acceptance Criteria
 
-- [ ] `docker/docker-compose.yaml` changes:
+- [x] `docker/docker-compose.yaml` changes:
     - PostgreSQL service updated from `postgres:15` to `postgres:17`
     - Flyway `migrations` service removed entirely
     - Migration volume mount (`../backend/migrations:/flyway/sql`) removed
     - All Flyway-related environment variables removed
     - A comment documents that migrations run via the Go binary on startup
-- [ ] `docker/docker-compose.yaml` retains:
+- [x] `docker/docker-compose.yaml` retains:
     - PostgreSQL `db` service with health check
     - Emulator service (unchanged)
     - Network and volume configuration
-- [ ] `docker compose -f docker/docker-compose.yaml config` validates without errors.
-- [ ] `docker compose -f docker/docker-compose.yaml --profile dev up -d` starts PostgreSQL
+- [x] `docker compose -f docker/docker-compose.yaml config` validates without errors.
+- [x] `docker compose -f docker/docker-compose.yaml --profile dev up -d` starts PostgreSQL
     successfully.
 
 ## Files to Modify
@@ -45,15 +45,15 @@ container may not be needed. Update the PostgreSQL service to version 17.
 
 ## Steps
 
-- [ ] **Step 1: Remove the Flyway migrations service**
+- [x] **Step 1: Remove the Flyway migrations service**
 
   Delete the entire `migrations:` service block from `docker/docker-compose.yaml`.
 
-- [ ] **Step 2: Update PostgreSQL version**
+- [x] **Step 2: Update PostgreSQL version**
 
   Change `image: postgres:15` to `image: postgres:17`.
 
-- [ ] **Step 3: Add a comment about migration strategy**
+- [x] **Step 3: Add a comment about migration strategy**
 
   ```yaml
   # Migrations are handled by the Go binary via embedded goose.
@@ -61,11 +61,11 @@ container may not be needed. Update the PostgreSQL service to version 17.
   # Or set APPLY_DB_MIGRATIONS_ON_START=true for auto-migration on startup.
   ```
 
-- [ ] **Step 4: Clean up `.env` if needed**
+- [x] **Step 4: Clean up `.env` if needed**
 
   Remove any Flyway-specific environment variables from `docker/.env`.
 
-- [ ] **Step 5: Validate the compose file**
+- [x] **Step 5: Validate the compose file**
 
   ```bash
   docker compose -f docker/docker-compose.yaml config
@@ -73,7 +73,7 @@ container may not be needed. Update the PostgreSQL service to version 17.
 
   Expected: valid YAML output, no errors.
 
-- [ ] **Step 6: Test starting the database**
+- [x] **Step 6: Test starting the database**
 
   ```bash
   docker compose -f docker/docker-compose.yaml --profile dev up -d
@@ -82,7 +82,7 @@ container may not be needed. Update the PostgreSQL service to version 17.
 
   Expected: `db` service is healthy.
 
-- [ ] **Step 7: Stop and commit**
+- [x] **Step 7: Stop and commit**
 
   ```bash
   docker compose -f docker/docker-compose.yaml --profile dev down
