@@ -96,3 +96,91 @@ func jwtForArcher(archerID uuid.UUID, secret string) string {
 	}
 	return token
 }
+
+// TargetOverride is a functional modifier to customize test target creation.
+type TargetOverride func(*model.TargetCreate)
+
+// createTestTarget inserts a test target configuration into the database.
+//
+
+func createTestTarget(ctx context.Context, pool *pgxpool.Pool, sessionID uuid.UUID, overrides ...TargetOverride) (*model.TargetRead, error) {
+	payload := model.TargetCreate{
+		SessionID: sessionID,
+		Distance:  18,
+		Lane:      1,
+	}
+	for _, fn := range overrides {
+		fn(&payload)
+	}
+
+	repo := repository.NewTargetRepo(pool)
+	id, err := repo.Create(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("creating test target: %w", err)
+	}
+
+	return repo.FindByID(ctx, id)
+}
+
+// SlotOverride is a functional modifier to customize test slot creation.
+type SlotOverride func(*model.SlotCreate)
+
+// createTestSlot inserts a test slot into the database.
+//
+
+func createTestSlot(ctx context.Context, pool *pgxpool.Pool, targetID, archerID, sessionID uuid.UUID, overrides ...SlotOverride) (*model.SlotRead, error) {
+	shotPerRound := 3
+	payload := model.SlotCreate{
+		TargetID:        targetID,
+		ArcherID:        archerID,
+		SessionID:       sessionID,
+		SlotLetter:      model.SlotLetterA,
+		FaceType:        model.FaceTypeWA40Full,
+		Bowstyle:        model.BowstyleRecurve,
+		DrawWeight:      40.0,
+		IsShooting:      true,
+		ShotPerRound:    &shotPerRound,
+		IntervalSeconds: 20,
+	}
+	for _, fn := range overrides {
+		fn(&payload)
+	}
+
+	repo := repository.NewSlotRepo(pool)
+	id, err := repo.Create(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("creating test slot: %w", err)
+	}
+
+	return repo.FindByID(ctx, id)
+}
+
+// ShotOverride is a functional modifier to customize test shot creation.
+type ShotOverride func(*model.ShotCreate)
+
+// createTestShot inserts a test shot into the database.
+//
+
+func createTestShot(ctx context.Context, pool *pgxpool.Pool, slotID uuid.UUID, overrides ...ShotOverride) (*model.ShotRead, error) {
+	x := 0.5
+	y := 0.5
+	score := 10
+	payload := model.ShotCreate{
+		SlotID: slotID,
+		X:      &x,
+		Y:      &y,
+		IsX:    true,
+		Score:  &score,
+	}
+	for _, fn := range overrides {
+		fn(&payload)
+	}
+
+	repo := repository.NewShotRepo(pool)
+	id, err := repo.Create(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("creating test shot: %w", err)
+	}
+
+	return repo.FindByID(ctx, id)
+}
