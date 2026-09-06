@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -eu
 
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 UNINSTALLER_SCRIPT="remote_uninstaller.bash"
@@ -44,7 +44,7 @@ render_templates() {
         -e "s|{{ cloudflared_tunnel_id }}|${tunnel_id}|g" \
         -e "s|{{ app_user_home_dir }}|${app_user_home_dir}|g" \
         -e "s|{{ app_name }}|${app_name}|g" \
-        -e "s|{{ prod_uvicorn_port }}|${server_port}|g" \
+        -e "s|{{ server_port }}|${server_port}|g" \
         "${SCRIPT_DIR}/templates/cloudflared_config.yaml.j2" >"${temp_dir}/cloudflared_config.yaml"
 
     sed \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -Eeu
 
 : "${GITHUB_TOKEN:?Environment variable GITHUB_TOKEN is not set}"
 

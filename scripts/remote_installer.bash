@@ -71,6 +71,7 @@ install_os_packages() {
     log_info "Configuring Cloudflare repository..."
     local codename="bookworm"
     if [[ -f /etc/os-release ]]; then
+        # shellcheck disable=SC1091
         codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-bookworm}")"
     fi
     curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
