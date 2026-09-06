@@ -38,15 +38,26 @@ generate_env_file() {
 POSTGRES_USER="${app_user}"
 POSTGRES_PASSWORD="${postgres_password}"
 POSTGRES_DB="${app_user}"
-POSTGRES_HOST="localhost"
+POSTGRES_HOST=""
 POSTGRES_PORT="5432"
 POSTGRES_SOCKET_DIR="/var/run/postgresql"
-ARCH_STATS_SERVER_PORT="8001"
-ARCH_STATS_DEV_MODE="false"
 POSTGRES_POOL_MIN_SIZE="1"
 POSTGRES_POOL_MAX_SIZE="10"
-ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID=""
-VITE_GOOGLE_CLIENT_ID=""
+POSTGRES_MAX_QUERIES="50000"
+POSTGRES_MAX_INACTIVE_CONNECTION_LIFETIME="300.0"
+POSTGRES_COMMAND_TIMEOUT="15.0"
+POSTGRES_STATEMENT_CACHE_SIZE="200"
+
+ARCH_STATS_SERVER_PORT="8001"
+ARCH_STATS_DEV_MODE="false"
+ARCH_STATS_WS_CHANNEL="archy"
+APPLY_DB_MIGRATIONS_ON_START="true"
+
+SESSION_TTL_HOURS="24"
+SESSION_TOKEN_BYTES="32"
+
+ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID="${ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID:-}"
+VITE_GOOGLE_CLIENT_ID="${ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID:-}"
 ARCH_STATS_JWT_SECRET="${jwt_secret}"
 ARCH_STATS_JWT_ALGORITHM="HS256"
 ARCH_STATS_JWT_TTL_MINUTES="60"
@@ -65,20 +76,25 @@ install_os_packages() {
     curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
     echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared ${codename} main" | tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
 
-    log_info "Installing OS packages (cloudflared, postgresql, postgresql-contrib, openssl)..."
+    log_info "Installing OS packages (cloudflared, postgresql, postgresql-contrib, openssl, jq, curl)..."
     apt-get update -y
     apt-get install -y \
         cloudflared \
         postgresql \
         postgresql-contrib \
-        openssl
+        openssl \
+        jq \
+        curl
 }
 
 setup_postgres() {
     local app_user="${1}"
     local postgres_password="${2}"
     local pg_path="/etc/postgresql/15/main"
-    log_info "Setting up PostgreSQL user and database..."
+    if [[ ! -d "${pg_path}" ]]; then
+        pg_path="$(find /etc/postgresql -mindepth 2 -maxdepth 2 -type d 2>/dev/null | head -n 1)"
+    fi
+    log_info "Setting up PostgreSQL user and database in ${pg_path}..."
 
     log_info "Stopping postgresql service if running to apply custom configurations..."
     systemctl stop postgresql || true
@@ -90,10 +106,9 @@ setup_postgres() {
 
     systemctl enable --now postgresql
 
-    # Run PostgreSQL commands from "${ROOT_DIR} to avoid "could not change directory to '/root': Permission denied"
     (
         cd ~postgres
-        if ! sudo -u postgres psql -t -c '\du' | cut -d \| -f 1 | grep -q "${app_user}"; then
+        if ! sudo -u postgres psql -t -c '\du' | cut -d \| -f 1 | grep -qw "${app_user}"; then
             log_info "Creating PostgreSQL user '${app_user}'..."
             sudo -u postgres psql -c "CREATE USER \"${app_user}\" WITH PASSWORD '${postgres_password}';"
         fi
@@ -138,7 +153,8 @@ setup_cloudflared() {
     chmod 644 /etc/systemd/system/cloudflared.service /etc/cloudflared/cloudflared_config.yaml
 
     systemctl daemon-reload
-    systemctl enable --now cloudflared.service
+    systemctl enable cloudflared.service
+    systemctl start cloudflared.service || true
     log_info "Cloudflared setup complete."
 }
 
@@ -147,14 +163,11 @@ register_app_service() {
     mv "${ROOT_DIR}/${app_user}.service" "/etc/systemd/system/"
     chmod 644 "/etc/systemd/system/${app_user}.service"
     systemctl daemon-reload
-    systemctl enable --now "${app_user}.service"
+    systemctl enable "${app_user}.service"
 }
 
-install_app_as_user() {
+run_install_app() {
     local app_user="${1}"
-    local user_dir
-    user_dir="$(getent passwd "${app_user}" | cut -d: -f6)"
-    local script_path="${user_dir}/install_app.bash"
     local env_file="${ROOT_DIR}/env"
     if [[ -f "${env_file}" ]]; then
         # shellcheck disable=SC1090
@@ -163,14 +176,10 @@ install_app_as_user() {
         log_error "Environment file not found. Aborting."
         exit 15
     fi
-    mv "${ROOT_DIR}/install_app.bash" "${script_path}"
-    chown "${app_user}:${app_user}" "${script_path}"
-    chmod 755 "$script_path"
-    log_info "Running application installer as ${app_user}..."
-    if ! runuser -u "${app_user}" -- "${script_path}"; then
-        log_error "Application installation failed."
-        exit 14
-    fi
+
+    log_info "Executing application installer for ${app_user}..."
+    chmod 755 "${ROOT_DIR}/install_app.bash"
+    GITHUB_TOKEN="${GITHUB_TOKEN}" "${ROOT_DIR}/install_app.bash" "${app_user}"
 }
 
 main() {
@@ -189,14 +198,13 @@ main() {
     generate_env_file "${app_user}" "${postgres_password}"
     setup_postgres "${app_user}" "${postgres_password}"
     setup_cloudflared "${app_user}"
-    install_app_as_user "${app_user}"
     register_app_service "${app_user}"
+    run_install_app "${app_user}"
 
-    log_info "Starting ${app_user} service..."
-    systemctl start "${app_user}.service"
-
+    log_info "Checking ${app_user} service status..."
     if ! systemctl is-active --quiet "${app_user}.service"; then
         log_error "Service ${app_user}.service failed to start."
+        journalctl -u "${app_user}.service" -n 50 --no-pager || true
         exit 22
     fi
 
