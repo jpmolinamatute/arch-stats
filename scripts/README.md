@@ -53,17 +53,19 @@ environment for script editing:
 Here are the primary scripts used in the project lifecycle:
 
 | Script | Description |
-| :--- | :--- |
-| [`install.bash`](./install.bash) | Installs Arch-Stats to the local system (downloads artifact, sets up venv). |
-| [`generate_fe_types.bash`](./generate_fe_types.bash) | Generates frontend TypeScript types from the backend OpenAPI schema. |
-| [`linting.bash`](./linting.bash) | All-in-one runner for backend, frontend, and bash linting/testing. |
-| [`create_pr.bash`](./create_pr.bash) | Automates PR creation with labels based on changed files. |
-| [`remote_installer.bash`](./remote_installer.bash) | Sets up the application and systemd service on a remote Linux server. |
-| [`local_installer.bash`](./local_installer.bash) | Orchestrates remote installation/uninstallation via SSH. |
+| :------ | :--------- |
+| [`create_pr.bash`](./create_pr.bash) | Automates PR creation with labels (`frontend`, `backend`, `documentation`) based on changed files vs `origin/main`. |
+| [`deploy.bash`](./deploy.bash) | Orchestrates remote deployment via SSH — auto-detects install vs update, renders templates, uploads assets, and runs the remote installer. Also supports uninstalling. |
+| [`enrich_openapi.py`](./enrich_openapi.py) | Post-processes an OpenAPI 3.0 JSON spec to add schema aliases, validation-error schemas, and `nullable` annotations for frontend TypeScript compatibility. |
+| [`generate_fe_types.bash`](./generate_fe_types.bash) | Generates frontend TypeScript types from the backend OpenAPI schema. Fetches from the live server or regenerates via `swag` when offline. |
+| [`install_app.bash`](./install_app.bash) | Downloads the latest release binary and checksum from GitHub, verifies SHA-256, installs the binary, runs database migrations, and restarts the systemd service. Runs on the remote server as root. |
+| [`linting.bash`](./linting.bash) | All-in-one linting runner for frontend (ESLint, Prettier, Vitest, vue-tsc build), bash (ShellCheck, shfmt), and Go (gofumpt, golangci-lint, go test). Auto-detects staged files when used as a pre-commit hook. |
+| [`remote_installer.bash`](./remote_installer.bash) | Full first-time server provisioning: installs OS packages (PostgreSQL, cloudflared), creates the app user, generates the `.env` file, configures PostgreSQL and Cloudflare Tunnel, registers systemd services, and delegates binary installation to `install_app.bash`. |
+| [`remote_uninstaller.bash`](./remote_uninstaller.bash) | Reverses a remote installation: stops and removes systemd services, drops the PostgreSQL database and user, purges cloudflared, and deletes the app user and home directory. |
 
 ## Type Generation
 
-To keep frontend TypeScript types in sync with the backend Pydantic models, use the generation script:
+To keep frontend TypeScript types in sync with the backend Go models, use the generation script:
 
 ```bash
 ./scripts/generate_fe_types.bash
@@ -72,9 +74,12 @@ To keep frontend TypeScript types in sync with the backend Pydantic models, use 
 The script intelligently determines the source of the OpenAPI schema:
 
 1. **Server Running**: If the backend is running, it fetches the schema directly from
-   `http://localhost:8000/api/openapi.json`.
+   `http://localhost:<ARCH_STATS_SERVER_PORT>/api/openapi.json` (defaults to port `8000`).
 2. **Server Stopped**: If the backend is not running, it regenerates Swagger 2.0 specs via `swag`
-   and converts them to OpenAPI 3.0.
+   and converts them to OpenAPI 3.0 using `swagger2openapi`.
+3. **Enrichment**: If `enrich_openapi.py` is present, it post-processes the OpenAPI 3.0 spec to add
+   schema aliases, validation error schemas, and nullable field annotations for full frontend
+   compatibility.
 
 ## Git Hooks & Safety Net
 
@@ -103,10 +108,19 @@ After pushing your changes, use the helper script to create a Pull Request:
 
 The directory is organized by function:
 
-- **`scripts/*.bash`**: executable scripts for development and deployment tasks.
-- **`scripts/lib/`**: Shared libraries and helper functions (e.g., `manage_docker`).
+- **`scripts/*.bash`**: Executable scripts for development and deployment tasks.
+- **`scripts/enrich_openapi.py`**: Python post-processor for OpenAPI spec enrichment.
+- **`scripts/lib/`**: Shared Bash libraries sourced by other scripts.
+    - `logging` Colored `log_info` / `log_error` helpers.
+    - `manage_docker` Docker Compose lifecycle helpers (`start_docker`, `stop_docker`, `is_docker_running`).
+- **`scripts/cloudflared/`**: Cloudflare Tunnel systemd service unit file.
+- **`scripts/pg_conf/`**: Custom PostgreSQL configuration files (`postgresql.conf`, `secondary.conf`).
+- **`scripts/templates/`**: Jinja2-style templates rendered by `deploy.bash` at deploy time.
+    - `arch-stats.service.j2` Systemd unit for the Arch Stats application.
+    - `cloudflared_config.yaml.j2` Cloudflare Tunnel configuration.
+    - `pg_hba.conf.j2` PostgreSQL host-based authentication.
 - **`.github/workflows/`**: CI/CD pipeline definitions.
-- **`.github/actions/`**: Local composite actions (`uv-setup`, `npm-setup`).
+- **`.github/actions/`**: Local composite actions (`npm-setup`).
 
 ### Style Guidelines
 
@@ -182,7 +196,7 @@ This runs **ShellCheck** and **shfmt** to ensure code correctness and consistent
 The repository uses GitHub Actions for continuous integration and deployment.
 
 - **Frontend**: Linting & Formatting ([`frontend_linting.yaml`](../.github/workflows/frontend_linting.yaml))
-- **Backend**: Type Check, Linting & Tests ([`backend_linting.yaml`](../.github/workflows/backend_linting.yaml))
+- **Backend**: Linting & Tests ([`backend_linting.yaml`](../.github/workflows/backend_linting.yaml))
 - **Scripts**: Bash Linting ([`bash_linting.yaml`](../.github/workflows/bash_linting.yaml))
 - **Release**: Build Artifact ([`build_artifact.yaml`](../.github/workflows/build_artifact.yaml))
 
@@ -191,7 +205,7 @@ The repository uses GitHub Actions for continuous integration and deployment.
 For a PR to be mergeable, the following workflows must pass if triggered:
 
 | Workflow | Triggers on Changes In | Must Pass |
-| :--- | :--- | :--- |
+| :------ | :--------------------- | :-------- |
 | **Frontend** | `frontend/**` | Formatting, Linting, Tests |
 | **Backend** | `backend/**` | golangci-lint, gofumpt, go test |
 | **Scripts** | `scripts/*.bash` | ShellCheck, shfmt |
@@ -203,26 +217,35 @@ For a PR to be mergeable, the following workflows must pass if triggered:
 
 Deployment and CI jobs must surface required runtime variables explicitly.
 
-| Variable | Purpose | Required | Default (dev) |
-| :--- | :--- | :--- | :--- |
-| `PGHOST` | Postgres host | yes | `localhost` |
-| `PGPORT` | Postgres port | no | `5432` |
-| `PGUSER` | Postgres user | yes | `postgres` |
-| `PGPASSWORD` | Postgres password | yes | *(secret)* |
-| `PGDATABASE` | DB name | yes | `arch_stats` |
+| Variable | Purpose | Required | Default |
+| :------- | :------ | :------- | :------ |
+| `GITHUB_TOKEN` | GitHub API token for release downloads | yes | *(secret)* |
+| `POSTGRES_USER` | Postgres user | yes | `arch-stats` |
+| `POSTGRES_PASSWORD` | Postgres password | yes | *(auto-generated)* |
+| `POSTGRES_DB` | Database name | yes | `arch-stats` |
+| `POSTGRES_HOST` | Postgres host | no | *(empty,  uses unix socket)* |
+| `POSTGRES_PORT` | Postgres port | no | `5432` |
+| `POSTGRES_SOCKET_DIR` | Postgres unix socket directory | no | `/var/run/postgresql` |
 | `POSTGRES_POOL_MIN_SIZE` | Min pool connections | no | `1` |
 | `POSTGRES_POOL_MAX_SIZE` | Max pool connections | no | `10` |
+| `ARCH_STATS_SERVER_PORT` | Application HTTP port | no | `8001` |
+| `ARCH_STATS_DEV_MODE` | Enable development mode | no | `false` |
+| `ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID` | Google OAuth Client ID | yes (install) | -W |
+| `ARCH_STATS_JWT_SECRET` | JWT signing secret | yes (install) | *(auto-generated)* |
+| `ARCH_STATS_JWT_ALGORITHM` | JWT algorithm | no | `HS256` |
+| `ARCH_STATS_JWT_TTL_MINUTES` | JWT token TTL | no | `60` |
+| `CLOUDFLARED_TUNNEL_ID` | Cloudflare Tunnel UUID | yes (install) | - |
 
 ## Platform Assumptions
 
 - **Linux**: Scripts rely on Linux-specific paths (e.g., `/var/run/postgresql`) and commands
   (`systemctl`).
-- **Docker**: Expected to be available for running the database and tests.
-- **Docker Compose**: Expected to be available for running the database and tests.
-- **Dependencies**: `uv` for Python and `npm` for Node.js are expected to be managed via the
-  provided setup actions/scripts.
+- **Docker**: Expected to be available for running the database in development.
+- **Docker Compose**: Expected to be available for running the database in development.
+- **Dependencies**: `npm` for Node.js frontend and Go toolchain for the backend are expected to be
+  available in the development environment.
 
 ## References
 
-- **Backend**: [backend/](../backend)
-- **Frontend**: [frontend/README.md](../frontend/README.md)
+- **Backend**: [backend/README.md](file://../backend/README.md)
+- **Frontend**: [frontend/README.md](file://../frontend/README.md)
