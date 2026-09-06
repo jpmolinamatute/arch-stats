@@ -31,6 +31,15 @@ func NewArcherHandler(archerSvc ArcherService) *ArcherHandler {
 	}
 }
 
+// Routes registers all archer CRUD endpoints on the provided chi Router.
+func (h *ArcherHandler) Routes(r chi.Router) {
+	r.Get("/", h.List)
+	r.Get("/{id}", h.GetByID)
+	r.Post("/", h.Create)
+	r.Patch("/", h.Update)
+	r.Delete("/{id}", h.Delete)
+}
+
 // List godoc
 // @Summary     List Archers
 // @Description Query archers matching default filter criteria and return a JSON list
@@ -163,13 +172,4 @@ func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// Routes registers all archer CRUD endpoints on the provided chi Router.
-func (h *ArcherHandler) Routes(r chi.Router) {
-	r.Get("/", h.List)
-	r.Get("/{id}", h.GetByID)
-	r.Post("/", h.Create)
-	r.Patch("/", h.Update)
-	r.Delete("/{id}", h.Delete)
 }

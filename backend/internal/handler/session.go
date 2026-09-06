@@ -194,7 +194,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.OwnerArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "ERROR: user not allowed to open a session for another archer"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden: cannot open session for another archer"))
 		return
 	}
 
@@ -239,7 +239,7 @@ func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !session.IsOpened && session.OwnerArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
@@ -285,7 +285,7 @@ func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.OwnerArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Archer is not allowed to re-open this session"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden: cannot re-open another archer's session"))
 		return
 	}
 
@@ -304,7 +304,7 @@ func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 // @Accept      json
 // @Produce     json
 // @Param       request body model.SessionId true "Session identifier payload"
-// @Success     200 {object} map[string]string
+// @Success     204
 // @Failure     400 {object} model.ErrorResponse
 // @Failure     401 {object} model.ErrorResponse
 // @Failure     403 {object} model.ErrorResponse
@@ -325,7 +325,7 @@ func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.SessionID == nil || *req.SessionID == uuid.Nil {
-		WriteError(w, http.StatusBadRequest, "ERROR: session_id wasn't provided")
+		WriteError(w, http.StatusBadRequest, "session_id is required")
 		return
 	}
 
@@ -336,7 +336,7 @@ func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.OwnerArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
@@ -345,5 +345,5 @@ func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = WriteJSON(w, http.StatusOK, map[string]string{"status": "closed"})
+	w.WriteHeader(http.StatusNoContent)
 }

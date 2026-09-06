@@ -266,8 +266,8 @@ func TestShotHandler_Create(t *testing.T) {
 		}
 		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -285,8 +285,8 @@ func TestShotHandler_Create(t *testing.T) {
 		}
 		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -307,8 +307,8 @@ func TestShotHandler_Create(t *testing.T) {
 		}
 		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -331,8 +331,8 @@ func TestShotHandler_Create(t *testing.T) {
 		}
 		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "All shots must belong to the same slot" {
-			t.Fatalf("expected detail 'All shots must belong to the same slot', got %q", errResp.Detail)
+		if errResp.Detail != "all shots must belong to the same slot" {
+			t.Fatalf("expected detail 'all shots must belong to the same slot', got %q", errResp.Detail)
 		}
 	})
 

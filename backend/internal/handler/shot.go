@@ -111,14 +111,14 @@ func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Conte
 	}
 
 	if len(shots) < 3 || len(shots) > 10 {
-		WriteError(w, http.StatusBadRequest, "Invalid input")
+		WriteError(w, http.StatusBadRequest, "batch must contain between 3 and 10 shots")
 		return
 	}
 
 	slotID := shots[0].SlotID
 	for _, s := range shots[1:] {
 		if s.SlotID != slotID {
-			WriteError(w, http.StatusBadRequest, "All shots must belong to the same slot")
+			WriteError(w, http.StatusBadRequest, "all shots must belong to the same slot")
 			return
 		}
 	}

@@ -101,7 +101,7 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if info.ArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.ArcherID != authArcherID {
-		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
@@ -197,7 +197,7 @@ func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 // @Tags        Slots
 // @Produce     json
 // @Param       slot_id path string true "Slot UUID"
-// @Success     200
+// @Success     204
 // @Failure     401 {object} model.ErrorResponse
 // @Failure     404 {object} model.ErrorResponse
 // @Failure     422 {object} model.ErrorResponse
@@ -220,5 +220,5 @@ func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

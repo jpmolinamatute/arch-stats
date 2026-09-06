@@ -1,3 +1,10 @@
+// Package handler provides HTTP request handling for the arch-stats API.
+//
+// Handler Response Conventions:
+//
+//   - 201 Created: return the created entity's ID struct (e.g., model.ArcherID, model.SessionID).
+//   - 200 OK: return the resource or a status struct for state mutations.
+//   - 204 No Content: return no body for destructive operations (delete, leave).
 package handler
 
 import (

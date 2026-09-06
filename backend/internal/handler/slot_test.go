@@ -593,7 +593,7 @@ func TestSlotHandler_LeaveSession(t *testing.T) {
 		}
 	})
 
-	t.Run("returns_200_when_leave_succeeds", func(t *testing.T) {
+	t.Run("returns_204_when_leave_succeeds", func(t *testing.T) {
 		authID := uuid.New()
 		slotID := uuid.New()
 		mockSvc := &mockSlotHandlerService{
@@ -607,8 +607,8 @@ func TestSlotHandler_LeaveSession(t *testing.T) {
 
 		h.LeaveSession(rr, req)
 
-		if rr.Code != http.StatusOK {
-			t.Fatalf("expected status 200, got %d: %s", rr.Code, rr.Body.String())
+		if rr.Code != http.StatusNoContent {
+			t.Fatalf("expected status 204, got %d: %s", rr.Code, rr.Body.String())
 		}
 	})
 }
