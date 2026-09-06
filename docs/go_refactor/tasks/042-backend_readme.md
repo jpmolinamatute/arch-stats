@@ -8,7 +8,7 @@
 
 Rewrite `backend/README.md` to reflect the Go backend architecture, replacing all outdated
 Python/Uvicorn/uv/Pydantic references. The new documentation must provide comprehensive guidance
-for new Go developers onboarding to the project, explain the updated GitHub Actions CI/CD workflows,
+for new Go developers onboarding to the project, explain the GitHub Actions CI/CD workflows,
 and document how to install the single-binary application on a Raspberry Pi 5 (including testing the
 installation scripts locally using the Docker Raspberry Pi emulator).
 
@@ -21,9 +21,9 @@ installation scripts locally using the Docker Raspberry Pi emulator).
 
 ## Acceptance Criteria
 
-- [ ] `backend/README.md` is updated and completely free of Python, uv, Uvicorn, FastAPI, Pydantic,
+- [x] `backend/README.md` is updated and completely free of Python, uv, Uvicorn, FastAPI, Pydantic,
   or Flyway references.
-- [ ] **Development Environment Guide for Go Developers**:
+- [x] **Development Environment Guide for Go Developers**:
     - Prerequisites listed: Go 1.27.0+, Docker & Docker Compose, `air` (live reload), `swag`
       (OpenAPI generation), `golangci-lint`.
     - Local setup instructions: cloning, module download (`go mod download`), database startup via
@@ -34,13 +34,13 @@ installation scripts locally using the Docker Raspberry Pi emulator).
     - How to regenerate OpenAPI annotations (`swag init`) and sync TypeScript frontend types
       (`npm run generate:types`).
     - VS Code task integration (`Start Go Server (air)`, `Run Go Tests`, etc.).
-- [ ] **GitHub Workflows Explanation**:
+- [x] **GitHub Workflows Explanation**:
     - Explains `backend_linting.yaml` (linting, vetting, unit & integration tests).
     - Explains `frontend_linting.yaml` and `bash_linting.yaml`.
     - Explains `build_artifact.yaml` release pipeline: frontend build, embedding static assets via
       `//go:embed`, cross-compiling for `linux/arm64` (Raspberry Pi 5), generating SHA256 checksums,
       and publishing GitHub Releases with the single binary.
-- [ ] **Raspberry Pi 5 Installation & Emulator Testing**:
+- [x] **Raspberry Pi 5 Installation & Emulator Testing**:
     - Describes target deployment model: single `/opt/arch-stats/arch-stats` binary, `.env`
       configuration, and `arch-stats.service` systemd unit.
     - Instructions on deploying / installing to a physical Raspberry Pi 5 using `scripts/deploy.bash`,
@@ -48,7 +48,7 @@ installation scripts locally using the Docker Raspberry Pi emulator).
     - Step-by-step guide for testing installation scripts locally using the Docker Raspberry Pi
       emulator (`docker compose --profile emulator up -d`), connecting via port 2222 with SSH keys,
       and verifying systemd service execution.
-- [ ] Markdown complies with markdownlint standards (including MD007 4-space list indentation).
+- [x] Markdown complies with markdownlint standards (including MD007 4-space list indentation).
 
 ## Files to Create/Modify
 
@@ -70,13 +70,13 @@ installation scripts locally using the Docker Raspberry Pi emulator).
 
 ## Steps
 
-- [ ] **Step 1: Draft the Architecture & Getting Started Section**
+- [x] **Step 1: Draft the Architecture & Getting Started Section**
 
   Define the Go stack: Chi router, pgx pool, squirrel SQL builder, envconfig, goose migrations,
   and embedded frontend serving. Detail prerequisites and local environment bootstrap steps
   (Docker database, `air` live reload, VS Code tasks).
 
-- [ ] **Step 2: Document Code Quality, Testing, and OpenAPI Workflows**
+- [x] **Step 2: Document Code Quality, Testing, and OpenAPI Workflows**
 
   Document commands for:
     - Unit and integration tests: `go test -v ./...`
@@ -84,14 +84,14 @@ installation scripts locally using the Docker Raspberry Pi emulator).
     - OpenAPI spec generation with `swag init -g cmd/arch-stats/main.go -o specs/`
     - Syncing frontend types with `npm run generate:types`
 
-- [ ] **Step 3: Document GitHub Actions CI/CD Pipeline**
+- [x] **Step 3: Document GitHub Actions CI/CD Pipeline**
 
   Document the CI/CD matrix and workflow triggers:
     - `backend_linting.yaml`: Trigger conditions, steps executed.
     - `build_artifact.yaml`: Cross-compilation target (`linux/arm64`), asset embedding, release
       artifact generation.
 
-- [ ] **Step 4: Document Raspberry Pi 5 Installation & Docker Emulator Testing**
+- [x] **Step 4: Document Raspberry Pi 5 Installation & Docker Emulator Testing**
 
   Document:
     - How `scripts/install_app.bash` downloads and installs the standalone Go binary on
@@ -103,5 +103,5 @@ installation scripts locally using the Docker Raspberry Pi emulator).
 
 ## Verification
 
-- [ ] Verify `backend/README.md` contains accurate, executable commands for Go developers.
-- [ ] Run markdownlint on `docs/go_refactor/tasks/042-backend_readme.md` and `backend/README.md`.
+- [x] Verify `backend/README.md` contains accurate, executable commands for Go developers.
+- [x] Run markdownlint on `docs/go_refactor/tasks/042-backend_readme.md` and `backend/README.md`.
