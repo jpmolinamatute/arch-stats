@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/config"
@@ -21,6 +22,7 @@ type RouterDeps struct {
 	ShotHandler    *handler.ShotHandler
 	FaceHandler    *handler.FaceHandler
 	HealthHandler  *handler.HealthHandler
+	SPAHandler     http.Handler
 }
 
 // buildRouter constructs the chi HTTP router with global middleware and nested route groups.
@@ -67,6 +69,10 @@ func buildRouter(deps *RouterDeps) chi.Router {
 			r.Route("/shot", deps.ShotHandler.Routes)
 		})
 	})
+
+	if deps.SPAHandler != nil {
+		r.Handle("/*", deps.SPAHandler)
+	}
 
 	return r
 }
