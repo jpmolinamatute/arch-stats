@@ -14,8 +14,8 @@ frontend/src/types/*
 !frontend/src/types/.gitkeep
 backend-old/src/core/logs/*
 !backend-old/src/core/logs/.gitkeep
-backend-old/src/frontend/*
-!backend-old/src/frontend/.gitkeep
+backend/frontend/*
+!backend/frontend/.gitkeep
 openapi.json
 google_client_secret.json
 .worktrees/
