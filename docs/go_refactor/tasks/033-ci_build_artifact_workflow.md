@@ -18,7 +18,7 @@ for `linux/arm64` (Raspberry Pi 5), and publish the single binary as a GitHub Re
 
 ## Acceptance Criteria
 
-- [ ] `.github/workflows/build_artifact.yaml` is rewritten with this pipeline:
+- [x] `.github/workflows/build_artifact.yaml` is rewritten with this pipeline:
   1. Checkout code
   2. Set up Go 1.27.0
   3. Set up Node.js (for frontend build)
@@ -30,10 +30,10 @@ for `linux/arm64` (Raspberry Pi 5), and publish the single binary as a GitHub Re
   9. Cross-compile Go binary: `GOOS=linux GOARCH=arm64 go build -o arch-stats ./cmd/arch-stats`
   10. Generate checksum: `sha256sum arch-stats > arch-stats.sha256`
   11. Create GitHub Release with the binary and checksum
-- [ ] The release artifact is a single binary (not a tarball).
-- [ ] No Python, uv, Flyway, or venv references remain.
-- [ ] The `uv-setup` custom action is no longer referenced.
-- [ ] The `npm-setup` custom action is still referenced for the frontend.
+- [x] The release artifact is a single binary (not a tarball).
+- [x] No Python, uv, Flyway, or venv references remain.
+- [x] The `uv-setup` custom action is no longer referenced.
+- [x] The `npm-setup` custom action is still referenced for the frontend.
 
 ## Files to Modify
 
@@ -48,7 +48,7 @@ for `linux/arm64` (Raspberry Pi 5), and publish the single binary as a GitHub Re
 
 ## Steps
 
-- [ ] **Step 1: Rewrite the workflow**
+- [x] **Step 1: Rewrite the workflow**
 
   Replace the entire contents of `.github/workflows/build_artifact.yaml`:
 
@@ -131,13 +131,13 @@ for `linux/arm64` (Raspberry Pi 5), and publish the single binary as a GitHub Re
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ```
 
-- [ ] **Step 2: Validate YAML syntax**
+- [x] **Step 2: Validate YAML syntax**
 
   ```bash
   python3 -c "import yaml; yaml.safe_load(open('.github/workflows/build_artifact.yaml'))"
   ```
 
-- [ ] **Step 3: Verify no Python references remain**
+- [x] **Step 3: Verify no Python references remain**
 
   ```bash
   grep -i "uv\|python\|uvicorn\|flyway\|tar\|venv" .github/workflows/build_artifact.yaml
@@ -145,7 +145,7 @@ for `linux/arm64` (Raspberry Pi 5), and publish the single binary as a GitHub Re
 
   Expected: no results.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add -A
