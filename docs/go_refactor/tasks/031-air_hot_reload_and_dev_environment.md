@@ -17,19 +17,19 @@ Go backend.
 
 ## Acceptance Criteria
 
-- [ ] `backend/.air.toml` configures air with:
+- [x] `backend/.air.toml` configures air with:
     - Watch `cmd/`, `internal/` directories for `.go` file changes
     - Build command: `go build -o ./tmp/arch-stats ./cmd/arch-stats`
     - Run command: `./tmp/arch-stats`
     - Exclude `tmp/`, `tests/`, `vendor/`, `specs/`
     - Log coloring enabled
-- [ ] `.vscode/tasks.json` is updated:
+- [x] `.vscode/tasks.json` is updated:
     - "Start Uvicorn Server" task replaced with "Start Go Server (air)"
     - "Start Vite Server" task unchanged
     - Docker Compose tasks unchanged
     - New task: "Run Go Tests" (`cd backend && go test ./... -v`)
-- [ ] Running `air` in `backend/` starts the Go server and automatically rebuilds on file changes.
-- [ ] `backend/.gitignore` updated to ignore `tmp/` (air build output).
+- [x] Running `air` in `backend/` starts the Go server and automatically rebuilds on file changes.
+- [x] `backend/.gitignore` updated to ignore `tmp/` (air build output).
 
 ## Files to Create/Modify
 
@@ -41,7 +41,7 @@ Go backend.
 
 ## Steps
 
-- [ ] **Step 1: Create `.air.toml`**
+- [x] **Step 1: Create `.air.toml`**
 
   Create `backend/.air.toml`:
 
@@ -74,7 +74,7 @@ Go backend.
   clean_on_exit = true
   ```
 
-- [ ] **Step 2: Update `backend/.gitignore`**
+- [x] **Step 2: Update `backend/.gitignore`**
 
   Add:
 
@@ -83,7 +83,7 @@ Go backend.
   build-errors.log
   ```
 
-- [ ] **Step 3: Update `.vscode/tasks.json`**
+- [x] **Step 3: Update `.vscode/tasks.json`**
 
   Replace the "Start Uvicorn Server" task with:
 
@@ -129,7 +129,7 @@ Go backend.
   }
   ```
 
-- [ ] **Step 4: Test air**
+- [x] **Step 4: Test air**
 
   ```bash
   cd backend
@@ -140,7 +140,7 @@ Go backend.
   Expected: air watches files, builds, and starts the server. Modifying a `.go` file triggers
   a rebuild.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add -A
