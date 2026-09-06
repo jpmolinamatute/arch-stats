@@ -20,25 +20,25 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
 
 ## Acceptance Criteria
 
-- [ ] `backend/tests/integration/testmain_test.go` provides a `TestMain(m)` function that:
+- [x] `backend/tests/integration/testmain_test.go` provides a `TestMain(m)` function that:
     - Starts a PostgreSQL 17 container via `testcontainers-go`
     - Waits for the container to be healthy
     - Creates a `pgxpool.Pool` connected to the container
     - Runs goose migrations against the test database
     - Exposes the pool to all tests via a package-level variable
     - Tears down the container after all tests complete
-- [ ] `backend/tests/integration/helpers_test.go` provides shared utilities:
+- [x] `backend/tests/integration/helpers_test.go` provides shared utilities:
     - `truncateAll(ctx, pool)` — truncates all tables in FK-safe order (matching Python's
     `_truncate_all`)
     - `createTestArcher(ctx, pool, overrides)` — inserts a test archer and returns the record
     - `createTestSession(ctx, pool, archerID, overrides)` — inserts a test shooting session
     - `jwtForArcher(archerID, secret)` — generates a valid JWT for test requests
-- [ ] `backend/tests/integration/smoke_test.go` contains a single smoke test that:
+- [x] `backend/tests/integration/smoke_test.go` contains a single smoke test that:
     - Verifies the pool is connected
     - Verifies migrations ran (tables exist)
     - Verifies `truncateAll` works without error
-- [ ] `go test ./tests/integration/... -v` passes (smoke test connects, migrates, truncates).
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./tests/integration/... -v` passes (smoke test connects, migrates, truncates).
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -56,7 +56,7 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
 
 ## Steps
 
-- [ ] **Step 1: Add testcontainers-go dependency**
+- [x] **Step 1: Add testcontainers-go dependency**
 
   ```bash
   cd backend
@@ -64,7 +64,7 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
   go get github.com/testcontainers/testcontainers-go/modules/postgres
   ```
 
-- [ ] **Step 2: Write `testmain_test.go`**
+- [x] **Step 2: Write `testmain_test.go`**
 
   Create `backend/tests/integration/testmain_test.go`:
 
@@ -133,7 +133,7 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
   }
   ```
 
-- [ ] **Step 3: Write `helpers_test.go`**
+- [x] **Step 3: Write `helpers_test.go`**
 
   Create `backend/tests/integration/helpers_test.go` with:
     - `truncateAll(ctx, pool)` executing TRUNCATE in FK-safe order
@@ -178,7 +178,7 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
   }
   ```
 
-- [ ] **Step 4: Write `smoke_test.go`**
+- [x] **Step 4: Write `smoke_test.go`**
 
   Create `backend/tests/integration/smoke_test.go`:
 
@@ -219,7 +219,7 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
   }
   ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
   ```bash
   cd backend
@@ -228,14 +228,14 @@ function that boots a PostgreSQL container, runs goose migrations, and provides 
 
   Expected: all 3 smoke tests pass (container boots, migrations run, truncate works).
 
-- [ ] **Step 6: Run go vet**
+- [x] **Step 6: Run go vet**
 
   ```bash
   cd backend
   go vet ./...
   ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
   ```bash
   git add -A
