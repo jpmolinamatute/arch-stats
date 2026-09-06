@@ -7,6 +7,7 @@ Requires=postgresql.service
 Type=simple
 User={{ app_name }}
 Group={{ app_name }}
+WorkingDirectory=/opt/{{ app_name }}
 ExecStart=/opt/{{ app_name }}/{{ app_name }}
 EnvironmentFile=/opt/{{ app_name }}/.env
 Restart=on-failure

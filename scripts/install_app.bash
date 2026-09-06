@@ -104,6 +104,45 @@ assert_postgres_socket() {
     log_info "Detected PostgreSQL socket: ${socket_path}"
 }
 
+install_migrations() {
+    local base_url="${1}"
+    local install_dir="${2}"
+    local tmp_dir="${3}"
+    local app_user="${4}"
+    local target_migrations="${install_dir}/migrations"
+    local staged_migrations="/tmp/deploy_assets/migrations"
+
+    mkdir -p "${target_migrations}"
+
+    if [[ -d "${staged_migrations}" ]] && compgen -G "${staged_migrations}/*.sql" >/dev/null; then
+        log_info "Installing migrations from staged assets..."
+        cp "${staged_migrations}"/*.sql "${target_migrations}/"
+    else
+        local zip_url="${base_url}-migrations/zipball/main"
+        local zip_file="${tmp_dir}/migrations.zip"
+        local unpack_dir="${tmp_dir}/migrations_unpacked"
+
+        log_info "Downloading migrations archive from ${zip_url}..."
+        gh_download "${zip_url}" "${zip_file}" false
+
+        mkdir -p "${unpack_dir}"
+        unzip -q "${zip_file}" -d "${unpack_dir}"
+
+        local src_dir
+        src_dir="$(find "${unpack_dir}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+        if [[ -z "${src_dir}" ]]; then
+            log_error "Failed to locate extracted migrations directory."
+            exit 11
+        fi
+        cp "${src_dir}"/*.sql "${target_migrations}/"
+    fi
+
+    chown -R "${app_user}:${app_user}" "${target_migrations}"
+    chmod 755 "${target_migrations}"
+    chmod 644 "${target_migrations}"/*.sql
+    log_info "Installed SQL migrations to ${target_migrations}"
+}
+
 main() {
     local app_user="${1:-arch-stats}"
     local app_name="arch-stats"
@@ -150,6 +189,8 @@ main() {
     mkdir -p "${install_dir}"
     log_info "Installing binary to ${target_bin}..."
     install -m 755 -o "${app_user}" -g "${app_user}" "${dl_bin}" "${target_bin}"
+
+    install_migrations "${base_url}" "${install_dir}" "${tmp_dir}" "${app_user}"
 
     log_info "Running database migrations as user ${app_user}..."
     if ! runuser -u "${app_user}" -- bash -c "cd '${install_dir}' && '${target_bin}' migrate"; then

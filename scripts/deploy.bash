@@ -95,6 +95,10 @@ upload_install_assets() {
         "${cert_file}" \
         "${env_temp_file}" \
         "${host}:${REMOTE_SECURE_DIR}/"
+
+    if [[ -d "${SCRIPT_DIR}/../backend/migrations" ]]; then
+        scp -r "${SCP_OPTS[@]}" "${SCRIPT_DIR}/../backend/migrations" "${host}:${REMOTE_SECURE_DIR}/"
+    fi
 }
 
 upload_update_assets() {
@@ -107,6 +111,10 @@ upload_update_assets() {
         "${SCRIPT_DIR}/install_app.bash" \
         "${env_temp_file}" \
         "${host}:${REMOTE_SECURE_DIR}/"
+
+    if [[ -d "${SCRIPT_DIR}/../backend/migrations" ]]; then
+        scp -r "${SCP_OPTS[@]}" "${SCRIPT_DIR}/../backend/migrations" "${host}:${REMOTE_SECURE_DIR}/"
+    fi
 }
 
 install() {
