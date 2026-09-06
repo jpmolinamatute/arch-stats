@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
 func TestRecovery_CatchesPanicAndReturns500(t *testing.T) {
@@ -24,7 +25,7 @@ func TestRecovery_CatchesPanicAndReturns500(t *testing.T) {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 
-	var resp middleware.ErrorResponse
+	var resp model.ErrorResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("response is not valid JSON: %v", err)
 	}

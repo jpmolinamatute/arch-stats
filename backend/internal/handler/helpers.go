@@ -13,12 +13,9 @@ import (
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
-// ErrorResponse is an alias for model.ErrorResponse for handler swaggo annotations.
-type ErrorResponse = model.ErrorResponse
-
-// writeJSON marshals data as JSON, sets the Content-Type header to application/json,
+// WriteJSON marshals data as JSON, sets the Content-Type header to application/json,
 // writes the HTTP status code, and writes the response body.
-func writeJSON(w http.ResponseWriter, status int, data any) error {
+func WriteJSON(w http.ResponseWriter, status int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if data == nil || status == http.StatusNoContent {
@@ -30,9 +27,9 @@ func writeJSON(w http.ResponseWriter, status int, data any) error {
 	return nil
 }
 
-// readJSON decodes the JSON request body into the target pointer dst.
+// ReadJSON decodes the JSON request body into the target pointer dst.
 // It limits request payload size to 1MB and wraps any decode error in apperror.ErrValidation.
-func readJSON(r *http.Request, dst any) error {
+func ReadJSON(r *http.Request, dst any) error {
 	if r.Body == nil {
 		return apperror.Wrap(apperror.ErrValidation, "request body is empty")
 	}
@@ -45,38 +42,18 @@ func readJSON(r *http.Request, dst any) error {
 	return nil
 }
 
-// writeError writes an error response formatted as JSON with a status code and detail message.
-func writeError(w http.ResponseWriter, status int, message string) {
+// WriteError writes an error response formatted as JSON with a status code and detail message.
+func WriteError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(middleware.ErrorResponse{
+	_ = json.NewEncoder(w).Encode(model.ErrorResponse{
 		Detail: message,
 	})
 }
 
-// writeAppError translates a domain error using middleware.WriteError into appropriate status code and JSON.
-func writeAppError(w http.ResponseWriter, err error) {
-	middleware.WriteError(w, err)
-}
-
-// WriteJSON is the exported alias for writeJSON.
-func WriteJSON(w http.ResponseWriter, status int, data any) error {
-	return writeJSON(w, status, data)
-}
-
-// ReadJSON is the exported alias for readJSON.
-func ReadJSON(r *http.Request, dst any) error {
-	return readJSON(r, dst)
-}
-
-// WriteError is the exported alias for writeError.
-func WriteError(w http.ResponseWriter, status int, message string) {
-	writeError(w, status, message)
-}
-
-// WriteAppError is the exported alias for writeAppError.
+// WriteAppError translates a domain error using middleware.WriteError into appropriate status code and JSON.
 func WriteAppError(w http.ResponseWriter, err error) {
-	writeAppError(w, err)
+	middleware.WriteError(w, err)
 }
 
 // getURLParam extracts a URL parameter from the chi route context,
@@ -100,7 +77,7 @@ func parseUUIDParam(w http.ResponseWriter, r *http.Request, paramNames ...string
 
 	id, err := uuid.Parse(raw)
 	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid "+paramNames[0]+" is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "valid "+paramNames[0]+" is required"))
 		return uuid.Nil, false
 	}
 
@@ -112,7 +89,7 @@ func parseUUIDParam(w http.ResponseWriter, r *http.Request, paramNames ...string
 func requireOwnership(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return uuid.Nil, false
 	}
 
@@ -122,7 +99,7 @@ func requireOwnership(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) 
 	}
 
 	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return uuid.Nil, false
 	}
 

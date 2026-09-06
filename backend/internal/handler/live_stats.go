@@ -60,7 +60,7 @@ func (h *LiveStatsHandler) Routes(r chi.Router) {
 func (h *LiveStatsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -71,18 +71,18 @@ func (h *LiveStatsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 
 	slotID, err := uuid.Parse(slotIDStr)
 	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid slot_id UUID"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid slot_id UUID"))
 		return
 	}
 
 	stat, err := h.svc.GetStats(r.Context(), slotID, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	if err := writeJSON(w, http.StatusOK, stat); err != nil {
-		writeAppError(w, err)
+	if err := WriteJSON(w, http.StatusOK, stat); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 }
@@ -97,7 +97,7 @@ func (h *LiveStatsHandler) WebSocketStats(w http.ResponseWriter, r *http.Request
 	}
 
 	if _, err := uuid.Parse(slotIDStr); err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid slot_id UUID"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid slot_id UUID"))
 		return
 	}
 

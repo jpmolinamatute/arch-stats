@@ -62,11 +62,11 @@ func (h *SlotHandler) GetArcherCurrentSlot(w http.ResponseWriter, r *http.Reques
 
 	info, err := h.slotSvc.GetArcherCurrentSlot(r.Context(), archerID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, info)
+	_ = WriteJSON(w, http.StatusOK, info)
 }
 
 // GetSlot godoc
@@ -85,7 +85,7 @@ func (h *SlotHandler) GetArcherCurrentSlot(w http.ResponseWriter, r *http.Reques
 func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -96,16 +96,16 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 
 	info, err := h.slotSvc.GetSlot(r.Context(), slotID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if info.ArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, info)
+	_ = WriteJSON(w, http.StatusOK, info)
 }
 
 // JoinSession godoc
@@ -124,37 +124,37 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	var req model.SlotJoinRequest
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.ArcherID == uuid.Nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "archer_id is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "archer_id is required"))
 		return
 	}
 	if req.SessionID == uuid.Nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
 		return
 	}
 
 	if req.ArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
 		return
 	}
 
 	resp, err := h.slotSvc.JoinSession(r.Context(), req)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, resp)
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // ReJoinSession godoc
@@ -173,7 +173,7 @@ func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
 func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -184,11 +184,11 @@ func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.slotSvc.ReJoinSession(r.Context(), slotID, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, resp)
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // LeaveSession godoc
@@ -206,7 +206,7 @@ func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.slotSvc.LeaveSession(r.Context(), slotID, authArcherID); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 

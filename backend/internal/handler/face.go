@@ -44,7 +44,7 @@ func (h *FaceHandler) Routes(r chi.Router) {
 func (h *FaceHandler) ListFaces(w http.ResponseWriter, r *http.Request) {
 	faces, err := h.faceSvc.ListAll(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h *FaceHandler) ListFaces(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_ = writeJSON(w, http.StatusOK, summaries)
+	_ = WriteJSON(w, http.StatusOK, summaries)
 }
 
 // GetFace godoc
@@ -76,19 +76,19 @@ func (h *FaceHandler) GetFace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.TrimSpace(faceType) == "" {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "face_type is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "face_type is required"))
 		return
 	}
 
 	face, err := h.faceSvc.GetByID(r.Context(), faceType)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 	if face == nil {
-		writeAppError(w, apperror.ErrNotFound)
+		WriteAppError(w, apperror.ErrNotFound)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, face)
+	_ = WriteJSON(w, http.StatusOK, face)
 }

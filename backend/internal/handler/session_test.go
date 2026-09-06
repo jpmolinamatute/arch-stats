@@ -663,7 +663,7 @@ func TestSessionHandler_Create(t *testing.T) {
 		if rec.Code != http.StatusForbidden {
 			t.Fatalf("expected status 403, got %d", rec.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
 			t.Fatalf("failed to decode error response: %v", err)
 		}
@@ -905,7 +905,7 @@ func TestSessionHandler_Close(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", rec.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
 			t.Fatalf("failed to decode error response: %v", err)
 		}

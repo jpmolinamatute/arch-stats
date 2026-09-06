@@ -43,7 +43,7 @@ func NewArcherHandler(archerSvc ArcherService) *ArcherHandler {
 func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 	archers, err := h.archerSvc.List(r.Context(), model.ArcherFilter{})
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 		archers = []model.ArcherRead{}
 	}
 
-	_ = writeJSON(w, http.StatusOK, archers)
+	_ = WriteJSON(w, http.StatusOK, archers)
 }
 
 // GetByID godoc
@@ -74,11 +74,11 @@ func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	archer, err := h.archerSvc.GetByID(r.Context(), id)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, archer)
+	_ = WriteJSON(w, http.StatusOK, archer)
 }
 
 // Create godoc
@@ -95,18 +95,18 @@ func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Router      /archer/ [post]
 func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherCreate
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	id, err := h.archerSvc.Create(r.Context(), req)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusCreated, model.ArcherID{ArcherID: id})
+	_ = WriteJSON(w, http.StatusCreated, model.ArcherID{ArcherID: id})
 }
 
 // Update godoc
@@ -124,18 +124,18 @@ func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router      /archer/ [patch]
 func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherUpdate
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.Where.ArcherID == nil || *req.Where.ArcherID == uuid.Nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "where.archer_id is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "where.archer_id is required"))
 		return
 	}
 
 	if err := h.archerSvc.Update(r.Context(), *req.Where.ArcherID, req.Data); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.archerSvc.Delete(r.Context(), id); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 

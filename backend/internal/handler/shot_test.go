@@ -264,7 +264,7 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
 		if errResp.Detail != "Invalid input" {
 			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
@@ -283,7 +283,7 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
 		if errResp.Detail != "Invalid input" {
 			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
@@ -305,7 +305,7 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
 		if errResp.Detail != "Invalid input" {
 			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
@@ -329,7 +329,7 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
 		if errResp.Detail != "All shots must belong to the same slot" {
 			t.Fatalf("expected detail 'All shots must belong to the same slot', got %q", errResp.Detail)

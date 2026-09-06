@@ -240,7 +240,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
 		}
 
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
 			t.Fatalf("failed to decode error response: %v", err)
 		}

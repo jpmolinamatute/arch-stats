@@ -61,13 +61,13 @@ func NewAuthHandler(authSvc AuthService, archerSvc ArcherService, cfg AuthHandle
 // @Router      /auth/google [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req model.GoogleOneTapRequest
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if strings.TrimSpace(req.Credential) == "" {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "credential is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "credential is required"))
 		return
 	}
 
@@ -76,17 +76,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	authd, needsReg, err := h.authSvc.LoginWithGoogle(r.Context(), req.Credential, now, meta)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if needsReg != nil {
-		_ = writeJSON(w, http.StatusOK, needsReg)
+		_ = WriteJSON(w, http.StatusOK, needsReg)
 		return
 	}
 
 	h.setAuthCookie(w, r, authd.AccessToken, authd.ExpiresAt)
-	_ = writeJSON(w, http.StatusOK, authd)
+	_ = WriteJSON(w, http.StatusOK, authd)
 }
 
 // Register godoc
@@ -104,13 +104,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router      /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.AuthRegistrationRequest
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if err := validateRegistrationRequest(&req); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -119,12 +119,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	authd, err := h.authSvc.RegisterWithGoogle(r.Context(), req, now, meta)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	h.setAuthCookie(w, r, authd.AccessToken, authd.ExpiresAt)
-	_ = writeJSON(w, http.StatusCreated, authd)
+	_ = WriteJSON(w, http.StatusCreated, authd)
 }
 
 // Logout godoc
@@ -144,7 +144,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.clearAuthCookie(w, r)
-	_ = writeJSON(w, http.StatusOK, model.LogoutResponse{Success: true})
+	_ = WriteJSON(w, http.StatusOK, model.LogoutResponse{Success: true})
 }
 
 // Me godoc
@@ -164,13 +164,13 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if token == "" {
-			writeAppError(w, apperror.Wrap(apperror.ErrUnauthorized, "no authentication token or context found"))
+			WriteAppError(w, apperror.Wrap(apperror.ErrUnauthorized, "no authentication token or context found"))
 			return
 		}
 
 		authenticatedID, authErr := h.authSvc.Authenticate(r.Context(), token)
 		if authErr != nil {
-			writeAppError(w, apperror.Wrap(apperror.ErrUnauthorized, authErr.Error()))
+			WriteAppError(w, apperror.Wrap(apperror.ErrUnauthorized, authErr.Error()))
 			return
 		}
 		archerID = authenticatedID
@@ -178,7 +178,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	archer, err := h.archerSvc.GetByID(r.Context(), archerID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -196,7 +196,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		Archer:      *archer,
 	}
 
-	_ = writeJSON(w, http.StatusOK, resp)
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 func (h *AuthHandler) setAuthCookie(w http.ResponseWriter, r *http.Request, token string, expiresAt time.Time) {
