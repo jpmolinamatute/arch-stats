@@ -61,13 +61,13 @@ docs/
 - Consumes: Clean working tree on `main`.
 - Produces: Checked out branch `refactor/027-handler-live-stats` and initialized `docs/plans/task.md`.
 
-- [ ] **Step 1: Create and switch to git branch**
+- [x] **Step 1: Create and switch to git branch**
 
 ```bash
 git checkout -b refactor/027-handler-live-stats
 ```
 
-- [ ] **Step 2: Initialize `docs/plans/task.md` with Task 027 checklist table**
+- [x] **Step 2: Initialize `docs/plans/task.md` with Task 027 checklist table**
 
 Update `docs/plans/task.md` to:
 
@@ -81,7 +81,7 @@ Update `docs/plans/task.md` to:
 | Task 5: Mark Tasks as Completed in Task Spec and Live Tracker | PENDING | Mark `027-handler_live_stats.md` checklist and `docs/plans/task.md` as DONE |
 ```
 
-- [ ] **Step 3: Commit initial tracker setup**
+- [x] **Step 3: Commit initial tracker setup**
 
 ```bash
 git add docs/plans/task.md docs/plans/2026-09-05-handler-live-stats.md
@@ -99,7 +99,7 @@ git commit -m "docs: initialize task tracker for task 027 handler live stats"
 - Consumes: `model.LiveStat`, `model.Stats`, `model.ShotScore`, `apperror`, `middleware.WithArcherID`, `coder/websocket`.
 - Produces: Failing test suite covering all REST and WebSocket handler behaviors.
 
-- [ ] **Step 1: Write unit tests in `backend/internal/handler/live_stats_test.go`**
+- [x] **Step 1: Write unit tests in `backend/internal/handler/live_stats_test.go`**
 
 ```go
 package handler_test
@@ -428,7 +428,7 @@ func TestLiveStatsHandler_Routes_Registration(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify compilation failure**
+- [x] **Step 2: Run tests to verify compilation failure**
 
 ```bash
 cd backend && go test ./internal/handler/... -v -run TestLiveStatsHandler
@@ -446,7 +446,7 @@ Expected: Compilation failure because `handler.NewLiveStatsHandler` and `handler
 - Consumes: `model.LiveStat`, `apperror`, `middleware.GetArcherID`, `middleware.WriteError`, `coder/websocket`, `websocket.Client`.
 - Produces: `LiveStatsHandler`, `LiveStatsService`, `WebSocketHub`, `Routes(r chi.Router)`, `GetStats(w, r)`, `WebSocketStats(w, r)`.
 
-- [ ] **Step 1: Implement `backend/internal/handler/live_stats.go`**
+- [x] **Step 1: Implement `backend/internal/handler/live_stats.go`**
 
 ```go
 package handler
@@ -563,18 +563,18 @@ func (h *LiveStatsHandler) WebSocketStats(w http.ResponseWriter, r *http.Request
 }
 ```
 
-- [ ] **Step 2: Run unit tests to verify they pass**
+- [x] **Step 2: Run unit tests to verify they pass**
 
 ```bash
 cd backend && go test ./internal/handler/... -v -run TestLiveStatsHandler
 ```
 Expected: All tests pass.
 
-- [ ] **Step 3: Update `docs/plans/task.md` with Task 2 and Task 3 complete**
+- [x] **Step 3: Update `docs/plans/task.md` with Task 2 and Task 3 complete**
 
 Update `docs/plans/task.md` to reflect progress.
 
-- [ ] **Step 4: Commit handler and tests**
+- [x] **Step 4: Commit handler and tests**
 
 ```bash
 git add backend/internal/handler/live_stats.go backend/internal/handler/live_stats_test.go docs/plans/task.md
@@ -592,42 +592,42 @@ git commit -m "feat(handler): implement LiveStatsHandler with REST stats and Web
 - Consumes: Complete backend package suite.
 - Produces: Clean test outputs, zero race conditions, zero linting violations, clean binary compilation.
 
-- [ ] **Step 1: Run handler package tests with race detector**
+- [x] **Step 1: Run handler package tests with race detector**
 
 ```bash
 cd backend && go test -race ./internal/handler/... -v
 ```
 Expected: All handler tests pass with 0 data races.
 
-- [ ] **Step 2: Run entire backend test suite with race detector**
+- [x] **Step 2: Run entire backend test suite with race detector**
 
 ```bash
 cd backend && go test -race ./...
 ```
 Expected: All packages pass with cached or fresh test runs.
 
-- [ ] **Step 3: Run `go vet`**
+- [x] **Step 3: Run `go vet`**
 
 ```bash
 cd backend && go vet ./...
 ```
 Expected: Exit code 0, no warnings.
 
-- [ ] **Step 4: Run `golangci-lint`**
+- [x] **Step 4: Run `golangci-lint`**
 
 ```bash
 cd backend && golangci-lint run ./...
 ```
 Expected: 0 issues reported.
 
-- [ ] **Step 5: Verify binary compiles**
+- [x] **Step 5: Verify binary compiles**
 
 ```bash
 cd backend && go build ./...
 ```
 Expected: Successful compilation of all backend packages and cmd entrypoint.
 
-- [ ] **Step 6: Update `docs/plans/task.md` with Task 4 complete**
+- [x] **Step 6: Update `docs/plans/task.md` with Task 4 complete**
 
 Update `docs/plans/task.md` to reflect Task 4 DONE.
 
@@ -643,7 +643,7 @@ Update `docs/plans/task.md` to reflect Task 4 DONE.
 - Consumes: Verified implementation from Task 4.
 - Produces: Updated markdown documentation with all checkboxes checked and all tasks marked DONE.
 
-- [ ] **Step 1: Mark all acceptance criteria and steps in `docs/go_refactor/tasks/027-handler_live_stats.md` as completed (`[x]`)**
+- [x] **Step 1: Mark all acceptance criteria and steps in `docs/go_refactor/tasks/027-handler_live_stats.md` as completed (`[x]`)**
 
 Update `docs/go_refactor/tasks/027-handler_live_stats.md`:
 
@@ -677,7 +677,7 @@ And in `Steps`:
 - [x] **Step 6: Commit**
 ```
 
-- [ ] **Step 2: Update `docs/plans/task.md` with all tasks marked `DONE`**
+- [x] **Step 2: Update `docs/plans/task.md` with all tasks marked `DONE`**
 
 Update `docs/plans/task.md` to:
 
@@ -691,7 +691,7 @@ Update `docs/plans/task.md` to:
 | Task 5: Mark Tasks as Completed in Task Spec and Live Tracker | DONE | Mark `027-handler_live_stats.md` checklist and `docs/plans/task.md` as DONE |
 ```
 
-- [ ] **Step 3: Commit final documentation and task completion changes**
+- [x] **Step 3: Commit final documentation and task completion changes**
 
 ```bash
 git add docs/go_refactor/tasks/027-handler_live_stats.md docs/plans/task.md

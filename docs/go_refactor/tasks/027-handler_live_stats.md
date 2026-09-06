@@ -20,21 +20,21 @@ and registers the client with the WebSocket hub.
 
 ## Acceptance Criteria
 
-- [ ] `backend/internal/handler/live_stats.go` implements `LiveStatsHandler` with methods:
+- [x] `backend/internal/handler/live_stats.go` implements `LiveStatsHandler` with methods:
     - `GetStats(w, r)` — GET `/api/v0/stats/{slot_id}` — returns live statistics for a slot
     - `WebSocketStats(w, r)` — GET `/api/v0/stats/ws/{slot_id}` — upgrades to WebSocket,
     registers client with hub, streams NOTIFY payloads as JSON messages
-- [ ] The WebSocket handler:
+- [x] The WebSocket handler:
     - Upgrades the HTTP connection using `nhooyr.io/websocket`
     - Creates a `Client` and registers it with the hub
     - Starts `WritePump` and `ReadPump` goroutines
     - Unregisters the client when the connection closes
-- [ ] The stats endpoint is authenticated (requires auth middleware).
-- [ ] Unit tests verify:
+- [x] The stats endpoint is authenticated (requires auth middleware).
+- [x] Unit tests verify:
     - GetStats returns 200 + stats JSON for valid slot
     - GetStats returns 404 for non-existent slot
-- [ ] `go test ./internal/handler/...` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] `go test ./internal/handler/...` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -50,7 +50,7 @@ and registers the client with the WebSocket hub.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests for GetStats**
+- [x] **Step 1: Write failing tests for GetStats**
 
   Create `backend/internal/handler/live_stats_test.go`:
     - Define mock `liveStatsService` interface
@@ -58,13 +58,13 @@ and registers the client with the WebSocket hub.
     - Test GetStats returns 404 for unknown slot
     - (WebSocket upgrade is hard to unit test — covered by integration tests in task 041)
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 3: Implement `live_stats.go`**
+- [x] **Step 3: Implement `live_stats.go`**
 
   Implement the REST handler and WebSocket upgrade handler:
 
@@ -87,19 +87,19 @@ and registers the client with the WebSocket hub.
   }
   ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
   ```bash
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 5: Run go vet and build**
+- [x] **Step 5: Run go vet and build**
 
   ```bash
   cd backend && go vet ./... && go build ./...
   ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```bash
   git add -A
