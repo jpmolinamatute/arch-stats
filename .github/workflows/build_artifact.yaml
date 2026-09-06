@@ -45,11 +45,6 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Copy frontend build to backend for embedding
-        run: |
-          rm -rf backend/frontend
-          cp -r frontend/dist backend/frontend
-
       - name: Cross-compile Go binary (linux/arm64)
         working-directory: ./backend
         env:
