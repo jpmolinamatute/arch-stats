@@ -2,14 +2,12 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
@@ -60,17 +58,8 @@ func scanShot(scanner interface{ Scan(dest ...any) error }) (model.ShotRead, err
 // FindByID retrieves a shot record by its primary key identifier.
 // Returns nil, nil if no shot exists with the given ID.
 func (r *ShotRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.ShotRead, error) {
-	sql, args, err := StmtBuilder.Select(shotColumns...).
-		From("shot").
-		Where(squirrel.Eq{"shot_id": id}).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("building find shot by id query: %w", err)
-	}
-
-	row := r.db.QueryRow(ctx, sql, args...)
-	return ScanOne(row, func(r pgx.Row) (model.ShotRead, error) {
-		return scanShot(r)
+	return findByID(ctx, r.db, "shot", "shot_id", shotColumns, id, func(row pgx.Row) (model.ShotRead, error) {
+		return scanShot(row)
 	})
 }
 
@@ -151,17 +140,7 @@ func (r *ShotRepo) Create(ctx context.Context, data model.ShotCreate) (uuid.UUID
 			Values(data.SlotID, data.X, data.Y, data.IsX, data.Score, data.ArrowID)
 	}
 
-	sql, args, err := insertBuilder.Suffix("RETURNING shot_id").ToSql()
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("building create shot query: %w", err)
-	}
-
-	var newID uuid.UUID
-	if err := r.db.QueryRow(ctx, sql, args...).Scan(&newID); err != nil {
-		return uuid.Nil, fmt.Errorf("inserting shot: %w", err)
-	}
-
-	return newID, nil
+	return createReturningID(ctx, r.db, insertBuilder, "shot_id")
 }
 
 // CreateBatch inserts a batch of shot records in a single query and returns their generated UUIDs.
@@ -263,46 +242,16 @@ func (r *ShotRepo) Update(ctx context.Context, data model.ShotSet, filter model.
 	}
 
 	if whereCount == 0 {
-		return errors.New("update requires at least one filter condition to prevent unrestricted updates")
+		return errUpdateRequiresFilter
 	}
 
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return fmt.Errorf("building update shot query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing update shot: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return execUpdate(ctx, r.db, q)
 }
 
 // Delete removes a shot record by its primary key identifier.
 // Returns apperror.ErrNotFound if no shot existed with the given ID.
 func (r *ShotRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("shot").
-		Where(squirrel.Eq{"shot_id": id}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("building delete shot query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing delete shot: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return deleteByID(ctx, r.db, "shot", "shot_id", id)
 }
 
 // CountBySlotID counts the total number of shots recorded for a given slot.

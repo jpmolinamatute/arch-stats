@@ -2,13 +2,11 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
@@ -53,17 +51,8 @@ func scanTarget(scanner interface{ Scan(dest ...any) error }) (model.TargetRead,
 // FindByID retrieves a target configuration by primary key identifier.
 // Returns nil, nil if no target exists with the given ID.
 func (r *TargetRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.TargetRead, error) {
-	sql, args, err := StmtBuilder.Select(targetColumns...).
-		From("target").
-		Where(squirrel.Eq{"target_id": id}).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("building find target by id query: %w", err)
-	}
-
-	row := r.db.QueryRow(ctx, sql, args...)
-	return ScanOne(row, func(r pgx.Row) (model.TargetRead, error) {
-		return scanTarget(r)
+	return findByID(ctx, r.db, "target", "target_id", targetColumns, id, func(row pgx.Row) (model.TargetRead, error) {
+		return scanTarget(row)
 	})
 }
 
@@ -116,21 +105,11 @@ func (r *TargetRepo) FindBySessionID(ctx context.Context, sessionID uuid.UUID) (
 
 // Create inserts a new target configuration record and returns the generated UUID identifier.
 func (r *TargetRepo) Create(ctx context.Context, data model.TargetCreate) (uuid.UUID, error) {
-	sql, args, err := StmtBuilder.Insert("target").
+	builder := StmtBuilder.Insert("target").
 		Columns("session_id", "distance", "lane").
-		Values(data.SessionID, data.Distance, data.Lane).
-		Suffix("RETURNING target_id").
-		ToSql()
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("building create target query: %w", err)
-	}
+		Values(data.SessionID, data.Distance, data.Lane)
 
-	var newID uuid.UUID
-	if err := r.db.QueryRow(ctx, sql, args...).Scan(&newID); err != nil {
-		return uuid.Nil, fmt.Errorf("inserting target: %w", err)
-	}
-
-	return newID, nil
+	return createReturningID(ctx, r.db, builder, "target_id")
 }
 
 // Update mutates target fields specified in data for rows matching filter.
@@ -176,44 +155,14 @@ func (r *TargetRepo) Update(ctx context.Context, data model.TargetSet, filter mo
 	}
 
 	if whereCount == 0 {
-		return errors.New("at least one filter criterion is required for update")
+		return errUpdateRequiresFilter
 	}
 
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return fmt.Errorf("building update target query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing update target: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return execUpdate(ctx, r.db, q)
 }
 
 // Delete removes a target configuration by primary key identifier.
 // Returns apperror.ErrNotFound if no target existed with the given ID.
 func (r *TargetRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("target").
-		Where(squirrel.Eq{"target_id": id}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("building delete target query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing delete target: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return deleteByID(ctx, r.db, "target", "target_id", id)
 }
