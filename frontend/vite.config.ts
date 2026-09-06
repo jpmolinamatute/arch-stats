@@ -1,5 +1,3 @@
-import { readdirSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
@@ -16,18 +14,6 @@ export default defineConfig(({ mode }) => {
         plugins: [
             vue(),
             tailwindcss(),
-            {
-                name: 'clean-out-dir',
-                buildStart() {
-                    const outDir = fileURLToPath(new URL('../backend-old/src/frontend', import.meta.url))
-                    const files = readdirSync(outDir)
-                    for (const file of files) {
-                        if (file !== '.gitkeep') {
-                            rmSync(join(outDir, file), { recursive: true, force: true })
-                        }
-                    }
-                },
-            },
         ],
         resolve: {
             alias: {
@@ -35,8 +21,8 @@ export default defineConfig(({ mode }) => {
             },
         },
         build: {
-            outDir: '../backend-old/src/frontend',
-            emptyOutDir: false,
+            outDir: 'dist',
+            emptyOutDir: true,
         },
         server: {
             headers: {
