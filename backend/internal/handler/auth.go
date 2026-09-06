@@ -48,10 +48,17 @@ func NewAuthHandler(authSvc AuthService, archerSvc ArcherService, cfg AuthHandle
 	}
 }
 
-// Login handles POST /api/v0/auth/login and POST /api/v0/auth/google.
-// It verifies the Google One Tap credential. For existing archers, it mints a session, sets the
-// arch_stats_auth HTTP-only cookie, and returns AuthAuthenticated (200). For new users, it returns
-// AuthNeedsRegistration (200) with no cookie.
+// Login godoc
+// @Summary     Google One Tap Login
+// @Description Authenticate via Google One Tap credential. For existing archers, sets the auth cookie and returns credentials. For new archers, returns registration requirement.
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       request body model.GoogleOneTapRequest true "Google One Tap credential"
+// @Success     200 {object} model.AuthAuthenticated
+// @Failure     422 {object} model.ErrorResponse
+// @Router      /auth/login [post]
+// @Router      /auth/google [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req model.GoogleOneTapRequest
 	if err := readJSON(r, &req); err != nil {
@@ -82,9 +89,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, authd)
 }
 
-// Register handles POST /api/v0/auth/register.
-// It validates registration fields, creates the archer profile (or logs them in if already registered),
-// sets the arch_stats_auth HTTP-only cookie, and returns AuthAuthenticated (201).
+// Register godoc
+// @Summary     Register
+// @Description Register a new archer profile with Google One Tap credential and demographic details
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       request body model.AuthRegistrationRequest true "Registration details"
+// @Success     201 {object} model.AuthAuthenticated
+// @Failure     422 {object} model.ErrorResponse
+// @Router      /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req model.AuthRegistrationRequest
 	if err := readJSON(r, &req); err != nil {
@@ -110,9 +124,15 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusCreated, authd)
 }
 
-// Logout handles POST /api/v0/auth/logout.
-// It deletes the arch_stats_auth cookie and revokes the active session token in the database if present.
-// It is idempotent and always returns 200 OK.
+// Logout godoc
+// @Summary     Logout
+// @Description Deletes the auth cookie and revokes the active session token in the database
+// @Tags        Auth
+// @Produce     json
+// @Success     200 {object} model.LogoutResponse
+// @Failure     401 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	token := middleware.ExtractToken(r)
 	if token != "" {
@@ -123,8 +143,16 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, model.LogoutResponse{Success: true})
 }
 
-// Me handles GET /api/v0/auth/me.
-// It returns the currently authenticated archer from the request context or token cookie.
+// Me godoc
+// @Summary     Get Current User
+// @Description Returns the currently authenticated archer from the request context or token cookie
+// @Tags        Auth
+// @Produce     json
+// @Success     200 {object} model.AuthAuthenticated
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /auth/me [get]
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	archerID, err := middleware.GetArcherID(r.Context())
 	token := middleware.ExtractToken(r)

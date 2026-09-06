@@ -31,8 +31,15 @@ func NewArcherHandler(archerSvc ArcherService) *ArcherHandler {
 	}
 }
 
-// List handles GET /api/v0/archer/.
-// It queries archers matching default filter criteria and returns a JSON list.
+// List godoc
+// @Summary     List Archers
+// @Description Query archers matching default filter criteria and return a JSON list
+// @Tags        Archers
+// @Produce     json
+// @Success     200 {array} model.ArcherRead
+// @Failure     401 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /archer/ [get]
 func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 	archers, err := h.archerSvc.List(r.Context(), model.ArcherFilter{})
 	if err != nil {
@@ -47,8 +54,18 @@ func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, archers)
 }
 
-// GetByID handles GET /api/v0/archer/{id}.
-// It retrieves a single archer profile by primary key identifier.
+// GetByID godoc
+// @Summary     Get Archer
+// @Description Retrieve a single archer profile by UUID primary key identifier
+// @Tags        Archers
+// @Produce     json
+// @Param       id path string true "Archer UUID"
+// @Success     200 {object} model.ArcherRead
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /archer/{id} [get]
 func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := getURLParam(r, "id")
 	if idStr == "" {
@@ -70,8 +87,18 @@ func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, archer)
 }
 
-// Create handles POST /api/v0/archer/.
-// It parses the archer creation payload, validates and persists the new archer, and returns 201 Created.
+// Create godoc
+// @Summary     Create Archer
+// @Description Parse archer creation payload, persist new profile, and return created identifier
+// @Tags        Archers
+// @Accept      json
+// @Produce     json
+// @Param       request body model.ArcherCreate true "Archer creation payload"
+// @Success     201 {object} model.ArcherID
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /archer/ [post]
 func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherCreate
 	if err := readJSON(r, &req); err != nil {
@@ -88,8 +115,19 @@ func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusCreated, model.ArcherID{ArcherID: id})
 }
 
-// Update handles PATCH /api/v0/archer/.
-// It updates archer fields matching the specified where filter.
+// Update godoc
+// @Summary     Update Archer
+// @Description Update archer fields matching the specified where filter
+// @Tags        Archers
+// @Accept      json
+// @Produce     json
+// @Param       request body model.ArcherUpdate true "Archer update filter and data"
+// @Success     200
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /archer/ [patch]
 func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherUpdate
 	if err := readJSON(r, &req); err != nil {
@@ -111,8 +149,18 @@ func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Delete handles DELETE /api/v0/archer/{id}.
-// It removes an archer profile by primary key identifier and returns 204 No Content.
+// Delete godoc
+// @Summary     Delete Archer
+// @Description Remove an archer profile by UUID primary key identifier
+// @Tags        Archers
+// @Produce     json
+// @Param       id path string true "Archer UUID"
+// @Success     204
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /archer/{id} [delete]
 func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := getURLParam(r, "id")
 	if idStr == "" {
