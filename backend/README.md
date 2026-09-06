@@ -1,4 +1,4 @@
-# Arch Stats — Go Backend
+# Arch Stats - Go Backend
 
 The backend is a statically compiled Go service that powers the Arch Stats archery tracking
 platform. It exposes a REST API, serves the embedded Vue 3 SPA, and pushes real-time updates
@@ -7,7 +7,7 @@ over WebSocket.
 ## Architecture Overview
 
 | Layer | Package | Responsibility |
-| --- | --- | --- |
+| ----- | ------- | -------------- |
 | Entrypoint | `cmd/arch-stats/` | CLI flags, wiring, graceful shutdown |
 | Configuration | `internal/config/` | Environment-based config (`envconfig` style) |
 | HTTP Routing | `internal/handler/` | Chi v5 route handlers, SPA serving |
@@ -28,7 +28,7 @@ renders live updates.
 Install these tools before starting development:
 
 | Tool | Version | Purpose |
-| --- | --- | --- |
+| ---- | ------- | ------- |
 | [Go](https://go.dev/dl/) | 1.27.0+ | Language runtime |
 | [Docker](https://docs.docker.com/get-docker/) & Docker Compose | latest | Local PostgreSQL database |
 | [air](https://github.com/air-verse/air) | latest | Live-reload dev server |
@@ -117,7 +117,7 @@ The server listens on the port defined by `ARCH_STATS_SERVER_PORT` (default `800
 The workspace includes pre-configured VS Code tasks in `.vscode/tasks.json`:
 
 | Task | Description |
-| --- | --- |
+| ---- | ----------- |
 | `Start Docker Compose` | Launches the PostgreSQL container |
 | `Stop Docker Compose` | Stops the container |
 | `Stop & Remove Volumes` | Stops containers and removes volumes |
@@ -198,7 +198,7 @@ and generates TypeScript types into `frontend/src/types/types.generated.ts`.
 
 ## GitHub Actions CI/CD Pipelines
 
-### `backend_linting.yaml` — Lint, Format & Test
+### `backend_linting.yaml` - Lint, Format & Test
 
 **Trigger:** Pull requests that touch `backend/**/*.go`, `backend/go.mod`, `backend/go.sum`,
 `backend/.golangci.yml`, or the workflow file itself.
@@ -206,7 +206,7 @@ and generates TypeScript types into `frontend/src/types/types.generated.ts`.
 **Jobs:**
 
 | Job | What it does |
-| --- | --- |
+| --- | ------------ |
 | `lint` | Runs `golangci-lint` via the official action |
 | `format-check` | Verifies all files are `gofumpt`-formatted |
 | `vet` | Runs `go vet ./...` |
@@ -217,18 +217,18 @@ PostgreSQL 17 service container with health checks, checks out the private migra
 submodule using `secrets.MIGRATIONS_REPOSITORY` and `secrets.MIGRATIONS_PAT`, and runs the
 full test suite with race detection.
 
-### `frontend_linting.yaml` — Frontend Linting & Tests
+### `frontend_linting.yaml` - Frontend Linting & Tests
 
 **Trigger:** Pull requests touching `frontend/**`.
 
 **Jobs:**
 
 | Job | What it does |
-| --- | --- |
+| --- | ------------ |
 | `lint` | Runs ESLint via `npm run lint` |
 | `tests` | Runs frontend tests via `npm run test` (depends on `lint`) |
 
-### `bash_linting.yaml` — Bash Linting & Formatting
+### `bash_linting.yaml` - Bash Linting & Formatting
 
 **Trigger:** Pull requests touching `scripts/*.bash`.
 
@@ -239,20 +239,20 @@ full test suite with race detection.
 | `format` | Checks formatting with `shfmt` (4-space indent) |
 | `lint` | Runs `shellcheck` with bash dialect |
 
-### `build_artifact.yaml` — Release Pipeline
+### `build_artifact.yaml` - Release Pipeline
 
 **Trigger:** Push to `main` branch.
 
 **Pipeline steps (single job):**
 
 1. **Checkout** code and set up Go + Node.js
-2. **Generate OpenAPI spec** — `swag init -g cmd/arch-stats/main.go -o specs/`
-3. **Generate frontend types** — `npm run generate:types`
-4. **Build frontend** — `npm run build` (output goes to `backend/frontend/`)
-5. **Cross-compile Go binary** — targets `linux/arm64` with
+2. **Generate OpenAPI spec** `swag init -g cmd/arch-stats/main.go -o specs/`
+3. **Generate frontend types** `npm run generate:types`
+4. **Build frontend** `npm run build` (output goes to `backend/frontend/`)
+5. **Cross-compile Go binary** targets `linux/arm64` with
    `CGO_ENABLED=0 go build -ldflags="-s -w"` for Raspberry Pi 5
-6. **Generate SHA256 checksum** — `sha256sum arch-stats > arch-stats.sha256`
-7. **Create GitHub Release** — Tags `v<run_number>`, attaches the binary and checksum
+6. **Generate SHA256 checksum** `sha256sum arch-stats > arch-stats.sha256`
+7. **Create GitHub Release** Tags `v<run_number>`, attaches the binary and checksum
 
 The binary embeds the compiled frontend via `//go:embed all:frontend` in `embed.go`, producing
 a single self-contained executable.
@@ -265,7 +265,7 @@ The production environment is a Raspberry Pi 5 running Debian (Bookworm). The de
 consists of:
 
 | Component | Path |
-| --- | --- |
+| --------- | ---- |
 | Application binary | `/opt/arch-stats/arch-stats` |
 | Environment config | `/opt/arch-stats/.env` |
 | SQL migrations | `/opt/arch-stats/migrations/*.sql` |
@@ -289,13 +289,13 @@ RestartSec=5
 
 Three scripts orchestrate deployment from your workstation:
 
-- **`scripts/deploy.bash`** — Main entry point. Auto-detects install vs.
+- **`scripts/deploy.bash`** Main entry point. Auto-detects install vs.
   update, renders templates, uploads assets via SCP, runs the installer
   over SSH.
-- **`scripts/remote_installer.bash`** — Runs on the Pi during fresh
+- **`scripts/remote_installer.bash`** Runs on the Pi during fresh
   install. Installs OS packages, creates the app user, configures
   PostgreSQL, sets up Cloudflared, registers the systemd service.
-- **`scripts/install_app.bash`** — Downloads the latest GitHub Release
+- **`scripts/install_app.bash`** Downloads the latest GitHub Release
   binary, verifies SHA256, installs to `/opt/arch-stats/`, runs
   migrations, restarts the service.
 
@@ -317,10 +317,10 @@ Three scripts orchestrate deployment from your workstation:
 
 Required environment variables for fresh install:
 
-- `GITHUB_TOKEN` — GitHub PAT for downloading release artifacts
-- `ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID` — Google OAuth client ID
-- `ARCH_STATS_JWT_SECRET` — JWT signing secret
-- `CLOUDFLARED_TUNNEL_ID` — Cloudflare tunnel ID
+- `GITHUB_TOKEN` GitHub PAT for downloading release artifacts
+- `ARCH_STATS_GOOGLE_OAUTH_CLIENT_ID` Google OAuth client ID
+- `ARCH_STATS_JWT_SECRET` JWT signing secret
+- `CLOUDFLARED_TUNNEL_ID` Cloudflare tunnel ID
 
 ### Testing with the Docker Raspberry Pi emulator
 
@@ -335,7 +335,7 @@ docker compose -f docker/docker-compose.yaml --profile emulator up -d
 
 This builds the emulator image from `docker/Dockerfile.rpi` (based on
 `jrei/systemd-debian:12`) and starts it with SSH on port `2222`. The container runs systemd,
-PostgreSQL, and SSH — everything the real Pi would have.
+PostgreSQL, and SSH everything the real Pi would have.
 
 **2. Connect via SSH:**
 
