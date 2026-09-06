@@ -12,6 +12,11 @@ import (
 //go:embed all:frontend
 var Frontend embed.FS
 
+// Migrations holds embedded SQL migration scripts.
+//
+//go:embed migrations/*.sql
+var Migrations embed.FS
+
 // FS returns an fs.FS sub-tree rooted at the embedded "frontend" directory.
 func FS() (fs.FS, error) {
 	sub, err := fs.Sub(Frontend, "frontend")

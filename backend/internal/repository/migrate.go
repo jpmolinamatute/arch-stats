@@ -3,11 +3,17 @@ package repository
 import (
 	"context"
 	"fmt"
+	"io/fs"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
+
+// SetBaseFS sets the base filesystem used by goose for migrations.
+func SetBaseFS(fsys fs.FS) {
+	goose.SetBaseFS(fsys)
+}
 
 // RunMigrations applies pending database migrations from the given directory.
 func RunMigrations(ctx context.Context, pool *pgxpool.Pool, migrationsDir string) error {

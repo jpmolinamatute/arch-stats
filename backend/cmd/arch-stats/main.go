@@ -81,6 +81,9 @@ func run() error {
 		"max_conns", cfg.PostgresPoolMaxSize,
 	)
 
+	// Set base filesystem for embedded migrations
+	repository.SetBaseFS(backend.Migrations)
+
 	// Standalone migration CLI subcommand
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
 		slog.Info("running database migrations...")
