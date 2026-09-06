@@ -1,0 +1,2335 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend API for archery statistics tracking",
+        "title": "Arch Stats API",
+        "contact": {},
+        "version": "v0"
+    },
+    "basePath": "/api/v0",
+    "paths": {
+        "/archer/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Query archers matching default filter criteria and return a JSON list",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archers"
+                ],
+                "summary": "List Archers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ArcherRead"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Parse archer creation payload, persist new profile, and return created identifier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archers"
+                ],
+                "summary": "Create Archer",
+                "parameters": [
+                    {
+                        "description": "Archer creation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ArcherCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ArcherID"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update archer fields matching the specified where filter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archers"
+                ],
+                "summary": "Update Archer",
+                "parameters": [
+                    {
+                        "description": "Archer update filter and data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ArcherUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/archer/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a single archer profile by UUID primary key identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archers"
+                ],
+                "summary": "Get Archer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ArcherRead"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove an archer profile by UUID primary key identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archers"
+                ],
+                "summary": "Delete Archer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/google": {
+            "post": {
+                "description": "Authenticate via Google One Tap credential. For existing archers, sets the auth cookie and returns credentials. For new archers, returns registration requirement.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Google One Tap Login",
+                "parameters": [
+                    {
+                        "description": "Google One Tap credential",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GoogleOneTapRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthAuthenticated"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate via Google One Tap credential. For existing archers, sets the auth cookie and returns credentials. For new archers, returns registration requirement.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Google One Tap Login",
+                "parameters": [
+                    {
+                        "description": "Google One Tap credential",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GoogleOneTapRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthAuthenticated"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes the auth cookie and revokes the active session token in the database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "operationId": "logout_api_v0_auth_logout_post",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/LogoutResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the currently authenticated archer from the request context or token cookie",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get Current User",
+                "operationId": "get_current_user_api_v0_auth_me_get",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthAuthenticated"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Register a new archer profile with Google One Tap credential and demographic details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register",
+                "operationId": "register_api_v0_auth_register_post",
+                "parameters": [
+                    {
+                        "description": "Registration details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AuthRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthAuthenticated"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/AuthAuthenticated"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/faces": {
+            "get": {
+                "description": "Returns a list of target face summaries (face_type and face_name). Public endpoint.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Faces"
+                ],
+                "summary": "List Faces",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/FaceMinimal"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/faces/{face_type}": {
+            "get": {
+                "description": "Returns the full geometry and scoring layout for the requested face type. Public endpoint.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Faces"
+                ],
+                "summary": "Get Face",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Face type identifier",
+                        "name": "face_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Face"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Returns current service health and database migration schema version. Public endpoint.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new shooting session and returns the assigned session ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Create Session",
+                "parameters": [
+                    {
+                        "description": "Session creation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SessionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/archer/{archer_id}/close-session": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all closed sessions owned by the archer",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Closed Session For Archer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "archer_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/SessionRead"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/archer/{archer_id}/open-session": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the open session ID owned by the archer, or null session_id if none exists",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Open Session For Archer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "archer_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/archer/{archer_id}/participating": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the open session ID the archer is currently participating in, or null if none",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Participating Session For Archer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "archer_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/close": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks an active shooting session as closed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Close Session",
+                "parameters": [
+                    {
+                        "description": "Session identifier payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/open": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all currently open sessions in the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get All Open Sessions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/SessionRead"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/re-open": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Re-opens a closed shooting session after verifying owner identity and absence of conflicts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Re Open Session",
+                "parameters": [
+                    {
+                        "description": "Session identifier payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionId"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/slot": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Assigns an archer to a target slot within an open session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slots"
+                ],
+                "summary": "Join Session",
+                "parameters": [
+                    {
+                        "description": "Slot join parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SlotJoinRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SlotJoinResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/slot/archer/{archer_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns active slot assignment for the given archer (open session and is_shooting = true)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slots"
+                ],
+                "summary": "Get Archer Current Slot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archer UUID",
+                        "name": "archer_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/FullSlotInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/slot/leave/{slot_id}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deactivates an active slot assignment (stop shooting in the session)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slots"
+                ],
+                "summary": "Leave Session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/slot/re-join/{slot_id}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Re-activates a previously inactive slot assignment",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slots"
+                ],
+                "summary": "Re Join Session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SlotJoinResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/slot/{slot_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns active slot assignment details by slot UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Slots"
+                ],
+                "summary": "Get Slot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/FullSlotInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/session/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns full session details for the given session UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SessionRead"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shot": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Record a single shot or a batch array of shots (3 to 10 shots) for the authenticated archer",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shots"
+                ],
+                "summary": "Create Shot",
+                "parameters": [
+                    {
+                        "description": "Shot creation payload (object or array)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ShotCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ShotId"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shot/by-slot/{slot_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns list of shots for the given slot owned by the authenticated archer",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shots"
+                ],
+                "summary": "Get Shots By Slot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ShotRead"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shot/count-by-slot/{slot_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns total shot count for the given slot owned by the authenticated archer",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shots"
+                ],
+                "summary": "Get Shots Count By Slot",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/{slot_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns current live aggregate statistics and recent shot scores for a slot",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Get Stats",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot UUID",
+                        "name": "slot_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/LiveStat"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ArcherCreate": {
+            "type": "object",
+            "required": [
+                "bowstyle",
+                "date_of_birth",
+                "draw_weight",
+                "email",
+                "first_name",
+                "gender",
+                "google_subject",
+                "last_name"
+            ],
+            "properties": {
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "draw_weight": {
+                    "type": "number",
+                    "maximum": 200
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "gender": {
+                    "$ref": "#/definitions/Gender"
+                },
+                "google_picture_url": {
+                    "type": "string"
+                },
+                "google_subject": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                }
+            }
+        },
+        "ArcherFilter": {
+            "type": "object",
+            "properties": {
+                "archer_id": {
+                    "type": "string"
+                },
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "draw_weight": {
+                    "type": "number"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "$ref": "#/definitions/Gender"
+                },
+                "google_subject": {
+                    "type": "string"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "ArcherID": {
+            "type": "object",
+            "required": [
+                "archer_id"
+            ],
+            "properties": {
+                "archer_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "ArcherRead": {
+            "type": "object",
+            "required": [
+                "archer_id",
+                "bowstyle",
+                "created_at",
+                "date_of_birth",
+                "draw_weight",
+                "email",
+                "first_name",
+                "gender",
+                "google_subject",
+                "last_login_at",
+                "last_name"
+            ],
+            "properties": {
+                "archer_id": {
+                    "type": "string"
+                },
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "draw_weight": {
+                    "type": "number"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "$ref": "#/definitions/Gender"
+                },
+                "google_picture_url": {
+                    "type": "string"
+                },
+                "google_subject": {
+                    "type": "string"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "ArcherSet": {
+            "type": "object",
+            "properties": {
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "draw_weight": {
+                    "type": "number",
+                    "maximum": 200
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "gender": {
+                    "$ref": "#/definitions/Gender"
+                },
+                "google_picture_url": {
+                    "type": "string"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                }
+            }
+        },
+        "ArcherUpdate": {
+            "type": "object",
+            "required": [
+                "data",
+                "where"
+            ],
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/ArcherSet"
+                },
+                "where": {
+                    "$ref": "#/definitions/ArcherFilter"
+                }
+            }
+        },
+        "AuthAuthenticated": {
+            "type": "object",
+            "required": [
+                "access_token",
+                "archer",
+                "expires_at",
+                "status"
+            ],
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "archer": {
+                    "$ref": "#/definitions/ArcherRead"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/AuthStatus"
+                }
+            }
+        },
+        "AuthRegistrationRequest": {
+            "type": "object",
+            "required": [
+                "bowstyle",
+                "credential",
+                "date_of_birth",
+                "draw_weight",
+                "gender"
+            ],
+            "properties": {
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "credential": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "date_of_birth": {
+                    "type": "string"
+                },
+                "draw_weight": {
+                    "type": "number",
+                    "maximum": 200
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "gender": {
+                    "$ref": "#/definitions/Gender"
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                }
+            }
+        },
+        "AuthStatus": {
+            "type": "string",
+            "enum": [
+                "authenticated",
+                "needs_registration"
+            ],
+            "x-enum-varnames": [
+                "AuthStatusAuthenticated",
+                "AuthStatusNeedsRegistration"
+            ]
+        },
+        "Bowstyle": {
+            "type": "string",
+            "enum": [
+                "recurve",
+                "compound",
+                "barebow",
+                "longbow"
+            ],
+            "x-enum-varnames": [
+                "BowstyleRecurve",
+                "BowstyleCompound",
+                "BowstyleBarebow",
+                "BowstyleLongbow"
+            ]
+        },
+        "ErrorResponse": {
+            "type": "object",
+            "required": [
+                "detail"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "detail": {
+                    "type": "string"
+                }
+            }
+        },
+        "Face": {
+            "type": "object",
+            "required": [
+                "face_name",
+                "face_type",
+                "render_cross",
+                "rings",
+                "spots",
+                "viewBox"
+            ],
+            "properties": {
+                "face_name": {
+                    "type": "string"
+                },
+                "face_type": {
+                    "$ref": "#/definitions/FaceType"
+                },
+                "render_cross": {
+                    "type": "boolean"
+                },
+                "rings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Ring"
+                    }
+                },
+                "spots": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Spot"
+                    }
+                },
+                "viewBox": {
+                    "type": "number"
+                }
+            }
+        },
+        "FaceMinimal": {
+            "type": "object",
+            "required": [
+                "face_name",
+                "face_type"
+            ],
+            "properties": {
+                "face_name": {
+                    "type": "string"
+                },
+                "face_type": {
+                    "$ref": "#/definitions/FaceType"
+                }
+            }
+        },
+        "FaceType": {
+            "type": "string",
+            "enum": [
+                "wa_40cm_full",
+                "wa_60cm_full",
+                "wa_80cm_full",
+                "wa_122cm_full",
+                "wa_40cm_6rings",
+                "wa_60cm_6rings",
+                "wa_80cm_6rings",
+                "wa_122cm_6rings",
+                "wa_40cm_triple_vertical",
+                "wa_60cm_triple_triangular",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "FaceTypeWA40Full",
+                "FaceTypeWA60Full",
+                "FaceTypeWA80Full",
+                "FaceTypeWA122Full",
+                "FaceTypeWA406Rings",
+                "FaceTypeWA606Rings",
+                "FaceTypeWA806Rings",
+                "FaceTypeWA1226Rings",
+                "FaceTypeWA40TripleVertical",
+                "FaceTypeWA60TripleTriangular",
+                "FaceTypeNone"
+            ]
+        },
+        "FullSlotInfo": {
+            "type": "object",
+            "required": [
+                "archer_id",
+                "bowstyle",
+                "created_at",
+                "distance",
+                "draw_weight",
+                "face_type",
+                "interval_seconds",
+                "is_shooting",
+                "lane",
+                "session_id",
+                "slot",
+                "slot_id",
+                "slot_letter",
+                "target_id"
+            ],
+            "properties": {
+                "archer_id": {
+                    "type": "string"
+                },
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "integer"
+                },
+                "draw_weight": {
+                    "type": "number"
+                },
+                "face_type": {
+                    "$ref": "#/definitions/FaceType"
+                },
+                "interval_seconds": {
+                    "type": "integer"
+                },
+                "is_shooting": {
+                    "type": "boolean"
+                },
+                "lane": {
+                    "type": "integer"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "shot_per_round": {
+                    "type": "integer"
+                },
+                "slot": {
+                    "type": "string"
+                },
+                "slot_id": {
+                    "type": "string"
+                },
+                "slot_letter": {
+                    "$ref": "#/definitions/SlotLetter"
+                },
+                "target_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "Gender": {
+            "type": "string",
+            "enum": [
+                "male",
+                "female",
+                "non_binary",
+                "other",
+                "unspecified"
+            ],
+            "x-enum-varnames": [
+                "GenderMale",
+                "GenderFemale",
+                "GenderNonBinary",
+                "GenderOther",
+                "GenderUnspecified"
+            ]
+        },
+        "GoogleOneTapRequest": {
+            "type": "object",
+            "required": [
+                "credential"
+            ],
+            "properties": {
+                "credential": {
+                    "type": "string",
+                    "minLength": 10
+                }
+            }
+        },
+        "HealthResponse": {
+            "type": "object",
+            "required": [
+                "schema_version",
+                "status"
+            ],
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "schema_version": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "LiveStat": {
+            "type": "object",
+            "required": [
+                "scores",
+                "stats"
+            ],
+            "properties": {
+                "scores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ShotScore"
+                    }
+                },
+                "stats": {
+                    "$ref": "#/definitions/Stats"
+                }
+            }
+        },
+        "LogoutResponse": {
+            "type": "object",
+            "required": [
+                "success"
+            ],
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "Ring": {
+            "type": "object",
+            "required": [
+                "data_score",
+                "fill",
+                "r",
+                "stroke",
+                "stroke_width"
+            ],
+            "properties": {
+                "data_score": {
+                    "type": "integer"
+                },
+                "fill": {
+                    "type": "string"
+                },
+                "r": {
+                    "type": "number"
+                },
+                "stroke": {
+                    "type": "string"
+                },
+                "stroke_width": {
+                    "type": "number"
+                }
+            }
+        },
+        "SessionCreate": {
+            "type": "object",
+            "required": [
+                "is_indoor",
+                "is_opened",
+                "owner_archer_id",
+                "session_location"
+            ],
+            "properties": {
+                "is_indoor": {
+                    "type": "boolean"
+                },
+                "is_opened": {
+                    "type": "boolean"
+                },
+                "owner_archer_id": {
+                    "type": "string"
+                },
+                "session_location": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
+        },
+        "SessionId": {
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "SessionRead": {
+            "type": "object",
+            "required": [
+                "created_at",
+                "is_indoor",
+                "is_opened",
+                "owner_archer_id",
+                "session_id",
+                "session_location"
+            ],
+            "properties": {
+                "closed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "is_indoor": {
+                    "type": "boolean"
+                },
+                "is_opened": {
+                    "type": "boolean"
+                },
+                "owner_archer_id": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "session_location": {
+                    "type": "string"
+                }
+            }
+        },
+        "ShotCreate": {
+            "type": "object",
+            "required": [
+                "is_x",
+                "slot_id"
+            ],
+            "properties": {
+                "arrow_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "is_x": {
+                    "type": "boolean"
+                },
+                "score": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
+                },
+                "slot_id": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                }
+            }
+        },
+        "ShotId": {
+            "type": "object",
+            "required": [
+                "shot_id"
+            ],
+            "properties": {
+                "shot_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "ShotRead": {
+            "type": "object",
+            "required": [
+                "created_at",
+                "is_x",
+                "shot_id",
+                "slot_id"
+            ],
+            "properties": {
+                "arrow_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "is_x": {
+                    "type": "boolean"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "shot_id": {
+                    "type": "string"
+                },
+                "slot_id": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                }
+            }
+        },
+        "ShotScore": {
+            "type": "object",
+            "required": [
+                "created_at",
+                "is_x",
+                "score",
+                "shot_id"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "is_x": {
+                    "type": "boolean"
+                },
+                "score": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
+                },
+                "shot_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "SlotJoinRequest": {
+            "type": "object",
+            "required": [
+                "archer_id",
+                "bowstyle",
+                "distance",
+                "draw_weight",
+                "face_type",
+                "interval_seconds",
+                "is_shooting",
+                "session_id"
+            ],
+            "properties": {
+                "archer_id": {
+                    "type": "string"
+                },
+                "bowstyle": {
+                    "$ref": "#/definitions/Bowstyle"
+                },
+                "club_id": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "draw_weight": {
+                    "type": "number",
+                    "maximum": 200
+                },
+                "face_type": {
+                    "$ref": "#/definitions/FaceType"
+                },
+                "interval_seconds": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "is_shooting": {
+                    "type": "boolean"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "shot_per_round": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 3
+                }
+            }
+        },
+        "SlotJoinResponse": {
+            "type": "object",
+            "required": [
+                "slot",
+                "slot_id"
+            ],
+            "properties": {
+                "slot": {
+                    "type": "string"
+                },
+                "slot_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "SlotLetter": {
+            "type": "string",
+            "enum": [
+                "A",
+                "B",
+                "C",
+                "D"
+            ],
+            "x-enum-varnames": [
+                "SlotLetterA",
+                "SlotLetterB",
+                "SlotLetterC",
+                "SlotLetterD"
+            ]
+        },
+        "Spot": {
+            "type": "object",
+            "required": [
+                "diameter",
+                "x_offset",
+                "y_offset"
+            ],
+            "properties": {
+                "diameter": {
+                    "type": "number"
+                },
+                "x_offset": {
+                    "type": "number"
+                },
+                "y_offset": {
+                    "type": "number"
+                }
+            }
+        },
+        "Stats": {
+            "type": "object",
+            "required": [
+                "max_score",
+                "mean",
+                "number_of_shots",
+                "slot_id",
+                "total_score"
+            ],
+            "properties": {
+                "max_score": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "mean": {
+                    "type": "number"
+                },
+                "number_of_shots": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "slot_id": {
+                    "type": "string"
+                },
+                "total_score": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "access_token",
+            "in": "cookie"
+        }
+    }
+}

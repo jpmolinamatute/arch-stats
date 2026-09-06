@@ -27,9 +27,14 @@ func NewHealthHandler(maintenance MaintenanceService) *HealthHandler {
 	return &HealthHandler{maintenance: maintenance}
 }
 
-// Health handles GET /api/v0/health.
-// It returns the current database migration schema version.
-// This is an unauthenticated, public endpoint.
+// Health godoc
+// @Summary     Health Check
+// @Description Returns current service health and database migration schema version. Public endpoint.
+// @Tags        System
+// @Produce     json
+// @Success     200 {object} HealthResponse
+// @Failure     503 {object} HealthResponse
+// @Router      /health [get]
 func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	ver, err := h.maintenance.GetSchemaVersion(r.Context())
 	if err != nil {

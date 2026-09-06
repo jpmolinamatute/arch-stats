@@ -8,7 +8,11 @@ import (
 
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
+
+// ErrorResponse is an alias for model.ErrorResponse for handler swaggo annotations.
+type ErrorResponse = model.ErrorResponse
 
 // writeJSON marshals data as JSON, sets the Content-Type header to application/json,
 // writes the HTTP status code, and writes the response body.

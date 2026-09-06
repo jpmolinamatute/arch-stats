@@ -54,3 +54,8 @@ type SessionRead struct {
 type SessionID struct {
 	SessionID *uuid.UUID `json:"session_id,omitempty"`
 }
+
+// SessionId is an alias for SessionID to support OpenAPI schema generation conventions.
+//
+//nolint:revive // Compatibility alias for frontend OpenAPI naming conventions
+type SessionId = SessionID

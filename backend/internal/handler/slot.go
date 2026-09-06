@@ -41,9 +41,19 @@ func (h *SlotHandler) Routes(r chi.Router) {
 	r.Patch("/leave/{slot_id}", h.LeaveSession)
 }
 
-// GetArcherCurrentSlot handles GET /api/v0/session/slot/archer/{archer_id}.
-// Returns active slot assignment (open session and is_shooting = true).
-// Enforces that only the authenticated archer can query their current slot.
+// GetArcherCurrentSlot godoc
+// @Summary     Get Archer Current Slot
+// @Description Returns active slot assignment for the given archer (open session and is_shooting = true)
+// @Tags        Slots
+// @Produce     json
+// @Param       archer_id path string true "Archer UUID"
+// @Success     200 {object} model.FullSlotInfo
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/slot/archer/{archer_id} [get]
 func (h *SlotHandler) GetArcherCurrentSlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -76,9 +86,19 @@ func (h *SlotHandler) GetArcherCurrentSlot(w http.ResponseWriter, r *http.Reques
 	_ = writeJSON(w, http.StatusOK, info)
 }
 
-// GetSlot handles GET /api/v0/session/slot/{slot_id}.
-// Returns active slot assignment details.
-// Enforces that only the authenticated archer owning the slot can retrieve it.
+// GetSlot godoc
+// @Summary     Get Slot
+// @Description Returns active slot assignment details by slot UUID
+// @Tags        Slots
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200 {object} model.FullSlotInfo
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/slot/{slot_id} [get]
 func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -114,9 +134,19 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, info)
 }
 
-// JoinSession handles POST /api/v0/session/slot.
-// Assigns an archer to a target slot within an open session.
-// Enforces that only the authenticated archer can join for themselves.
+// JoinSession godoc
+// @Summary     Join Session
+// @Description Assigns an archer to a target slot within an open session
+// @Tags        Slots
+// @Accept      json
+// @Produce     json
+// @Param       request body model.SlotJoinRequest true "Slot join parameters"
+// @Success     200 {object} model.SlotJoinResponse
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/slot [post]
 func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -153,8 +183,19 @@ func (h *SlotHandler) JoinSession(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, resp)
 }
 
-// ReJoinSession handles PATCH /api/v0/session/slot/re-join/{slot_id}.
-// Re-activates a previously inactive slot assignment.
+// ReJoinSession godoc
+// @Summary     Re Join Session
+// @Description Re-activates a previously inactive slot assignment
+// @Tags        Slots
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200 {object} model.SlotJoinResponse
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/slot/re-join/{slot_id} [patch]
 func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -185,8 +226,18 @@ func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, resp)
 }
 
-// LeaveSession handles PATCH /api/v0/session/slot/leave/{slot_id}.
-// Deactivates an active slot assignment (leave the session).
+// LeaveSession godoc
+// @Summary     Leave Session
+// @Description Deactivates an active slot assignment (stop shooting in the session)
+// @Tags        Slots
+// @Produce     json
+// @Param       slot_id path string true "Slot UUID"
+// @Success     200
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/slot/leave/{slot_id} [patch]
 func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {

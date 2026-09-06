@@ -60,3 +60,8 @@ type ShotRead struct {
 type ShotID struct {
 	ShotID uuid.UUID `json:"shot_id"`
 }
+
+// ShotId is an alias for ShotID to support OpenAPI schema generation conventions.
+//
+//nolint:revive // Compatibility alias for frontend OpenAPI naming conventions
+type ShotId = ShotID

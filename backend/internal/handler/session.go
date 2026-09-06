@@ -47,9 +47,18 @@ func (h *SessionHandler) Routes(r chi.Router) {
 	r.Patch("/close", h.Close)
 }
 
-// GetOpenForArcher handles GET /api/v0/session/archer/{archer_id}/open-session.
-// Returns the open session ID owned by the archer, or null session_id if none exists.
-// Enforces that only the authenticated archer can query their open session.
+// GetOpenForArcher godoc
+// @Summary     Get Open Session For Archer
+// @Description Returns the open session ID owned by the archer, or null session_id if none exists
+// @Tags        Sessions
+// @Produce     json
+// @Param       archer_id path string true "Archer UUID"
+// @Success     200 {object} model.SessionId
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/archer/{archer_id}/open-session [get]
 func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -82,9 +91,18 @@ func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request
 	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: &session.SessionID})
 }
 
-// GetClosedForArcher handles GET /api/v0/session/archer/{archer_id}/close-session.
-// Returns all closed sessions owned by the archer.
-// Enforces that only the authenticated archer can query their closed sessions.
+// GetClosedForArcher godoc
+// @Summary     Get Closed Session For Archer
+// @Description Returns all closed sessions owned by the archer
+// @Tags        Sessions
+// @Produce     json
+// @Param       archer_id path string true "Archer UUID"
+// @Success     200 {array} model.SessionRead
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/archer/{archer_id}/close-session [get]
 func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -123,9 +141,18 @@ func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Reque
 	_ = writeJSON(w, http.StatusOK, sessions)
 }
 
-// GetParticipating handles GET /api/v0/session/archer/{archer_id}/participating.
-// Returns the open session ID the archer is currently participating in, or null if none.
-// Enforces that only the authenticated archer can query their participation.
+// GetParticipating godoc
+// @Summary     Get Participating Session For Archer
+// @Description Returns the open session ID the archer is currently participating in, or null if none
+// @Tags        Sessions
+// @Produce     json
+// @Param       archer_id path string true "Archer UUID"
+// @Success     200 {object} model.SessionId
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/archer/{archer_id}/participating [get]
 func (h *SessionHandler) GetParticipating(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -154,8 +181,15 @@ func (h *SessionHandler) GetParticipating(w http.ResponseWriter, r *http.Request
 	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: sessionID})
 }
 
-// ListAllOpen handles GET /api/v0/session/open.
-// Returns all currently open sessions. Requires authentication.
+// ListAllOpen godoc
+// @Summary     Get All Open Sessions
+// @Description Returns all currently open sessions in the system
+// @Tags        Sessions
+// @Produce     json
+// @Success     200 {array} model.SessionRead
+// @Failure     401 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/open [get]
 func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 	if _, err := middleware.GetArcherID(r.Context()); err != nil {
 		writeAppError(w, err)
@@ -180,9 +214,19 @@ func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, sessions)
 }
 
-// Create handles POST /api/v0/session.
-// Creates a new shooting session and returns 201 Created with the session ID.
-// Enforces that an archer can only create a session for themselves.
+// Create godoc
+// @Summary     Create Session
+// @Description Creates a new shooting session and returns the assigned session ID
+// @Tags        Sessions
+// @Accept      json
+// @Produce     json
+// @Param       request body model.SessionCreate true "Session creation payload"
+// @Success     201 {object} model.SessionId
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session [post]
 func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -210,9 +254,19 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusCreated, model.SessionID{SessionID: &id})
 }
 
-// GetByID handles GET /api/v0/session/{id}.
-// Returns full session details. Open sessions are readable by any authenticated archer.
-// Closed sessions are only readable by the session owner (403 Forbidden otherwise).
+// GetByID godoc
+// @Summary     Get Session
+// @Description Returns full session details for the given session UUID
+// @Tags        Sessions
+// @Produce     json
+// @Param       id path string true "Session UUID"
+// @Success     200 {object} model.SessionRead
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/{id} [get]
 func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -245,9 +299,20 @@ func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, session)
 }
 
-// ReOpen handles PATCH /api/v0/session/re-open.
-// Re-opens a closed shooting session after verifying owner identity and absence of conflicts.
-// Returns 200 OK with the re-opened session ID.
+// ReOpen godoc
+// @Summary     Re Open Session
+// @Description Re-opens a closed shooting session after verifying owner identity and absence of conflicts
+// @Tags        Sessions
+// @Accept      json
+// @Produce     json
+// @Param       request body model.SessionId true "Session identifier payload"
+// @Success     200 {object} model.SessionId
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Failure     422 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/re-open [patch]
 func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
@@ -285,9 +350,20 @@ func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: req.SessionID})
 }
 
-// Close handles PATCH /api/v0/session/close.
-// Marks an active shooting session as closed. Returns 200 OK with {"status": "closed"}.
-// Validates session presence, owner identity, and active open status.
+// Close godoc
+// @Summary     Close Session
+// @Description Marks an active shooting session as closed
+// @Tags        Sessions
+// @Accept      json
+// @Produce     json
+// @Param       request body model.SessionId true "Session identifier payload"
+// @Success     200 {object} map[string]string
+// @Failure     400 {object} model.ErrorResponse
+// @Failure     401 {object} model.ErrorResponse
+// @Failure     403 {object} model.ErrorResponse
+// @Failure     404 {object} model.ErrorResponse
+// @Security    BearerAuth
+// @Router      /session/close [patch]
 func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
