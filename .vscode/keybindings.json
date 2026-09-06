@@ -7,7 +7,7 @@
     {
         "key": "ctrl+shift+2",
         "command": "workbench.action.tasks.runTask",
-        "args": "Start Uvicorn Server"
+        "args": "Start Go Server (air)"
     },
     {
         "key": "ctrl+shift+3",
