@@ -22,3 +22,5 @@ google_client_secret.json
 backend/arch-stats
 /arch-stats
 /docs/plans/task.md
+backend/tmp/
+backend/build-errors.log

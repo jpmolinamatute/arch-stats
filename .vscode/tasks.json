@@ -63,10 +63,12 @@
                 "detail": "Stop, remove containers and delete associated volumes"
             },
             {
-                "label": "Start Uvicorn Server",
+                "label": "Start Go Server (air)",
                 "type": "shell",
-                "command": "${workspaceFolder}/scripts/start_uvicorn.bash",
-                "problemMatcher": [],
+                "command": "air",
+                "options": {
+                    "cwd": "${workspaceFolder}/backend"
+                },
                 "presentation": {
                     "echo": true,
                     "reveal": "always",
@@ -74,7 +76,8 @@
                     "focus": false,
                     "panel": "dedicated"
                 },
-                "detail": "Start FastAPI server with Uvicorn in backend-old/server"
+                "problemMatcher": [],
+                "detail": "Start Go backend with air for live-reload"
             },
             {
                 "label": "Start Vite Server",

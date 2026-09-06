@@ -1,0 +1,26 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/arch-stats ./cmd/arch-stats"
+bin = "./tmp/arch-stats"
+full_bin = "./tmp/arch-stats"
+include_ext = ["go", "toml"]
+exclude_dir = ["tmp", "tests", "vendor", "specs", "migrations", "frontend"]
+exclude_regex = ["_test\\.go"]
+delay = 1000
+log = "build-errors.log"
+send_interrupt = true
+kill_delay = 500
+
+[log]
+time = true
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+[misc]
+clean_on_exit = true
