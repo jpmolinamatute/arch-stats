@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
@@ -75,4 +77,54 @@ func WriteError(w http.ResponseWriter, status int, message string) {
 // WriteAppError is the exported alias for writeAppError.
 func WriteAppError(w http.ResponseWriter, err error) {
 	writeAppError(w, err)
+}
+
+// getURLParam extracts a URL parameter from the chi route context,
+// falling back to the standard library PathValue.
+func getURLParam(r *http.Request, key string) string {
+	if val := chi.URLParam(r, key); val != "" {
+		return val
+	}
+	return r.PathValue(key)
+}
+
+// parseUUIDParam extracts a UUID from the URL path, trying paramNames in order.
+// Writes a 422 validation error response and returns uuid.Nil, false on failure.
+func parseUUIDParam(w http.ResponseWriter, r *http.Request, paramNames ...string) (uuid.UUID, bool) {
+	var raw string
+	for _, name := range paramNames {
+		if raw = getURLParam(r, name); raw != "" {
+			break
+		}
+	}
+
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid "+paramNames[0]+" is required"))
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
+// requireOwnership verifies the authenticated archer matches the archer_id in the URL.
+// Writes the error response and returns uuid.Nil, false on failure.
+func requireOwnership(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	authArcherID, err := middleware.GetArcherID(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return uuid.Nil, false
+	}
+
+	archerID, ok := parseUUIDParam(w, r, "archer_id", "id")
+	if !ok {
+		return uuid.Nil, false
+	}
+
+	if authArcherID != archerID {
+		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
+		return uuid.Nil, false
+	}
+
+	return archerID, true
 }

@@ -67,14 +67,8 @@ func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Security    BearerAuth
 // @Router      /archer/{id} [get]
 func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "archer_id")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "archer_id")
+	if !ok {
 		return
 	}
 
@@ -162,14 +156,8 @@ func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Security    BearerAuth
 // @Router      /archer/{id} [delete]
 func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "archer_id")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "archer_id")
+	if !ok {
 		return
 	}
 
@@ -188,11 +176,4 @@ func (h *ArcherHandler) Routes(r chi.Router) {
 	r.Post("/", h.Create)
 	r.Patch("/", h.Update)
 	r.Delete("/{id}", h.Delete)
-}
-
-func getURLParam(r *http.Request, key string) string {
-	if val := chi.URLParam(r, key); val != "" {
-		return val
-	}
-	return r.PathValue(key)
 }

@@ -60,21 +60,8 @@ func (h *SessionHandler) Routes(r chi.Router) {
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/open-session [get]
 func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
@@ -104,21 +91,8 @@ func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/close-session [get]
 func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
@@ -154,21 +128,8 @@ func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Reque
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/participating [get]
 func (h *SessionHandler) GetParticipating(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
@@ -274,14 +235,8 @@ func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "session")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid session id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "session")
+	if !ok {
 		return
 	}
 

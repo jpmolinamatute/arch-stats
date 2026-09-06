@@ -156,17 +156,8 @@ func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
@@ -201,17 +192,8 @@ func (h *ShotHandler) CountBySlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 

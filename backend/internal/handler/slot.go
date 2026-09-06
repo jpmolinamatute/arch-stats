@@ -55,25 +55,8 @@ func (h *SlotHandler) Routes(r chi.Router) {
 // @Security    BearerAuth
 // @Router      /session/slot/archer/{archer_id} [get]
 func (h *SlotHandler) GetArcherCurrentSlot(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	if archerIDStr == "" {
-		archerIDStr = getURLParam(r, "id")
-	}
-
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
@@ -106,17 +89,8 @@ func (h *SlotHandler) GetSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
@@ -203,17 +177,8 @@ func (h *SlotHandler) ReJoinSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
@@ -245,17 +210,8 @@ func (h *SlotHandler) LeaveSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
