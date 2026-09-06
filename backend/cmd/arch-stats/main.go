@@ -19,6 +19,14 @@ import (
 	"github.com/jpmolinamatute/arch-stats/backend/internal/service"
 )
 
+// @title       Arch Stats API
+// @version     v0
+// @description Backend API for archery statistics tracking
+// @BasePath    /api/v0
+
+// @securityDefinitions.apikey BearerAuth
+// @in   cookie
+// @name access_token
 func main() {
 	if err := run(); err != nil {
 		os.Exit(1)
