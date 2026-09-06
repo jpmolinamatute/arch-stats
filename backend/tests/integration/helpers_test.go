@@ -102,7 +102,7 @@ type TargetOverride func(*model.TargetCreate)
 
 // createTestTarget inserts a test target configuration into the database.
 //
-//nolint:unused // shared test helper across repository integration test files
+
 func createTestTarget(ctx context.Context, pool *pgxpool.Pool, sessionID uuid.UUID, overrides ...TargetOverride) (*model.TargetRead, error) {
 	payload := model.TargetCreate{
 		SessionID: sessionID,
@@ -127,7 +127,7 @@ type SlotOverride func(*model.SlotCreate)
 
 // createTestSlot inserts a test slot into the database.
 //
-//nolint:unused // shared test helper across repository integration test files
+
 func createTestSlot(ctx context.Context, pool *pgxpool.Pool, targetID, archerID, sessionID uuid.UUID, overrides ...SlotOverride) (*model.SlotRead, error) {
 	shotPerRound := 3
 	payload := model.SlotCreate{
@@ -160,7 +160,7 @@ type ShotOverride func(*model.ShotCreate)
 
 // createTestShot inserts a test shot into the database.
 //
-//nolint:unused // shared test helper across repository integration test files
+
 func createTestShot(ctx context.Context, pool *pgxpool.Pool, slotID uuid.UUID, overrides ...ShotOverride) (*model.ShotRead, error) {
 	x := 0.5
 	y := 0.5
