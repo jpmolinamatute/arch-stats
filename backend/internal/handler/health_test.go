@@ -28,7 +28,7 @@ func TestHealthHandler_Health_Success(t *testing.T) {
 	}
 	h := NewHealthHandler(mockSvc)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/health", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/health", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	h.Health(rec, req)
@@ -58,7 +58,7 @@ func TestHealthHandler_Health_DatabaseError(t *testing.T) {
 	}
 	h := NewHealthHandler(mockSvc)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/health", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/health", http.NoBody)
 	rec := httptest.NewRecorder()
 
 	h.Health(rec, req)
