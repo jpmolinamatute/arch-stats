@@ -15,7 +15,10 @@ import (
 	"github.com/jpmolinamatute/arch-stats/backend/internal/repository"
 )
 
-var testPool *pgxpool.Pool
+var (
+	testPool *pgxpool.Pool
+	testDSN  string
+)
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
@@ -40,6 +43,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "failed to get connection string: %v\n", err)
 		os.Exit(1)
 	}
+	testDSN = dsn
 
 	testPool, err = repository.NewPool(ctx, dsn, 2, 5)
 	if err != nil {

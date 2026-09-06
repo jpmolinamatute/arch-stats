@@ -18,7 +18,7 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
 
 ## Acceptance Criteria
 
-- [ ] `backend/tests/integration/websocket_test.go` tests the following scenarios:
+- [x] `backend/tests/integration/websocket_test.go` tests the following scenarios:
     - **Single client connection**: Connect a WebSocket client → verify the connection is
     accepted and the client receives a welcome/ack message (if applicable)
     - **NOTIFY broadcast**: Connect a WebSocket client → fire a `pg_notify` on the configured
@@ -29,11 +29,11 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
     verify no panic or error in the hub (remaining clients still receive messages)
     - **Invalid upgrade request**: Send a regular HTTP GET to the WebSocket endpoint (without
     upgrade headers) → verify it returns an appropriate error (400 or 426)
-- [ ] Tests use `nhooyr.io/websocket` (or `gorilla/websocket`) client for WebSocket connections.
-- [ ] Tests use the testcontainers PostgreSQL instance to fire real `pg_notify` events.
-- [ ] Each test truncates tables and stops the hub after completion.
-- [ ] `go test ./tests/integration/... -v -count=1 -run WebSocket` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] Tests use `nhooyr.io/websocket` (or `gorilla/websocket`) client for WebSocket connections.
+- [x] Tests use the testcontainers PostgreSQL instance to fire real `pg_notify` events.
+- [x] Each test truncates tables and stops the hub after completion.
+- [x] `go test ./tests/integration/... -v -count=1 -run WebSocket` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create
 
@@ -48,7 +48,7 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
 
 ## Steps
 
-- [ ] **Step 1: Write single client connection test**
+- [x] **Step 1: Write single client connection test**
 
   ```go
   func TestWebSocket_SingleClientConnection(t *testing.T) {
@@ -73,7 +73,7 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
   }
   ```
 
-- [ ] **Step 2: Write NOTIFY broadcast test**
+- [x] **Step 2: Write NOTIFY broadcast test**
 
   ```go
   func TestWebSocket_NotifyBroadcast(t *testing.T) {
@@ -111,16 +111,16 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
   }
   ```
 
-- [ ] **Step 3: Write multiple clients fan-out test**
+- [x] **Step 3: Write multiple clients fan-out test**
 
   Connect 3 clients, fire one NOTIFY, verify all 3 receive the message.
 
-- [ ] **Step 4: Write client disconnect cleanup test**
+- [x] **Step 4: Write client disconnect cleanup test**
 
   Connect 2 clients, disconnect one, fire NOTIFY, verify the remaining client still receives
   the message and no panic occurs.
 
-- [ ] **Step 5: Write invalid upgrade request test**
+- [x] **Step 5: Write invalid upgrade request test**
 
   ```go
   func TestWebSocket_InvalidUpgrade(t *testing.T) {
@@ -140,21 +140,21 @@ fired in PostgreSQL is received by connected WebSocket clients via the hub.
   }
   ```
 
-- [ ] **Step 6: Run WebSocket integration tests**
+- [x] **Step 6: Run WebSocket integration tests**
 
   ```bash
   cd backend
   go test ./tests/integration/... -v -count=1 -run WebSocket
   ```
 
-- [ ] **Step 7: Run go vet**
+- [x] **Step 7: Run go vet**
 
   ```bash
   cd backend
   go vet ./...
   ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
   ```bash
   git add -A
