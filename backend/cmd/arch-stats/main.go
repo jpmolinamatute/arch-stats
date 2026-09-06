@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jpmolinamatute/arch-stats/backend"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/auth"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/config"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/handler"
@@ -33,6 +34,13 @@ func run() error {
 	if err != nil {
 		slog.Error("failed to load configuration", "error", err)
 		return err
+	}
+
+	for _, arg := range os.Args[1:] {
+		if arg == "--dev" || arg == "-dev" {
+			cfg.DevMode = true
+			break
+		}
 	}
 
 	// 2. Logger
@@ -136,6 +144,25 @@ func run() error {
 	faceHandler := handler.NewFaceHandler(faceSvc)
 	healthHandler := handler.NewHealthHandler(maintenanceRepo)
 
+	// 8b. SPA Handler
+	frontendFS, err := backend.FS()
+	if err != nil {
+		slog.Error("failed to load embedded frontend filesystem", "error", err)
+		return err
+	}
+
+	frontendDir := os.Getenv("ARCH_STATS_FRONTEND_DIR")
+	if frontendDir == "" {
+		for _, candidate := range []string{"frontend", "backend/frontend", "../frontend/dist", "dist"} {
+			if info, statErr := os.Stat(candidate); statErr == nil && info.IsDir() {
+				frontendDir = candidate
+				break
+			}
+		}
+	}
+
+	spaHandler := handler.NewSPAHandler(frontendFS, cfg.DevMode, frontendDir)
+
 	// 9. Build Chi Router
 	routerDeps := RouterDeps{
 		Cfg:            cfg,
@@ -148,6 +175,7 @@ func run() error {
 		ShotHandler:    shotHandler,
 		FaceHandler:    faceHandler,
 		HealthHandler:  healthHandler,
+		SPAHandler:     spaHandler,
 	}
 	router := buildRouter(&routerDeps)
 

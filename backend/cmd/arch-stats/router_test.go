@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/google/uuid"
@@ -309,6 +310,11 @@ func setupTestRouter() http.Handler {
 	faceSvc := &testFaceService{}
 	maintSvc := &testMaintenanceService{schemaVer: 10}
 
+	mockSPA := handler.NewSPAHandler(fstest.MapFS{
+		"index.html":     &fstest.MapFile{Data: []byte("<!DOCTYPE html><html><body>Router Test Index</body></html>")},
+		"assets/test.js": &fstest.MapFile{Data: []byte("console.log('router test asset');")},
+	}, false, "")
+
 	deps := RouterDeps{
 		Cfg:            cfg,
 		Logger:         logger,
@@ -320,6 +326,7 @@ func setupTestRouter() http.Handler {
 		ShotHandler:    handler.NewShotHandler(shotSvc),
 		FaceHandler:    handler.NewFaceHandler(faceSvc),
 		HealthHandler:  handler.NewHealthHandler(maintSvc),
+		SPAHandler:     mockSPA,
 	}
 
 	return buildRouter(&deps)
@@ -457,3 +464,61 @@ func TestRouter_CORSPreflight(t *testing.T) {
 		t.Errorf("missing or incorrect Access-Control-Allow-Origin: %q", rec.Header().Get("Access-Control-Allow-Origin"))
 	}
 }
+
+func TestRouter_SPAFallbackAndAssets(t *testing.T) {
+	r := setupTestRouter()
+
+	tests := []struct {
+		name           string
+		method         string
+		url            string
+		wantStatus     int
+		wantBodySubstr string
+	}{
+		{
+			name:           "Root path serves SPA index",
+			method:         http.MethodGet,
+			url:            "/",
+			wantStatus:     http.StatusOK,
+			wantBodySubstr: "Router Test Index",
+		},
+		{
+			name:           "Unknown non-API path falls back to SPA index",
+			method:         http.MethodGet,
+			url:            "/dashboard/live",
+			wantStatus:     http.StatusOK,
+			wantBodySubstr: "Router Test Index",
+		},
+		{
+			name:           "Existing asset path serves asset",
+			method:         http.MethodGet,
+			url:            "/assets/test.js",
+			wantStatus:     http.StatusOK,
+			wantBodySubstr: "console.log('router test asset')",
+		},
+		{
+			name:           "Unknown API endpoint returns 404",
+			method:         http.MethodGet,
+			url:            "/api/v0/unknown-endpoint",
+			wantStatus:     http.StatusNotFound,
+			wantBodySubstr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.url, http.NoBody)
+			rec := httptest.NewRecorder()
+
+			r.ServeHTTP(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Errorf("got status %d, want %d", rec.Code, tt.wantStatus)
+			}
+			if tt.wantBodySubstr != "" && !strings.Contains(rec.Body.String(), tt.wantBodySubstr) {
+				t.Errorf("expected body to contain %q, got: %s", tt.wantBodySubstr, rec.Body.String())
+			}
+		})
+	}
+}
+
