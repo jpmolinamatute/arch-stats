@@ -31,6 +31,15 @@ func NewArcherHandler(archerSvc ArcherService) *ArcherHandler {
 	}
 }
 
+// Routes registers all archer CRUD endpoints on the provided chi Router.
+func (h *ArcherHandler) Routes(r chi.Router) {
+	r.Get("/", h.List)
+	r.Get("/{id}", h.GetByID)
+	r.Post("/", h.Create)
+	r.Patch("/", h.Update)
+	r.Delete("/{id}", h.Delete)
+}
+
 // List godoc
 // @Summary     List Archers
 // @Description Query archers matching default filter criteria and return a JSON list
@@ -43,15 +52,11 @@ func NewArcherHandler(archerSvc ArcherService) *ArcherHandler {
 func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 	archers, err := h.archerSvc.List(r.Context(), model.ArcherFilter{})
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	if archers == nil {
-		archers = []model.ArcherRead{}
-	}
-
-	_ = writeJSON(w, http.StatusOK, archers)
+	_ = WriteJSON(w, http.StatusOK, archers)
 }
 
 // GetByID godoc
@@ -67,24 +72,18 @@ func (h *ArcherHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Security    BearerAuth
 // @Router      /archer/{id} [get]
 func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "archer_id")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "archer_id")
+	if !ok {
 		return
 	}
 
 	archer, err := h.archerSvc.GetByID(r.Context(), id)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, archer)
+	_ = WriteJSON(w, http.StatusOK, archer)
 }
 
 // Create godoc
@@ -101,18 +100,18 @@ func (h *ArcherHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Router      /archer/ [post]
 func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherCreate
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	id, err := h.archerSvc.Create(r.Context(), req)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusCreated, model.ArcherID{ArcherID: id})
+	_ = WriteJSON(w, http.StatusCreated, model.ArcherID{ArcherID: id})
 }
 
 // Update godoc
@@ -130,18 +129,18 @@ func (h *ArcherHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router      /archer/ [patch]
 func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req model.ArcherUpdate
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.Where.ArcherID == nil || *req.Where.ArcherID == uuid.Nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "where.archer_id is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "where.archer_id is required"))
 		return
 	}
 
 	if err := h.archerSvc.Update(r.Context(), *req.Where.ArcherID, req.Data); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -162,37 +161,15 @@ func (h *ArcherHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Security    BearerAuth
 // @Router      /archer/{id} [delete]
 func (h *ArcherHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "archer_id")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "archer_id")
+	if !ok {
 		return
 	}
 
 	if err := h.archerSvc.Delete(r.Context(), id); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// Routes registers all archer CRUD endpoints on the provided chi Router.
-func (h *ArcherHandler) Routes(r chi.Router) {
-	r.Get("/", h.List)
-	r.Get("/{id}", h.GetByID)
-	r.Post("/", h.Create)
-	r.Patch("/", h.Update)
-	r.Delete("/{id}", h.Delete)
-}
-
-func getURLParam(r *http.Request, key string) string {
-	if val := chi.URLParam(r, key); val != "" {
-		return val
-	}
-	return r.PathValue(key)
 }

@@ -60,35 +60,22 @@ func (h *SessionHandler) Routes(r chi.Router) {
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/open-session [get]
 func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
 	session, err := h.sessionSvc.GetOpen(r.Context(), archerID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrNotFound) {
-			_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: nil})
+			_ = WriteJSON(w, http.StatusOK, model.SessionID{SessionID: nil})
 			return
 		}
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: &session.SessionID})
+	_ = WriteJSON(w, http.StatusOK, model.SessionID{SessionID: &session.SessionID})
 }
 
 // GetClosedForArcher godoc
@@ -104,21 +91,8 @@ func (h *SessionHandler) GetOpenForArcher(w http.ResponseWriter, r *http.Request
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/close-session [get]
 func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
@@ -130,15 +104,11 @@ func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Reque
 
 	sessions, err := h.sessionSvc.List(r.Context(), filter)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	if sessions == nil {
-		sessions = []model.SessionRead{}
-	}
-
-	_ = writeJSON(w, http.StatusOK, sessions)
+	_ = WriteJSON(w, http.StatusOK, sessions)
 }
 
 // GetParticipating godoc
@@ -154,31 +124,18 @@ func (h *SessionHandler) GetClosedForArcher(w http.ResponseWriter, r *http.Reque
 // @Security    BearerAuth
 // @Router      /session/archer/{archer_id}/participating [get]
 func (h *SessionHandler) GetParticipating(w http.ResponseWriter, r *http.Request) {
-	authArcherID, err := middleware.GetArcherID(r.Context())
-	if err != nil {
-		writeAppError(w, err)
-		return
-	}
-
-	archerIDStr := getURLParam(r, "archer_id")
-	archerID, err := uuid.Parse(archerIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid archer_id is required"))
-		return
-	}
-
-	if authArcherID != archerID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+	archerID, ok := requireOwnership(w, r)
+	if !ok {
 		return
 	}
 
 	sessionID, err := h.sessionSvc.GetParticipating(r.Context(), archerID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: sessionID})
+	_ = WriteJSON(w, http.StatusOK, model.SessionID{SessionID: sessionID})
 }
 
 // ListAllOpen godoc
@@ -192,7 +149,7 @@ func (h *SessionHandler) GetParticipating(w http.ResponseWriter, r *http.Request
 // @Router      /session/open [get]
 func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 	if _, err := middleware.GetArcherID(r.Context()); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -203,15 +160,11 @@ func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 
 	sessions, err := h.sessionSvc.List(r.Context(), filter)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	if sessions == nil {
-		sessions = []model.SessionRead{}
-	}
-
-	_ = writeJSON(w, http.StatusOK, sessions)
+	_ = WriteJSON(w, http.StatusOK, sessions)
 }
 
 // Create godoc
@@ -230,28 +183,28 @@ func (h *SessionHandler) ListAllOpen(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	var req model.SessionCreate
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.OwnerArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "ERROR: user not allowed to open a session for another archer"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden: cannot open session for another archer"))
 		return
 	}
 
 	id, err := h.sessionSvc.Create(r.Context(), req)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusCreated, model.SessionID{SessionID: &id})
+	_ = WriteJSON(w, http.StatusCreated, model.SessionID{SessionID: &id})
 }
 
 // GetByID godoc
@@ -270,33 +223,27 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	idStr := getURLParam(r, "id")
-	if idStr == "" {
-		idStr = getURLParam(r, "session")
-	}
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid session id is required"))
+	id, ok := parseUUIDParam(w, r, "id", "session")
+	if !ok {
 		return
 	}
 
 	session, err := h.sessionSvc.GetByID(r.Context(), id)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if !session.IsOpened && session.OwnerArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, session)
+	_ = WriteJSON(w, http.StatusOK, session)
 }
 
 // ReOpen godoc
@@ -316,38 +263,38 @@ func (h *SessionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	var req model.SessionID
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.SessionID == nil || *req.SessionID == uuid.Nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "session_id is required"))
 		return
 	}
 
 	session, err := h.sessionSvc.GetByID(r.Context(), *req.SessionID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if session.OwnerArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Archer is not allowed to re-open this session"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden: cannot re-open another archer's session"))
 		return
 	}
 
 	if err := h.sessionSvc.ReOpen(r.Context(), *req.SessionID); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, model.SessionID{SessionID: req.SessionID})
+	_ = WriteJSON(w, http.StatusOK, model.SessionID{SessionID: req.SessionID})
 }
 
 // Close godoc
@@ -357,7 +304,7 @@ func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 // @Accept      json
 // @Produce     json
 // @Param       request body model.SessionId true "Session identifier payload"
-// @Success     200 {object} map[string]string
+// @Success     204
 // @Failure     400 {object} model.ErrorResponse
 // @Failure     401 {object} model.ErrorResponse
 // @Failure     403 {object} model.ErrorResponse
@@ -367,36 +314,36 @@ func (h *SessionHandler) ReOpen(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) Close(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	var req model.SessionID
-	if err := readJSON(r, &req); err != nil {
-		writeAppError(w, err)
+	if err := ReadJSON(r, &req); err != nil {
+		WriteAppError(w, err)
 		return
 	}
 
 	if req.SessionID == nil || *req.SessionID == uuid.Nil {
-		writeError(w, http.StatusBadRequest, "ERROR: session_id wasn't provided")
+		WriteError(w, http.StatusBadRequest, "session_id is required")
 		return
 	}
 
 	session, err := h.sessionSvc.GetByID(r.Context(), *req.SessionID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if session.OwnerArcherID != authArcherID {
-		writeAppError(w, apperror.Wrap(apperror.ErrForbidden, "Forbidden"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrForbidden, "forbidden"))
 		return
 	}
 
 	if err := h.sessionSvc.Close(r.Context(), *req.SessionID); err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, map[string]string{"status": "closed"})
+	w.WriteHeader(http.StatusNoContent)
 }

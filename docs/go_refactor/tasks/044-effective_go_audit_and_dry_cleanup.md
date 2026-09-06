@@ -502,37 +502,37 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
 
 ## Acceptance Criteria
 
-- [ ] A `deleteByID` helper exists in `repository/base.go` and all repository
+- [x] A `deleteByID` helper exists in `repository/base.go` and all repository
   `Delete` methods delegate to it.
-- [ ] An `execUpdate` helper exists in `repository/base.go` and all repository
+- [x] An `execUpdate` helper exists in `repository/base.go` and all repository
   `Update` methods use it for the tail exec + affected-rows check.
-- [ ] A `findByID` generic helper exists in `repository/base.go` and all
+- [x] A `findByID` generic helper exists in `repository/base.go` and all
   repository `FindByID` methods delegate to it.
-- [ ] A `createReturningID` helper exists in `repository/base.go` and all
+- [x] A `createReturningID` helper exists in `repository/base.go` and all
   repository `Create` methods delegate to it.
-- [ ] A `parseUUIDParam` helper exists in `handler/helpers.go` and all UUID
+- [x] A `parseUUIDParam` helper exists in `handler/helpers.go` and all UUID
   parsing from URL params uses it.
-- [ ] A `requireOwnership` helper exists in `handler/helpers.go` and all
+- [x] A `requireOwnership` helper exists in `handler/helpers.go` and all
   auth + ownership checks use it.
-- [ ] `ErrorResponse` is defined only in `model/base.go`. No duplicate
+- [x] `ErrorResponse` is defined only in `model/base.go`. No duplicate
   definition exists in `middleware/error_mapper.go` or `handler/helpers.go`.
-- [ ] The redundant exported/unexported function pairs in `handler/helpers.go`
+- [x] The redundant exported/unexported function pairs in `handler/helpers.go`
   are consolidated into a single set of functions.
-- [ ] Nil-to-empty-slice normalization happens in the service layer, not in
+- [x] Nil-to-empty-slice normalization happens in the service layer, not in
   handlers.
-- [ ] All `fmt.Errorf` context messages follow the `"<operation> <entity>: %w"`
+- [x] All `fmt.Errorf` context messages follow the `"<operation> <entity>: %w"`
   format consistently.
-- [ ] All error strings are lowercase without `ERROR:` prefix.
-- [ ] The update-filter guard uses a shared sentinel error.
-- [ ] `FaceRepo` constructor uses `NewFaceRepo(db DBTX)`, not variadic.
-- [ ] `_ = ctx` lines are removed from `FaceRepo` methods.
-- [ ] `getURLParam` is in `handler/helpers.go`, not `handler/archer.go`.
-- [ ] `ArcherHandler.Routes` is positioned after the constructor.
-- [ ] Handler response shapes for mutations are consistent and documented.
-- [ ] `golangci-lint run ./...` passes with zero findings.
-- [ ] `gofumpt -l .` reports no unformatted files.
-- [ ] `go test ./... -v -count=1` passes.
-- [ ] `go vet ./...` reports no issues.
+- [x] All error strings are lowercase without `ERROR:` prefix.
+- [x] The update-filter guard uses a shared sentinel error.
+- [x] `FaceRepo` constructor uses `NewFaceRepo(db DBTX)`, not variadic.
+- [x] `_ = ctx` lines are removed from `FaceRepo` methods.
+- [x] `getURLParam` is in `handler/helpers.go`, not `handler/archer.go`.
+- [x] `ArcherHandler.Routes` is positioned after the constructor.
+- [x] Handler response shapes for mutations are consistent and documented.
+- [x] `golangci-lint run ./...` passes with zero findings.
+- [x] `gofumpt -l .` reports no unformatted files.
+- [x] `go test ./... -v -count=1` passes.
+- [x] `go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -578,7 +578,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
 
 ## Steps
 
-- [ ] **Step 1: Add repository base helpers (`deleteByID`, `execUpdate`,
+- [x] **Step 1: Add repository base helpers (`deleteByID`, `execUpdate`,
   `findByID`, `createReturningID`)**
 
   Add the four generic helpers to `backend/internal/repository/base.go` as
@@ -592,7 +592,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/repository/... -v -run TestCreateReturningID
   ```
 
-- [ ] **Step 2: Refactor all repository CRUD methods to use base helpers**
+- [x] **Step 2: Refactor all repository CRUD methods to use base helpers**
 
   Refactor `Delete`, `Update` tail, `FindByID`, and `Create` methods in all
   5 CRUD repositories (archer, session, slot, shot, target) to delegate to the
@@ -602,7 +602,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Unify the update-filter guard error**
+- [x] **Step 3: Unify the update-filter guard error**
 
   Add `errUpdateRequiresFilter` sentinel to `base.go`. Replace all inline
   `errors.New("update requires...")` and
@@ -613,7 +613,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 4: Standardize `fmt.Errorf` context messages**
+- [x] **Step 4: Standardize `fmt.Errorf` context messages**
 
   Audit all repository files and normalize error wrapping messages to the
   `"<operation> <entity>: %w"` format. Update any tests that assert on error
@@ -623,7 +623,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 5: Fix FaceRepo anti-patterns (D1, D2)**
+- [x] **Step 5: Fix FaceRepo anti-patterns (D1, D2)**
 
   Change `NewFaceRepo(db ...DBTX)` to `NewFaceRepo(db DBTX)`. Remove `_ = ctx`
   lines from `FindAll`, `FindByType`, and `FindByID`. Update any call sites
@@ -633,7 +633,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 6: Add handler helpers (`parseUUIDParam`, `requireOwnership`)**
+- [x] **Step 6: Add handler helpers (`parseUUIDParam`, `requireOwnership`)**
 
   Add both helpers to `handler/helpers.go` as described in B1 and B2. Move
   `getURLParam` from `archer.go` to `helpers.go` (D4). Write unit tests in
@@ -644,7 +644,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v -run TestRequireOwnership
   ```
 
-- [ ] **Step 7: Refactor handler UUID parsing and ownership checks**
+- [x] **Step 7: Refactor handler UUID parsing and ownership checks**
 
   Replace all inline UUID-from-URL parsing and auth-then-ownership boilerplate
   in handlers with calls to `parseUUIDParam` and `requireOwnership`. Update
@@ -654,7 +654,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 8: Consolidate `ErrorResponse` type (B3)**
+- [x] **Step 8: Consolidate `ErrorResponse` type (B3)**
 
   Remove `middleware.ErrorResponse` struct from `error_mapper.go`. Import and
   use `model.ErrorResponse` instead. Remove the type alias from
@@ -666,7 +666,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 9: Consolidate exported/unexported helper pairs (B4)**
+- [x] **Step 9: Consolidate exported/unexported helper pairs (B4)**
 
   Decide on exported vs unexported. Remove the redundant set. Update all call
   sites.
@@ -675,7 +675,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 10: Move nil-to-empty-slice normalization to service layer (B5)**
+- [x] **Step 10: Move nil-to-empty-slice normalization to service layer (B5)**
 
   Ensure all service `List` / `FindAll` / `GetBy*` methods that return slices
   normalize nil to empty slice. Remove the handler-side nil guards.
@@ -685,7 +685,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 11: Standardize error message casing (C1)**
+- [x] **Step 11: Standardize error message casing (C1)**
 
   Audit all error messages in handlers and services. Lowercase all messages.
   Remove `ERROR:` prefixes. Update test assertions.
@@ -694,7 +694,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./... -v
   ```
 
-- [ ] **Step 12: Standardize handler response shapes (C4)**
+- [x] **Step 12: Standardize handler response shapes (C4)**
 
   Document the response convention in `handler/helpers.go`. Ensure Create
   returns 201 with consistent ID shapes, state mutations return 200, and
@@ -704,12 +704,12 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go test ./internal/handler/... -v
   ```
 
-- [ ] **Step 13: Move `ArcherHandler.Routes` position (D3)**
+- [x] **Step 13: Move `ArcherHandler.Routes` position (D3)**
 
   Move the `Routes` method to immediately after `NewArcherHandler` in
   `handler/archer.go`.
 
-- [ ] **Step 14: Run full verification suite**
+- [x] **Step 14: Run full verification suite**
 
   ```bash
   cd backend && gofumpt -l .
@@ -719,7 +719,7 @@ The shared `getURLParam` function is defined at the bottom of `archer.go`
   cd backend && go build ./...
   ```
 
-- [ ] **Step 15: Commit**
+- [x] **Step 15: Commit**
 
   ```bash
   git add -A

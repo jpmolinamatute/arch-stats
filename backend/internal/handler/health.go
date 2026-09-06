@@ -38,14 +38,14 @@ func NewHealthHandler(maintenance MaintenanceService) *HealthHandler {
 func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	ver, err := h.maintenance.GetSchemaVersion(r.Context())
 	if err != nil {
-		_ = writeJSON(w, http.StatusServiceUnavailable, HealthResponse{
+		_ = WriteJSON(w, http.StatusServiceUnavailable, HealthResponse{
 			Status: "unhealthy",
 			Error:  err.Error(),
 		})
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, HealthResponse{
+	_ = WriteJSON(w, http.StatusOK, HealthResponse{
 		Status:        "ok",
 		SchemaVersion: ver,
 	})

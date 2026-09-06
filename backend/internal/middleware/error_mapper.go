@@ -6,52 +6,47 @@ import (
 	"net/http"
 
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
-// ErrorResponse represents an HTTP error response body matching frontend expectations.
-type ErrorResponse struct {
-	Detail string `json:"detail"`
-	Code   string `json:"code,omitempty"`
-}
-
 // MapError maps domain errors to their corresponding HTTP status codes and response bodies.
-func MapError(err error) (int, ErrorResponse) {
+func MapError(err error) (int, model.ErrorResponse) {
 	if err == nil {
-		return http.StatusOK, ErrorResponse{}
+		return http.StatusOK, model.ErrorResponse{}
 	}
 
 	var appErr *apperror.AppError
 	if errors.As(err, &appErr) {
 		switch appErr.Code() {
 		case apperror.ErrNotFound.Code():
-			return http.StatusNotFound, ErrorResponse{
+			return http.StatusNotFound, model.ErrorResponse{
 				Detail: appErr.Error(),
 				Code:   appErr.Code(),
 			}
 		case apperror.ErrUnauthorized.Code():
-			return http.StatusUnauthorized, ErrorResponse{
+			return http.StatusUnauthorized, model.ErrorResponse{
 				Detail: appErr.Error(),
 				Code:   appErr.Code(),
 			}
 		case apperror.ErrForbidden.Code():
-			return http.StatusForbidden, ErrorResponse{
+			return http.StatusForbidden, model.ErrorResponse{
 				Detail: appErr.Error(),
 				Code:   appErr.Code(),
 			}
 		case apperror.ErrConflict.Code():
-			return http.StatusConflict, ErrorResponse{
+			return http.StatusConflict, model.ErrorResponse{
 				Detail: appErr.Error(),
 				Code:   appErr.Code(),
 			}
 		case apperror.ErrValidation.Code():
-			return http.StatusUnprocessableEntity, ErrorResponse{
+			return http.StatusUnprocessableEntity, model.ErrorResponse{
 				Detail: appErr.Error(),
 				Code:   appErr.Code(),
 			}
 		}
 	}
 
-	return http.StatusInternalServerError, ErrorResponse{
+	return http.StatusInternalServerError, model.ErrorResponse{
 		Detail: "internal server error",
 		Code:   "INTERNAL_ERROR",
 	}

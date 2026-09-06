@@ -452,7 +452,7 @@ func TestSessionHandler_ListAllOpen(t *testing.T) {
 	t.Run("returns 200 with empty array when no open sessions exist", func(t *testing.T) {
 		svc := &mockSessionHandlerService{
 			listFn: func(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error) {
-				return nil, nil
+				return []model.SessionRead{}, nil
 			},
 		}
 		h := handler.NewSessionHandler(svc)
@@ -663,11 +663,11 @@ func TestSessionHandler_Create(t *testing.T) {
 		if rec.Code != http.StatusForbidden {
 			t.Fatalf("expected status 403, got %d", rec.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
 			t.Fatalf("failed to decode error response: %v", err)
 		}
-		if !strings.Contains(errResp.Detail, "user not allowed to open a session for another archer") {
+		if !strings.Contains(errResp.Detail, "cannot open session for another archer") {
 			t.Fatalf("unexpected error detail: %s", errResp.Detail)
 		}
 	})
@@ -905,11 +905,11 @@ func TestSessionHandler_Close(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", rec.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
 			t.Fatalf("failed to decode error response: %v", err)
 		}
-		if errResp.Detail != "ERROR: session_id wasn't provided" {
+		if errResp.Detail != "session_id is required" {
 			t.Fatalf("unexpected detail message: %q", errResp.Detail)
 		}
 	})
@@ -969,7 +969,7 @@ func TestSessionHandler_Close(t *testing.T) {
 		}
 	})
 
-	t.Run("returns 200 with status closed when successful", func(t *testing.T) {
+	t.Run("returns 204 when successful", func(t *testing.T) {
 		svc := &mockSessionHandlerService{
 			getByIDFn: func(ctx context.Context, id uuid.UUID) (*model.SessionRead, error) {
 				return sampleSessionReadData(sessionID, authID, true), nil
@@ -987,15 +987,8 @@ func TestSessionHandler_Close(t *testing.T) {
 
 		h.Close(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Fatalf("expected status 200, got %d", rec.Code)
-		}
-		var resp map[string]string
-		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
-			t.Fatalf("failed to decode response: %v", err)
-		}
-		if resp["status"] != "closed" {
-			t.Fatalf("expected status 'closed', got %q", resp["status"])
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("expected status 204, got %d", rec.Code)
 		}
 	})
 }

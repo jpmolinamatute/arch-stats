@@ -10,7 +10,7 @@ import (
 )
 
 func TestFaceRepo_FindAll(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 	faces, err := repo.FindAll(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -34,7 +34,7 @@ func TestFaceRepo_FindAll(t *testing.T) {
 }
 
 func TestFaceRepo_FindByType_Found(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 	faces, err := repo.FindByType(context.Background(), model.FaceTypeWA40Full)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -51,7 +51,7 @@ func TestFaceRepo_FindByType_Found(t *testing.T) {
 }
 
 func TestFaceRepo_FindByType_NotFound(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 	faces, err := repo.FindByType(context.Background(), model.FaceType("unknown_custom_face"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -62,7 +62,7 @@ func TestFaceRepo_FindByType_NotFound(t *testing.T) {
 }
 
 func TestFaceRepo_FindByID_Found(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 	face, err := repo.FindByID(context.Background(), string(model.FaceTypeWA80Full))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -76,7 +76,7 @@ func TestFaceRepo_FindByID_Found(t *testing.T) {
 }
 
 func TestFaceRepo_FindByID_NotFoundReturnsNil(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 	face, err := repo.FindByID(context.Background(), "non_existent_face")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -87,7 +87,7 @@ func TestFaceRepo_FindByID_NotFoundReturnsNil(t *testing.T) {
 }
 
 func TestFaceRepo_BuildSelectQuery(t *testing.T) {
-	repo := repository.NewFaceRepo()
+	repo := repository.NewFaceRepo(nil)
 
 	// Test FindAll query building
 	sqlAll, argsAll, err := repo.BuildSelectQuery(nil)

@@ -264,10 +264,10 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -283,10 +283,10 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -305,10 +305,10 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "Invalid input" {
-			t.Fatalf("expected detail 'Invalid input', got %q", errResp.Detail)
+		if errResp.Detail != "batch must contain between 3 and 10 shots" {
+			t.Fatalf("expected detail 'batch must contain between 3 and 10 shots', got %q", errResp.Detail)
 		}
 	})
 
@@ -329,10 +329,10 @@ func TestShotHandler_Create(t *testing.T) {
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rr.Code)
 		}
-		var errResp middleware.ErrorResponse
+		var errResp model.ErrorResponse
 		_ = json.NewDecoder(rr.Body).Decode(&errResp)
-		if errResp.Detail != "All shots must belong to the same slot" {
-			t.Fatalf("expected detail 'All shots must belong to the same slot', got %q", errResp.Detail)
+		if errResp.Detail != "all shots must belong to the same slot" {
+			t.Fatalf("expected detail 'all shots must belong to the same slot', got %q", errResp.Detail)
 		}
 	})
 
@@ -482,7 +482,7 @@ func TestShotHandler_GetBySlot(t *testing.T) {
 	t.Run("returns 200 with empty array when no shots recorded", func(t *testing.T) {
 		svc := &mockShotHandlerService{
 			getBySlotFn: func(ctx context.Context, sID, aID uuid.UUID) ([]model.ShotRead, error) {
-				return nil, nil
+				return []model.ShotRead{}, nil
 			},
 		}
 

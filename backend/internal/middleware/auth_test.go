@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
 type mockAuthenticator struct {
@@ -39,7 +40,7 @@ func TestAuth_MissingTokenReturns401(t *testing.T) {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 
-	var errResp middleware.ErrorResponse
+	var errResp model.ErrorResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &errResp); err != nil {
 		t.Fatalf("response is not JSON: %v", err)
 	}

@@ -2,13 +2,11 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
@@ -69,17 +67,8 @@ func scanSlot(scanner interface{ Scan(dest ...any) error }) (model.SlotRead, err
 // FindByID retrieves a slot assignment by primary key identifier.
 // Returns nil, nil if no slot exists with the given ID.
 func (r *SlotRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.SlotRead, error) {
-	sql, args, err := StmtBuilder.Select(slotColumns...).
-		From("slot").
-		Where(squirrel.Eq{"slot_id": id}).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("building find slot by id query: %w", err)
-	}
-
-	row := r.db.QueryRow(ctx, sql, args...)
-	return ScanOne(row, func(r pgx.Row) (model.SlotRead, error) {
-		return scanSlot(r)
+	return findByID(ctx, r.db, "slot", "slot_id", slotColumns, id, func(row pgx.Row) (model.SlotRead, error) {
+		return scanSlot(row)
 	})
 }
 
@@ -154,7 +143,7 @@ func (r *SlotRepo) FindAll(ctx context.Context, filter model.SlotFilter) ([]mode
 //
 //nolint:gocritic // hugeParam: data value parameter matches repository interface specification
 func (r *SlotRepo) Create(ctx context.Context, data model.SlotCreate) (uuid.UUID, error) {
-	sql, args, err := StmtBuilder.Insert("slot").
+	builder := StmtBuilder.Insert("slot").
 		Columns(
 			"target_id",
 			"archer_id",
@@ -180,19 +169,9 @@ func (r *SlotRepo) Create(ctx context.Context, data model.SlotCreate) (uuid.UUID
 			data.IsShooting,
 			data.ShotPerRound,
 			data.IntervalSeconds,
-		).
-		Suffix("RETURNING slot_id").
-		ToSql()
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("building create slot query: %w", err)
-	}
+		)
 
-	var newID uuid.UUID
-	if err := r.db.QueryRow(ctx, sql, args...).Scan(&newID); err != nil {
-		return uuid.Nil, fmt.Errorf("inserting slot: %w", err)
-	}
-
-	return newID, nil
+	return createReturningID(ctx, r.db, builder, "slot_id")
 }
 
 // Update mutates slot assignment fields specified in data for rows matching filter.
@@ -262,46 +241,16 @@ func (r *SlotRepo) Update(ctx context.Context, data model.SlotSet, filter model.
 	}
 
 	if whereCount == 0 {
-		return errors.New("update requires at least one filter condition to prevent unrestricted updates")
+		return errUpdateRequiresFilter
 	}
 
-	sql, args, err := q.ToSql()
-	if err != nil {
-		return fmt.Errorf("building update query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing update: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return execUpdate(ctx, r.db, q)
 }
 
 // Delete removes a slot assignment by primary key identifier.
 // Returns apperror.ErrNotFound if no slot assignment existed with the given ID.
 func (r *SlotRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("slot").
-		Where(squirrel.Eq{"slot_id": id}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("building delete slot query: %w", err)
-	}
-
-	tag, err := r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("executing delete slot: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
-	}
-
-	return nil
+	return deleteByID(ctx, r.db, "slot", "slot_id", id)
 }
 
 // CountBySessionID counts the total number of slot assignments for a given session.

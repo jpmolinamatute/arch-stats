@@ -17,7 +17,6 @@ import (
 	"github.com/jpmolinamatute/arch-stats/backend/internal/auth"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/config"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/handler"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
@@ -423,7 +422,7 @@ func TestRouter_ProtectedRoutes_RequireAuth(t *testing.T) {
 				t.Errorf("got status %d, want 401 Unauthorized for %s %s; body: %s", rec.Code, tt.method, tt.url, rec.Body.String())
 			}
 
-			var errResp middleware.ErrorResponse
+			var errResp model.ErrorResponse
 			if err := json.Unmarshal(rec.Body.Bytes(), &errResp); err != nil {
 				t.Fatalf("failed to decode error response: %v", err)
 			}

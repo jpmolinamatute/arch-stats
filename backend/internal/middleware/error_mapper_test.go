@@ -11,6 +11,7 @@ import (
 
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
 func TestMapError(t *testing.T) {
@@ -136,7 +137,7 @@ func TestWriteError(t *testing.T) {
 		t.Errorf("WriteError Content-Type = %q, want application/json", ct)
 	}
 
-	var resp middleware.ErrorResponse
+	var resp model.ErrorResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("WriteError response is not valid JSON: %v", err)
 	}

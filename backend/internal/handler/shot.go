@@ -57,25 +57,25 @@ func (h *ShotHandler) Routes(r chi.Router) {
 func (h *ShotHandler) Create(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
 	if r.Body == nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
 		return
 	}
 	defer r.Body.Close()
 
 	raw, err := io.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "failed to read request body"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "failed to read request body"))
 		return
 	}
 
 	trimmed := bytes.TrimSpace(raw)
 	if len(trimmed) == 0 {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "request body is empty"))
 		return
 	}
 
@@ -90,42 +90,42 @@ func (h *ShotHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *ShotHandler) handleSingleCreate(w http.ResponseWriter, ctx context.Context, raw []byte, authArcherID uuid.UUID) {
 	var shot model.ShotCreate
 	if err := json.Unmarshal(raw, &shot); err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
 		return
 	}
 
 	id, err := h.shotSvc.Create(ctx, shot, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusCreated, model.ShotID{ShotID: id})
+	_ = WriteJSON(w, http.StatusCreated, model.ShotID{ShotID: id})
 }
 
 func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Context, raw []byte, authArcherID uuid.UUID) {
 	var shots []model.ShotCreate
 	if err := json.Unmarshal(raw, &shots); err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
+		WriteAppError(w, apperror.Wrap(apperror.ErrValidation, "invalid request body: "+err.Error()))
 		return
 	}
 
 	if len(shots) < 3 || len(shots) > 10 {
-		writeError(w, http.StatusBadRequest, "Invalid input")
+		WriteError(w, http.StatusBadRequest, "batch must contain between 3 and 10 shots")
 		return
 	}
 
 	slotID := shots[0].SlotID
 	for _, s := range shots[1:] {
 		if s.SlotID != slotID {
-			writeError(w, http.StatusBadRequest, "All shots must belong to the same slot")
+			WriteError(w, http.StatusBadRequest, "all shots must belong to the same slot")
 			return
 		}
 	}
 
 	ids, err := h.shotSvc.CreateBatch(ctx, shots, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Conte
 		resp[i] = model.ShotID{ShotID: id}
 	}
 
-	_ = writeJSON(w, http.StatusCreated, resp)
+	_ = WriteJSON(w, http.StatusCreated, resp)
 }
 
 // GetBySlot godoc
@@ -152,35 +152,22 @@ func (h *ShotHandler) handleBatchCreate(w http.ResponseWriter, ctx context.Conte
 func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
 	shots, err := h.shotSvc.GetBySlot(r.Context(), slotID, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	if shots == nil {
-		shots = []model.ShotRead{}
-	}
-
-	_ = writeJSON(w, http.StatusOK, shots)
+	_ = WriteJSON(w, http.StatusOK, shots)
 }
 
 // CountBySlot godoc
@@ -197,29 +184,20 @@ func (h *ShotHandler) GetBySlot(w http.ResponseWriter, r *http.Request) {
 func (h *ShotHandler) CountBySlot(w http.ResponseWriter, r *http.Request) {
 	authArcherID, err := middleware.GetArcherID(r.Context())
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	slotIDStr := getURLParam(r, "slot_id")
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "slot")
-	}
-	if slotIDStr == "" {
-		slotIDStr = getURLParam(r, "id")
-	}
-
-	slotID, err := uuid.Parse(slotIDStr)
-	if err != nil {
-		writeAppError(w, apperror.Wrap(apperror.ErrValidation, "valid slot_id is required"))
+	slotID, ok := parseUUIDParam(w, r, "slot_id", "slot", "id")
+	if !ok {
 		return
 	}
 
 	count, err := h.shotSvc.CountBySlot(r.Context(), slotID, authArcherID)
 	if err != nil {
-		writeAppError(w, err)
+		WriteAppError(w, err)
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, count)
+	_ = WriteJSON(w, http.StatusOK, count)
 }

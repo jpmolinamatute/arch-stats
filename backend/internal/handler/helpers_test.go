@@ -10,7 +10,7 @@ import (
 
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/handler"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/middleware"
+	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
 )
 
 func TestWriteJSON(t *testing.T) {
@@ -108,7 +108,7 @@ func TestWriteErrorAndWriteAppError(t *testing.T) {
 			t.Fatalf("expected 400, got %d", rec.Code)
 		}
 
-		var resp middleware.ErrorResponse
+		var resp model.ErrorResponse
 		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 			t.Fatalf("decode failed: %v", err)
 		}
