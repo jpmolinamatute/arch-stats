@@ -3,6 +3,9 @@ package model
 // Gender represents the archer's gender identity.
 type Gender string
 
+// GenderType is a compatibility alias for frontend OpenAPI schema generation.
+type GenderType = Gender
+
 const (
 	GenderMale        Gender = "male"
 	GenderFemale      Gender = "female"
@@ -13,6 +16,9 @@ const (
 
 // Bowstyle represents the equipment discipline.
 type Bowstyle string
+
+// BowStyleType is a compatibility alias for frontend OpenAPI schema generation.
+type BowStyleType = Bowstyle
 
 const (
 	BowstyleRecurve  Bowstyle = "recurve"
