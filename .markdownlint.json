@@ -12,7 +12,17 @@
         "indent": 4
     },
     "MD013": {
-        "line_length": 100
+        "line_length": 100,
+        "tables": false,
+        "stern": true,
+        "strict": true
+    },
+    "MD024": {
+        "siblings_only": true
+    },
+    "MD060": {
+        "aligned_delimiter": true,
+        "style": "compact"
     },
     "no-hard-tabs": true
 }

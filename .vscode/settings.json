@@ -31,7 +31,10 @@
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
     "vitest.rootConfig": "./frontend/vitest.config.ts",
     "cSpell.words": [
-        "notabool"
+        "browsable",
+        "notabool",
+        "SMALLINT",
+        "TIMESTAMPTZ"
     ],
     "typescript.tsserver.enableTracing": true,
     "go.lintTool": "golangci-lint",
@@ -54,5 +57,9 @@
         "-count=1"
     ],
     "go.testTimeout": "30s",
-    "go.testEnvFile": "${workspaceFolder}/backend/.env"
+    "go.testEnvFile": "${workspaceFolder}/backend/.env",
+    "cSpell.language": "en,en-CA",
+    "markdownlint.configFile": ".markdownlint.json",
+    "markdownlint.run": "onSave",
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
 }
