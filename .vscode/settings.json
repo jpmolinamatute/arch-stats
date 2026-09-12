@@ -23,9 +23,16 @@
     ],
     "shellformat.path": "/usr/bin/shfmt",
     "shellformat.flag": "-i 4 -s -ci -w",
-    "sqlfluff.dialect": "postgres",
+    "sqlfluff.linter.run": "onSave",
     "sqlfluff.executablePath": "/usr/bin/sqlfluff",
     "sqlfluff.shell": true,
+    "sqlfluff.workingDirectory": "${workspaceFolder}/backend/migrations",
+    "sqlfluff.format.enabled": true,
+    "sqlfluff.env.customDotEnvFiles": [
+        "${workspaceFolder}/.env"
+    ],
+    "sqlfluff.config": "${workspaceFolder}/.sqlfluff",
+    "sqlfluff.env.useDotEnvFile": true,
     "typescript.tsdk": "./frontend/node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "typescript.format.placeOpenBraceOnNewLineForFunctions": true,
@@ -57,9 +64,9 @@
         "-count=1"
     ],
     "go.testTimeout": "30s",
-    "go.testEnvFile": "${workspaceFolder}/backend/.env",
+    "go.testEnvFile": "${workspaceFolder}/.env",
     "cSpell.language": "en,en-CA",
-    "markdownlint.configFile": ".markdownlint.json",
+    "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
     "markdownlint.run": "onSave",
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
 }
