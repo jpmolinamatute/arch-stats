@@ -19,14 +19,14 @@ None (foundational task for the onboarding refactor).
 
 ## Acceptance Criteria
 
-- [ ] PostgreSQL migration files in `backend/migrations/` define the canonical target schema:
-    - [ ] `auth` table:
+- [x] PostgreSQL migration files in `backend/migrations/` define the canonical target schema:
+    - [x] `auth` table:
         - `archer_id UUID PRIMARY KEY DEFAULT uuid_generate_v4()`
         - `google_subject TEXT NOT NULL UNIQUE`
         - `google_picture_url TEXT`
         - `last_login_at TIMESTAMPTZ NOT NULL DEFAULT now()`
         - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
-    - [ ] `archer` table:
+    - [x] `archer` table:
         - `archer_id UUID PRIMARY KEY REFERENCES auth(archer_id) ON DELETE CASCADE`
         - `email VARCHAR(100) NOT NULL` (unique partial index: `uq_archer_email_active ON
           archer(lower(email)) WHERE is_deleted = FALSE`)
@@ -39,7 +39,7 @@ None (foundational task for the onboarding refactor).
         - `is_deleted BOOLEAN NOT NULL DEFAULT FALSE`
         - Legacy columns removed (`bowstyle`, `draw_weight`, `club_id`, `google_subject`,
           `google_picture_url`, `last_login_at`, `created_at`).
-    - [ ] `bow` table:
+    - [x] `bow` table:
         - `bow_id UUID PRIMARY KEY DEFAULT uuid_generate_v4()`
         - `archer_id UUID NOT NULL REFERENCES archer(archer_id) ON DELETE CASCADE`
         - `name VARCHAR(255) NOT NULL CHECK (length(trim(name)) > 0)`
@@ -49,9 +49,9 @@ None (foundational task for the onboarding refactor).
         - `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`
         - Composite unique constraint: `CONSTRAINT uq_bow_archer UNIQUE (archer_id, bow_id)`
         - Index on `bow(archer_id) WHERE is_deleted = FALSE`
-    - [ ] `arrow_status` enum:
+    - [x] `arrow_status` enum:
         - `CREATE TYPE arrow_status AS ENUM ('in_use', 'damaged', 'lost')`
-    - [ ] `arrow` table:
+    - [x] `arrow` table:
         - `arrow_id UUID PRIMARY KEY DEFAULT uuid_generate_v4()`
         - `archer_id UUID NOT NULL REFERENCES archer(archer_id) ON DELETE CASCADE`
         - `arrow_set SMALLINT NOT NULL`
@@ -67,11 +67,11 @@ None (foundational task for the onboarding refactor).
         - Deferrable constraint trigger `trg_check_arrow_set_count` enforcing minimum 3 arrows per
           set
         - Index on `arrow(archer_id) WHERE status = 'in_use' AND is_deleted = FALSE`
-    - [ ] `session` table foreign key:
+    - [x] `session` table foreign key:
         - `(archer_id, bow_id) REFERENCES bow(archer_id, bow_id) ON DELETE RESTRICT`
-    - [ ] `shot` table foreign key:
+    - [x] `shot` table foreign key:
         - `arrow_id UUID REFERENCES arrow(arrow_id) ON DELETE SET NULL`
-    - [ ] `auth_session` table (for server-side session token tracking):
+    - [x] `auth_session` table (for server-side session token tracking):
         - `auth_id UUID PRIMARY KEY DEFAULT uuid_generate_v4()`
         - `archer_id UUID NOT NULL REFERENCES auth(archer_id) ON DELETE CASCADE`
         - `session_token_hash BYTEA NOT NULL UNIQUE`
@@ -81,8 +81,8 @@ None (foundational task for the onboarding refactor).
         - `ua TEXT`
         - `ip_inet INET`
         - Index on `auth_session(expires_at)`
-- [ ] `./scripts/run_migration_tests.bash` succeeds without errors.
-- [ ] Goose migrations apply cleanly (`goose up`), roll back cleanly (`goose down-to 0`), and
+- [x] `./scripts/run_migration_tests.bash` succeeds without errors.
+- [x] Goose migrations apply cleanly (`goose up`), roll back cleanly (`goose down-to 0`), and
       re-apply cleanly (`goose up`).
 
 ## Files to Create/Modify
@@ -104,7 +104,7 @@ None (foundational task for the onboarding refactor).
 
 ## Steps
 
-- [ ] **Step 1: Inspect and update migrations for auth and archer separation**
+- [x] **Step 1: Inspect and update migrations for auth and archer separation**
 
   Update migration DDL to create `auth` first (containing `archer_id`, `google_subject`,
   `google_picture_url`, `last_login_at`, and `created_at`), then create `archer` with shared primary
@@ -127,7 +127,7 @@ None (foundational task for the onboarding refactor).
   FOR EACH ROW EXECUTE FUNCTION check_archer_age();
   ```
 
-- [ ] **Step 2: Create the `bow` table migration**
+- [x] **Step 2: Create the `bow` table migration**
 
   Add migration creating table `bow`:
 
@@ -147,7 +147,7 @@ None (foundational task for the onboarding refactor).
   CREATE INDEX IF NOT EXISTS idx_bow_archer_active ON bow (archer_id) WHERE is_deleted = FALSE;
   ```
 
-- [ ] **Step 3: Update `arrow` table migration**
+- [x] **Step 3: Update `arrow` table migration**
 
   Update `arrow` table schema to include `arrow_status` enum, `status` column, `SMALLINT` set and
   number, compact `REAL` specs, and composite partial unique constraint:
@@ -182,7 +182,7 @@ None (foundational task for the onboarding refactor).
   WHERE status = 'in_use' AND is_deleted = FALSE;
   ```
 
-- [ ] **Step 4: Create `auth_session` table and update session/shot foreign keys**
+- [x] **Step 4: Create `auth_session` table and update session/shot foreign keys**
 
   Add migration for server-side token management:
 
@@ -204,7 +204,7 @@ None (foundational task for the onboarding refactor).
 
   Ensure `session` references `bow(archer_id, bow_id)` and `shot` references `arrow(arrow_id)`.
 
-- [ ] **Step 5: Run migration test script**
+- [x] **Step 5: Run migration test script**
 
   ```bash
   ./backend/migrations/scripts/run_migration_tests.bash
@@ -212,7 +212,7 @@ None (foundational task for the onboarding refactor).
 
   Verify `goose up`, rollback to 0, and re-run all pass cleanly.
 
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
 
   ```bash
   git add backend/migrations
