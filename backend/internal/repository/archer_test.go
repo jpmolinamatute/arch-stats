@@ -3,6 +3,7 @@ package repository_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -183,6 +184,15 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 			case int:
 				*d = &val
 			}
+		case *int16:
+			switch val := v.(type) {
+			case int16:
+				*d = val
+			case int:
+				*d = int16(val)
+			}
+		case *model.ArrowStatus:
+			*d = v.(model.ArrowStatus)
 		case *int64:
 			switch val := v.(type) {
 			case int64:
@@ -200,6 +210,31 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 func (m *mockMultiRows) Values() ([]any, error) { return m.records[m.idx-1], nil }
 func (m *mockMultiRows) RawValues() [][]byte    { return nil }
 func (m *mockMultiRows) Conn() *pgx.Conn        { return nil }
+
+func TestMockMultiRows_ScanArrowTypes(t *testing.T) {
+	setVal := int16(2)
+	statusVal := model.ArrowStatusInUse
+	mr := &mockMultiRows{
+		records: [][]any{
+			{setVal, statusVal},
+		},
+	}
+	if !mr.Next() {
+		t.Fatal("expected next row")
+	}
+
+	var scannedSet int16
+	var scannedStatus model.ArrowStatus
+	if err := mr.Scan(&scannedSet, &scannedStatus); err != nil {
+		t.Fatalf("unexpected scan error: %v", err)
+	}
+	if scannedSet != 2 {
+		t.Errorf("expected scannedSet 2, got %d", scannedSet)
+	}
+	if scannedStatus != model.ArrowStatusInUse {
+		t.Errorf("expected scannedStatus %q, got %q", model.ArrowStatusInUse, scannedStatus)
+	}
+}
 
 func sampleArcherRow(id uuid.UUID, email, _ string) []any {
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -364,10 +399,16 @@ func TestArcherRepo_FindAll_WithFilters(t *testing.T) {
 	}
 }
 
-func TestArcherRepo_Create_Success(t *testing.T) {
+func TestArcherRepo_Create_WithArcherID_Success(t *testing.T) {
 	generatedID := uuid.New()
+	authArcherID := uuid.New()
+	var executedSQL string
+	var executedArgs []any
+
 	mock := &mockDBTX{
 		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
 					id := dest[0].(*uuid.UUID)
@@ -380,6 +421,7 @@ func TestArcherRepo_Create_Success(t *testing.T) {
 
 	repo := repository.NewArcherRepo(mock)
 	createPayload := model.ArcherCreate{
+		ArcherID:    &authArcherID,
 		FirstName:   "Robin",
 		LastName:    "Hood",
 		Email:       "robin@sherwood.org",
@@ -393,6 +435,51 @@ func TestArcherRepo_Create_Success(t *testing.T) {
 	}
 	if id != generatedID {
 		t.Errorf("expected generated id %v, got %v", generatedID, id)
+	}
+	if !strings.Contains(executedSQL, "INSERT INTO archer") {
+		t.Errorf("expected INSERT INTO archer in query: %s", executedSQL)
+	}
+	if len(executedArgs) != 6 || executedArgs[0] != authArcherID {
+		t.Errorf("expected first arg authArcherID %v, got %v", authArcherID, executedArgs)
+	}
+}
+
+func TestArcherRepo_Create_WithoutArcherID_Fallback(t *testing.T) {
+	generatedID := uuid.New()
+	callCount := 0
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			callCount++
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					id := dest[0].(*uuid.UUID)
+					*id = generatedID
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewArcherRepo(mock)
+	createPayload := model.ArcherCreate{
+		ArcherID:    nil,
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-01-15",
+		Gender:      model.GenderMale,
+	}
+
+	id, err := repo.Create(context.Background(), createPayload)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if id != generatedID {
+		t.Errorf("expected generated id %v, got %v", generatedID, id)
+	}
+	if callCount != 2 {
+		t.Errorf("expected 2 calls (auth insert + archer insert), got %d", callCount)
 	}
 }
 
