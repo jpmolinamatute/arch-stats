@@ -463,35 +463,118 @@ func TestArcherModels_JSON(t *testing.T) {
 func TestAuthModels_JSON(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	archerID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	picURL := "https://example.com/avatar.jpg"
 
-	authRead := model.AuthAuthenticated{
-		Status:      model.AuthStatusAuthenticated,
-		AccessToken: "jwt-token-xyz",
-		ExpiresAt:   now.Add(time.Hour * 24),
-		Archer: model.ArcherRead{
-			ArcherID:    archerID,
-			FirstName:   "Robin",
-			LastName:    "Hood",
-			Email:       "robin@sherwood.org",
-			DateOfBirth: "1995-06-15",
-			Gender:      model.GenderMale,
-			IsDeleted:   false,
-		},
-	}
+	t.Run("AuthIdentityRead JSON marshaling", func(t *testing.T) {
+		identity := model.AuthIdentityRead{
+			ArcherID:         archerID,
+			GoogleSubject:    "google-sub-98765",
+			GooglePictureURL: &picURL,
+			LastLoginAt:      now,
+			CreatedAt:        now,
+		}
 
-	b, err := json.Marshal(authRead)
-	if err != nil {
-		t.Fatalf("failed to marshal AuthAuthenticated: %v", err)
-	}
+		b, err := json.Marshal(identity)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthIdentityRead: %v", err)
+		}
 
-	var decoded model.AuthAuthenticated
-	if err := json.Unmarshal(b, &decoded); err != nil {
-		t.Fatalf("failed to unmarshal AuthAuthenticated: %v", err)
-	}
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal AuthIdentityRead JSON: %v", err)
+		}
 
-	if decoded.Status != model.AuthStatusAuthenticated || decoded.AccessToken != "jwt-token-xyz" {
-		t.Errorf("mismatch in decoded AuthAuthenticated: %+v", decoded)
-	}
+		expectedKeys := []string{
+			"archer_id", "google_subject", "google_picture_url", "last_login_at", "created_at",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected key %q in AuthIdentityRead JSON", k)
+			}
+		}
+
+		var decoded model.AuthIdentityRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthIdentityRead: %v", err)
+		}
+		if decoded.ArcherID != archerID || decoded.GoogleSubject != "google-sub-98765" || *decoded.GooglePictureURL != picURL {
+			t.Errorf("mismatch in decoded AuthIdentityRead: %+v", decoded)
+		}
+	})
+
+	t.Run("AuthAuthenticated JSON marshaling", func(t *testing.T) {
+		authRead := model.AuthAuthenticated{
+			Status:      model.AuthStatusAuthenticated,
+			AccessToken: "jwt-token-xyz",
+			ExpiresAt:   now.Add(time.Hour * 24),
+			Archer: model.ArcherRead{
+				ArcherID:    archerID,
+				FirstName:   "Robin",
+				LastName:    "Hood",
+				Email:       "robin@sherwood.org",
+				DateOfBirth: "1995-06-15",
+				Gender:      model.GenderMale,
+				IsDeleted:   false,
+			},
+		}
+
+		b, err := json.Marshal(authRead)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthAuthenticated: %v", err)
+		}
+
+		var decoded model.AuthAuthenticated
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthAuthenticated: %v", err)
+		}
+
+		if decoded.Status != model.AuthStatusAuthenticated || decoded.AccessToken != "jwt-token-xyz" || decoded.Archer.IsDeleted != false {
+			t.Errorf("mismatch in decoded AuthAuthenticated: %+v", decoded)
+		}
+	})
+
+	t.Run("AuthNeedsRegistration JSON marshaling", func(t *testing.T) {
+		given := "Robin"
+		family := "Hood"
+		needsReg := model.AuthNeedsRegistration{
+			Status:             model.AuthStatusNeedsRegistration,
+			GoogleEmail:        "robin@sherwood.org",
+			GoogleSubject:      "google-sub-12345",
+			GivenName:          &given,
+			FamilyName:         &family,
+			GivenNameProvided:  true,
+			FamilyNameProvided: true,
+			PictureURL:         &picURL,
+		}
+
+		b, err := json.Marshal(needsReg)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthNeedsRegistration: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal AuthNeedsRegistration JSON: %v", err)
+		}
+
+		expectedKeys := []string{
+			"status", "google_email", "google_subject", "given_name", "family_name",
+			"given_name_provided", "family_name_provided", "picture_url",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected key %q in AuthNeedsRegistration JSON", k)
+			}
+		}
+
+		var decoded model.AuthNeedsRegistration
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthNeedsRegistration: %v", err)
+		}
+		if decoded.GoogleEmail != "robin@sherwood.org" || !decoded.GivenNameProvided {
+			t.Errorf("mismatch in decoded AuthNeedsRegistration: %+v", decoded)
+		}
+	})
 }
 
 func TestSessionModels_JSON(t *testing.T) {
