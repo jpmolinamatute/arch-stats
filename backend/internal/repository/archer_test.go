@@ -3,6 +3,7 @@ package repository_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -398,10 +399,16 @@ func TestArcherRepo_FindAll_WithFilters(t *testing.T) {
 	}
 }
 
-func TestArcherRepo_Create_Success(t *testing.T) {
+func TestArcherRepo_Create_WithArcherID_Success(t *testing.T) {
 	generatedID := uuid.New()
+	authArcherID := uuid.New()
+	var executedSQL string
+	var executedArgs []any
+
 	mock := &mockDBTX{
 		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			executedSQL = sql
+			executedArgs = args
 			return &mockSingleRow{
 				scanFn: func(dest ...any) error {
 					id := dest[0].(*uuid.UUID)
@@ -414,6 +421,7 @@ func TestArcherRepo_Create_Success(t *testing.T) {
 
 	repo := repository.NewArcherRepo(mock)
 	createPayload := model.ArcherCreate{
+		ArcherID:    &authArcherID,
 		FirstName:   "Robin",
 		LastName:    "Hood",
 		Email:       "robin@sherwood.org",
@@ -427,6 +435,51 @@ func TestArcherRepo_Create_Success(t *testing.T) {
 	}
 	if id != generatedID {
 		t.Errorf("expected generated id %v, got %v", generatedID, id)
+	}
+	if !strings.Contains(executedSQL, "INSERT INTO archer") {
+		t.Errorf("expected INSERT INTO archer in query: %s", executedSQL)
+	}
+	if len(executedArgs) != 6 || executedArgs[0] != authArcherID {
+		t.Errorf("expected first arg authArcherID %v, got %v", authArcherID, executedArgs)
+	}
+}
+
+func TestArcherRepo_Create_WithoutArcherID_Fallback(t *testing.T) {
+	generatedID := uuid.New()
+	callCount := 0
+
+	mock := &mockDBTX{
+		queryRowFn: func(ctx context.Context, sql string, args ...any) pgx.Row {
+			callCount++
+			return &mockSingleRow{
+				scanFn: func(dest ...any) error {
+					id := dest[0].(*uuid.UUID)
+					*id = generatedID
+					return nil
+				},
+			}
+		},
+	}
+
+	repo := repository.NewArcherRepo(mock)
+	createPayload := model.ArcherCreate{
+		ArcherID:    nil,
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-01-15",
+		Gender:      model.GenderMale,
+	}
+
+	id, err := repo.Create(context.Background(), createPayload)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if id != generatedID {
+		t.Errorf("expected generated id %v, got %v", generatedID, id)
+	}
+	if callCount != 2 {
+		t.Errorf("expected 2 calls (auth insert + archer insert), got %d", callCount)
 	}
 }
 
