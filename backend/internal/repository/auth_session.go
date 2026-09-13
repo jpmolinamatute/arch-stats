@@ -102,7 +102,7 @@ func (r *AuthSessionRepo) Create(ctx context.Context, data model.AuthSessionCrea
 		createdAt = time.Now().UTC()
 	}
 
-	sql, args, err := StmtBuilder.Insert("auth").
+	sql, args, err := StmtBuilder.Insert("auth_session").
 		Columns(
 			"archer_id",
 			"session_token_hash",
@@ -135,7 +135,7 @@ func (r *AuthSessionRepo) Create(ctx context.Context, data model.AuthSessionCrea
 // Returns nil, nil if no session exists for the given hash.
 func (r *AuthSessionRepo) FindByTokenHash(ctx context.Context, hash []byte) (*model.AuthSessionRead, error) {
 	sql, args, err := StmtBuilder.Select(authSessionColumns...).
-		From("auth").
+		From("auth_session").
 		Where(squirrel.Eq{"session_token_hash": hash}).
 		ToSql()
 	if err != nil {
@@ -151,7 +151,7 @@ func (r *AuthSessionRepo) FindByTokenHash(ctx context.Context, hash []byte) (*mo
 // DeleteByArcherID removes all auth sessions belonging to the specified archer (e.g. logout all sessions).
 // Operation is idempotent and returns nil if no sessions exist.
 func (r *AuthSessionRepo) DeleteByArcherID(ctx context.Context, archerID uuid.UUID) error {
-	sql, args, err := StmtBuilder.Delete("auth").
+	sql, args, err := StmtBuilder.Delete("auth_session").
 		Where(squirrel.Eq{"archer_id": archerID}).
 		ToSql()
 	if err != nil {
@@ -168,7 +168,7 @@ func (r *AuthSessionRepo) DeleteByArcherID(ctx context.Context, archerID uuid.UU
 // DeleteExpired removes all sessions whose expires_at is prior to the current time.
 // Returns the count of deleted session records.
 func (r *AuthSessionRepo) DeleteExpired(ctx context.Context) (int64, error) {
-	sql, args, err := StmtBuilder.Delete("auth").
+	sql, args, err := StmtBuilder.Delete("auth_session").
 		Where(squirrel.Lt{"expires_at": time.Now().UTC()}).
 		ToSql()
 	if err != nil {
@@ -186,7 +186,7 @@ func (r *AuthSessionRepo) DeleteExpired(ctx context.Context) (int64, error) {
 // RevokeByTokenHash marks an active session as revoked. Returns apperror.ErrNotFound
 // if no matching unrevoked session exists.
 func (r *AuthSessionRepo) RevokeByTokenHash(ctx context.Context, hash []byte, revokedAt time.Time) error {
-	sql, args, err := StmtBuilder.Update("auth").
+	sql, args, err := StmtBuilder.Update("auth_session").
 		Set("revoked_at", revokedAt).
 		Where(squirrel.Eq{"session_token_hash": hash}).
 		Where(squirrel.Eq{"revoked_at": nil}).
@@ -210,7 +210,7 @@ func (r *AuthSessionRepo) RevokeByTokenHash(ctx context.Context, hash []byte, re
 // DeleteByTokenHash removes an auth session identified by its token hash.
 // If no session was deleted, returns apperror.ErrNotFound.
 func (r *AuthSessionRepo) DeleteByTokenHash(ctx context.Context, hash []byte) error {
-	sql, args, err := StmtBuilder.Delete("auth").
+	sql, args, err := StmtBuilder.Delete("auth_session").
 		Where(squirrel.Eq{"session_token_hash": hash}).
 		ToSql()
 	if err != nil {

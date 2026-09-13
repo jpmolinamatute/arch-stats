@@ -79,3 +79,15 @@ const (
 	SessionStatusOpen   SessionStatus = "open"
 	SessionStatusClosed SessionStatus = "closed"
 )
+
+// ArrowStatus represents the operational status of an arrow.
+type ArrowStatus string
+
+// ArrowStatusType is a compatibility alias for frontend OpenAPI schema generation.
+type ArrowStatusType = ArrowStatus
+
+const (
+	ArrowStatusInUse   ArrowStatus = "in_use"
+	ArrowStatusDamaged ArrowStatus = "damaged"
+	ArrowStatusLost    ArrowStatus = "lost"
+)

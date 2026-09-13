@@ -16,40 +16,40 @@ represent system-managed Google OAuth identity data.
 
 ## Acceptance Criteria
 
-- [ ] New file `backend/internal/model/bow.go` defines:
-    - [ ] `BowCreate`: `ArcherID`, `Name`, `Bowstyle`, `DrawWeight`
-    - [ ] `BowRead`: `BowID`, `ArcherID`, `Name`, `Bowstyle`, `DrawWeight`, `IsDeleted`, `CreatedAt`
-    - [ ] `BowSet`: nullable fields for updates (`Name`, `Bowstyle`, `DrawWeight`)
-    - [ ] `BowFilter`: `BowID`, `ArcherID`, `Bowstyle`, `IsDeleted`
-- [ ] New enum `ArrowStatus` in `backend/internal/model/enums.go`:
-    - [ ] Values: `ArrowStatusInUse = "in_use"`, `ArrowStatusDamaged = "damaged"`, `ArrowStatusLost
+- [x] New file `backend/internal/model/bow.go` defines:
+    - [x] `BowCreate`: `ArcherID`, `Name`, `Bowstyle`, `DrawWeight`
+    - [x] `BowRead`: `BowID`, `ArcherID`, `Name`, `Bowstyle`, `DrawWeight`, `IsDeleted`, `CreatedAt`
+    - [x] `BowSet`: nullable fields for updates (`Name`, `Bowstyle`, `DrawWeight`)
+    - [x] `BowFilter`: `BowID`, `ArcherID`, `Bowstyle`, `IsDeleted`
+- [x] New enum `ArrowStatus` in `backend/internal/model/enums.go`:
+    - [x] Values: `ArrowStatusInUse = "in_use"`, `ArrowStatusDamaged = "damaged"`, `ArrowStatusLost
           = "lost"`
-- [ ] New file `backend/internal/model/arrow.go` defines:
-    - [ ] `ArrowCreate`: `ArcherID`, `ArrowSet`, `ArrowNumber`, `Status` (optional, defaults to
+- [x] New file `backend/internal/model/arrow.go` defines:
+    - [x] `ArrowCreate`: `ArcherID`, `ArrowSet`, `ArrowNumber`, `Status` (optional, defaults to
           `in_use`), `Spine`, `Length`, `Weight`
-    - [ ] `ArrowBatchCreate`: `ArcherID`, `ArrowSet`, `Count` (min 3), `Status` (optional, defaults
+    - [x] `ArrowBatchCreate`: `ArcherID`, `ArrowSet`, `Count` (min 3), `Status` (optional, defaults
           to `in_use`), `Spine`, `Length`, `Weight`
-    - [ ] `ArrowRead`: `ArrowID`, `ArcherID`, `ArrowSet`, `ArrowNumber`, `Status`, `Spine`, `Length`
+    - [x] `ArrowRead`: `ArrowID`, `ArcherID`, `ArrowSet`, `ArrowNumber`, `Status`, `Spine`, `Length`
           , `Weight`, `IsDeleted`, `CreatedAt`
-    - [ ] `ArrowSet`: nullable fields for updates (`Status`, `Spine`, `Length`, `Weight`)
-    - [ ] `ArrowFilter`: `ArrowID`, `ArcherID`, `ArrowSet`, `Status`, `IsDeleted`
-- [ ] Modified `backend/internal/model/archer.go`:
-    - [ ] Equipment fields removed (`Bowstyle`, `DrawWeight`)
-    - [ ] Legacy fields removed (`ClubID`, `GoogleSubject`, `GooglePictureURL`, `LastLoginAt`,
+    - [x] `ArrowSet`: nullable fields for updates (`Status`, `Spine`, `Length`, `Weight`)
+    - [x] `ArrowFilter`: `ArrowID`, `ArcherID`, `ArrowSet`, `Status`, `IsDeleted`
+- [x] Modified `backend/internal/model/archer.go`:
+    - [x] Equipment fields removed (`Bowstyle`, `DrawWeight`)
+    - [x] Legacy fields removed (`ClubID`, `GoogleSubject`, `GooglePictureURL`, `LastLoginAt`,
           `CreatedAt`)
-    - [ ] `ArcherCreate` requires: `Email`, `FirstName`, `LastName`, `DateOfBirth`, `Gender`
-    - [ ] `ArcherRead` includes: `ArcherID`, `Email`, `FirstName`, `LastName`, `DateOfBirth`,
+    - [x] `ArcherCreate` requires: `Email`, `FirstName`, `LastName`, `DateOfBirth`, `Gender`
+    - [x] `ArcherRead` includes: `ArcherID`, `Email`, `FirstName`, `LastName`, `DateOfBirth`,
           `Gender`, `IsDeleted`
-- [ ] Modified `backend/internal/model/auth.go`:
-    - [ ] `AuthIdentityRead` represents OAuth record: `ArcherID`, `GoogleSubject`,
+- [x] Modified `backend/internal/model/auth.go`:
+    - [x] `AuthIdentityRead` represents OAuth record: `ArcherID`, `GoogleSubject`,
           `GooglePictureURL`, `LastLoginAt`, `CreatedAt`
-    - [ ] `AuthStatus` enum values preserved: `authenticated`, `needs_registration`
-    - [ ] `AuthNeedsRegistration` includes `GoogleEmail`, `GoogleSubject`, `GivenName`,
+    - [x] `AuthStatus` enum values preserved: `authenticated`, `needs_registration`
+    - [x] `AuthNeedsRegistration` includes `GoogleEmail`, `GoogleSubject`, `GivenName`,
           `FamilyName`, `PictureURL`
-- [ ] JSON tags match snake_case API specifications.
-- [ ] Unit tests in `backend/internal/model/model_test.go` verify JSON marshaling and validation.
-- [ ] `cd backend && go test ./internal/model/... -v` passes.
-- [ ] `cd backend && go vet ./...` reports no issues.
+- [x] JSON tags match snake_case API specifications.
+- [x] Unit tests in `backend/internal/model/model_test.go` verify JSON marshaling and validation.
+- [x] `cd backend && go test ./internal/model/... -v` passes.
+- [x] `cd backend && go vet ./...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -71,7 +71,7 @@ represent system-managed Google OAuth identity data.
 
 ## Steps
 
-- [ ] **Step 1: Write failing tests in `model_test.go`**
+- [x] **Step 1: Write failing tests in `model_test.go`**
 
   Add tests for `BowRead`, `BowCreate`, `ArrowRead`, `ArrowBatchCreate`, updated `ArcherRead`,
   and `AuthIdentityRead` verifying:
@@ -79,14 +79,14 @@ represent system-managed Google OAuth identity data.
     - Deserialization properly parses valid JSON payloads.
     - Validations flag negative draw weight or invalid enums.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   ```bash
   cd backend
   go test ./internal/model/... -v
   ```
 
-- [ ] **Step 3: Implement `bow.go`**
+- [x] **Step 3: Implement `bow.go`**
 
   Create `backend/internal/model/bow.go`:
 
@@ -130,7 +130,7 @@ represent system-managed Google OAuth identity data.
   }
   ```
 
-- [ ] **Step 4: Implement `arrow.go`**
+- [x] **Step 4: Implement `arrow.go`**
 
   Create `backend/internal/model/arrow.go`:
 
@@ -192,13 +192,13 @@ represent system-managed Google OAuth identity data.
   }
   ```
 
-- [ ] **Step 5: Refactor `archer.go` and `auth.go`**
+- [x] **Step 5: Refactor `archer.go` and `auth.go`**
 
   Remove equipment and Google identity fields from `ArcherCreate`, `ArcherRead`, and `ArcherSet`.
   Include `IsDeleted bool json:"is_deleted"` in `ArcherRead`.
   Define `AuthIdentityRead` and updated `AuthNeedsRegistration` in `auth.go`.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
   ```bash
   cd backend
@@ -206,7 +206,7 @@ represent system-managed Google OAuth identity data.
   golangci-lint run ./internal/model/...
   ```
 
-- [ ] **Step 7: Commit changes**
+- [x] **Step 7: Commit changes**
 
   ```bash
   git add backend/internal/model

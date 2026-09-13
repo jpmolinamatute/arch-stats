@@ -82,14 +82,7 @@ func (s *Service) LoginExisting(
 		return nil, apperror.Wrap(apperror.ErrValidation, "archer is required")
 	}
 
-	updateData := model.ArcherSet{
-		LastLoginAt: &now,
-	}
-	if googleData != nil && strings.TrimSpace(googleData.Picture) != "" {
-		trimmedPic := strings.TrimSpace(googleData.Picture)
-		updateData.GooglePictureURL = &trimmedPic
-	}
-
+	updateData := model.ArcherSet{}
 	filter := model.ArcherFilter{ArcherID: &archer.ArcherID}
 	if err := s.archers.Update(ctx, updateData, filter); err != nil {
 		return nil, fmt.Errorf("updating archer last login: %w", err)
@@ -164,22 +157,12 @@ func (s *Service) Register(
 		return nil, apperror.Wrap(apperror.ErrValidation, "draw_weight must be between 0 and 200")
 	}
 
-	var pictureURL *string
-	if trimmedPic := strings.TrimSpace(googleData.Picture); trimmedPic != "" {
-		pictureURL = &trimmedPic
-	}
-
 	createData := model.ArcherCreate{
-		FirstName:        given,
-		LastName:         family,
-		Email:            googleData.Email,
-		DateOfBirth:      payload.DateOfBirth,
-		Gender:           payload.Gender,
-		Bowstyle:         payload.Bowstyle,
-		DrawWeight:       payload.DrawWeight,
-		ClubID:           payload.ClubID,
-		GooglePictureURL: pictureURL,
-		GoogleSubject:    googleData.Sub,
+		FirstName:   given,
+		LastName:    family,
+		Email:       googleData.Email,
+		DateOfBirth: payload.DateOfBirth,
+		Gender:      payload.Gender,
 	}
 
 	newArcherID, err := s.archers.Create(ctx, createData)

@@ -23,14 +23,11 @@ func TestEndpointArcher_CreateSuccess(t *testing.T) {
 	}
 
 	payload := model.ArcherCreate{
-		FirstName:     "Test",
-		LastName:      "Archer",
-		Email:         "test.archer@example.com",
-		DateOfBirth:   "1990-01-01",
-		Gender:        model.GenderUnspecified,
-		Bowstyle:      model.BowstyleRecurve,
-		DrawWeight:    40.0,
-		GoogleSubject: "test_subject_123",
+		FirstName:   "Test",
+		LastName:    "Archer",
+		Email:       "test.archer@example.com",
+		DateOfBirth: "1990-01-01",
+		Gender:      model.GenderUnspecified,
 	}
 	body, _ := json.Marshal(payload)
 

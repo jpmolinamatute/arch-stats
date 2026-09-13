@@ -78,7 +78,6 @@ func (m *mockArcherService) GetByID(ctx context.Context, id uuid.UUID) (*model.A
 	return nil, errors.New("unimplemented")
 }
 
-//nolint:gocritic // hugeParam: filter matches ArcherService interface specification
 func (m *mockArcherService) List(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
 	if m.listFn != nil {
 		return m.listFn(ctx, filter)

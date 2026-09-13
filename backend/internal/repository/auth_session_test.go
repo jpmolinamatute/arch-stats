@@ -66,8 +66,8 @@ func TestAuthSessionRepo_Create_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.HasPrefix(executedSQL, "INSERT INTO auth") {
-		t.Errorf("expected INSERT INTO auth query, got: %s", executedSQL)
+	if !strings.HasPrefix(executedSQL, "INSERT INTO auth_session") {
+		t.Errorf("expected INSERT INTO auth_session query, got: %s", executedSQL)
 	}
 	expectedCols := []string{"archer_id", "session_token_hash", "created_at", "expires_at", "ua", "ip_inet"}
 	for _, col := range expectedCols {
@@ -189,7 +189,7 @@ func TestAuthSessionRepo_FindByTokenHash_Success(t *testing.T) {
 		t.Fatal("expected session, got nil")
 	}
 
-	if !strings.HasPrefix(executedSQL, "SELECT auth_id, archer_id, session_token_hash, created_at, expires_at, revoked_at, ua, ip_inet FROM auth") {
+	if !strings.HasPrefix(executedSQL, "SELECT auth_id, archer_id, session_token_hash, created_at, expires_at, revoked_at, ua, ip_inet FROM auth_session") {
 		t.Errorf("unexpected query SQL: %s", executedSQL)
 	}
 	if !strings.Contains(executedSQL, "WHERE session_token_hash = $1") {
@@ -310,8 +310,8 @@ func TestAuthSessionRepo_DeleteByArcherID_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.HasPrefix(executedSQL, "DELETE FROM auth") {
-		t.Errorf("expected DELETE FROM auth query, got: %s", executedSQL)
+	if !strings.HasPrefix(executedSQL, "DELETE FROM auth_session") {
+		t.Errorf("expected DELETE FROM auth_session query, got: %s", executedSQL)
 	}
 	if !strings.Contains(executedSQL, "WHERE archer_id = $1") {
 		t.Errorf("expected WHERE archer_id = $1, got: %s", executedSQL)
@@ -362,8 +362,8 @@ func TestAuthSessionRepo_DeleteExpired_Success(t *testing.T) {
 	if count != 5 {
 		t.Errorf("expected deleted count 5, got %d", count)
 	}
-	if !strings.HasPrefix(executedSQL, "DELETE FROM auth") {
-		t.Errorf("expected DELETE FROM auth query, got: %s", executedSQL)
+	if !strings.HasPrefix(executedSQL, "DELETE FROM auth_session") {
+		t.Errorf("expected DELETE FROM auth_session query, got: %s", executedSQL)
 	}
 	if !strings.Contains(executedSQL, "WHERE expires_at < $1") {
 		t.Errorf("expected WHERE expires_at < $1, got: %s", executedSQL)
@@ -422,7 +422,7 @@ func TestAuthSessionRepo_RevokeByTokenHash_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.HasPrefix(executedSQL, "UPDATE auth SET revoked_at = $1") {
+	if !strings.HasPrefix(executedSQL, "UPDATE auth_session SET revoked_at = $1") {
 		t.Errorf("unexpected query SQL: %s", executedSQL)
 	}
 	if !strings.Contains(executedSQL, "WHERE session_token_hash = $2 AND revoked_at IS NULL") {
@@ -464,7 +464,7 @@ func TestAuthSessionRepo_DeleteByTokenHash_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.HasPrefix(executedSQL, "DELETE FROM auth WHERE session_token_hash = $1") {
+	if !strings.HasPrefix(executedSQL, "DELETE FROM auth_session WHERE session_token_hash = $1") {
 		t.Errorf("unexpected query SQL: %s", executedSQL)
 	}
 }

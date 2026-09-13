@@ -201,24 +201,16 @@ func (m *mockMultiRows) Values() ([]any, error) { return m.records[m.idx-1], nil
 func (m *mockMultiRows) RawValues() [][]byte    { return nil }
 func (m *mockMultiRows) Conn() *pgx.Conn        { return nil }
 
-func sampleArcherRow(id uuid.UUID, email, googleSub string) []any {
-	now := time.Now().Truncate(time.Second)
+func sampleArcherRow(id uuid.UUID, email, _ string) []any {
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
-	pic := "https://example.com/photo.jpg"
 	return []any{
 		id,
+		email,
 		"Robin",
 		"Hood",
-		email,
 		dob,
 		model.GenderMale,
-		model.BowstyleBarebow,
-		42.5,
-		nil, // club_id
-		&pic,
-		googleSub,
-		now,
-		now,
+		false,
 	}
 }
 
@@ -330,8 +322,8 @@ func TestArcherRepo_FindByGoogleSubject_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if archer == nil || archer.GoogleSubject != sub {
-		t.Fatalf("expected archer with google subject %s, got %v", sub, archer)
+	if archer == nil || archer.ArcherID != archerID {
+		t.Fatalf("expected archer with id %s, got %v", archerID, archer)
 	}
 	if mock.lastArgs[0] != sub {
 		t.Errorf("expected query arg %s, got %v", sub, mock.lastArgs[0])
@@ -354,10 +346,10 @@ func TestArcherRepo_FindAll_WithFilters(t *testing.T) {
 
 	repo := repository.NewArcherRepo(mock)
 	gender := model.GenderMale
-	bowstyle := model.BowstyleBarebow
+	email := "a1@test.com"
 	filter := model.ArcherFilter{
-		Gender:   &gender,
-		Bowstyle: &bowstyle,
+		Gender: &gender,
+		Email:  &email,
 	}
 
 	archers, err := repo.FindAll(context.Background(), filter)
@@ -388,14 +380,11 @@ func TestArcherRepo_Create_Success(t *testing.T) {
 
 	repo := repository.NewArcherRepo(mock)
 	createPayload := model.ArcherCreate{
-		FirstName:     "Robin",
-		LastName:      "Hood",
-		Email:         "robin@sherwood.org",
-		DateOfBirth:   "1990-01-15",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleBarebow,
-		DrawWeight:    42.5,
-		GoogleSubject: "google-sub-robin",
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-01-15",
+		Gender:      model.GenderMale,
 	}
 
 	id, err := repo.Create(context.Background(), createPayload)

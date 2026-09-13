@@ -15,7 +15,7 @@ import (
 
 var sessionColumns = []string{
 	"session_id",
-	"owner_archer_id",
+	"archer_id",
 	"session_location",
 	"is_indoor",
 	"is_opened",
@@ -68,7 +68,7 @@ func (r *SessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Sessio
 func (r *SessionRepo) FindOpen(ctx context.Context, archerID uuid.UUID) (*model.SessionRead, error) {
 	sql, args, err := StmtBuilder.Select(sessionColumns...).
 		From("session").
-		Where(squirrel.Eq{"owner_archer_id": archerID}).
+		Where(squirrel.Eq{"archer_id": archerID}).
 		Where(squirrel.Eq{"is_opened": true}).
 		ToSql()
 	if err != nil {
@@ -82,8 +82,6 @@ func (r *SessionRepo) FindOpen(ctx context.Context, archerID uuid.UUID) (*model.
 }
 
 // FindAll queries all shooting sessions matching the optional criteria in filter.
-//
-
 func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) ([]model.SessionRead, error) {
 	q := StmtBuilder.Select(sessionColumns...).
 		From("session").
@@ -93,7 +91,7 @@ func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) (
 		q = q.Where(squirrel.Eq{"session_id": *filter.SessionID})
 	}
 	if filter.OwnerArcherID != nil {
-		q = q.Where(squirrel.Eq{"owner_archer_id": *filter.OwnerArcherID})
+		q = q.Where(squirrel.Eq{"archer_id": *filter.OwnerArcherID})
 	}
 	if filter.CreatedAt != nil {
 		q = q.Where(squirrel.Eq{"created_at": *filter.CreatedAt})
@@ -127,12 +125,10 @@ func (r *SessionRepo) FindAll(ctx context.Context, filter model.SessionFilter) (
 }
 
 // Create inserts a new shooting session record and returns the generated UUID identifier.
-//
-
 func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uuid.UUID, error) {
 	builder := StmtBuilder.Insert("session").
 		Columns(
-			"owner_archer_id",
+			"archer_id",
 			"session_location",
 			"is_indoor",
 			"is_opened",
@@ -150,8 +146,6 @@ func (r *SessionRepo) Create(ctx context.Context, data model.SessionCreate) (uui
 // Update mutates session fields specified in data for rows matching filter.
 // Requires at least one filter criterion to prevent unbounded updates.
 // Returns apperror.ErrNotFound if no session matched the filter.
-//
-
 func (r *SessionRepo) Update(ctx context.Context, data model.SessionSet, filter model.SessionFilter) error {
 	q := StmtBuilder.Update("session")
 	setCount := 0
@@ -183,7 +177,7 @@ func (r *SessionRepo) Update(ctx context.Context, data model.SessionSet, filter 
 		whereCount++
 	}
 	if filter.OwnerArcherID != nil {
-		q = q.Where(squirrel.Eq{"owner_archer_id": *filter.OwnerArcherID})
+		q = q.Where(squirrel.Eq{"archer_id": *filter.OwnerArcherID})
 		whereCount++
 	}
 	if filter.CreatedAt != nil {

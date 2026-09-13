@@ -76,6 +76,15 @@ type AuthNeedsRegistration struct {
 	PictureURL         *string    `json:"picture_url,omitempty"`
 }
 
+// AuthIdentityRead represents a persisted Google OAuth authentication record.
+type AuthIdentityRead struct {
+	ArcherID         uuid.UUID `json:"archer_id"`
+	GoogleSubject    string    `json:"google_subject"`
+	GooglePictureURL *string   `json:"google_picture_url,omitempty"`
+	LastLoginAt      time.Time `json:"last_login_at"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
 // LogoutResponse indicates logout operation success.
 type LogoutResponse struct {
 	Success bool `json:"success"`

@@ -33,6 +33,9 @@ func TestEnums_JSON(t *testing.T) {
 		{"WSContentTypeShotCreated", model.WSContentTypeShotCreated, `"shot.created"`},
 		{"SessionStatusOpen", model.SessionStatusOpen, `"open"`},
 		{"SessionStatusClosed", model.SessionStatusClosed, `"closed"`},
+		{"ArrowStatusInUse", model.ArrowStatusInUse, `"in_use"`},
+		{"ArrowStatusDamaged", model.ArrowStatusDamaged, `"damaged"`},
+		{"ArrowStatusLost", model.ArrowStatusLost, `"lost"`},
 	}
 
 	for _, tc := range tests {
@@ -88,22 +91,299 @@ func TestBaseTypes_JSON(t *testing.T) {
 	})
 }
 
-func TestArcherModels_JSON(t *testing.T) {
-	clubID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
-	picURL := "https://example.com/avatar.jpg"
+func TestBowModels_JSON(t *testing.T) {
+	archerID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	bowID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	now := time.Now().UTC().Truncate(time.Second)
 
+	t.Run("BowCreate JSON marshaling", func(t *testing.T) {
+		create := model.BowCreate{
+			ArcherID:   archerID,
+			Name:       "Competition Recurve",
+			Bowstyle:   model.BowstyleRecurve,
+			DrawWeight: 38.5,
+		}
+
+		b, err := json.Marshal(create)
+		if err != nil {
+			t.Fatalf("failed to marshal BowCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal BowCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "name", "bowstyle", "draw_weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in BowCreate", k)
+			}
+		}
+
+		var decoded model.BowCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal BowCreate: %v", err)
+		}
+		if decoded.Name != "Competition Recurve" || decoded.DrawWeight != 38.5 || decoded.Bowstyle != model.BowstyleRecurve {
+			t.Errorf("mismatch in decoded BowCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("BowRead JSON marshaling", func(t *testing.T) {
+		read := model.BowRead{
+			BowID:      bowID,
+			ArcherID:   archerID,
+			Name:       "Competition Recurve",
+			Bowstyle:   model.BowstyleRecurve,
+			DrawWeight: 38.5,
+			IsDeleted:  false,
+			CreatedAt:  now,
+		}
+
+		b, err := json.Marshal(read)
+		if err != nil {
+			t.Fatalf("failed to marshal BowRead: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal BowRead JSON: %v", err)
+		}
+
+		expectedKeys := []string{"bow_id", "archer_id", "name", "bowstyle", "draw_weight", "is_deleted", "created_at"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in BowRead", k)
+			}
+		}
+
+		var decoded model.BowRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal BowRead: %v", err)
+		}
+		if decoded.BowID != bowID || decoded.IsDeleted != false || !decoded.CreatedAt.Equal(now) {
+			t.Errorf("mismatch in decoded BowRead: %+v", decoded)
+		}
+	})
+
+	t.Run("BowSet and BowFilter JSON marshaling", func(t *testing.T) {
+		name := "Updated Bow Name"
+		weight := 42.0
+		set := model.BowSet{
+			Name:       &name,
+			DrawWeight: &weight,
+		}
+
+		sb, err := json.Marshal(set)
+		if err != nil {
+			t.Fatalf("failed to marshal BowSet: %v", err)
+		}
+		var setMap map[string]any
+		if err := json.Unmarshal(sb, &setMap); err != nil {
+			t.Fatalf("failed to unmarshal BowSet JSON: %v", err)
+		}
+		if _, ok := setMap["name"]; !ok {
+			t.Errorf("expected 'name' in BowSet")
+		}
+		if _, ok := setMap["bowstyle"]; ok {
+			t.Errorf("expected omitted 'bowstyle' in BowSet")
+		}
+
+		isDeleted := false
+		filter := model.BowFilter{
+			ArcherID:  &archerID,
+			IsDeleted: &isDeleted,
+		}
+		fb, err := json.Marshal(filter)
+		if err != nil {
+			t.Fatalf("failed to marshal BowFilter: %v", err)
+		}
+		var filterMap map[string]any
+		if err := json.Unmarshal(fb, &filterMap); err != nil {
+			t.Fatalf("failed to unmarshal BowFilter JSON: %v", err)
+		}
+		if _, ok := filterMap["archer_id"]; !ok {
+			t.Errorf("expected 'archer_id' in BowFilter")
+		}
+	})
+}
+
+func TestArrowModels_JSON(t *testing.T) {
+	archerID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	arrowID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	now := time.Now().UTC().Truncate(time.Second)
+	spine := 500.0
+	length := 29.5
+	weight := 320.0
+	status := model.ArrowStatusInUse
+
+	t.Run("ArrowCreate JSON marshaling", func(t *testing.T) {
+		create := model.ArrowCreate{
+			ArcherID:    archerID,
+			ArrowSet:    1,
+			ArrowNumber: 4,
+			Status:      &status,
+			Spine:       &spine,
+			Length:      &length,
+			Weight:      &weight,
+		}
+
+		b, err := json.Marshal(create)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "arrow_set", "arrow_number", "status", "spine", "length", "weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowCreate", k)
+			}
+		}
+
+		var decoded model.ArrowCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowCreate: %v", err)
+		}
+		if decoded.ArrowSet != 1 || decoded.ArrowNumber != 4 || *decoded.Spine != 500.0 {
+			t.Errorf("mismatch in decoded ArrowCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowBatchCreate JSON marshaling", func(t *testing.T) {
+		batch := model.ArrowBatchCreate{
+			ArcherID: archerID,
+			ArrowSet: 2,
+			Count:    6,
+			Status:   &status,
+			Spine:    &spine,
+			Length:   &length,
+			Weight:   &weight,
+		}
+
+		b, err := json.Marshal(batch)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowBatchCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowBatchCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "arrow_set", "count", "status", "spine", "length", "weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowBatchCreate", k)
+			}
+		}
+
+		var decoded model.ArrowBatchCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowBatchCreate: %v", err)
+		}
+		if decoded.Count != 6 || decoded.ArrowSet != 2 {
+			t.Errorf("mismatch in decoded ArrowBatchCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowRead JSON marshaling", func(t *testing.T) {
+		read := model.ArrowRead{
+			ArrowID:     arrowID,
+			ArcherID:    archerID,
+			ArrowSet:    1,
+			ArrowNumber: 3,
+			Status:      model.ArrowStatusInUse,
+			Spine:       &spine,
+			Length:      &length,
+			Weight:      &weight,
+			IsDeleted:   false,
+			CreatedAt:   now,
+		}
+
+		b, err := json.Marshal(read)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowRead: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowRead JSON: %v", err)
+		}
+
+		expectedKeys := []string{
+			"arrow_id", "archer_id", "arrow_set", "arrow_number",
+			"status", "spine", "length", "weight", "is_deleted", "created_at",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowRead", k)
+			}
+		}
+
+		var decoded model.ArrowRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowRead: %v", err)
+		}
+		if decoded.ArrowID != arrowID || decoded.Status != model.ArrowStatusInUse || decoded.IsDeleted != false {
+			t.Errorf("mismatch in decoded ArrowRead: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowSet and ArrowFilter JSON marshaling", func(t *testing.T) {
+		damaged := model.ArrowStatusDamaged
+		set := model.ArrowSet{
+			Status: &damaged,
+		}
+		sb, err := json.Marshal(set)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowSet: %v", err)
+		}
+		var setMap map[string]any
+		if err := json.Unmarshal(sb, &setMap); err != nil {
+			t.Fatalf("failed to unmarshal ArrowSet JSON: %v", err)
+		}
+		if _, ok := setMap["status"]; !ok {
+			t.Errorf("expected 'status' in ArrowSet")
+		}
+		if _, ok := setMap["spine"]; ok {
+			t.Errorf("expected omitted 'spine' in ArrowSet")
+		}
+
+		setNum := int16(1)
+		isDeleted := false
+		filter := model.ArrowFilter{
+			ArcherID:  &archerID,
+			ArrowSet:  &setNum,
+			Status:    &damaged,
+			IsDeleted: &isDeleted,
+		}
+		fb, err := json.Marshal(filter)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowFilter: %v", err)
+		}
+		var filterMap map[string]any
+		if err := json.Unmarshal(fb, &filterMap); err != nil {
+			t.Fatalf("failed to unmarshal ArrowFilter JSON: %v", err)
+		}
+		if _, ok := filterMap["arrow_set"]; !ok {
+			t.Errorf("expected 'arrow_set' in ArrowFilter")
+		}
+	})
+}
+
+func TestArcherModels_JSON(t *testing.T) {
 	create := model.ArcherCreate{
-		FirstName:        "Robin",
-		LastName:         "Hood",
-		Email:            "robin@sherwood.org",
-		DateOfBirth:      "1995-06-15",
-		Gender:           model.GenderMale,
-		Bowstyle:         model.BowstyleLongbow,
-		DrawWeight:       45.5,
-		ClubID:           &clubID,
-		GooglePictureURL: &picURL,
-		GoogleSubject:    "google-sub-12345",
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1995-06-15",
+		Gender:      model.GenderMale,
 	}
 
 	b, err := json.Marshal(create)
@@ -118,7 +398,6 @@ func TestArcherModels_JSON(t *testing.T) {
 
 	expectedKeys := []string{
 		"first_name", "last_name", "email", "date_of_birth", "gender",
-		"bowstyle", "draw_weight", "club_id", "google_picture_url", "google_subject",
 	}
 	for _, k := range expectedKeys {
 		if _, ok := createMap[k]; !ok {
@@ -126,21 +405,24 @@ func TestArcherModels_JSON(t *testing.T) {
 		}
 	}
 
+	forbiddenKeys := []string{
+		"bowstyle", "draw_weight", "club_id", "google_picture_url", "google_subject", "last_login_at", "created_at",
+	}
+	for _, k := range forbiddenKeys {
+		if _, ok := createMap[k]; ok {
+			t.Errorf("forbidden legacy key %q found in ArcherCreate serialization", k)
+		}
+	}
+
 	archerID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	read := model.ArcherRead{
-		ArcherID:         archerID,
-		FirstName:        create.FirstName,
-		LastName:         create.LastName,
-		Email:            create.Email,
-		DateOfBirth:      create.DateOfBirth,
-		Gender:           create.Gender,
-		Bowstyle:         create.Bowstyle,
-		DrawWeight:       create.DrawWeight,
-		ClubID:           create.ClubID,
-		GooglePictureURL: create.GooglePictureURL,
-		GoogleSubject:    create.GoogleSubject,
-		LastLoginAt:      now,
-		CreatedAt:        now,
+		ArcherID:    archerID,
+		FirstName:   create.FirstName,
+		LastName:    create.LastName,
+		Email:       create.Email,
+		DateOfBirth: create.DateOfBirth,
+		Gender:      create.Gender,
+		IsDeleted:   false,
 	}
 
 	rb, err := json.Marshal(read)
@@ -148,12 +430,32 @@ func TestArcherModels_JSON(t *testing.T) {
 		t.Fatalf("failed to marshal ArcherRead: %v", err)
 	}
 
+	var readMap map[string]any
+	if err := json.Unmarshal(rb, &readMap); err != nil {
+		t.Fatalf("failed to unmarshal ArcherRead JSON: %v", err)
+	}
+
+	expectedReadKeys := []string{
+		"archer_id", "first_name", "last_name", "email", "date_of_birth", "gender", "is_deleted",
+	}
+	for _, k := range expectedReadKeys {
+		if _, ok := readMap[k]; !ok {
+			t.Errorf("expected JSON key %q missing in ArcherRead serialization", k)
+		}
+	}
+
+	for _, k := range forbiddenKeys {
+		if _, ok := readMap[k]; ok {
+			t.Errorf("forbidden legacy key %q found in ArcherRead serialization", k)
+		}
+	}
+
 	var decodedRead model.ArcherRead
 	if err := json.Unmarshal(rb, &decodedRead); err != nil {
 		t.Fatalf("failed to unmarshal ArcherRead: %v", err)
 	}
 
-	if decodedRead.ArcherID != archerID || decodedRead.Email != create.Email || decodedRead.Gender != model.GenderMale {
+	if decodedRead.ArcherID != archerID || decodedRead.Email != create.Email || decodedRead.Gender != model.GenderMale || decodedRead.IsDeleted != false {
 		t.Errorf("mismatch in decoded ArcherRead: %+v", decodedRead)
 	}
 }
@@ -161,39 +463,118 @@ func TestArcherModels_JSON(t *testing.T) {
 func TestAuthModels_JSON(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	archerID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	picURL := "https://example.com/avatar.jpg"
 
-	authRead := model.AuthAuthenticated{
-		Status:      model.AuthStatusAuthenticated,
-		AccessToken: "jwt-token-xyz",
-		ExpiresAt:   now.Add(time.Hour * 24),
-		Archer: model.ArcherRead{
-			ArcherID:      archerID,
-			FirstName:     "Robin",
-			LastName:      "Hood",
-			Email:         "robin@sherwood.org",
-			DateOfBirth:   "1995-06-15",
-			Gender:        model.GenderMale,
-			Bowstyle:      model.BowstyleLongbow,
-			DrawWeight:    45.5,
-			GoogleSubject: "google-sub-12345",
-			LastLoginAt:   now,
-			CreatedAt:     now,
-		},
-	}
+	t.Run("AuthIdentityRead JSON marshaling", func(t *testing.T) {
+		identity := model.AuthIdentityRead{
+			ArcherID:         archerID,
+			GoogleSubject:    "google-sub-98765",
+			GooglePictureURL: &picURL,
+			LastLoginAt:      now,
+			CreatedAt:        now,
+		}
 
-	b, err := json.Marshal(authRead)
-	if err != nil {
-		t.Fatalf("failed to marshal AuthAuthenticated: %v", err)
-	}
+		b, err := json.Marshal(identity)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthIdentityRead: %v", err)
+		}
 
-	var decoded model.AuthAuthenticated
-	if err := json.Unmarshal(b, &decoded); err != nil {
-		t.Fatalf("failed to unmarshal AuthAuthenticated: %v", err)
-	}
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal AuthIdentityRead JSON: %v", err)
+		}
 
-	if decoded.Status != model.AuthStatusAuthenticated || decoded.AccessToken != "jwt-token-xyz" {
-		t.Errorf("mismatch in decoded AuthAuthenticated: %+v", decoded)
-	}
+		expectedKeys := []string{
+			"archer_id", "google_subject", "google_picture_url", "last_login_at", "created_at",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected key %q in AuthIdentityRead JSON", k)
+			}
+		}
+
+		var decoded model.AuthIdentityRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthIdentityRead: %v", err)
+		}
+		if decoded.ArcherID != archerID || decoded.GoogleSubject != "google-sub-98765" || *decoded.GooglePictureURL != picURL {
+			t.Errorf("mismatch in decoded AuthIdentityRead: %+v", decoded)
+		}
+	})
+
+	t.Run("AuthAuthenticated JSON marshaling", func(t *testing.T) {
+		authRead := model.AuthAuthenticated{
+			Status:      model.AuthStatusAuthenticated,
+			AccessToken: "jwt-token-xyz",
+			ExpiresAt:   now.Add(time.Hour * 24),
+			Archer: model.ArcherRead{
+				ArcherID:    archerID,
+				FirstName:   "Robin",
+				LastName:    "Hood",
+				Email:       "robin@sherwood.org",
+				DateOfBirth: "1995-06-15",
+				Gender:      model.GenderMale,
+				IsDeleted:   false,
+			},
+		}
+
+		b, err := json.Marshal(authRead)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthAuthenticated: %v", err)
+		}
+
+		var decoded model.AuthAuthenticated
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthAuthenticated: %v", err)
+		}
+
+		if decoded.Status != model.AuthStatusAuthenticated || decoded.AccessToken != "jwt-token-xyz" || decoded.Archer.IsDeleted != false {
+			t.Errorf("mismatch in decoded AuthAuthenticated: %+v", decoded)
+		}
+	})
+
+	t.Run("AuthNeedsRegistration JSON marshaling", func(t *testing.T) {
+		given := "Robin"
+		family := "Hood"
+		needsReg := model.AuthNeedsRegistration{
+			Status:             model.AuthStatusNeedsRegistration,
+			GoogleEmail:        "robin@sherwood.org",
+			GoogleSubject:      "google-sub-12345",
+			GivenName:          &given,
+			FamilyName:         &family,
+			GivenNameProvided:  true,
+			FamilyNameProvided: true,
+			PictureURL:         &picURL,
+		}
+
+		b, err := json.Marshal(needsReg)
+		if err != nil {
+			t.Fatalf("failed to marshal AuthNeedsRegistration: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal AuthNeedsRegistration JSON: %v", err)
+		}
+
+		expectedKeys := []string{
+			"status", "google_email", "google_subject", "given_name", "family_name",
+			"given_name_provided", "family_name_provided", "picture_url",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected key %q in AuthNeedsRegistration JSON", k)
+			}
+		}
+
+		var decoded model.AuthNeedsRegistration
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal AuthNeedsRegistration: %v", err)
+		}
+		if decoded.GoogleEmail != "robin@sherwood.org" || !decoded.GivenNameProvided {
+			t.Errorf("mismatch in decoded AuthNeedsRegistration: %+v", decoded)
+		}
+	})
 }
 
 func TestSessionModels_JSON(t *testing.T) {

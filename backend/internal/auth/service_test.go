@@ -43,7 +43,6 @@ func (m *mockArcherRepo) Create(ctx context.Context, data model.ArcherCreate) (u
 	return uuid.New(), nil
 }
 
-//nolint:gocritic // hugeParam: filter matches ArcherRepository interface
 func (m *mockArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter model.ArcherFilter) error {
 	if m.updateFn != nil {
 		return m.updateFn(ctx, data, filter)
@@ -104,15 +103,12 @@ func TestService_LoginExisting(t *testing.T) {
 	now := time.Now().UTC()
 
 	archer := &model.ArcherRead{
-		ArcherID:      archerID,
-		FirstName:     "Robin",
-		LastName:      "Hood",
-		Email:         "robin@sherwood.org",
-		DateOfBirth:   "1990-01-01",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleBarebow,
-		DrawWeight:    40.0,
-		GoogleSubject: "google-sub-1",
+		ArcherID:    archerID,
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-01-01",
+		Gender:      model.GenderMale,
 	}
 
 	googleData := &auth.GoogleUserData{
@@ -134,18 +130,10 @@ func TestService_LoginExisting(t *testing.T) {
 				if filter.ArcherID == nil || *filter.ArcherID != archerID {
 					t.Errorf("expected filter by archer id %s", archerID)
 				}
-				if data.LastLoginAt == nil || *data.LastLoginAt != now {
-					t.Errorf("expected LastLoginAt to match now")
-				}
-				if data.GooglePictureURL == nil || *data.GooglePictureURL != googleData.Picture {
-					t.Errorf("expected picture url %s", googleData.Picture)
-				}
 				return nil
 			},
 			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.ArcherRead, error) {
 				updated := *archer
-				updated.LastLoginAt = now
-				updated.GooglePictureURL = &googleData.Picture
 				return &updated, nil
 			},
 		}
@@ -246,15 +234,12 @@ func TestService_Register(t *testing.T) {
 			},
 			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.ArcherRead, error) {
 				return &model.ArcherRead{
-					ArcherID:      newArcherID,
-					FirstName:     createdData.FirstName,
-					LastName:      createdData.LastName,
-					Email:         createdData.Email,
-					DateOfBirth:   createdData.DateOfBirth,
-					Gender:        createdData.Gender,
-					Bowstyle:      createdData.Bowstyle,
-					DrawWeight:    createdData.DrawWeight,
-					GoogleSubject: createdData.GoogleSubject,
+					ArcherID:    newArcherID,
+					FirstName:   createdData.FirstName,
+					LastName:    createdData.LastName,
+					Email:       createdData.Email,
+					DateOfBirth: createdData.DateOfBirth,
+					Gender:      createdData.Gender,
 				}, nil
 			},
 		}
@@ -289,11 +274,10 @@ func TestService_Register(t *testing.T) {
 	t.Run("if archer already exists with google subject, performs login instead", func(t *testing.T) {
 		t.Parallel()
 		existingArcher := &model.ArcherRead{
-			ArcherID:      newArcherID,
-			FirstName:     "Existing",
-			LastName:      "Archer",
-			Email:         googleData.Email,
-			GoogleSubject: googleData.Sub,
+			ArcherID:  newArcherID,
+			FirstName: "Existing",
+			LastName:  "Archer",
+			Email:     googleData.Email,
 		}
 
 		archers := &mockArcherRepo{
@@ -701,11 +685,10 @@ func TestService_LoginWithGoogle(t *testing.T) {
 		t.Parallel()
 		existingID := uuid.New()
 		existing := &model.ArcherRead{
-			ArcherID:      existingID,
-			FirstName:     "Existing",
-			LastName:      "User",
-			Email:         "existing@example.com",
-			GoogleSubject: "google-sub-existing",
+			ArcherID:  existingID,
+			FirstName: "Existing",
+			LastName:  "User",
+			Email:     "existing@example.com",
 		}
 		archers := &mockArcherRepo{
 			findByGoogleSubjectFn: func(ctx context.Context, sub string) (*model.ArcherRead, error) {

@@ -13,18 +13,12 @@ import (
 
 var archerColumns = []string{
 	"archer_id",
+	"email",
 	"first_name",
 	"last_name",
-	"email",
 	"date_of_birth",
 	"gender",
-	"bowstyle",
-	"draw_weight",
-	"club_id",
-	"google_picture_url",
-	"google_subject",
-	"last_login_at",
-	"created_at",
+	"is_deleted",
 }
 
 // ArcherRepo manages database operations for archer profiles.
@@ -50,18 +44,12 @@ func scanArcher(scanner interface{ Scan(dest ...any) error }) (model.ArcherRead,
 
 	err := scanner.Scan(
 		&a.ArcherID,
+		&a.Email,
 		&a.FirstName,
 		&a.LastName,
-		&a.Email,
 		&dobRaw,
 		&a.Gender,
-		&a.Bowstyle,
-		&a.DrawWeight,
-		&a.ClubID,
-		&a.GooglePictureURL,
-		&a.GoogleSubject,
-		&a.LastLoginAt,
-		&a.CreatedAt,
+		&a.IsDeleted,
 	)
 	if err != nil {
 		return model.ArcherRead{}, err
@@ -104,9 +92,14 @@ func (r *ArcherRepo) FindByEmail(ctx context.Context, email string) (*model.Arch
 
 // FindByGoogleSubject retrieves an archer by OAuth Google Subject identifier.
 func (r *ArcherRepo) FindByGoogleSubject(ctx context.Context, sub string) (*model.ArcherRead, error) {
-	sql, args, err := StmtBuilder.Select(archerColumns...).
+	cols := make([]string, len(archerColumns))
+	for i, c := range archerColumns {
+		cols[i] = "archer." + c
+	}
+	sql, args, err := StmtBuilder.Select(cols...).
 		From("archer").
-		Where(squirrel.Eq{"google_subject": sub}).
+		Join("auth ON auth.archer_id = archer.archer_id").
+		Where(squirrel.Eq{"auth.google_subject": sub}).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building find by google subject query: %w", err)
@@ -119,15 +112,16 @@ func (r *ArcherRepo) FindByGoogleSubject(ctx context.Context, sub string) (*mode
 }
 
 // FindAll queries all archers matching the optional criteria in filter.
-//
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
 func (r *ArcherRepo) FindAll(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
 	q := StmtBuilder.Select(archerColumns...).
 		From("archer").
-		OrderBy("created_at DESC")
+		OrderBy("archer_id ASC")
 
 	if filter.ArcherID != nil {
 		q = q.Where(squirrel.Eq{"archer_id": *filter.ArcherID})
+	}
+	if filter.Email != nil {
+		q = q.Where(squirrel.Eq{"email": *filter.Email})
 	}
 	if filter.FirstName != nil {
 		q = q.Where(squirrel.Eq{"first_name": *filter.FirstName})
@@ -138,23 +132,8 @@ func (r *ArcherRepo) FindAll(ctx context.Context, filter model.ArcherFilter) ([]
 	if filter.Gender != nil {
 		q = q.Where(squirrel.Eq{"gender": *filter.Gender})
 	}
-	if filter.Bowstyle != nil {
-		q = q.Where(squirrel.Eq{"bowstyle": *filter.Bowstyle})
-	}
-	if filter.DrawWeight != nil {
-		q = q.Where(squirrel.Eq{"draw_weight": *filter.DrawWeight})
-	}
-	if filter.ClubID != nil {
-		q = q.Where(squirrel.Eq{"club_id": *filter.ClubID})
-	}
-	if filter.GoogleSubject != nil {
-		q = q.Where(squirrel.Eq{"google_subject": *filter.GoogleSubject})
-	}
-	if filter.LastLoginAt != nil {
-		q = q.Where(squirrel.Eq{"last_login_at": *filter.LastLoginAt})
-	}
-	if filter.CreatedAt != nil {
-		q = q.Where(squirrel.Eq{"created_at": *filter.CreatedAt})
+	if filter.IsDeleted != nil {
+		q = q.Where(squirrel.Eq{"is_deleted": *filter.IsDeleted})
 	}
 
 	sql, args, err := q.ToSql()
@@ -181,38 +160,28 @@ func (r *ArcherRepo) Create(ctx context.Context, data model.ArcherCreate) (uuid.
 		return uuid.Nil, fmt.Errorf("parsing date_of_birth: %w", err)
 	}
 
+	var archerID uuid.UUID
+	if data.ArcherID != nil && *data.ArcherID != uuid.Nil {
+		archerID = *data.ArcherID
+	} else {
+		sub := "google-sub-" + uuid.New().String()
+		err := r.db.QueryRow(ctx, "INSERT INTO auth (google_subject) VALUES ($1) RETURNING archer_id", sub).Scan(&archerID)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("creating auth identity: %w", err)
+		}
+	}
+
+	cols := []string{"archer_id", "first_name", "last_name", "email", "date_of_birth", "gender"}
+	vals := []any{archerID, data.FirstName, data.LastName, data.Email, dob, data.Gender}
+
 	builder := StmtBuilder.Insert("archer").
-		Columns(
-			"first_name",
-			"last_name",
-			"email",
-			"date_of_birth",
-			"gender",
-			"bowstyle",
-			"draw_weight",
-			"club_id",
-			"google_picture_url",
-			"google_subject",
-		).
-		Values(
-			data.FirstName,
-			data.LastName,
-			data.Email,
-			dob,
-			data.Gender,
-			data.Bowstyle,
-			data.DrawWeight,
-			data.ClubID,
-			data.GooglePictureURL,
-			data.GoogleSubject,
-		)
+		Columns(cols...).
+		Values(vals...)
 
 	return createReturningID(ctx, r.db, builder, "archer_id")
 }
 
 // Update updates fields of an archer specified by data for rows matching filter.
-//
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
 func (r *ArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter model.ArcherFilter) error {
 	q := StmtBuilder.Update("archer")
 	setCount := 0
@@ -225,28 +194,20 @@ func (r *ArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter mo
 		q = q.Set("last_name", *data.LastName)
 		setCount++
 	}
+	if data.Email != nil {
+		q = q.Set("email", *data.Email)
+		setCount++
+	}
+	if data.DateOfBirth != nil {
+		dob, err := time.Parse("2006-01-02", *data.DateOfBirth)
+		if err != nil {
+			return fmt.Errorf("parsing date_of_birth: %w", err)
+		}
+		q = q.Set("date_of_birth", dob)
+		setCount++
+	}
 	if data.Gender != nil {
 		q = q.Set("gender", *data.Gender)
-		setCount++
-	}
-	if data.Bowstyle != nil {
-		q = q.Set("bowstyle", *data.Bowstyle)
-		setCount++
-	}
-	if data.DrawWeight != nil {
-		q = q.Set("draw_weight", *data.DrawWeight)
-		setCount++
-	}
-	if data.ClubID != nil {
-		q = q.Set("club_id", *data.ClubID)
-		setCount++
-	}
-	if data.GooglePictureURL != nil {
-		q = q.Set("google_picture_url", *data.GooglePictureURL)
-		setCount++
-	}
-	if data.LastLoginAt != nil {
-		q = q.Set("last_login_at", *data.LastLoginAt)
 		setCount++
 	}
 
@@ -257,6 +218,10 @@ func (r *ArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter mo
 	whereCount := 0
 	if filter.ArcherID != nil {
 		q = q.Where(squirrel.Eq{"archer_id": *filter.ArcherID})
+		whereCount++
+	}
+	if filter.Email != nil {
+		q = q.Where(squirrel.Eq{"email": *filter.Email})
 		whereCount++
 	}
 	if filter.FirstName != nil {
@@ -271,28 +236,8 @@ func (r *ArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter mo
 		q = q.Where(squirrel.Eq{"gender": *filter.Gender})
 		whereCount++
 	}
-	if filter.Bowstyle != nil {
-		q = q.Where(squirrel.Eq{"bowstyle": *filter.Bowstyle})
-		whereCount++
-	}
-	if filter.DrawWeight != nil {
-		q = q.Where(squirrel.Eq{"draw_weight": *filter.DrawWeight})
-		whereCount++
-	}
-	if filter.ClubID != nil {
-		q = q.Where(squirrel.Eq{"club_id": *filter.ClubID})
-		whereCount++
-	}
-	if filter.GoogleSubject != nil {
-		q = q.Where(squirrel.Eq{"google_subject": *filter.GoogleSubject})
-		whereCount++
-	}
-	if filter.LastLoginAt != nil {
-		q = q.Where(squirrel.Eq{"last_login_at": *filter.LastLoginAt})
-		whereCount++
-	}
-	if filter.CreatedAt != nil {
-		q = q.Where(squirrel.Eq{"created_at": *filter.CreatedAt})
+	if filter.IsDeleted != nil {
+		q = q.Where(squirrel.Eq{"is_deleted": *filter.IsDeleted})
 		whereCount++
 	}
 
