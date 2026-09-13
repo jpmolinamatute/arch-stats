@@ -33,6 +33,9 @@ func TestEnums_JSON(t *testing.T) {
 		{"WSContentTypeShotCreated", model.WSContentTypeShotCreated, `"shot.created"`},
 		{"SessionStatusOpen", model.SessionStatusOpen, `"open"`},
 		{"SessionStatusClosed", model.SessionStatusClosed, `"closed"`},
+		{"ArrowStatusInUse", model.ArrowStatusInUse, `"in_use"`},
+		{"ArrowStatusDamaged", model.ArrowStatusDamaged, `"damaged"`},
+		{"ArrowStatusLost", model.ArrowStatusLost, `"lost"`},
 	}
 
 	for _, tc := range tests {
