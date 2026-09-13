@@ -209,6 +209,174 @@ func TestBowModels_JSON(t *testing.T) {
 	})
 }
 
+func TestArrowModels_JSON(t *testing.T) {
+	archerID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	arrowID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	now := time.Now().UTC().Truncate(time.Second)
+	spine := 500.0
+	length := 29.5
+	weight := 320.0
+	status := model.ArrowStatusInUse
+
+	t.Run("ArrowCreate JSON marshaling", func(t *testing.T) {
+		create := model.ArrowCreate{
+			ArcherID:    archerID,
+			ArrowSet:    1,
+			ArrowNumber: 4,
+			Status:      &status,
+			Spine:       &spine,
+			Length:      &length,
+			Weight:      &weight,
+		}
+
+		b, err := json.Marshal(create)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "arrow_set", "arrow_number", "status", "spine", "length", "weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowCreate", k)
+			}
+		}
+
+		var decoded model.ArrowCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowCreate: %v", err)
+		}
+		if decoded.ArrowSet != 1 || decoded.ArrowNumber != 4 || *decoded.Spine != 500.0 {
+			t.Errorf("mismatch in decoded ArrowCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowBatchCreate JSON marshaling", func(t *testing.T) {
+		batch := model.ArrowBatchCreate{
+			ArcherID: archerID,
+			ArrowSet: 2,
+			Count:    6,
+			Status:   &status,
+			Spine:    &spine,
+			Length:   &length,
+			Weight:   &weight,
+		}
+
+		b, err := json.Marshal(batch)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowBatchCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowBatchCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "arrow_set", "count", "status", "spine", "length", "weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowBatchCreate", k)
+			}
+		}
+
+		var decoded model.ArrowBatchCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowBatchCreate: %v", err)
+		}
+		if decoded.Count != 6 || decoded.ArrowSet != 2 {
+			t.Errorf("mismatch in decoded ArrowBatchCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowRead JSON marshaling", func(t *testing.T) {
+		read := model.ArrowRead{
+			ArrowID:     arrowID,
+			ArcherID:    archerID,
+			ArrowSet:    1,
+			ArrowNumber: 3,
+			Status:      model.ArrowStatusInUse,
+			Spine:       &spine,
+			Length:      &length,
+			Weight:      &weight,
+			IsDeleted:   false,
+			CreatedAt:   now,
+		}
+
+		b, err := json.Marshal(read)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowRead: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal ArrowRead JSON: %v", err)
+		}
+
+		expectedKeys := []string{
+			"arrow_id", "archer_id", "arrow_set", "arrow_number",
+			"status", "spine", "length", "weight", "is_deleted", "created_at",
+		}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in ArrowRead", k)
+			}
+		}
+
+		var decoded model.ArrowRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal ArrowRead: %v", err)
+		}
+		if decoded.ArrowID != arrowID || decoded.Status != model.ArrowStatusInUse || decoded.IsDeleted != false {
+			t.Errorf("mismatch in decoded ArrowRead: %+v", decoded)
+		}
+	})
+
+	t.Run("ArrowSet and ArrowFilter JSON marshaling", func(t *testing.T) {
+		damaged := model.ArrowStatusDamaged
+		set := model.ArrowSet{
+			Status: &damaged,
+		}
+		sb, err := json.Marshal(set)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowSet: %v", err)
+		}
+		var setMap map[string]any
+		if err := json.Unmarshal(sb, &setMap); err != nil {
+			t.Fatalf("failed to unmarshal ArrowSet JSON: %v", err)
+		}
+		if _, ok := setMap["status"]; !ok {
+			t.Errorf("expected 'status' in ArrowSet")
+		}
+		if _, ok := setMap["spine"]; ok {
+			t.Errorf("expected omitted 'spine' in ArrowSet")
+		}
+
+		setNum := int16(1)
+		isDeleted := false
+		filter := model.ArrowFilter{
+			ArcherID:  &archerID,
+			ArrowSet:  &setNum,
+			Status:    &damaged,
+			IsDeleted: &isDeleted,
+		}
+		fb, err := json.Marshal(filter)
+		if err != nil {
+			t.Fatalf("failed to marshal ArrowFilter: %v", err)
+		}
+		var filterMap map[string]any
+		if err := json.Unmarshal(fb, &filterMap); err != nil {
+			t.Fatalf("failed to unmarshal ArrowFilter JSON: %v", err)
+		}
+		if _, ok := filterMap["arrow_set"]; !ok {
+			t.Errorf("expected 'arrow_set' in ArrowFilter")
+		}
+	})
+}
+
 func TestArcherModels_JSON(t *testing.T) {
 	clubID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	picURL := "https://example.com/avatar.jpg"
