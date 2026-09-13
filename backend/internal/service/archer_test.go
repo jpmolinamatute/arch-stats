@@ -4,19 +4,14 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/apperror"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/model"
-	"github.com/jpmolinamatute/arch-stats/backend/internal/repository"
 	"github.com/jpmolinamatute/arch-stats/backend/internal/service"
 )
 
-var (
-	_ service.ArcherRepository = (*mockArcherRepo)(nil)
-	_ service.ArcherRepository = (*repository.ArcherRepo)(nil)
-)
+var _ service.ArcherRepository = (*mockArcherRepo)(nil)
 
 type mockArcherRepo struct {
 	findByIDFn func(ctx context.Context, id uuid.UUID) (*model.ArcherRead, error)
@@ -66,30 +61,23 @@ func (m *mockArcherRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func validArcherCreate() model.ArcherCreate {
 	return model.ArcherCreate{
-		FirstName:     "Robin",
-		LastName:      "Hood",
-		Email:         "robin@sherwood.org",
-		DateOfBirth:   "1990-05-15",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleRecurve,
-		DrawWeight:    42.5,
-		GoogleSubject: "google-sub-12345",
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-05-15",
+		Gender:      model.GenderMale,
 	}
 }
 
 func sampleArcherRead(id uuid.UUID) model.ArcherRead {
 	return model.ArcherRead{
-		ArcherID:      id,
-		FirstName:     "Robin",
-		LastName:      "Hood",
-		Email:         "robin@sherwood.org",
-		DateOfBirth:   "1990-05-15",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleRecurve,
-		DrawWeight:    42.5,
-		GoogleSubject: "google-sub-12345",
-		CreatedAt:     time.Now().UTC(),
-		LastLoginAt:   time.Now().UTC(),
+		ArcherID:    id,
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1990-05-15",
+		Gender:      model.GenderMale,
+		IsDeleted:   false,
 	}
 }
 
@@ -261,11 +249,6 @@ func TestArcherService_Create(t *testing.T) {
 			{"empty date of birth", func(d *model.ArcherCreate) { d.DateOfBirth = "" }},
 			{"invalid date of birth format", func(d *model.ArcherCreate) { d.DateOfBirth = "15/05/1990" }},
 			{"invalid gender", func(d *model.ArcherCreate) { d.Gender = "alien" }},
-			{"invalid bowstyle", func(d *model.ArcherCreate) { d.Bowstyle = "crossbow" }},
-			{"draw weight zero", func(d *model.ArcherCreate) { d.DrawWeight = 0 }},
-			{"draw weight negative", func(d *model.ArcherCreate) { d.DrawWeight = -5 }},
-			{"draw weight excessive", func(d *model.ArcherCreate) { d.DrawWeight = 250 }},
-			{"empty google subject", func(d *model.ArcherCreate) { d.GoogleSubject = "" }},
 		}
 
 		for _, tc := range tests {
@@ -360,9 +343,7 @@ func TestArcherService_Update(t *testing.T) {
 	})
 
 	t.Run("validates invalid fields", func(t *testing.T) {
-		invalidWeight := -10.0
 		invalidGender := model.Gender("robot")
-		invalidBow := model.Bowstyle("laser")
 		emptyFirst := "   "
 
 		tests := []struct {
@@ -370,9 +351,7 @@ func TestArcherService_Update(t *testing.T) {
 			data model.ArcherSet
 		}{
 			{"empty first name", model.ArcherSet{FirstName: &emptyFirst}},
-			{"invalid draw weight", model.ArcherSet{DrawWeight: &invalidWeight}},
 			{"invalid gender", model.ArcherSet{Gender: &invalidGender}},
-			{"invalid bowstyle", model.ArcherSet{Bowstyle: &invalidBow}},
 		}
 
 		for _, tc := range tests {

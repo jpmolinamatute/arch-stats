@@ -139,15 +139,6 @@ func validateArcherCreate(data model.ArcherCreate) error {
 	if !isValidGender(data.Gender) {
 		return apperror.Wrap(apperror.ErrValidation, "invalid gender")
 	}
-	if !isValidBowstyle(data.Bowstyle) {
-		return apperror.Wrap(apperror.ErrValidation, "invalid bowstyle")
-	}
-	if data.DrawWeight <= 0 || data.DrawWeight > 200 {
-		return apperror.Wrap(apperror.ErrValidation, "draw_weight must be between 0 and 200")
-	}
-	if strings.TrimSpace(data.GoogleSubject) == "" {
-		return apperror.Wrap(apperror.ErrValidation, "google_subject is required")
-	}
 	return nil
 }
 
@@ -160,12 +151,6 @@ func validateArcherSet(data model.ArcherSet) error {
 	}
 	if data.Gender != nil && !isValidGender(*data.Gender) {
 		return apperror.Wrap(apperror.ErrValidation, "invalid gender")
-	}
-	if data.Bowstyle != nil && !isValidBowstyle(*data.Bowstyle) {
-		return apperror.Wrap(apperror.ErrValidation, "invalid bowstyle")
-	}
-	if data.DrawWeight != nil && (*data.DrawWeight <= 0 || *data.DrawWeight > 200) {
-		return apperror.Wrap(apperror.ErrValidation, "draw_weight must be between 0 and 200")
 	}
 	return nil
 }
