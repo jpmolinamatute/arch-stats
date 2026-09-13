@@ -378,21 +378,12 @@ func TestArrowModels_JSON(t *testing.T) {
 }
 
 func TestArcherModels_JSON(t *testing.T) {
-	clubID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
-	picURL := "https://example.com/avatar.jpg"
-	now := time.Now().UTC().Truncate(time.Second)
-
 	create := model.ArcherCreate{
-		FirstName:        "Robin",
-		LastName:         "Hood",
-		Email:            "robin@sherwood.org",
-		DateOfBirth:      "1995-06-15",
-		Gender:           model.GenderMale,
-		Bowstyle:         model.BowstyleLongbow,
-		DrawWeight:       45.5,
-		ClubID:           &clubID,
-		GooglePictureURL: &picURL,
-		GoogleSubject:    "google-sub-12345",
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       "robin@sherwood.org",
+		DateOfBirth: "1995-06-15",
+		Gender:      model.GenderMale,
 	}
 
 	b, err := json.Marshal(create)
@@ -407,7 +398,6 @@ func TestArcherModels_JSON(t *testing.T) {
 
 	expectedKeys := []string{
 		"first_name", "last_name", "email", "date_of_birth", "gender",
-		"bowstyle", "draw_weight", "club_id", "google_picture_url", "google_subject",
 	}
 	for _, k := range expectedKeys {
 		if _, ok := createMap[k]; !ok {
@@ -415,21 +405,24 @@ func TestArcherModels_JSON(t *testing.T) {
 		}
 	}
 
+	forbiddenKeys := []string{
+		"bowstyle", "draw_weight", "club_id", "google_picture_url", "google_subject", "last_login_at", "created_at",
+	}
+	for _, k := range forbiddenKeys {
+		if _, ok := createMap[k]; ok {
+			t.Errorf("forbidden legacy key %q found in ArcherCreate serialization", k)
+		}
+	}
+
 	archerID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	read := model.ArcherRead{
-		ArcherID:         archerID,
-		FirstName:        create.FirstName,
-		LastName:         create.LastName,
-		Email:            create.Email,
-		DateOfBirth:      create.DateOfBirth,
-		Gender:           create.Gender,
-		Bowstyle:         create.Bowstyle,
-		DrawWeight:       create.DrawWeight,
-		ClubID:           create.ClubID,
-		GooglePictureURL: create.GooglePictureURL,
-		GoogleSubject:    create.GoogleSubject,
-		LastLoginAt:      now,
-		CreatedAt:        now,
+		ArcherID:    archerID,
+		FirstName:   create.FirstName,
+		LastName:    create.LastName,
+		Email:       create.Email,
+		DateOfBirth: create.DateOfBirth,
+		Gender:      create.Gender,
+		IsDeleted:   false,
 	}
 
 	rb, err := json.Marshal(read)
@@ -437,12 +430,32 @@ func TestArcherModels_JSON(t *testing.T) {
 		t.Fatalf("failed to marshal ArcherRead: %v", err)
 	}
 
+	var readMap map[string]any
+	if err := json.Unmarshal(rb, &readMap); err != nil {
+		t.Fatalf("failed to unmarshal ArcherRead JSON: %v", err)
+	}
+
+	expectedReadKeys := []string{
+		"archer_id", "first_name", "last_name", "email", "date_of_birth", "gender", "is_deleted",
+	}
+	for _, k := range expectedReadKeys {
+		if _, ok := readMap[k]; !ok {
+			t.Errorf("expected JSON key %q missing in ArcherRead serialization", k)
+		}
+	}
+
+	for _, k := range forbiddenKeys {
+		if _, ok := readMap[k]; ok {
+			t.Errorf("forbidden legacy key %q found in ArcherRead serialization", k)
+		}
+	}
+
 	var decodedRead model.ArcherRead
 	if err := json.Unmarshal(rb, &decodedRead); err != nil {
 		t.Fatalf("failed to unmarshal ArcherRead: %v", err)
 	}
 
-	if decodedRead.ArcherID != archerID || decodedRead.Email != create.Email || decodedRead.Gender != model.GenderMale {
+	if decodedRead.ArcherID != archerID || decodedRead.Email != create.Email || decodedRead.Gender != model.GenderMale || decodedRead.IsDeleted != false {
 		t.Errorf("mismatch in decoded ArcherRead: %+v", decodedRead)
 	}
 }
@@ -456,17 +469,13 @@ func TestAuthModels_JSON(t *testing.T) {
 		AccessToken: "jwt-token-xyz",
 		ExpiresAt:   now.Add(time.Hour * 24),
 		Archer: model.ArcherRead{
-			ArcherID:      archerID,
-			FirstName:     "Robin",
-			LastName:      "Hood",
-			Email:         "robin@sherwood.org",
-			DateOfBirth:   "1995-06-15",
-			Gender:        model.GenderMale,
-			Bowstyle:      model.BowstyleLongbow,
-			DrawWeight:    45.5,
-			GoogleSubject: "google-sub-12345",
-			LastLoginAt:   now,
-			CreatedAt:     now,
+			ArcherID:    archerID,
+			FirstName:   "Robin",
+			LastName:    "Hood",
+			Email:       "robin@sherwood.org",
+			DateOfBirth: "1995-06-15",
+			Gender:      model.GenderMale,
+			IsDeleted:   false,
 		},
 	}
 
