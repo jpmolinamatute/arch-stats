@@ -17,37 +17,37 @@ newly separated `auth` identity table, equipment tables (`bow` and `arrow`), and
 
 ## Acceptance Criteria
 
-- [ ] New repository `backend/internal/repository/bow.go` implements:
-    - [ ] `Create(ctx context.Context, data model.BowCreate) (uuid.UUID, error)`
-    - [ ] `FindByID(ctx context.Context, id uuid.UUID) (*model.BowRead, error)`
-    - [ ] `FindAllByArcherID(ctx context.Context, archerID uuid.UUID) ([]model.BowRead, error)`
-    - [ ] `CountByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)`
-- [ ] New repository `backend/internal/repository/arrow.go` implements:
-    - [ ] `Create(ctx context.Context, data model.ArrowCreate) (uuid.UUID, error)` (inserts `status`
+- [x] New repository `backend/internal/repository/bow.go` implements:
+    - [x] `Create(ctx context.Context, data model.BowCreate) (uuid.UUID, error)`
+    - [x] `FindByID(ctx context.Context, id uuid.UUID) (*model.BowRead, error)`
+    - [x] `FindAllByArcherID(ctx context.Context, archerID uuid.UUID) ([]model.BowRead, error)`
+    - [x] `CountByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)`
+- [x] New repository `backend/internal/repository/arrow.go` implements:
+    - [x] `Create(ctx context.Context, data model.ArrowCreate) (uuid.UUID, error)` (inserts `status`
           , default `'in_use'`)
-    - [ ] `CreateBatch(ctx context.Context, data model.ArrowBatchCreate) ([]model.ArrowRead, error)`
+    - [x] `CreateBatch(ctx context.Context, data model.ArrowBatchCreate) ([]model.ArrowRead, error)`
           (inserts `status`, default `'in_use'`)
-    - [ ] `FindByID(ctx context.Context, id uuid.UUID) (*model.ArrowRead, error)`
-    - [ ] `FindAllByArcherID(ctx context.Context, archerID uuid.UUID) ([]model.ArrowRead, error)`
-    - [ ] `CountByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)`
-    - [ ] `CountInUseByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)` (for arrow
+    - [x] `FindByID(ctx context.Context, id uuid.UUID) (*model.ArrowRead, error)`
+    - [x] `FindAllByArcherID(ctx context.Context, archerID uuid.UUID) ([]model.ArrowRead, error)`
+    - [x] `CountByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)`
+    - [x] `CountInUseByArcherID(ctx context.Context, archerID uuid.UUID) (int, error)` (for arrow
           ceiling)
-    - [ ] `FindByArcherAndSet(ctx context.Context, archerID uuid.UUID, set int16)`
+    - [x] `FindByArcherAndSet(ctx context.Context, archerID uuid.UUID, set int16)`
           `([]model.ArrowRead, error)`
-- [ ] New repository `backend/internal/repository/auth_identity.go` implements:
-    - [ ] `FindByGoogleSubject(ctx context.Context, sub string) (*model.AuthIdentityRead, error)`
-    - [ ] `FindByID(ctx context.Context, id uuid.UUID) (*model.AuthIdentityRead, error)`
-    - [ ] `Create(ctx context.Context, subject string, picture *string) (uuid.UUID, error)`
-    - [ ] `UpdateLastLogin(ctx context.Context, id uuid.UUID, login time.Time, pic *string) error`
-- [ ] Modified `backend/internal/repository/archer.go`:
-    - [ ] Column selection updated: `archer_id`, `email`, `first_name`, `last_name`,
+- [x] New repository `backend/internal/repository/auth_identity.go` implements:
+    - [x] `FindByGoogleSubject(ctx context.Context, sub string) (*model.AuthIdentityRead, error)`
+    - [x] `FindByID(ctx context.Context, id uuid.UUID) (*model.AuthIdentityRead, error)`
+    - [x] `Create(ctx context.Context, subject string, picture *string) (uuid.UUID, error)`
+    - [x] `UpdateLastLogin(ctx context.Context, id uuid.UUID, login time.Time, pic *string) error`
+- [x] Modified `backend/internal/repository/archer.go`:
+    - [x] Column selection updated: `archer_id`, `email`, `first_name`, `last_name`,
           `date_of_birth`, `gender`, `is_deleted`.
-    - [ ] Scanning functions updated to omit legacy equipment/Google columns.
-    - [ ] `Create` accepts `model.ArcherCreate` with `ArcherID` provided from `auth`.
-- [ ] Repositories support transactions via `WithTx(tx pgx.Tx)`.
-- [ ] Unit tests for all repositories using mock `DBTX` verify SQL query and argument construction.
-- [ ] `cd backend && go test ./internal/repository/... -v` passes.
-- [ ] `cd backend && golangci-lint run ./internal/repository/...` reports no issues.
+    - [x] Scanning functions updated to omit legacy equipment/Google columns.
+    - [x] `Create` accepts `model.ArcherCreate` with `ArcherID` provided from `auth`.
+- [x] Repositories support transactions via `WithTx(tx pgx.Tx)`.
+- [x] Unit tests for all repositories using mock `DBTX` verify SQL query and argument construction.
+- [x] `cd backend && go test ./internal/repository/... -v` passes.
+- [x] `cd backend && golangci-lint run ./internal/repository/...` reports no issues.
 
 ## Files to Create/Modify
 
@@ -70,35 +70,35 @@ newly separated `auth` identity table, equipment tables (`bow` and `arrow`), and
 
 ## Steps
 
-- [ ] **Step 1: Write failing query building tests for Bow and Arrow repos**
+- [x] **Step 1: Write failing query building tests for Bow and Arrow repos**
 
   Create `bow_test.go` and `arrow_test.go` verifying that `Create`, `FindByID`, `FindAllByArcherID`,
   and `CountByArcherID` generate valid SQL with Dollar placeholder format.
 
-- [ ] **Step 2: Run tests to verify failure**
+- [x] **Step 2: Run tests to verify failure**
 
   ```bash
   cd backend
   go test ./internal/repository/... -v
   ```
 
-- [ ] **Step 3: Implement `bow.go`**
+- [x] **Step 3: Implement `bow.go`**
 
   Implement `BowRepo` backed by `DBTX`. Write `FindAllByArcherID` ordered by `created_at ASC`, and
   `CountByArcherID` returning total active bows.
 
-- [ ] **Step 4: Implement `arrow.go`**
+- [x] **Step 4: Implement `arrow.go`**
 
   Implement `ArrowRepo`. Support single insertion and `CreateBatch` which inserts multiple rows
   in a single statement or transaction with `status` (defaulting to `'in_use'`). Implement
   `CountByArcherID`, `CountInUseByArcherID`, and `FindByArcherAndSet`.
 
-- [ ] **Step 5: Implement `auth_identity.go`**
+- [x] **Step 5: Implement `auth_identity.go`**
 
   Implement repository for the `auth` table. Provide lookup by `google_subject` and creation of new
   records when a user first signs in with Google OAuth.
 
-- [ ] **Step 6: Update `archer.go`**
+- [x] **Step 6: Update `archer.go`**
 
   Update column list in `archer.go` to strictly match personal fields:
 
@@ -116,7 +116,7 @@ newly separated `auth` identity table, equipment tables (`bow` and `arrow`), and
 
   Update `scanArcher` and SQL generation for `Create`, `Update`, `FindByID`, and `FindByEmail`.
 
-- [ ] **Step 7: Run repository unit tests**
+- [x] **Step 7: Run repository unit tests**
 
   ```bash
   cd backend
@@ -124,7 +124,7 @@ newly separated `auth` identity table, equipment tables (`bow` and `arrow`), and
   golangci-lint run ./internal/repository/...
   ```
 
-- [ ] **Step 8: Commit changes**
+- [x] **Step 8: Commit changes**
 
   ```bash
   git add backend/internal/repository
