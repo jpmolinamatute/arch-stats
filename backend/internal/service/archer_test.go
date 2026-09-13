@@ -28,7 +28,6 @@ func (m *mockArcherRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Arc
 	return nil, nil
 }
 
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
 func (m *mockArcherRepo) FindAll(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
 	if m.findAllFn != nil {
 		return m.findAllFn(ctx, filter)
@@ -44,7 +43,6 @@ func (m *mockArcherRepo) Create(ctx context.Context, data model.ArcherCreate) (u
 	return uuid.Nil, nil
 }
 
-//nolint:gocritic // hugeParam: filter value parameter matches repository interface specification
 func (m *mockArcherRepo) Update(ctx context.Context, data model.ArcherSet, filter model.ArcherFilter) error {
 	if m.updateFn != nil {
 		return m.updateFn(ctx, data, filter)

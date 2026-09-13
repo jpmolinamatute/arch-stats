@@ -85,7 +85,6 @@ type testArcherService struct {
 	deleteFn  func(ctx context.Context, id uuid.UUID) error
 }
 
-//nolint:gocritic // hugeParam: f matches ArcherService interface specification
 func (m *testArcherService) List(ctx context.Context, f model.ArcherFilter) ([]model.ArcherRead, error) {
 	if m.listFn != nil {
 		return m.listFn(ctx, f)

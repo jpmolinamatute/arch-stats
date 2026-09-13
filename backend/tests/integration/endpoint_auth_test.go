@@ -45,13 +45,15 @@ func TestEndpointAuth_Login_ValidGoogleToken_ExistingArcher(t *testing.T) {
 	t.Cleanup(func() { _ = truncateAll(ctx, testPool) })
 	ts, _ := newTestServer(t, newMockGoogleVerifier())
 
-	// Create existing archer with matching google subject
-	_, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
+	created, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
 		a.Email = "existing@example.com"
-		a.GoogleSubject = "google-sub-existing"
 	})
 	if err != nil {
 		t.Fatalf("createTestArcher failed: %v", err)
+	}
+	_, err = testPool.Exec(ctx, "UPDATE auth SET google_subject = $1 WHERE archer_id = $2", "google-sub-existing", created.ArcherID)
+	if err != nil {
+		t.Fatalf("updating auth google_subject failed: %v", err)
 	}
 
 	payload := model.GoogleOneTapRequest{Credential: "mock-google-existing"}

@@ -56,12 +56,12 @@ func TestSmoke_HelpersAndLifecycle(t *testing.T) {
 	customArcher, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
 		a.FirstName = "Marion"
 		a.LastName = "Ravenwood"
-		a.Bowstyle = model.BowstyleCompound
+		a.Gender = model.GenderFemale
 	})
 	if err != nil {
 		t.Fatalf("createTestArcher with override failed: %v", err)
 	}
-	if customArcher.FirstName != "Marion" || customArcher.Bowstyle != model.BowstyleCompound {
+	if customArcher.FirstName != "Marion" || customArcher.Gender != model.GenderFemale {
 		t.Fatalf("custom archer attributes not applied: %+v", customArcher)
 	}
 

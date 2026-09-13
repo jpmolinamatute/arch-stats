@@ -50,18 +50,29 @@ type ArcherOverride func(*model.ArcherCreate)
 func createTestArcher(ctx context.Context, pool *pgxpool.Pool, overrides ...ArcherOverride) (*model.ArcherRead, error) {
 	uniqueID := uuid.New().String()
 	payload := model.ArcherCreate{
-		FirstName:     "Robin",
-		LastName:      "Hood",
-		Email:         fmt.Sprintf("archer-%s@example.com", uniqueID[:8]),
-		DateOfBirth:   "1990-05-15",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleRecurve,
-		DrawWeight:    42.5,
-		GoogleSubject: fmt.Sprintf("google-sub-%s", uniqueID),
+		FirstName:   "Robin",
+		LastName:    "Hood",
+		Email:       fmt.Sprintf("archer-%s@example.com", uniqueID[:8]),
+		DateOfBirth: "1990-05-15",
+		Gender:      model.GenderMale,
 	}
 
 	for _, fn := range overrides {
 		fn(&payload)
+	}
+
+	if payload.ArcherID == nil || *payload.ArcherID == uuid.Nil {
+		var authID uuid.UUID
+		err := pool.QueryRow(ctx, "INSERT INTO auth (google_subject) VALUES ($1) RETURNING archer_id", "google-sub-"+uniqueID).Scan(&authID)
+		if err != nil {
+			return nil, fmt.Errorf("creating test auth: %w", err)
+		}
+		payload.ArcherID = &authID
+	} else {
+		_, err := pool.Exec(ctx, "INSERT INTO auth (archer_id, google_subject) VALUES ($1, $2) ON CONFLICT (archer_id) DO NOTHING", *payload.ArcherID, "google-sub-"+uniqueID)
+		if err != nil {
+			return nil, fmt.Errorf("creating test auth: %w", err)
+		}
 	}
 
 	repo := repository.NewArcherRepo(pool)

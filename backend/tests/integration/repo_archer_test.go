@@ -17,17 +17,20 @@ func TestArcherRepo_CreateAndFindByID(t *testing.T) {
 	repo := repository.NewArcherRepo(testPool)
 	unique := uuid.New().String()[:8]
 	email := "archer-" + unique + "@example.com"
-	sub := "google-sub-" + unique
+
+	var authID uuid.UUID
+	err := testPool.QueryRow(ctx, "INSERT INTO auth (google_subject) VALUES ($1) RETURNING archer_id", "google-sub-"+unique).Scan(&authID)
+	if err != nil {
+		t.Fatalf("inserting auth failed: %v", err)
+	}
 
 	id, err := repo.Create(ctx, model.ArcherCreate{
-		FirstName:     "Oliver",
-		LastName:      "Queen",
-		Email:         email,
-		DateOfBirth:   "1985-05-16",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleRecurve,
-		DrawWeight:    45.0,
-		GoogleSubject: sub,
+		ArcherID:    &authID,
+		FirstName:   "Oliver",
+		LastName:    "Queen",
+		Email:       email,
+		DateOfBirth: "1985-05-16",
+		Gender:      model.GenderMale,
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -54,15 +57,6 @@ func TestArcherRepo_CreateAndFindByID(t *testing.T) {
 	}
 	if archer.Gender != model.GenderMale {
 		t.Errorf("Gender = %v, want %v", archer.Gender, model.GenderMale)
-	}
-	if archer.Bowstyle != model.BowstyleRecurve {
-		t.Errorf("Bowstyle = %v, want %v", archer.Bowstyle, model.BowstyleRecurve)
-	}
-	if archer.DrawWeight != 45.0 {
-		t.Errorf("DrawWeight = %v, want 45.0", archer.DrawWeight)
-	}
-	if archer.GoogleSubject != sub {
-		t.Errorf("GoogleSubject = %q, want %q", archer.GoogleSubject, sub)
 	}
 }
 
@@ -107,11 +101,13 @@ func TestArcherRepo_FindByGoogleSubject(t *testing.T) {
 	unique := uuid.New().String()[:8]
 	sub := "google-sub-" + unique
 
-	created, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
-		a.GoogleSubject = sub
-	})
+	created, err := createTestArcher(ctx, testPool)
 	if err != nil {
 		t.Fatalf("createTestArcher failed: %v", err)
+	}
+	_, err = testPool.Exec(ctx, "UPDATE auth SET google_subject = $2 WHERE archer_id = $1", created.ArcherID, sub)
+	if err != nil {
+		t.Fatalf("updating auth google_subject failed: %v", err)
 	}
 
 	found, err := repo.FindByGoogleSubject(ctx, sub)
@@ -139,15 +135,23 @@ func TestArcherRepo_DuplicateEmail_Conflict(t *testing.T) {
 	repo := repository.NewArcherRepo(testPool)
 	email := "duplicate@example.com"
 
-	_, err := repo.Create(ctx, model.ArcherCreate{
-		FirstName:     "First",
-		LastName:      "Archer",
-		Email:         email,
-		DateOfBirth:   "1992-01-01",
-		Gender:        model.GenderFemale,
-		Bowstyle:      model.BowstyleBarebow,
-		DrawWeight:    30.0,
-		GoogleSubject: "sub-1",
+	var authID1, authID2 uuid.UUID
+	err := testPool.QueryRow(ctx, "INSERT INTO auth (google_subject) VALUES ($1) RETURNING archer_id", "google-sub-dup-1").Scan(&authID1)
+	if err != nil {
+		t.Fatalf("inserting auth 1 failed: %v", err)
+	}
+	err = testPool.QueryRow(ctx, "INSERT INTO auth (google_subject) VALUES ($1) RETURNING archer_id", "google-sub-dup-2").Scan(&authID2)
+	if err != nil {
+		t.Fatalf("inserting auth 2 failed: %v", err)
+	}
+
+	_, err = repo.Create(ctx, model.ArcherCreate{
+		ArcherID:    &authID1,
+		FirstName:   "First",
+		LastName:    "Archer",
+		Email:       email,
+		DateOfBirth: "1992-01-01",
+		Gender:      model.GenderFemale,
 	})
 	if err != nil {
 		t.Fatalf("initial Create() failed: %v", err)
@@ -155,14 +159,12 @@ func TestArcherRepo_DuplicateEmail_Conflict(t *testing.T) {
 
 	// Attempt duplicate email
 	_, err = repo.Create(ctx, model.ArcherCreate{
-		FirstName:     "Second",
-		LastName:      "Archer",
-		Email:         email,
-		DateOfBirth:   "1995-02-02",
-		Gender:        model.GenderMale,
-		Bowstyle:      model.BowstyleCompound,
-		DrawWeight:    50.0,
-		GoogleSubject: "sub-2",
+		ArcherID:    &authID2,
+		FirstName:   "Second",
+		LastName:    "Archer",
+		Email:       email,
+		DateOfBirth: "1995-02-02",
+		Gender:      model.GenderMale,
 	})
 	if err == nil {
 		t.Fatalf("expected unique constraint error on duplicate email, got nil")
@@ -183,13 +185,9 @@ func TestArcherRepo_Update(t *testing.T) {
 	}
 
 	newName := "UpdatedName"
-	newBowstyle := model.BowstyleBarebow
-	newDrawWeight := 36.0
 
 	err = repo.Update(ctx, model.ArcherSet{
-		FirstName:  &newName,
-		Bowstyle:   &newBowstyle,
-		DrawWeight: &newDrawWeight,
+		FirstName: &newName,
 	}, model.ArcherFilter{
 		ArcherID: &created.ArcherID,
 	})
@@ -203,12 +201,6 @@ func TestArcherRepo_Update(t *testing.T) {
 	}
 	if updated.FirstName != newName {
 		t.Errorf("FirstName = %q, want %q", updated.FirstName, newName)
-	}
-	if updated.Bowstyle != newBowstyle {
-		t.Errorf("Bowstyle = %v, want %v", updated.Bowstyle, newBowstyle)
-	}
-	if updated.DrawWeight != newDrawWeight {
-		t.Errorf("DrawWeight = %v, want %v", updated.DrawWeight, newDrawWeight)
 	}
 	if updated.LastName != created.LastName {
 		t.Errorf("LastName changed: got %q, want %q", updated.LastName, created.LastName)
@@ -237,9 +229,8 @@ func TestArcherRepo_FindAll_WithFilters(t *testing.T) {
 
 	repo := repository.NewArcherRepo(testPool)
 
-	// Create 2 recurve and 1 compound archer
-	_, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
-		a.Bowstyle = model.BowstyleRecurve
+	// Create 2 male and 1 female archer
+	femaleArcher, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
 		a.Gender = model.GenderFemale
 	})
 	if err != nil {
@@ -247,45 +238,43 @@ func TestArcherRepo_FindAll_WithFilters(t *testing.T) {
 	}
 
 	_, err = createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
-		a.Bowstyle = model.BowstyleRecurve
 		a.Gender = model.GenderMale
 	})
 	if err != nil {
 		t.Fatalf("create archer 2 failed: %v", err)
 	}
 
-	compoundArcher, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
-		a.Bowstyle = model.BowstyleCompound
+	_, err = createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
 		a.Gender = model.GenderMale
 	})
 	if err != nil {
 		t.Fatalf("create archer 3 failed: %v", err)
 	}
 
-	// Filter by BowstyleCompound
-	targetBowstyle := model.BowstyleCompound
+	// Filter by GenderFemale
+	targetGender := model.GenderFemale
 	results, err := repo.FindAll(ctx, model.ArcherFilter{
-		Bowstyle: &targetBowstyle,
+		Gender: &targetGender,
 	})
 	if err != nil {
-		t.Fatalf("FindAll(BowstyleCompound) failed: %v", err)
+		t.Fatalf("FindAll(GenderFemale) failed: %v", err)
 	}
 	if len(results) != 1 {
-		t.Fatalf("expected 1 compound archer, got %d", len(results))
+		t.Fatalf("expected 1 female archer, got %d", len(results))
 	}
-	if results[0].ArcherID != compoundArcher.ArcherID {
-		t.Errorf("ArcherID = %v, want %v", results[0].ArcherID, compoundArcher.ArcherID)
+	if results[0].ArcherID != femaleArcher.ArcherID {
+		t.Errorf("ArcherID = %v, want %v", results[0].ArcherID, femaleArcher.ArcherID)
 	}
 
-	// Filter by BowstyleRecurve
-	recurveBowstyle := model.BowstyleRecurve
-	recurveResults, err := repo.FindAll(ctx, model.ArcherFilter{
-		Bowstyle: &recurveBowstyle,
+	// Filter by GenderMale
+	maleGender := model.GenderMale
+	maleResults, err := repo.FindAll(ctx, model.ArcherFilter{
+		Gender: &maleGender,
 	})
 	if err != nil {
-		t.Fatalf("FindAll(BowstyleRecurve) failed: %v", err)
+		t.Fatalf("FindAll(GenderMale) failed: %v", err)
 	}
-	if len(recurveResults) != 2 {
-		t.Fatalf("expected 2 recurve archers, got %d", len(recurveResults))
+	if len(maleResults) != 2 {
+		t.Fatalf("expected 2 male archers, got %d", len(maleResults))
 	}
 }

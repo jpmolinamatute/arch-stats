@@ -60,7 +60,7 @@ func TestSessionRepo_FindByID_Success(t *testing.T) {
 		t.Fatal("expected session, got nil")
 	}
 
-	if !strings.HasPrefix(executedSQL, "SELECT session_id, owner_archer_id, session_location, is_indoor, is_opened, created_at, closed_at FROM session") {
+	if !strings.HasPrefix(executedSQL, "SELECT session_id, archer_id, session_location, is_indoor, is_opened, created_at, closed_at FROM session") {
 		t.Errorf("unexpected query SQL: %s", executedSQL)
 	}
 	if !strings.Contains(executedSQL, "WHERE session_id = $1") {
@@ -168,11 +168,11 @@ func TestSessionRepo_FindOpen_Success(t *testing.T) {
 		t.Fatal("expected session, got nil")
 	}
 
-	if !strings.HasPrefix(executedSQL, "SELECT session_id, owner_archer_id, session_location, is_indoor, is_opened, created_at, closed_at FROM session") {
+	if !strings.HasPrefix(executedSQL, "SELECT session_id, archer_id, session_location, is_indoor, is_opened, created_at, closed_at FROM session") {
 		t.Errorf("unexpected query SQL: %s", executedSQL)
 	}
-	if !strings.Contains(executedSQL, "WHERE") || !strings.Contains(executedSQL, "owner_archer_id = $1") || !strings.Contains(executedSQL, "is_opened = $2") {
-		t.Errorf("expected WHERE owner_archer_id = $1 AND is_opened = $2, got: %s", executedSQL)
+	if !strings.Contains(executedSQL, "WHERE") || !strings.Contains(executedSQL, "archer_id = $1") || !strings.Contains(executedSQL, "is_opened = $2") {
+		t.Errorf("expected WHERE archer_id = $1 AND is_opened = $2, got: %s", executedSQL)
 	}
 	if len(executedArgs) != 2 {
 		t.Fatalf("expected 2 arguments, got %d", len(executedArgs))
@@ -279,7 +279,7 @@ func TestSessionRepo_FindAll_WithFilters(t *testing.T) {
 
 	expectedClauses := []string{
 		"session_id = $",
-		"owner_archer_id = $",
+		"archer_id = $",
 		"created_at = $",
 		"closed_at = $",
 		"session_location = $",
@@ -364,7 +364,7 @@ func TestSessionRepo_Create_Success(t *testing.T) {
 	if !strings.HasPrefix(executedSQL, "INSERT INTO session") {
 		t.Errorf("expected INSERT INTO session query, got: %s", executedSQL)
 	}
-	expectedCols := []string{"owner_archer_id", "session_location", "is_indoor", "is_opened"}
+	expectedCols := []string{"archer_id", "session_location", "is_indoor", "is_opened"}
 	for _, col := range expectedCols {
 		if !strings.Contains(executedSQL, col) {
 			t.Errorf("expected query to contain column %q, got: %s", col, executedSQL)

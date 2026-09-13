@@ -23,7 +23,6 @@ func TestAuthFlow_SessionLifecycle(t *testing.T) {
 	// 1. Create an archer profile in PostgreSQL
 	archer, err := createTestArcher(ctx, testPool, func(a *model.ArcherCreate) {
 		a.Email = "auth-lifecycle@example.com"
-		a.GoogleSubject = "google-sub-lifecycle-test"
 	})
 	if err != nil {
 		t.Fatalf("createTestArcher failed: %v", err)
@@ -500,9 +499,6 @@ func TestAuthFlow_ServiceEndToEnd(t *testing.T) {
 	persistedArcher, err := archerRepo.FindByID(ctx, authResp.Archer.ArcherID)
 	if err != nil || persistedArcher == nil {
 		t.Fatalf("archer not found in DB: %v", err)
-	}
-	if persistedArcher.GoogleSubject != googleSub {
-		t.Errorf("GoogleSubject = %q, want %q", persistedArcher.GoogleSubject, googleSub)
 	}
 
 	// 2. Authenticate using the minted JWT token

@@ -49,8 +49,6 @@ func (s *ArcherService) GetByID(ctx context.Context, id uuid.UUID) (*model.Arche
 }
 
 // List queries archer profiles matching the provided filter criteria.
-//
-//nolint:gocritic // hugeParam: filter value parameter matches service interface specification
 func (s *ArcherService) List(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
 	archers, err := s.repo.FindAll(ctx, filter)
 	if err != nil {

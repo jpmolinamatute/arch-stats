@@ -25,7 +25,6 @@ type mockArcherHandlerService struct {
 	deleteFn  func(ctx context.Context, id uuid.UUID) error
 }
 
-//nolint:gocritic // hugeParam: filter matches ArcherService interface specification
 func (m *mockArcherHandlerService) List(ctx context.Context, filter model.ArcherFilter) ([]model.ArcherRead, error) {
 	if m.listFn != nil {
 		return m.listFn(ctx, filter)
@@ -242,14 +241,11 @@ func TestArcherHandler_Create(t *testing.T) {
 		h := handler.NewArcherHandler(svc)
 
 		payload := model.ArcherCreate{
-			FirstName:     "Katniss",
-			LastName:      "Everdeen",
-			Email:         "katniss@district12.org",
-			DateOfBirth:   "2000-05-08",
-			Gender:        model.GenderFemale,
-			Bowstyle:      model.BowstyleBarebow,
-			DrawWeight:    40.0,
-			GoogleSubject: "google-sub-12345",
+			FirstName:   "Katniss",
+			LastName:    "Everdeen",
+			Email:       "katniss@district12.org",
+			DateOfBirth: "2000-05-08",
+			Gender:      model.GenderFemale,
 		}
 		body, _ := json.Marshal(payload)
 		req := httptest.NewRequest(http.MethodPost, "/api/v0/archer/", bytes.NewReader(body))
