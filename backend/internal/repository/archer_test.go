@@ -183,6 +183,15 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 			case int:
 				*d = &val
 			}
+		case *int16:
+			switch val := v.(type) {
+			case int16:
+				*d = val
+			case int:
+				*d = int16(val)
+			}
+		case *model.ArrowStatus:
+			*d = v.(model.ArrowStatus)
 		case *int64:
 			switch val := v.(type) {
 			case int64:
@@ -200,6 +209,31 @@ func (m *mockMultiRows) Scan(dest ...any) error {
 func (m *mockMultiRows) Values() ([]any, error) { return m.records[m.idx-1], nil }
 func (m *mockMultiRows) RawValues() [][]byte    { return nil }
 func (m *mockMultiRows) Conn() *pgx.Conn        { return nil }
+
+func TestMockMultiRows_ScanArrowTypes(t *testing.T) {
+	setVal := int16(2)
+	statusVal := model.ArrowStatusInUse
+	mr := &mockMultiRows{
+		records: [][]any{
+			{setVal, statusVal},
+		},
+	}
+	if !mr.Next() {
+		t.Fatal("expected next row")
+	}
+
+	var scannedSet int16
+	var scannedStatus model.ArrowStatus
+	if err := mr.Scan(&scannedSet, &scannedStatus); err != nil {
+		t.Fatalf("unexpected scan error: %v", err)
+	}
+	if scannedSet != 2 {
+		t.Errorf("expected scannedSet 2, got %d", scannedSet)
+	}
+	if scannedStatus != model.ArrowStatusInUse {
+		t.Errorf("expected scannedStatus %q, got %q", model.ArrowStatusInUse, scannedStatus)
+	}
+}
 
 func sampleArcherRow(id uuid.UUID, email, _ string) []any {
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
