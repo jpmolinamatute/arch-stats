@@ -91,6 +91,124 @@ func TestBaseTypes_JSON(t *testing.T) {
 	})
 }
 
+func TestBowModels_JSON(t *testing.T) {
+	archerID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	bowID := uuid.MustParse("22222222-2222-2222-2222-222222222222")
+	now := time.Now().UTC().Truncate(time.Second)
+
+	t.Run("BowCreate JSON marshaling", func(t *testing.T) {
+		create := model.BowCreate{
+			ArcherID:   archerID,
+			Name:       "Competition Recurve",
+			Bowstyle:   model.BowstyleRecurve,
+			DrawWeight: 38.5,
+		}
+
+		b, err := json.Marshal(create)
+		if err != nil {
+			t.Fatalf("failed to marshal BowCreate: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal BowCreate JSON: %v", err)
+		}
+
+		expectedKeys := []string{"archer_id", "name", "bowstyle", "draw_weight"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in BowCreate", k)
+			}
+		}
+
+		var decoded model.BowCreate
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal BowCreate: %v", err)
+		}
+		if decoded.Name != "Competition Recurve" || decoded.DrawWeight != 38.5 || decoded.Bowstyle != model.BowstyleRecurve {
+			t.Errorf("mismatch in decoded BowCreate: %+v", decoded)
+		}
+	})
+
+	t.Run("BowRead JSON marshaling", func(t *testing.T) {
+		read := model.BowRead{
+			BowID:      bowID,
+			ArcherID:   archerID,
+			Name:       "Competition Recurve",
+			Bowstyle:   model.BowstyleRecurve,
+			DrawWeight: 38.5,
+			IsDeleted:  false,
+			CreatedAt:  now,
+		}
+
+		b, err := json.Marshal(read)
+		if err != nil {
+			t.Fatalf("failed to marshal BowRead: %v", err)
+		}
+
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			t.Fatalf("failed to unmarshal BowRead JSON: %v", err)
+		}
+
+		expectedKeys := []string{"bow_id", "archer_id", "name", "bowstyle", "draw_weight", "is_deleted", "created_at"}
+		for _, k := range expectedKeys {
+			if _, ok := m[k]; !ok {
+				t.Errorf("expected JSON key %q missing in BowRead", k)
+			}
+		}
+
+		var decoded model.BowRead
+		if err := json.Unmarshal(b, &decoded); err != nil {
+			t.Fatalf("failed to roundtrip unmarshal BowRead: %v", err)
+		}
+		if decoded.BowID != bowID || decoded.IsDeleted != false || !decoded.CreatedAt.Equal(now) {
+			t.Errorf("mismatch in decoded BowRead: %+v", decoded)
+		}
+	})
+
+	t.Run("BowSet and BowFilter JSON marshaling", func(t *testing.T) {
+		name := "Updated Bow Name"
+		weight := 42.0
+		set := model.BowSet{
+			Name:       &name,
+			DrawWeight: &weight,
+		}
+
+		sb, err := json.Marshal(set)
+		if err != nil {
+			t.Fatalf("failed to marshal BowSet: %v", err)
+		}
+		var setMap map[string]any
+		if err := json.Unmarshal(sb, &setMap); err != nil {
+			t.Fatalf("failed to unmarshal BowSet JSON: %v", err)
+		}
+		if _, ok := setMap["name"]; !ok {
+			t.Errorf("expected 'name' in BowSet")
+		}
+		if _, ok := setMap["bowstyle"]; ok {
+			t.Errorf("expected omitted 'bowstyle' in BowSet")
+		}
+
+		isDeleted := false
+		filter := model.BowFilter{
+			ArcherID:  &archerID,
+			IsDeleted: &isDeleted,
+		}
+		fb, err := json.Marshal(filter)
+		if err != nil {
+			t.Fatalf("failed to marshal BowFilter: %v", err)
+		}
+		var filterMap map[string]any
+		if err := json.Unmarshal(fb, &filterMap); err != nil {
+			t.Fatalf("failed to unmarshal BowFilter JSON: %v", err)
+		}
+		if _, ok := filterMap["archer_id"]; !ok {
+			t.Errorf("expected 'archer_id' in BowFilter")
+		}
+	})
+}
+
 func TestArcherModels_JSON(t *testing.T) {
 	clubID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
 	picURL := "https://example.com/avatar.jpg"
